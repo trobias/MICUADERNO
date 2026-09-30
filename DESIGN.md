@@ -1,0 +1,239 @@
+# MI CUADERNO — DESIGN
+
+> Reglas visuales, de interacción y de motion. Si una decisión no está acá, se decide en coherencia con §1 y se agrega acá.
+
+## 1. Esencia
+
+**Un diario de tela, bordado a mano, que se abre sobre la mesa.**
+
+- La tapa es **tela de encuadernar** (lino) de un color pleno, con una mariposa bordada y un elástico.
+- Abierto, la tela de la tapa **enmarca** las hojas: el fondo de la app *es* el interior de las tapas, no un escritorio ni un gradiente.
+- Las hojas son **papel crema** con renglones suaves y margen rosado.
+- Lo que la persona marca se **borda**: las actividades se completan con **punto cruz**, los ánimos son **parches bordados**, el año es un **bastidor de punto cruz** que se va llenando día a día.
+- Los adornos son **papelería**: cintas-marcador, washi tape, stickers troquelados, notas adhesivas. Pocos y bien puestos.
+
+Test de identidad: si sacás el logo y cambiás el color, ¿sigue pareciendo un diario de tela bordado? Si no, está mal.
+
+### Contrato de dirección (resumen del comentario en `index.html`)
+- **Tesis:** el registro diario como bordado lento; rechaza el dashboard de hábitos (cards, rachas, gráficos).
+- **Mundo propio:** tela de encuadernar a página completa + papel crema + hilo de bordar como color de dato.
+- **Primer viewport:** cuaderno abierto; a la izquierda la fecha grande y los 5 parches de ánimo; a la derecha la lista del día con casillas de punto cruz. Acción principal: tocar un parche.
+- **Interacción firma:** marcar una actividad borda una ✕ en dos puntadas.
+
+## 2. Principios de composición
+
+1. **Una hoja, una intención.** Cada sección del día es un bloque de texto sobre renglones, no una card.
+2. **Aire.** Más espacio arriba de un título que abajo. Nunca llenar las esquinas.
+3. **Máximo un adorno por zona visual** (una cinta, un sticker, una nota). La decoración vive en los bordes, nunca encima de un campo de texto.
+4. **Jerarquía por tipografía y tinta**, no por cajas: título en Young Serif, pregunta en Castoro itálica, controles en Atkinson.
+5. **Nada de eyebrows/kickers** (etiquetas en mayúscula sobre títulos). El título habla solo.
+6. **Cards permitidas solo si son objetos físicos:** nota adhesiva, ficha, papelito, sticker.
+
+## 3. Color
+
+### 3.1 Papel y tinta
+| Token | Valor | Uso |
+|---|---|---|
+| `--paper` | `#FFF9ED` | hoja |
+| `--paper-shade` | `#F6EDDA` | borde/sombra interna de la hoja, lomo |
+| `--paper-edge` | `#EADFC8` | canto de hojas apiladas |
+| `--rule` | `#E3DCEB` | renglones (lavanda muy claro) |
+| `--margin` | `#EDB9C4` | línea de margen |
+| `--ink` | `#493D3B` | texto principal (≈10:1 sobre papel) |
+| `--ink-soft` | `#796966` | texto secundario (≈5:1, AA) |
+| `--ink-faint` | `#B3A5A0` | **solo** decoración y placeholders grandes (no texto normal) |
+| `--placeholder` | `#8E7F7B` | placeholders (≥4.5:1) |
+
+### 3.2 Pasteles de papelería (fondos de objetos, nunca texto)
+`--butter #F6D978` · `--blush #F4B9C6` · `--rose #D98FA1` · `--peach #F4C3A2` · `--sage #B9CBA7` · `--lavender #C9B8DE`
+
+Uso: notas adhesivas (butter), cintas (rose/butter), washi (blush/sage/lavender a 75 % de opacidad), pestañas del índice (una por destino).
+
+### 3.3 Hilos (color que **codifica** algo)
+
+**Ánimo** — rampa ordinal validada con `dataviz/validate_palette.js --ordinal` sobre `#FFF9ED`: luminosidad monótona (oscuro = pesado, claro = muy bien), saltos ΔL ≥ 0.06, contraste del extremo claro 2.08:1. La separación CVD entre 1 y 2 es 6.3 (banda 6–8), por eso **cada ánimo lleva además su glifo propio** (codificación secundaria obligatoria) y su nombre en tooltips/aria.
+
+| Ánimo | Token | Hilo | Glifo |
+|---|---|---|---|
+| 1 pesado | `--mood-1` | `#584488` | nube con lluvia |
+| 2 bajito | `--mood-2` | `#954A7E` | nube |
+| 3 normal | `--mood-3` | `#C15C67` | sol tras nube |
+| 4 bien | `--mood-4` | `#D67F46` | flor |
+| 5 muy bien | `--mood-5` | `#CAAE31` | sol |
+
+Cada hilo tiene un **tinte** para fondos (`--mood-n-tint`, mezcla 22 % con papel) usado en el parche seleccionado y en el calendario.
+
+**Estados de actividad** (hilo sobre papel, ≥3:1 como componente gráfico):
+`--thread-done #5F8150` (salvia oscura) · `--thread-partial #BF6E3F` (durazno tostado) · `--thread-later #6E5CA0` (lavanda oscura) · `--thread-skip` = `--ink-soft`.
+
+### 3.4 Tela de tapa (color de página completa)
+| Tapa | `--cloth` | `--cloth-deep` (tramado) | `--cloth-ink` (texto sobre tela) |
+|---|---|---|---|
+| salvia (default) | `#7F9B7A` | `#6E8A69` | `#FFF9ED` |
+| rosa viejo | `#C28596` | `#AE7383` | `#FFF9ED` |
+| lavanda | `#8C7FAE` | `#7B6E9D` | `#FFF9ED` |
+| manteca | `#E0B955` | `#CCA544` | `#493D3B` |
+
+Texto sobre tela: solo el de la tapa y el de las pestañas (sobre papel de color). Nunca párrafos sobre tela.
+
+### 3.5 Superficies del navegador
+`::selection` fondo `--butter`, texto `--ink`. `caret-color: --mood-3`. Scrollbar: `scrollbar-color: var(--paper-edge) transparent; scrollbar-width: thin`. Foco: ver §11.
+
+## 4. Tipografía
+
+Todas autoalojadas en `assets/fonts/` (woff2, subset latin), `font-display: swap`.
+
+| Rol | Familia | Por qué |
+|---|---|---|
+| Display (tapa, fechas, títulos de página) | **Young Serif** 400 | serif blanda de imprenta, como una etiqueta estampada en la tela. |
+| Escritura y preguntas | **Castoro** 400 + itálica | serif de texto cálida con itálica caligráfica: lo que escribe la persona se ve impreso con cariño. |
+| Interfaz (botones, pestañas, meta) | **Atkinson Hyperlegible Next** (variable) | máxima legibilidad para controles pequeños; baja fatiga. |
+| Acento manuscrito | **Nanum Pen Script** | anotaciones a mano: “guardado ♡”, “→ mañana”, frase de la tapa. Nunca para contenido ni controles. Tamaño mínimo 1.35rem. |
+
+Escala (rem, base 16px):
+
+| Token | Tamaño | Uso |
+|---|---|---|
+| `--fs-xs` | 0.8125 | meta (fechas chicas, contadores) |
+| `--fs-sm` | 0.9375 | controles, pestañas |
+| `--fs-md` | 1.0625 | escritura y cuerpo |
+| `--fs-lg` | 1.3125 | preguntas (Castoro itálica) |
+| `--fs-xl` | 1.75 | títulos de sección/página |
+| `--fs-2xl` | clamp(2.25, 1.7 + 2.2vw, 3.25) | fecha del día |
+| `--fs-cover` | clamp(2.5, 1.9 + 3vw, 4) | título de la tapa |
+
+- Interlineado de escritura = `--line` (1.75rem) y los renglones del papel se dibujan con ese mismo paso: el texto **cae sobre la línea**.
+- Medida de lectura: 60–70ch.
+- Tracking: títulos `-0.01em`; tapa `0.08em` en mayúsculas (es una etiqueta).
+- Números tabulares (`font-variant-numeric: tabular-nums`) en calendario, año y horas.
+
+## 5. Espacio, radios, sombras
+
+- Espaciado base 4px: `--s-1 4` `--s-2 8` `--s-3 12` `--s-4 16` `--s-5 24` `--s-6 32` `--s-7 48` `--s-8 64`.
+- Padding de hoja: `clamp(20px, 4vw, 56px)` lateral; margen izquierdo de escritura 44px con línea de margen.
+- Radios: hoja `4px 10px 10px 4px` (esquina externa apenas gastada); nota adhesiva `2px`; botones-etiqueta `6px`; parches de ánimo círculo; nada de `rounded-3xl` genérico.
+- Elevación (una sola por objeto):
+  - `--shadow-page`: `0 1px 0 var(--paper-edge), 0 18px 40px -24px rgb(40 30 28 / .45)`
+  - `--shadow-note`: `0 1px 1px rgb(73 61 59 / .12), 0 6px 12px -6px rgb(73 61 59 / .28)`
+  - `--shadow-sticker`: `drop-shadow(0 1px 1px rgb(73 61 59 / .25))` (sticker troquelado: borde blanco de 2px + sombra corta)
+
+## 6. Lenguaje de bordado (componentes firma)
+
+- **Casilla de punto cruz** (`.stitch-box`): cuadrado 22px de “tela aida” (4 agujeritos en las esquinas) con borde punteado suave.
+  - done: dos diagonales en `--thread-done`, trazo 2.5px, extremos redondeados. Animación: 1.ª diagonal 140ms, 2.ª 140ms (stroke-dashoffset), ease-out.
+  - partial: una diagonal en `--thread-partial`.
+  - postponed: puntada corrida horizontal con punta de flecha en `--thread-later` + anotación manuscrita “otro día”.
+  - skipped: nudito francés (círculo 5px) en `--ink-soft`.
+  - El texto **nunca se tacha**; done lleva un subrayado de puntada corrida muy suave.
+- **Parche de ánimo** (`.mood-patch`): círculo 52px (44px mínimo táctil) con borde de puntada (dashed 1.5px en hilo) y glifo en hilo. Seleccionado: relleno `--mood-n-tint`, borde continuo, leve rotación (-4° a 4°, fija por ánimo) — como un parche cosido.
+- **Puntada corrida** (`.running-stitch`): separador de secciones = línea discontinua `8px trazo / 6px espacio` en `--rule` más oscuro. Reemplaza a `<hr>` y a bordes de cards.
+- **Bastidor del año**: tela aida (grilla de agujeritos) 12 × 31; día con ánimo = ✕ de punto cruz rellena en el hilo del ánimo; día escrito sin ánimo = medio punto en `--ink-faint`; día inexistente (30/02) = sin agujeros.
+- **Botón-etiqueta** (`.label-btn`): etiqueta tejida: fondo `--ink`, texto `--paper`, radio 6px, costura interna punteada `1px rgb(255 249 237 / .45)` a 3px. Variante suave: fondo `--paper-shade`, texto `--ink`.
+- **Cinta-marcador**: cinta de raso (butter o rose) que cuelga del borde superior de la hoja activa; en el calendario, cae sobre el día seleccionado.
+
+## 7. Papelería
+
+- **Nota adhesiva** (`.sticky`): butter, rotación ±1.5°, cinta washi arriba. Para “Algo que quiero cuidar hoy”.
+- **Washi tape**: rectángulo 64×18px con bordes dentados (clip-path), 75 % opacidad.
+- **Papelito** (`.slip`): tira de papel con borde rasgado (clip-path) para recuerdos y avisos suaves (backup, recordatorios).
+- **Pestañas del índice**: una por destino, color fijo: Hoy `--butter`, Calendario `--blush`, Rutinas `--sage`, Páginas `--lavender`, Mi año `--peach`, Ajustes `--paper-shade`. Activa: sobresale 6px más y pierde la sombra (queda “adentro”).
+
+## 8. Stickers
+
+Biblioteca propia en SVG (`js/ui/stickers.js`), estilo **troquelado**: forma plana en pastel + contorno de tinta 1.6px + borde blanco de corte. Geometría limpia, nada de trazos temblorosos ni sombreados.
+
+Categorías (18):
+- **Naturaleza:** mariposa, margarita, tulipán, hoja, sol, luna, nube, ramita.
+- **Cositas:** taza, libro, auriculares, sobre, vela, corazón.
+- **Símbolos:** estrella, brillito, moño, flecha.
+- **Cintas washi:** rosa, salvia, lavanda, manteca (se pegan como sticker).
+
+Reglas: máx. ~12 stickers por hoja recomendados (sin límite duro); tamaño 48–96px; rotación −30°…30°; nunca tapan inputs (la capa de stickers queda detrás del texto en z-index salvo en modo “decorar”).
+
+## 9. Iconografía
+
+Un solo sistema, `js/ui/icons.js` (sprite SVG): 24×24, trazo 1.75px, `stroke-linecap: round`, `stroke-linejoin: round`, `currentColor`. Navegación (hoy=sol naciente sobre hoja, calendario, rutinas=bucle de hilo, páginas, año=bastidor, ajustes=carretel), acciones (agregar, editar, borrar, exportar, imprimir, restaurar, cerrar, flechas, más). Sin emojis como íconos. El ♡ tipográfico se permite solo como firma de texto.
+
+## 10. Layout y responsive
+
+- **≥ 1100px — doble página:** dos hojas de ~560px con lomo central (sombra interior + 5 puntadas de costura). Pestañas en el borde derecho.
+- **700–1099px — una hoja ancha:** máx. 720px; pestañas en el borde derecho.
+- **< 700px — una hoja:** ancho completo menos 10px de tela a cada lado; pestañas como fila inferior fija (altura 60px + `env(safe-area-inset-bottom)`), iconos + etiqueta corta.
+- Qué va en cada hoja (desktop): Hoy → izq. encabezado + ánimo inicial + intención + lista; der. notas + energía/sueño + cierre. Calendario-semana → lun–mié / jue–dom. Mes y Año → una sola hoja ancha (no forzar doble página).
+- Teclado móvil: el campo activo se desplaza a la vista (`scrollIntoView({block:'center'})`); nada fijo tapa inputs (la barra de pestañas se oculta con el teclado abierto vía `visualViewport`).
+
+## 11. Accesibilidad
+
+- Foco: `outline: 2px solid var(--mood-1); outline-offset: 3px;` + en hilos claros usa `--ink`. Siempre visible con teclado (`:focus-visible`).
+- Targets ≥ 44×44 en táctil (los parches, casillas y pestañas se agrandan con padding invisible).
+- Estado nunca solo por color: glifo + texto accesible.
+- Decoración (`.deco`, stickers de la tapa, escenas) con `aria-hidden="true"`.
+- `aria-live="polite"` para “guardado” y avisos.
+- Idioma `es-AR`.
+
+## 12. Motion
+
+**Presupuesto:** la app está quieta por defecto. Motion solo para feedback, continuidad espacial y rituales raros.
+
+Tokens: `--ease-out: cubic-bezier(0.23, 1, 0.32, 1)` · `--ease-in-out: cubic-bezier(0.77, 0, 0.175, 1)` · `--dur-press 120ms` · `--dur-ui 200ms` · `--dur-panel 260ms` · `--dur-page 420ms` · `--dur-cover 900ms`.
+
+| Momento | Frecuencia | Motion |
+|---|---|---|
+| Marcar casilla | decenas/día | bordado de la ✕ en 2×140ms; nada más se mueve |
+| Tocar parche | 2/día | parche se “cose”: escala 0.94→1 + rotación a su ángulo, 200ms |
+| Cambiar de día (flechas) | varias/día | hoja se desliza 12px + fade, 260ms (View Transitions si hay, fallback WAAPI) |
+| Cambiar de pestaña | varias/día | crossfade 200ms; la pestaña avanza 6px |
+| Soltar sticker | ocasional | asentamiento: escala 1.06→1 y rotación ±2°, 260ms |
+| Seleccionar día (calendario) | ocasional | la cinta baja 16px → 0, 260ms |
+| Abrir tapa | 1/sesión | primeras 3 veces: elástico se corre + tapa gira sobre bisagra izquierda, 900ms; luego fade 250ms |
+| Cierre del día guardado | 1/día | una ramita/luna aparece a su lado, 600ms, una vez |
+| Escenas ambientales | rara | ver §13 |
+
+Nunca: `transition: all`, `scale(0)`, `ease-in` en UI, rebotes, motion en atajos de teclado, parallax, cosas siguiendo al cursor. Hover con movimiento solo en `@media (hover: hover) and (pointer: fine)`.
+
+### Niveles (Ajustes → Cómo se mueve)
+- **Completas:** todo lo anterior + escenas.
+- **Suaves (default):** sin giro 3D de tapa (fade), escenas menos frecuentes.
+- **Reducidas (default si `prefers-reduced-motion`):** solo opacidad/color; sin desplazamientos, sin escenas; el bordado de la ✕ aparece instantáneo.
+- **Ninguna:** duraciones 0.
+
+Se aplica con `html[data-motion]` y las variables `--motion-scale` (1 / 0.85 / 0 para movimiento) y `--fade-scale`.
+
+## 13. Escenas ocasionales
+
+Pequeñas escenas SVG animadas con Web Animations API (`js/ui/scenes.js`), en el margen de la hoja, **nunca** sobre texto.
+
+Escenas: **mariposa** (cruza el margen y se posa en una esquina, luego se va), **vapor de té** (tres hilos de vapor sobre una taza, de noche), **sombra de hojas** (una sombra de ramita se desliza sobre el papel, de mañana), **nubes** (dos nubecitas cruzan el encabezado), **lluvia en la ventana** (tres gotas en la tapa… solo en la vista Año), **lámpara** (un halo cálido que respira una vez, de noche).
+
+Reglas del director de escenas:
+- **Una** escena a la vez, como máximo.
+- Primera aparición: no antes de 40–90s de haber llegado a una vista.
+- Separación: 4–9 min aleatorio (Completas); 8–15 min (Suaves); nunca en Reducidas/Ninguna.
+- No se dispara si: hay foco en un campo de texto, hubo tecleo en los últimos 20s, hay un diálogo abierto, la pestaña está oculta (`document.hidden`), o la ventana no tiene foco.
+- Duración 4–8s; después, silencio.
+- No repite la misma escena dos veces seguidas. Elige por hora del día.
+- Se cancela al instante si la persona empieza a escribir.
+
+## 14. Estados
+
+- **Vacíos** con voz propia (SPEC §8) y, como mucho, un sticker gris-tinta chiquito.
+- **Guardando/guardado:** anotación manuscrita “guardado ♡” junto al encabezado, 1.5s, `aria-live`.
+- **Error de almacenamiento:** papelito rosa arriba: “No pude guardar en este dispositivo. Descargá una copia para no perder nada.” + botón.
+- **Deshabilitado:** 50 % opacidad + `cursor: not-allowed`, nunca gris frío.
+
+## 15. Impresión
+
+Documento dedicado (`js/views/print.js` + `css/print.css`): `@page { size: A4 | A5 | letter; margin: 14mm 12mm }`. Portada (título, nombre, rango), una hoja por mes con mini calendario de parches, una hoja por día con contenido (fecha en Young Serif, ánimos con glifo + nombre, lista con marcas de punto cruz, notas y reflexiones), páginas libres. Sin fondos de tela; renglones muy suaves; todo en tinta (imprime bien en B/N gracias a los glifos).
+
+## 16. Do / Don't
+
+| Do | Don't |
+|---|---|
+| Separar secciones con puntada corrida y aire | Cards idénticas con ícono+título+texto |
+| Un sticker en una esquina | Stickers flotando por toda la hoja |
+| Parches con glifo + color | Color como único portador de significado |
+| “Hoy no salió” con un nudito suave | Tachar, rojo, “fallaste” |
+| Escena una vez, después silencio | Animaciones en loop |
+| Tela de color pleno como fondo | Gradientes, glass, glows, neumorphism |
+| Young Serif para fechas | Mayúsculas espaciadas como eyebrow sobre títulos |
+| Insights con conteos (“8 de 11”) | Porcentajes de “mejora”, gráficos de SaaS |
