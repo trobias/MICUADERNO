@@ -260,7 +260,41 @@ await test('mobile 375px: una hoja, pestañas abajo, sin scroll horizontal', asy
   }
   const tabsBox = await page.locator('#tabs').boundingBox();
   assert.ok(tabsBox.y + tabsBox.height >= 750, 'pestañas abajo');
+  const visibleTabs = await page.$$eval('#tabs .tab', (els) => els.filter((e) => e.offsetParent !== null).length);
+  assert.ok(visibleTabs <= 5, `barra inferior con ${visibleTabs} destinos (máx. 5)`);
+  assert.equal(await page.locator('#mobile-settings').isVisible(), true, 'Ajustes accesible arriba');
+  await goto(page, '#/anio');
+  const cell = await page.locator('.stitch-cell[data-date]').first().boundingBox();
+  assert.ok(cell.width >= 22 && cell.height >= 22, `celda del año ${cell.width}x${cell.height} (mín. 22)`);
   assert.deepEqual(errors, []);
+  await context.close();
+});
+
+await test('320px y celular apaisado: sin scroll horizontal', async () => {
+  for (const viewport of [{ width: 320, height: 640 }, { width: 844, height: 390 }]) {
+    const { page, errors, context } = await newPage(browser, { viewport });
+    await page.goto(FILE_URL);
+    await onboard(page);
+    for (const h of ['#/hoy', '#/calendario', '#/anio', '#/ajustes']) {
+      await goto(page, h);
+      const over = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+      assert.ok(over <= 0, `${viewport.width}px ${h} desborda ${over}px`);
+    }
+    assert.deepEqual(errors, []);
+    await context.close();
+  }
+});
+
+await test('rutina sin nombre: el error aparece junto al campo', async () => {
+  const { page, context } = await newPage(browser);
+  await page.goto(FILE_URL);
+  await onboard(page);
+  await goto(page, '#/rutinas');
+  await page.click('button:has-text("Nueva rutina")');
+  await page.click('dialog button:has-text("Crear rutina")');
+  assert.equal(await page.getAttribute('#rt-title', 'aria-invalid'), 'true');
+  assert.match(await page.textContent('#rt-title-err'), /nombre/);
+  assert.equal(await page.evaluate(() => document.activeElement.id), 'rt-title');
   await context.close();
 });
 

@@ -159,14 +159,16 @@ Un solo sistema, `js/ui/icons.js` (sprite SVG): 24×24, trazo 1.75px, `stroke-li
 
 - **≥ 1100px — doble página:** dos hojas de ~560px con lomo central (sombra interior + 5 puntadas de costura). Pestañas en el borde derecho.
 - **700–1099px — una hoja ancha:** máx. 720px; pestañas en el borde derecho.
-- **< 700px — una hoja:** ancho completo menos 10px de tela a cada lado; pestañas como fila inferior fija (altura 60px + `env(safe-area-inset-bottom)`), iconos + etiqueta corta.
+- **< 700px — una hoja:** ancho completo menos 8px de tela a cada lado; barra superior de tela con el nombre del cuaderno y el carretel de Ajustes; abajo, **5 pestañas** (máximo recomendado para navegación inferior) con ícono + etiqueta, altura 58px + `env(safe-area-inset-bottom)`.
 - Qué va en cada hoja (desktop): Hoy → izq. encabezado + ánimo inicial + intención + lista; der. notas + energía/sueño + cierre. Calendario-semana → lun–mié / jue–dom. Mes y Año → una sola hoja ancha (no forzar doble página).
 - Teclado móvil: el campo activo se desplaza a la vista (`scrollIntoView({block:'center'})`); nada fijo tapa inputs (la barra de pestañas se oculta con el teclado abierto vía `visualViewport`).
 
 ## 11. Accesibilidad
 
-- Foco: `outline: 2px solid var(--mood-1); outline-offset: 3px;` + en hilos claros usa `--ink`. Siempre visible con teclado (`:focus-visible`).
-- Targets ≥ 44×44 en táctil (los parches, casillas y pestañas se agrandan con padding invisible).
+- Foco: `outline: 2px solid var(--ink); outline-offset: 3px;` (tinta, no violeta: el anillo índigo es una marca de UI genérica). Siempre visible con teclado (`:focus-visible`). Sobre tela, anillo en `--cloth-ink`.
+- Targets ≥ 44×44 en táctil (los parches, casillas y pestañas se agrandan con padding invisible). En el bastidor del año cada día es un blanco de 22 px con centros a 24 px (WCAG 2.2 · 2.5.8); el punto cruz de 14 px se dibuja adentro.
+- Las barras fijas del celular nunca tapan el foco: `scroll-padding-top/bottom` (WCAG 2.2 · 2.4.11).
+- `touch-action: manipulation` en controles; los stickers necesitan moverse 4 px antes de arrastrarse (un toque solo selecciona).
 - Estado nunca solo por color: glifo + texto accesible.
 - Decoración (`.deco`, stickers de la tapa, escenas) con `aria-hidden="true"`.
 - `aria-live="polite"` para “guardado” y avisos.

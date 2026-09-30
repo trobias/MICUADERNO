@@ -96,7 +96,11 @@
       el.setPointerCapture(e.pointerId);
       var rect = layer.getBoundingClientRect();
       var startX = e.clientX, startY = e.clientY, ox = s.x, oy = s.y;
+      var moved = false;
       function move(ev) {
+        // Umbral de 4px: un toque selecciona, no mueve.
+        if (!moved && Math.abs(ev.clientX - startX) + Math.abs(ev.clientY - startY) < 4) return;
+        moved = true;
         s.x = MC.clamp(ox + (ev.clientX - startX) / rect.width, 0.02, 0.98);
         s.y = MC.clamp(oy + (ev.clientY - startY) / rect.height, 0.01, 0.99);
         place(el, s);
@@ -105,6 +109,7 @@
         el.removeEventListener('pointermove', move);
         el.removeEventListener('pointerup', up);
         el.removeEventListener('pointercancel', up);
+        if (!moved) return;
         settle(el);
         save();
       }

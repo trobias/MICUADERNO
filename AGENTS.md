@@ -6,6 +6,14 @@ Leé esto primero. Después `SPEC.md` (qué hace), `DESIGN.md` (cómo se ve y se
 
 Un diario personal digital con forma de **cuaderno de tela bordado**: registro de ánimo, actividades con estados amables, rutinas recurrentes, páginas libres con stickers, calendario, mapa del año, exportación e impresión. 100 % local (IndexedDB), offline, sin cuenta ni servidor. Español rioplatense, neutro en género.
 
+## Skills del repo que aplican (leelas antes de tocar UI)
+
+- `skills/impeccable/reference/craft-floor.md` — piso de calidad y lo que se rechaza (eyebrows, glass, gradientes, íconos con emoji…).
+- `skills/ui-ux-pro-max/references/quick-reference.md` — reglas de UX/accesibilidad (§1–§3 críticas). Sus sugerencias de paleta/tipografía no pisan DESIGN.md.
+- `skills/frontend-ui-engineering/SKILL.md` — tabla “Avoid the AI Aesthetic”.
+- `skills/animate/SKILL.md` y `skills/review-animations/SKILL.md` — antes de agregar o cambiar motion.
+- `skills/accessibility/SKILL.md` — WCAG 2.2.
+
 ## Filosofía (no negociable)
 
 - Amable siempre: nunca “fallaste”, “racha perdida”, rojo de error para la vida de la persona.

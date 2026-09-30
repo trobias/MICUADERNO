@@ -34,7 +34,14 @@
     var hasEnd = h('input', { id: 'rt-hasend', type: 'checkbox', checked: !!r.endDate });
     var end = h('input.input', { id: 'rt-end', type: 'date', value: r.endDate || D.addDays(today, 30), disabled: !r.endDate });
     hasEnd.addEventListener('change', function () { end.disabled = !hasEnd.checked; });
+    // Errores junto al campo que los causa, enlazados con aria-describedby.
+    var titleErr = h('p.form-error', { id: 'rt-title-err', role: 'alert' });
+    var endErr = h('p.form-error', { id: 'rt-end-err', role: 'alert' });
     var error = h('p.form-error', { role: 'alert' });
+    title.setAttribute('aria-describedby', 'rt-title-err');
+    end.setAttribute('aria-describedby', 'rt-end-err');
+    title.addEventListener('input', function () { titleErr.textContent = ''; title.removeAttribute('aria-invalid'); });
+    end.addEventListener('change', function () { endErr.textContent = ''; end.removeAttribute('aria-invalid'); });
 
     function paintExtra() {
       MC.clear(extra);
@@ -111,23 +118,23 @@
     actions.push({ label: 'Cancelar', kind: 'text' });
     actions.push({ label: existing ? 'Guardar' : 'Crear rutina', onClick: function () {
       var cur = currentRoutine();
-      if (!cur.title) { error.textContent = 'Poné un nombre para la rutina.'; title.focus(); return false; }
-      if (!cur.rule) { error.textContent = 'Elegí al menos un día.'; return false; }
-      if (cur.endDate && cur.endDate < cur.startDate) { error.textContent = 'La fecha final es antes del inicio.'; end.focus(); return false; }
+      if (!cur.title) { titleErr.textContent = 'Poné un nombre para la rutina, por ejemplo “caminar”.'; title.setAttribute('aria-invalid', 'true'); title.focus(); return false; }
+      if (!cur.rule) { error.textContent = 'Elegí al menos un día de la semana.'; return false; }
+      if (cur.endDate && cur.endDate < cur.startDate) { endErr.textContent = 'La fecha final quedó antes del inicio: movela un poco más adelante.'; end.setAttribute('aria-invalid', 'true'); end.focus(); return false; }
       return M.saveRoutine(cur).then(function () { onSaved(); c.toast(existing ? 'Rutina guardada.' : 'Rutina creada. Va a aparecer sola en tus días.'); });
     } });
 
     c.dialog({
       title: existing ? 'Editar rutina' : 'Nueva rutina',
       content: [
-        h('div.field', h('label', { for: 'rt-title' }, 'Nombre'), title),
+        h('div.field', h('label', { for: 'rt-title' }, 'Nombre'), title, titleErr),
         h('div.field', h('label', { for: 'rt-freq' }, 'Frecuencia'), freq),
         extra,
         preview,
         h('div.field', h('span', 'Momento del día'), moment),
         h('div.rt-dates',
           h('div.field', h('label', { for: 'rt-start' }, 'Desde'), start),
-          h('div.field', h('label.check', { for: 'rt-hasend' }, hasEnd, h('span', 'Hasta una fecha')), end)),
+          h('div.field', h('label.check', { for: 'rt-hasend' }, hasEnd, h('span', 'Hasta una fecha')), end, endErr)),
         error
       ],
       actions: actions

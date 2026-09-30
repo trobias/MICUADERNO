@@ -42,7 +42,7 @@ MI CUADERNO es un cuaderno personal digital: diario, agenda, registro de ánimo,
 
 ## 5. Navegación (destinos)
 
-Cinco pestañas de papel + ajustes. Nunca más de seis destinos.
+Cinco pestañas de papel + ajustes. Nunca más de seis destinos. En celular, la barra inferior tiene solo las cinco pestañas y Ajustes vive en una barra superior con el nombre del cuaderno.
 
 | Pestaña | Ruta | Qué es |
 |---|---|---|

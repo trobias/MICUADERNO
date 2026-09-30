@@ -3,6 +3,7 @@
 *, *::before, *::after { box-sizing: border-box; }
 
 html {
+  scroll-padding-top: 16px;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
   height: 100%;
@@ -27,6 +28,7 @@ p { margin: 0; text-wrap: pretty; }
 ul, ol { margin: 0; padding: 0; list-style: none; }
 button, input, textarea, select { font: inherit; color: inherit; }
 button { cursor: pointer; background: none; border: 0; padding: 0; }
+a, button, label, summary, [role='button'] { touch-action: manipulation; }
 img, svg { display: block; max-width: 100%; }
 svg { overflow: visible; }
 a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 3px; }
@@ -119,6 +121,7 @@ input.write { min-height: var(--line); height: var(--line); border-bottom: 1px s
   font-size: var(--fs-md);
 }
 .input:focus-visible, .select:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+.input[aria-invalid='true'] { border-color: #9C4F66; border-bottom-color: #9C4F66; }
 input[type='time'].input, input[type='date'].input { font-variant-numeric: tabular-nums; }
 
 input[type='checkbox'], input[type='radio'] { accent-color: var(--thread-done); width: 20px; height: 20px; margin: 0; }

@@ -231,7 +231,7 @@
     }
     toastEl.hidden = false;
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(hide, opts.ms || (opts.action ? 6000 : 2800));
+    toastTimer = setTimeout(hide, opts.ms || (opts.action ? 6000 : 3500));
     function hide() { toastEl.hidden = true; }
   };
 

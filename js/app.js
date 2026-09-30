@@ -16,6 +16,9 @@
 
   var main = document.getElementById('main');
   var tabsEl = document.getElementById('tabs');
+  var mobileBar = document.getElementById('mobile-bar');
+  var scrolls = {};         // posición de scroll por ruta, para volver atrás sin perder el lugar
+  var fromTab = false;      // navegar desde una pestaña empieza arriba
   var current = null;      // { name, params, instance }
   var lastHash = null;
   var booted = false;
@@ -48,12 +51,27 @@
     TABS.forEach(function (t) {
       tabsEl.appendChild(h('a.tab', { href: t.href, dataset: { tab: t.id } }, MC.icon(t.icon), h('span', t.label)));
     });
+    tabsEl.addEventListener('click', function (e) { if (e.target.closest('.tab')) fromTab = true; });
+    var gear = document.getElementById('mobile-settings');
+    gear.appendChild(MC.icon('ajustes'));
+    gear.addEventListener('click', function () { fromTab = true; });
   }
 
   function markTab(tab) {
     MC.$$('.tab', tabsEl).forEach(function (a) {
       if (a.dataset.tab === tab) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
     });
+    var gear = document.getElementById('mobile-settings');
+    if (tab === 'ajustes') gear.setAttribute('aria-current', 'page'); else gear.removeAttribute('aria-current');
+  }
+
+  /** Vuelve a una posición cuando el contenido (que carga asíncrono) ya es lo bastante alto. */
+  function restoreScroll(y) {
+    var t0 = Date.now();
+    (function tryIt() {
+      if (document.documentElement.scrollHeight >= y + window.innerHeight || Date.now() - t0 > 800) { window.scrollTo(0, y); return; }
+      requestAnimationFrame(tryIt);
+    })();
   }
 
   function destroyCurrent() {
@@ -75,9 +93,13 @@
     };
     var s = MC.model.settings();
     tabsEl.hidden = !s.onboarded || route.name === 'onboarding';
+    mobileBar.hidden = tabsEl.hidden;
     markTab(route.tab);
     if (booted) MC.motion.swap(main, go, dir || 0); else go();
-    if (!sameView || dir) window.scrollTo(0, 0);
+    var saved = scrolls[location.hash];
+    if (!fromTab && !dir && saved) restoreScroll(saved);
+    else if (!sameView || dir) window.scrollTo(0, 0);
+    fromTab = false;
     if (booted) {
       var heading = main.querySelector('h1');
       if (heading) { heading.setAttribute('tabindex', '-1'); heading.focus({ preventScroll: true }); }
@@ -88,6 +110,7 @@
   function onHash() {
     var hash = location.hash || '#/hoy';
     if (hash === lastHash) return;
+    if (lastHash) scrolls[lastHash] = window.scrollY;
     var prev = lastHash ? parse(lastHash) : null;
     lastHash = hash;
     var route = parse(hash);

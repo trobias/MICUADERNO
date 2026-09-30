@@ -181,9 +181,34 @@
   .book { max-width: 900px; }
 }
 
+/* Barra superior solo en celular: nombre del cuaderno + Ajustes (la barra inferior queda en 5 destinos). */
+.mobile-bar { display: none; }
+
 @media (max-width: 699px) {
   :root { --page-pad: 18px; --margin-x: 22px; }
-  .desk { padding: 8px 8px calc(84px + env(safe-area-inset-bottom)); }
+  /* El foco nunca queda tapado por las barras fijas (WCAG 2.2 · 2.4.11) */
+  html { scroll-padding-top: 64px; scroll-padding-bottom: calc(90px + env(safe-area-inset-bottom)); }
+  .desk { flex-direction: column; align-items: stretch; padding: 0 8px calc(84px + env(safe-area-inset-bottom)); }
+  .mobile-bar:not([hidden]) {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 52px;
+    padding: env(safe-area-inset-top) 2px 0 10px;
+    margin: 0 -8px 6px;
+    padding-left: 18px;
+    background: var(--cloth);
+    background-image: var(--tex-cloth);
+    color: var(--cloth-ink);
+  }
+  .mobile-bar__title { font-family: var(--font-display); font-size: 1.05rem; letter-spacing: 0.08em; }
+  .mobile-bar__settings { display: grid; place-items: center; width: 48px; height: 48px; color: var(--cloth-ink); border-radius: 50%; }
+  .mobile-bar__settings svg { width: 24px; height: 24px; }
+  .mobile-bar__settings[aria-current='page'] { background: rgb(255 255 255 / 0.16); }
+  .mobile-bar__settings:focus-visible { outline-color: var(--cloth-ink); outline-offset: -4px; }
   .book { display: block; }
   .page { min-height: calc(100dvh - 110px); }
   .spread > .page:first-child:not(:only-child) { min-height: 0; }
@@ -215,8 +240,7 @@
   .tab span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .tab[aria-current='page'] { transform: translateY(0); }
   .tab[aria-current='page']::after { left: 18%; right: 18%; bottom: 4px; }
-  .tab[data-tab='ajustes'] { margin-top: 0; flex: 0.7; }
-  .tab[data-tab='ajustes'] span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .tab[data-tab='ajustes'] { display: none; }
   body.keyboard-open .tabs { display: none; }
   @media (hover: hover) and (pointer: fine) { .tab:hover { transform: translateY(calc(3px * var(--move))); } }
 }

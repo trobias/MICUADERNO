@@ -63,3 +63,8 @@ Registro breve de decisiones de arquitectura y producto. Formato: contexto → d
 ## D15 · El manifest se enlaza solo por http(s) (2026-09-30)
 **Contexto:** en `file://` el navegador no puede leer el manifest y deja un error en consola.
 **Decisión:** `js/pwa.js` agrega `<link rel="manifest">` solo cuando la app se sirve por http(s). El SW solo recarga la página cuando reemplaza a una versión anterior (no en la primera instalación).
+
+## D16 · Auditoría con las skills de UI del repo (2026-09-30)
+**Contexto:** se revisó la app con `ui-ux-pro-max` (quick-reference + pro-rules), `frontend-ui-engineering` y `impeccable` (craft-floor, polish). El `--design-system` de `ui-ux-pro-max` propuso un patrón de landing (“storytelling”), acento índigo `#6366F1` y manuscrita como fuente principal: se descartó por contradecir el brief (manuscrita solo como acento) y por ser justamente el look genérico a evitar.
+**Decisión (aplicada):** barra inferior con 5 destinos + Ajustes arriba en celular; celdas del año de 22 px; foco en tinta en vez de violeta; `scroll-padding` para que las barras fijas no tapen el foco; umbral de arrastre en stickers; errores del formulario de rutina junto al campo con `aria-describedby`/`aria-invalid`; restaurar el scroll al volver atrás; avisos de 3,5 s; `touch-action: manipulation`. Nuevos E2E: 320 px, celular apaisado, ≤5 pestañas, tamaño de celdas, error junto al campo.
+**Pendiente propuesto:** tema “papel de noche” para escribir a oscuras (ui-ux-pro-max recomienda diseñar claro/oscuro juntos).
