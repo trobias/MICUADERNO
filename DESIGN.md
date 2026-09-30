@@ -206,7 +206,7 @@ Se aplica con `html[data-motion]` y las variables `--motion-scale` (1 / 0.85 / 0
 
 Pequeñas escenas SVG animadas con Web Animations API (`js/ui/scenes.js`), en el margen de la hoja, **nunca** sobre texto.
 
-Escenas: **mariposa** (cruza el margen y se posa en una esquina, luego se va), **vapor de té** (tres hilos de vapor sobre una taza, de noche), **sombra de hojas** (una sombra de ramita se desliza sobre el papel, de mañana), **nubes** (dos nubecitas cruzan el encabezado), **lluvia en la ventana** (tres gotas en la tapa… solo en la vista Año), **lámpara** (un halo cálido que respira una vez, de noche).
+Escenas: **mariposa** (cruza el margen y se posa en una esquina, luego se va), **vapor de té** (tres hilos de vapor sobre una taza, de noche), **sombra de hojas** (una sombra de ramita se desliza sobre el papel, de mañana), **nubes** (dos nubecitas cruzan el encabezado), **lámpara** (un halo cálido que respira una vez, de noche). Pendientes (ROADMAP B4): lluvia en la ventana, cortina, flor con viento, esquina de hoja con brisa.
 
 Reglas del director de escenas:
 - **Una** escena a la vez, como máximo.

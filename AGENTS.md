@@ -1,6 +1,6 @@
 # AGENTS.md — MI CUADERNO
 
-Leé esto primero. Después `SPEC.md` (qué hace), `DESIGN.md` (cómo se ve y se mueve) y `DATA_MODEL.md` (qué se guarda). Recién ahí abrí el código relevante.
+Leé esto primero. Después `SPEC.md` (qué hace), `DESIGN.md` (cómo se ve y se mueve) y `DATA_MODEL.md` (qué se guarda). Lo que falta está en `ROADMAP.md`. Recién ahí abrí el código relevante.
 
 ## Qué es
 
