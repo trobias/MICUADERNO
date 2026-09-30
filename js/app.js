@@ -168,7 +168,6 @@
       var s = MC.model.settings();
       var start = function () {
         booted = true;
-        lastHash = null;
         window.addEventListener('hashchange', onHash);
         onHash();
         if (MC.scenes) MC.scenes.start();

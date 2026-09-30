@@ -85,10 +85,25 @@
     var saved = c.savedNote();
     var sheet = h('section.page.page--margin.free-page');
     main.appendChild(h('div.spread.spread--single', sheet));
-    var persist = MC.debounce(function () { if (page) M.savePage(page).then(function () { saved.flash(); }); }, 450);
+    // Mismo resguardo que en Hoy: borrador local inmediato, IndexedDB con un respiro.
+    var draftKey = 'draft.page.' + id;
+    var rev = 0;
+    var save = MC.debounce(function () {
+      if (!page) return;
+      var r = rev;
+      M.savePage(page).then(function (p) { page.updatedAt = p.updatedAt; if (r === rev) MC.ui.set(draftKey, null); saved.flash(); });
+    }, 450);
+    function persist() { rev++; if (page) MC.ui.set(draftKey, { at: Date.now(), page: page }); save(); }
+    persist.flush = function () { save.flush(); };
+    persist.cancel = function () { save.cancel(); MC.ui.set(draftKey, null); };
 
     M.getPage(id).then(function (p) {
       if (destroyed) return;
+      var draft = MC.ui.get(draftKey, null);
+      if (p && draft && draft.page && draft.at > Date.parse(p.updatedAt || 0)) {
+        p = M.normalizePage(Object.assign({}, draft.page, { id: p.id, createdAt: p.createdAt }));
+        M.savePage(p).then(function () { MC.ui.set(draftKey, null); });
+      } else if (draft) MC.ui.set(draftKey, null);
       if (!p) {
         sheet.appendChild(c.empty('No encontré esta página. Quizás la borraste.', 'nube'));
         sheet.appendChild(h('a.label-btn', { href: '#/paginas' }, 'Volver al índice'));

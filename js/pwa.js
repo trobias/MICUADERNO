@@ -19,7 +19,12 @@
   });
 
   function register() {
-    if (!isHttp || !('serviceWorker' in navigator)) return;
+    if (!isHttp) return;
+    // El manifest solo se enlaza por http(s): en file:// el navegador no lo puede leer y ensucia la consola.
+    if (!document.querySelector('link[rel="manifest"]')) {
+      document.head.appendChild(h('link', { rel: 'manifest', href: 'manifest.webmanifest' }));
+    }
+    if (!('serviceWorker' in navigator)) return;
     navigator.serviceWorker.register('sw.js').then(function (reg) {
       function offer(worker) {
         c.toast('Hay una versión nueva del cuaderno.', { action: 'Actualizar', ms: 15000, onAction: function () { worker.postMessage({ type: 'skipWaiting' }); } });
@@ -36,8 +41,10 @@
       document.addEventListener('visibilitychange', function () { if (!document.hidden) reg.update().catch(function () {}); });
     }).catch(function (err) { console.warn('[MI CUADERNO] Service worker no registrado:', err); });
     var reloading = false;
+    // Solo recargamos cuando una versión nueva reemplaza a otra (no en la primera instalación).
+    var hadController = !!navigator.serviceWorker.controller;
     navigator.serviceWorker.addEventListener('controllerchange', function () {
-      if (reloading) return;
+      if (reloading || !hadController) return;
       reloading = true;
       location.reload();
     });

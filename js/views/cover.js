@@ -49,8 +49,10 @@
         overlay.remove();
         document.getElementById('app').removeAttribute('inert');
         opts.onOpen();
-        var main = document.getElementById('main');
-        var heading = main.querySelector('h1');
+        var pending = MC.pendingFocus && document.querySelector(MC.pendingFocus);
+        MC.pendingFocus = null;
+        if (pending) { pending.focus(); pending.scrollIntoView({ block: 'center' }); return; }
+        var heading = document.getElementById('main').querySelector('h1');
         if (heading) { heading.setAttribute('tabindex', '-1'); heading.focus({ preventScroll: true }); }
       };
       if (!board.animate || !MC.motion.allows('fade')) { finish(); return; }

@@ -1,0 +1,30 @@
+{
+  "id": "./",
+  "name": "MI CUADERNO",
+  "short_name": "Cuaderno",
+  "description": "Un lugarcito para mí: diario, agenda, rutinas y recuerdos que viven en este dispositivo.",
+  "lang": "es-AR",
+  "dir": "ltr",
+  "start_url": "./#/hoy",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "any",
+  "theme_color": "#6F8A6A",
+  "background_color": "#FFF9ED",
+  "categories": ["lifestyle", "productivity", "health"],
+  "icons": [
+    { "src": "assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icons/icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "assets/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "assets/icons/icon-mono-512.png", "sizes": "512x512", "type": "image/png", "purpose": "monochrome" },
+    { "src": "assets/icons/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ],
+  "shortcuts": [
+    { "name": "Hoy", "short_name": "Hoy", "description": "Abrir la página de hoy", "url": "./?go=hoy", "icons": [{ "src": "assets/icons/shortcut-hoy.png", "sizes": "96x96" }] },
+    { "name": "Escribir una nota", "short_name": "Escribir", "description": "Ir directo a escribir", "url": "./?go=nota", "icons": [{ "src": "assets/icons/shortcut-hoy.png", "sizes": "96x96" }] },
+    { "name": "Registrar ánimo", "short_name": "Ánimo", "description": "¿Cómo arrancaste hoy?", "url": "./?go=animo", "icons": [{ "src": "assets/icons/shortcut-hoy.png", "sizes": "96x96" }] },
+    { "name": "Calendario", "short_name": "Calendario", "url": "./?go=calendario", "icons": [{ "src": "assets/icons/shortcut-hoy.png", "sizes": "96x96" }] }
+  ]
+}

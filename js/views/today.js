@@ -33,9 +33,20 @@
     var destroyed = false;
     var scrap = null;
 
-    var persist = MC.debounce(function () {
-      M.saveDay(day).then(function (d) { day.createdAt = d.createdAt; day.updatedAt = d.updatedAt; saved.flash(); });
+    // Borrador local: cada cambio se anota al instante en localStorage para que nada se pierda
+    // si la pestaña se cierra antes de que IndexedDB termine de guardar. Se limpia al guardar.
+    var draftKey = 'draft.' + date;
+    var rev = 0;
+    var save = MC.debounce(function () {
+      var r = rev;
+      M.saveDay(day).then(function (d) {
+        day.createdAt = d.createdAt; day.updatedAt = d.updatedAt;
+        if (r === rev) MC.ui.set(draftKey, null);
+        saved.flash();
+      });
     }, 400);
+    function persist() { rev++; MC.ui.set(draftKey, { at: Date.now(), day: day }); save(); }
+    persist.flush = function () { save.flush(); };
 
     var spread = h('div.spread');
     var left = h('section.page.page--margin.page--left', { 'aria-label': 'Mañana y lista del día' });
@@ -47,10 +58,20 @@
 
     Promise.all([M.getDay(date), M.itemsForDay(date)]).then(function (res) {
       if (destroyed) return;
-      day = res[0];
+      day = recoverDraft(res[0]);
       items = res[1];
       build();
     });
+
+    function recoverDraft(stored) {
+      var draft = MC.ui.get(draftKey, null);
+      if (!draft || !draft.day) return stored;
+      var storedAt = stored.updatedAt ? Date.parse(stored.updatedAt) : 0;
+      if (draft.at <= storedAt) { MC.ui.set(draftKey, null); return stored; }
+      var recovered = M.normalizeDay(draft.day, date);
+      setTimeout(function () { M.saveDay(recovered).then(function () { MC.ui.set(draftKey, null); }); }, 0);
+      return recovered;
+    }
 
     /* ---------- Encabezado ---------- */
     function header() {
@@ -413,10 +434,10 @@
       var focus = MC.ui.get('focusOnLoad', null);
       if (focus) {
         MC.ui.set('focusOnLoad', null);
-        setTimeout(function () {
-          var el = focus === 'notes' ? MC.$('#notes') : MC.$('.section--mood .mood-patch');
-          if (el) { el.focus(); el.scrollIntoView({ block: 'center' }); }
-        }, 60);
+        var sel = focus === 'notes' ? '#notes' : '.section--mood .mood-patch';
+        // Si la tapa sigue puesta, la tapa enfoca esto al abrirse.
+        if (document.querySelector('.cover')) MC.pendingFocus = sel;
+        else setTimeout(function () { var el = MC.$(sel); if (el) { el.focus(); el.scrollIntoView({ block: 'center' }); } }, 60);
       }
       MC.emit('view:ready', { name: 'today', scenesAnchor: right });
     }
@@ -427,7 +448,7 @@
       refresh: function () {
         if (destroyed) return;
         Promise.all([M.getDay(date), M.itemsForDay(date)]).then(function (res) {
-          day = res[0]; items = res[1];
+          day = recoverDraft(res[0]); items = res[1];
           if (scrap) scrap.destroy();
           build();
         });

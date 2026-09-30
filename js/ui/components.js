@@ -255,12 +255,8 @@
       'aria-label': opts.ariaLabel || null, maxlength: 20000, spellcheck: 'true'
     });
     MC.autosize(ta);
-    if (opts.onInput) {
-      var save = MC.debounce(function () { opts.onInput(ta.value); }, 500);
-      ta.addEventListener('input', function () { MC.emit('typing'); save(); });
-      ta.addEventListener('blur', function () { save.flush(); });
-      ta.flushSave = save.flush;
-    }
+    // onInput se llama en cada tecla (barato); quien guarda decide cuándo escribir en disco.
+    if (opts.onInput) ta.addEventListener('input', function () { MC.emit('typing'); opts.onInput(ta.value); });
     return ta;
   };
 
