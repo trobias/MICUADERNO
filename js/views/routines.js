@@ -201,7 +201,7 @@
         var hits = active.filter(function (r) { return R.occursOn(r, k); });
         ul.appendChild(h('li.week-mini__day', { class: k === today ? 'is-today' : null },
           h('a.week-mini__name', { href: '#/dia/' + k }, D.DAYS_SHORT[D.weekday(k)] + ' ' + D.parse(k).d),
-          h('span.week-mini__items', hits.length ? hits.map(function (r) { return r.title; }).join(' · ') : '—')));
+          h('span.week-mini__items', hits.length ? hits.slice(0, 5).map(function (r) { return r.title; }).join(' · ') + (hits.length > 5 ? ' · y ' + (hits.length - 5) + ' más' : '') : '—')));
       });
       right.appendChild(ul);
       right.appendChild(h('p.section__hint.week-mini__hint', 'Tocá un día para abrir su página.'));

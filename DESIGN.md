@@ -42,7 +42,7 @@ Test de identidad: si sacás el logo y cambiás el color, ¿sigue pareciendo un 
 | `--ink` | `#493D3B` | texto principal (≈10:1 sobre papel) |
 | `--ink-soft` | `#796966` | texto secundario (≈5:1, AA) |
 | `--ink-faint` | `#B3A5A0` | **solo** decoración y placeholders grandes (no texto normal) |
-| `--placeholder` | `#8E7F7B` | placeholders (≥4.5:1) |
+| `--placeholder` | `#796966` | placeholders en itálica (≥4.5:1) |
 
 ### 3.2 Pasteles de papelería (fondos de objetos, nunca texto)
 `--butter #F6D978` · `--blush #F4B9C6` · `--rose #D98FA1` · `--peach #F4C3A2` · `--sage #B9CBA7` · `--lavender #C9B8DE`
@@ -65,14 +65,15 @@ Cada hilo tiene un **tinte** para fondos (`--mood-n-tint`, mezcla 22 % con papel
 
 **Estados de actividad** (hilo sobre papel, ≥3:1 como componente gráfico):
 `--thread-done #5F8150` (salvia oscura) · `--thread-partial #BF6E3F` (durazno tostado) · `--thread-later #6E5CA0` (lavanda oscura) · `--thread-skip` = `--ink-soft`.
+Para **texto chico** en color de hilo (“un poquito”, “guardado”, “×2”) se usan las variantes `--thread-done-text #4E6B41` y `--thread-partial-text #9E552B` (≥4.5:1).
 
 ### 3.4 Tela de tapa (color de página completa)
 | Tapa | `--cloth` | `--cloth-deep` (tramado) | `--cloth-ink` (texto sobre tela) |
 |---|---|---|---|
-| salvia (default) | `#7F9B7A` | `#6E8A69` | `#FFF9ED` |
-| rosa viejo | `#C28596` | `#AE7383` | `#FFF9ED` |
-| lavanda | `#8C7FAE` | `#7B6E9D` | `#FFF9ED` |
-| manteca | `#E0B955` | `#CCA544` | `#493D3B` |
+| salvia (default) | `#6F8A6A` | `#5F7A5A` | `#FFF9ED` (3.6:1) |
+| rosa viejo | `#B07385` | `#9C6273` | `#FFF9ED` (3.6:1) |
+| lavanda | `#857AA8` | `#736896` | `#FFF9ED` (3.8:1) |
+| manteca | `#DDB450` | `#C99F3F` | `#493D3B` (5.3:1) |
 
 Texto sobre tela: solo el de la tapa y el de las pestañas (sobre papel de color). Nunca párrafos sobre tela.
 
@@ -81,7 +82,7 @@ Texto sobre tela: solo el de la tapa y el de las pestañas (sobre papel de color
 
 ## 4. Tipografía
 
-Todas autoalojadas en `assets/fonts/` (woff2, subset latin), `font-display: swap`.
+Todas autoalojadas (woff2, subset latin, OFL). Se sirven **embebidas en `css/fonts.css`** como data URI (generado por `tools/build-fonts.mjs`): Chrome y Firefox bloquean `@font-face` desde archivos locales en `file://`, y la app tiene que verse igual con doble clic.
 
 | Rol | Familia | Por qué |
 |---|---|---|
@@ -223,9 +224,13 @@ Reglas del director de escenas:
 
 ## 15. Impresión
 
-Documento dedicado (`js/views/print.js` + `css/print.css`): `@page { size: A4 | A5 | letter; margin: 14mm 12mm }`. Portada (título, nombre, rango), una hoja por mes con mini calendario de parches, una hoja por día con contenido (fecha en Young Serif, ánimos con glifo + nombre, lista con marcas de punto cruz, notas y reflexiones), páginas libres. Sin fondos de tela; renglones muy suaves; todo en tinta (imprime bien en B/N gracias a los glifos).
+Documento dedicado (`js/views/print.js` + `css/print.css`): `@page { size: A4 | A5 | letter }` con márgenes 15/14 mm (11/10 mm en A5). Portada (título, frase, nombre, rango, mariposa), una hoja por mes con calendario de glifos y cantidad de cosas hechas, **los días en secuencia** (sin cortar un día entre dos hojas, `break-inside: avoid`, para no gastar una hoja por día), páginas libres (una hoja cada una) y rutinas. Sin fondos de tela; todo en tinta: imprime bien en blanco y negro gracias a los glifos de ánimo y las marcas de punto cruz.
 
-## 16. Do / Don't
+## 16. Íconos de la app
+
+Elegido entre tres exploraciones (mariposa sobre hoja, cuaderno cerrado con etiqueta, **parche bordado**): el **parche bordado** —círculo crema con costura rosa y mariposa pastel sobre tela salvia— porque se reconoce a 16 px y es el mismo lenguaje de los parches de ánimo. Maestros SVG en `assets/icons/src/` (claro, oscuro, monocromo, maskable con zona segura, notificación y badge); PNG/ICO generados con `npm run icons`.
+
+## 17. Do / Don't
 
 | Do | Don't |
 |---|---|

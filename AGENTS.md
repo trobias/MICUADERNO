@@ -23,6 +23,7 @@ HTML + CSS + **JavaScript clásico** (sin `type="module"`: los módulos no carga
 index.html              entrada; carga CSS y scripts en orden (ver final del body)
 manifest.webmanifest    PWA
 sw.js                   service worker (cache-first del shell; solo http/https)
+css/fonts.css           fuentes embebidas (data URI; GENERADO por tools/build-fonts.mjs, no editar)
 css/tokens.css          ← todos los tokens (colores, tipos, espacios, motion). Empezá acá.
 css/base.css            reset, tipografía, foco, selección, utilidades
 css/notebook.css        tela, hojas, lomo, pestañas, tapa, onboarding
@@ -52,7 +53,8 @@ assets/fonts/           woff2 autoalojadas
 assets/icons/           favicon, iconos PWA, notificación (generados por tools/make-icons.mjs)
 tests/unit/             node:test sobre js/core
 tests/e2e/              Playwright
-tools/                  serve.mjs, make-icons.mjs, dist.mjs
+tools/                  serve.mjs, make-icons.mjs, build-fonts.mjs, dist.mjs, check.mjs, shot.mjs (captura para QA)
+PRODUCT.md              verdad de producto (usada por la skill impeccable)
 skills/                 colección de skills del proyecto (no es parte de la app; no se distribuye)
 ```
 
@@ -85,8 +87,8 @@ skills/                 colección de skills del proyecto (no es parte de la app
 
 ```
 npm test          # unit (node:test), sin instalar nada
-npm install       # solo para e2e (instala @playwright/test; usa el Chromium del sistema si PLAYWRIGHT_BROWSERS_PATH existe)
-npm run e2e       # recorridos en file:// y http://
+npm install       # solo para e2e/íconos: instala playwright-core (no descarga navegadores)
+npm run e2e       # 13 recorridos en file:// y http:// (Chromium en /opt/pw-browsers/chromium o CHROMIUM=/ruta)
 npm run check     # sintaxis + unit + e2e
 npm run serve     # http://localhost:4173 (probar PWA/SW)
 ```
@@ -98,8 +100,14 @@ Probar a mano además: doble clic en `index.html`; mobile 375px; teclado solo; `
 1. Escribila en `SPEC.md` (y `DATA_MODEL.md` si guarda algo nuevo). Registrá decisiones no obvias en `DECISIONS.md`.
 2. Lógica pura en `js/core/` con test en `tests/unit/`.
 3. UI en `js/views/` o `js/ui/`, usando `MC.h()` y los componentes existentes; estilos con tokens.
-4. Nuevo script → agregarlo a `index.html` **y** a la lista `SHELL` de `sw.js` (y subir `CACHE_VERSION`).
+4. Nuevo script → agregarlo a `index.html` **y** a la lista `SHELL` de `sw.js`. **Cualquier cambio a un archivo del shell → subir `CACHE_VERSION` en `sw.js`**, o las PWA instaladas no se enteran.
 5. `npm run check`. Revisar en desktop y 375px.
+
+## Trampas conocidas
+
+- `file://` bloquea: módulos ES, `fetch` de archivos locales, `@font-face` locales y el manifest. Por eso: scripts clásicos, fuentes embebidas, manifest inyectado solo en http(s).
+- Los datos del día se guardan con borrador local + IndexedDB (ver DECISIONS D13): no saltear `persist()`.
+- Las ocurrencias de rutina son virtuales hasta que se marcan (`item.virtual`); usá `MC.model.setStatus`, nunca escribas actividades de rutina a mano.
 
 ## Anti-patterns
 

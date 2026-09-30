@@ -42,6 +42,9 @@
   --thread-partial: #BF6E3F;
   --thread-later: #6E5CA0;
   --thread-skip: var(--ink-soft);
+  /* Mismos hilos, un punto más oscuros para texto chico (≥4.5:1 sobre papel) */
+  --thread-done-text: #4E6B41;
+  --thread-partial-text: #9E552B;
 
   /* Tela de tapa (se redefine por [data-cover]) */
   --cloth: #6F8A6A;

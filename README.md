@@ -1,4 +1,43 @@
-# 📓 MICUADERNO - Skills Repository
+# MI CUADERNO
+
+*un lugarcito para mí ♡*
+
+Un diario personal con forma de cuaderno de tela bordado: cómo arrancó y cómo terminó cada día, lo que querías hacer (con estados amables: *lo hice · hice un poquito · lo dejo para otro día · hoy no salió*), rutinas que aparecen solas, páginas libres con stickers, calendario, un año bordado en punto cruz y recuerdos.
+
+**Todo queda en este dispositivo.** No hay cuenta, ni servidor, ni nube, ni estadísticas de uso.
+
+## Cómo abrirlo
+
+**Opción 1 — Carpeta (sin instalar nada).** Descargá el repo (o la carpeta que arma `npm run dist`) y hacé **doble clic en `index.html`**. Funciona sin internet en Chrome, Edge y Firefox. Tus datos quedan guardados en ese navegador.
+
+**Opción 2 — Como app (PWA).** Publicá esta carpeta en cualquier hosting estático con HTTPS (por ejemplo **GitHub Pages**: *Settings → Pages → Deploy from branch*). Al abrir la dirección, el navegador ofrece **Instalar**: queda con su ícono, se abre sin barra del navegador, funciona sin conexión y puede dejarte recordatorios suaves (solo si los activás).
+
+> Cada navegador y cada forma de abrirlo (carpeta o web) guarda su propio cuaderno. Para pasar de uno a otro: **Ajustes → Guardar una copia** y después **Abrir una copia…** en el otro.
+
+## Cuidar tus datos
+
+- **Ajustes → Mis datos → Guardar una copia (.json)**: una copia completa. El cuaderno te lo recuerda de vez en cuando.
+- **Abrir una copia…** restaura esa copia (avisa antes de reemplazar lo que hay).
+- **Llevarme mi cuaderno**: texto (.txt), planilla (.xlsx), CSV e **Imprimir mi cuaderno** (A4, A5 o Carta; también “Guardar como PDF”).
+
+## Para quien desarrolla
+
+Leé primero [`AGENTS.md`](AGENTS.md), después [`SPEC.md`](SPEC.md), [`DESIGN.md`](DESIGN.md) y [`DATA_MODEL.md`](DATA_MODEL.md). Decisiones en [`DECISIONS.md`](DECISIONS.md).
+
+```
+npm test          # pruebas unitarias (sin dependencias)
+npm install       # solo para e2e e íconos (playwright-core)
+npm run e2e       # 13 recorridos reales en Chromium (file:// y http://)
+npm run check     # sintaxis + unit + e2e
+npm run serve     # http://localhost:4173 para probar la PWA
+npm run dist      # arma dist/MI-CUADERNO/ + .zip para regalar
+```
+
+HTML + CSS + JavaScript sin frameworks ni paso de build. Fuentes (OFL) incluidas: Young Serif, Castoro, Atkinson Hyperlegible Next y Nanum Pen Script.
+
+---
+
+## 📦 Colección de skills (para agentes)
 
 Colección y respaldo de skills para agentes de inteligencia artificial y desarrollo asistido.
 

@@ -137,8 +137,9 @@
       var n = list.length;
       var s = {
         id: MC.uid('stk'), sticker: name,
-        x: MC.clamp(0.78 - (n % 4) * 0.08, 0.1, 0.9),
-        y: MC.clamp(0.1 + (n % 6) * 0.07, 0.05, 0.9),
+        // Primero en el margen derecho, bajando; así no tapa lo escrito.
+        x: MC.clamp(0.93 - (Math.floor(n / 6) % 3) * 0.05, 0.1, 0.96),
+        y: MC.clamp(0.2 + (n % 6) * 0.12, 0.05, 0.92),
         rot: Math.round((Math.random() * 24 - 12)),
         scale: 1
       };

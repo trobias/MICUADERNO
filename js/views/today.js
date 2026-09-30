@@ -335,7 +335,7 @@
           day.sleep = day.sleep == null ? 7 : MC.clamp(day.sleep + d, 0, 14);
           paint(); persist();
         };
-        var minus = h('button.icon-btn.icon-btn--sm', { type: 'button', 'aria-label': 'Menos horas de sueño' }, h('span', { 'aria-hidden': 'true', style: { fontSize: '1.4rem', lineHeight: '1' } }, '−'));
+        var minus = h('button.icon-btn.icon-btn--sm', { type: 'button', 'aria-label': 'Menos horas de sueño' }, MC.icon('minus'));
         var plus = h('button.icon-btn.icon-btn--sm', { type: 'button', 'aria-label': 'Más horas de sueño' }, MC.icon('plus'));
         minus.addEventListener('click', function () { step(-0.5); });
         plus.addEventListener('click', function () { step(0.5); });

@@ -46,3 +46,20 @@ Registro breve de decisiones de arquitectura y producto. Formato: contexto → d
 ## D11 · Notificaciones locales (2026-09-30)
 **Contexto:** sin servidor no hay Web Push.
 **Decisión:** `Notification`/`registration.showNotification` programadas por un reloj interno mientras la app/PWA está viva + Periodic Background Sync cuando exista. Se explica honestamente en Ajustes.
+
+## D12 · Fuentes embebidas en CSS (2026-09-30)
+**Contexto:** al probar con doble clic, Chrome bloqueó las `@font-face` locales (CORS, origen `null` en `file://`).
+**Decisión:** `css/fonts.css` con las cinco fuentes como data URI (≈172 KB), generado por `tools/build-fonts.mjs`.
+**Consecuencias:** misma tipografía en `file://` y en la PWA; el CSS inicial pesa más, pero se cachea y no hay peticiones extra.
+
+## D13 · Borrador local además de IndexedDB (2026-09-30)
+**Contexto:** las pruebas E2E mostraron que lo escrito justo antes de recargar podía perderse (la escritura en IndexedDB es asíncrona y va con un respiro de 400 ms).
+**Decisión:** cada cambio de un día o página se anota al instante en `localStorage` (`mc.ui.draft.*`) y se borra cuando IndexedDB confirma. Al abrir, un borrador más nuevo que lo guardado se recupera y se guarda.
+**Consecuencias:** localStorage solo guarda transitoriamente el último cambio en curso; la fuente de verdad sigue siendo IndexedDB.
+
+## D14 · Ícono: parche bordado (2026-09-30)
+**Decisión:** entre tres exploraciones se eligió el parche bordado (ver DESIGN §16) por legibilidad a 16 px y coherencia con los parches de ánimo.
+
+## D15 · El manifest se enlaza solo por http(s) (2026-09-30)
+**Contexto:** en `file://` el navegador no puede leer el manifest y deja un error en consola.
+**Decisión:** `js/pwa.js` agrega `<link rel="manifest">` solo cuando la app se sirve por http(s). El SW solo recarga la página cuando reemplaza a una versión anterior (no en la primera instalación).

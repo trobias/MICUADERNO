@@ -96,13 +96,24 @@
         right.appendChild(h('p.section__hint', 'Todavía no guardaste ningún recuerdo este año. Aparecen acá cuando completás “Qué quiero guardar” al cerrar un día.'));
       } else {
         var list = h('ul.memories');
-        memories.slice(0, 60).forEach(function (dd) {
+        var SHOWN = 6;
+        memories.forEach(function (dd, i) {
           list.appendChild(h('li.memory', { style: { '--tilt': ((MC.hash(dd.date) % 5) - 2) * 0.5 + 'deg' } },
             h('a.memory__link', { href: '#/dia/' + dd.date },
               h('span.memory__date', D.shortLabel(dd.date)),
               h('span.memory__text', dd.reflection.keep.trim()))));
+          if (i >= SHOWN) list.lastChild.hidden = true;
         });
         right.appendChild(list);
+        if (memories.length > SHOWN) {
+          var more = h('button.text-btn', { type: 'button', 'aria-expanded': 'false' }, 'Ver los ' + memories.length + ' recuerdos');
+          more.addEventListener('click', function () {
+            MC.$$('.memory', list).forEach(function (li) { li.hidden = false; });
+            more.remove();
+            list.children[SHOWN].querySelector('a').focus();
+          });
+          right.appendChild(more);
+        }
       }
     });
 

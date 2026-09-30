@@ -11,6 +11,7 @@
     anio: '<circle cx="12" cy="12.5" r="8.3"/><circle cx="12" cy="12.5" r="6.1"/><path d="M12 4.2V2.2M10.3 2.2h3.4"/><path d="M9 10.5l2 2m0-2-2 2M13 12.5l2 2m0-2-2 2"/>',
     ajustes: '<path d="M6.5 4h11M6.5 20h11"/><path d="M8 4v16M16 4v16"/><path d="M8 7.5l8 2.3M8 11.3l8 2.3M8 15.1l8 2.3"/>',
     plus: '<path d="M12 5v14M5 12h14"/>',
+    minus: '<path d="M5 12h14"/>',
     'arrow-left': '<path d="M14.5 6 8.5 12l6 6"/>',
     'arrow-right': '<path d="M9.5 6l6 6-6 6"/>',
     more: '<path d="M6 12h.01M12 12h.01M18 12h.01" stroke-width="3"/>',

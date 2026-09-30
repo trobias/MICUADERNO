@@ -25,7 +25,12 @@
     all.days.forEach(function (d) { byDay[d.date] = d; });
 
     // 1. Desde cuándo
-    var started = all.meta.createdAt ? D.fromDate(new Date(all.meta.createdAt)) : (all.days[0] && all.days[0].date);
+    // El comienzo es lo primero que hay registrado (un backup puede traer días anteriores a esta instalación).
+    var candidates = [];
+    if (all.meta.createdAt) candidates.push(D.fromDate(new Date(all.meta.createdAt)));
+    if (all.days[0]) candidates.push(all.days[0].date);
+    if (all.activities[0]) candidates.push(all.activities[0].date);
+    var started = candidates.sort()[0];
     if (started && started <= today) {
       var n = D.diffDays(started, today);
       out.push({ id: 'since', text: n === 0 ? 'Hoy empezaste este cuaderno.' : 'Hace ' + days(n) + ' que empezaste este cuaderno.' });

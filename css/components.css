@@ -82,7 +82,7 @@
 .saved-note {
   font-family: var(--font-hand);
   font-size: 1.45rem;
-  color: var(--thread-done);
+  color: var(--thread-done-text);
   opacity: 0;
   transition: opacity var(--dur-panel) var(--ease-out);
   white-space: nowrap;
@@ -183,7 +183,7 @@
 .activity[data-status='postponed'] .activity__title { color: var(--ink-soft); }
 .activity__meta { display: flex; gap: 8px; align-items: center; margin-top: 1px; }
 .activity__note { font-family: var(--font-hand); font-size: 1.3rem; line-height: 1; color: var(--thread-later); }
-.activity__note--partial { color: var(--thread-partial); }
+.activity__note--partial { color: var(--thread-partial-text); }
 .activity__note--skip { color: var(--ink-soft); }
 .activity__routine { display: inline-flex; align-items: center; gap: 3px; font-family: var(--font-ui); font-size: var(--fs-xs); color: var(--ink-soft); }
 .activity__routine svg { width: 14px; height: 14px; }

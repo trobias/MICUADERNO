@@ -107,7 +107,7 @@ Secciones, en orden de lectura (mobile) o repartidas en doble página (desktop: 
 7. **¿Cómo terminó tu día?** — sellos de ánimo + reflexiones: *qué me hizo bien*, *algo difícil*, *algo lindo*, *qué quiero guardar* (⇒ recuerdo), *texto libre*. Se muestra plegado como “cerrar el día” antes de las 17 h si está vacío; siempre se puede desplegar.
 8. **Capa de stickers** del día (scrapbook) — botón “stickers”.
 
-Guardado automático (debounce 500 ms) con un “guardado ♡” discreto. Días futuros: editables (planear). Días pasados: editables.
+Guardado automático: cada cambio se anota al instante como borrador local y se escribe en IndexedDB a los 400 ms; si la pestaña se cierra antes, el borrador se recupera al volver. Un “guardado” manuscrito discreto confirma. Días futuros: editables (planear). Días pasados: editables.
 
 ### 7.3 Calendario
 - **Mes**: grilla lunes-domingo. Cada día muestra: número, mancha de acuarela del ánimo final (o inicial si no hay final), punto de tinta si escribió, estrellita si guardó un recuerdo, trazo pequeño con cantidad de actividades hechas. Hoy con círculo a lápiz. Seleccionar día → cae una cinta-marcador y aparece una ficha con resumen + “abrir página”.
@@ -212,7 +212,7 @@ Ver `DATA_MODEL.md` para esquema. Resumen:
 - **TXT**: diario legible, día por día.
 - **CSV**: `dias.csv` y `actividades.csv` (UTF-8 con BOM para Excel, separador `,`, comillas RFC 4180).
 - **XLSX**: generado localmente sin dependencias (ZIP + SpreadsheetML).
-- **Impresión**: documento dedicado con `@page` A4 / A5 / Letter: portada, calendario mensual resumido, una página por día con contenido, páginas libres.
+- **Impresión**: documento dedicado con `@page` A4 / A5 / Letter: portada, calendario mensual resumido, los días en secuencia (sin partir un día entre hojas), páginas libres y rutinas.
 - **Recordatorio de copia**: nota suave en Hoy si pasaron N días desde la última copia (default 14) y hay datos.
 
 ## 14. Recordatorios / notificaciones
@@ -263,10 +263,11 @@ skills/               colección de skills (no es parte de la app)
 
 - **Comandos (desarrollo, nunca para la persona usuaria):**
   - `npm test` — unit tests (node:test, sin dependencias).
-  - `npm run e2e` — Playwright contra `file://` y `http://localhost` (usa el Chromium preinstalado).
+  - `npm run e2e` — 13 recorridos con `playwright-core` contra `file://` y `http://127.0.0.1` (usa el Chromium del sistema; `CHROMIUM=/ruta` para cambiarlo).
   - `npm run check` — `node --check` de todos los JS + unit + e2e.
   - `npm run serve` — servidor estático en `http://localhost:4173` para probar la PWA.
   - `npm run icons` — regenera PNG/ICO desde los SVG maestros.
+  - `node tools/build-fonts.mjs` — regenera `css/fonts.css` (fuentes embebidas) si cambian los `.woff2`.
   - `npm run dist` — arma la carpeta distribuible.
 
 ## 20. Estrategia de pruebas

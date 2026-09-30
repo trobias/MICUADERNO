@@ -83,7 +83,7 @@
 .day-cell__num { font-family: var(--font-display); font-size: 1.05rem; line-height: 1; justify-self: start; padding-left: 4px; font-variant-numeric: tabular-nums; }
 .day-cell__patch { align-self: center; }
 .day-cell__patch .mini-patch { width: 26px; height: 26px; }
-.day-cell__marks { display: flex; gap: 5px; align-items: center; min-height: 14px; font-size: 0.72rem; color: var(--thread-done); font-weight: 650; }
+.day-cell__marks { display: flex; gap: 5px; align-items: center; min-height: 14px; font-size: 0.72rem; color: var(--thread-done-text); font-weight: 650; }
 .mark-ink { display: inline-block; width: 7px; height: 7px; border-radius: 50% 40% 55% 45%; background: var(--ink); }
 .mark-star { display: inline-block; width: 13px; height: 13px; color: var(--mood-5); }
 .mark-star svg { width: 13px; height: 13px; fill: var(--mood-5); }
