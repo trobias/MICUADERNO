@@ -4,3 +4,6 @@ Desktop.ini
 .DS_Store
 *.tmp
 __pycache__/
+node_modules/
+dist/
+.impeccable/review/

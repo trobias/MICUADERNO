@@ -107,7 +107,7 @@
 }
 .mood-patch svg { width: 50px; height: 50px; transition: transform var(--dur-ui) var(--ease-out); }
 .mood-patch .patch-ring { fill: var(--paper); stroke: var(--thread); stroke-width: 1.6; stroke-dasharray: 3.2 2.6; transition: fill var(--dur-ui) ease; }
-.mood-patch .patch-glyph { fill: none; stroke: var(--thread); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.mood-patch .patch-glyph { fill: none; stroke: var(--thread); stroke-width: 1.35; stroke-linecap: round; stroke-linejoin: round; }
 .mood-patch .patch-glyph .fill { fill: var(--thread); stroke: none; }
 .mood-patch[aria-pressed='true'] { color: var(--ink); font-weight: 600; }
 .mood-patch[aria-pressed='true'] .patch-ring { fill: var(--tint); stroke-dasharray: none; stroke-width: 2.2; }

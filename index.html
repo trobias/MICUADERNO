@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="es-AR" data-motion="suaves">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>MI CUADERNO</title>
+  <meta name="description" content="Un lugarcito para mí: diario, agenda, rutinas y recuerdos que viven en este dispositivo.">
+  <meta name="theme-color" content="#6F8A6A">
+  <meta name="color-scheme" content="light">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Cuaderno">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="referrer" content="no-referrer">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="assets/icons/favicon.ico" sizes="48x48">
+  <link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="assets/icons/favicon-32x32.png" type="image/png" sizes="32x32">
+  <link rel="icon" href="assets/icons/favicon-16x16.png" type="image/png" sizes="16x16">
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="css/fonts.css">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/notebook.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/views.css">
+  <link rel="stylesheet" href="css/print.css">
+</head>
+<body data-cover="salvia">
+<!--
+  THESIS: el registro diario como bordado lento en un diario de tela; rechaza el dashboard de hábitos (cards, rachas, gráficos).
+  OWN-WORLD: tela de encuadernar a página completa (salvia/rosa viejo/lavanda/manteca), hojas crema con renglones lavanda y margen rosado, hilos de bordar como color de dato, papelería troquelada (cintas, washi, stickers). Young Serif · Castoro · Atkinson Hyperlegible Next · Nanum Pen Script.
+  STORY: abrís la tapa, sellás cómo arrancaste, bordás lo que hiciste, escribís si querés, cerrás el día; el año se va llenando de puntos cruz.
+  FIRST VIEWPORT: cuaderno abierto sobre su tela; hoja izquierda con la fecha grande y los 5 parches de ánimo (acción principal), la lista del día con casillas de punto cruz; hoja derecha con notas y cierre; pestañas de índice al borde.
+  FORM: diario encuadernado en tela con bordado, candidato 3 de 7 propios; seed ebc51b2e (tirada degradada, sin retadores).
+  FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
+-->
+  <a class="skip-link" href="#main">Ir al contenido</a>
+
+  <div class="desk" id="app">
+    <div class="book">
+      <main class="pages" id="main" tabindex="-1">
+        <noscript>
+          <div class="page"><p class="t-text">MI CUADERNO necesita JavaScript activado para funcionar. Tus datos quedan en este dispositivo.</p></div>
+        </noscript>
+      </main>
+      <nav class="tabs" id="tabs" aria-label="Secciones del cuaderno" hidden></nav>
+    </div>
+  </div>
+
+  <div class="scene-layer" id="scene-layer" aria-hidden="true"></div>
+  <div id="print-root" aria-hidden="true"></div>
+
+  <script src="js/core/ns.js"></script>
+  <script src="js/core/dates.js"></script>
+  <script src="js/core/recurrence.js"></script>
+  <script src="js/core/store.js"></script>
+  <script src="js/core/model.js"></script>
+  <script src="js/core/backup.js"></script>
+  <script src="js/core/zip.js"></script>
+  <script src="js/core/exporters.js"></script>
+  <script src="js/core/insights.js"></script>
+  <script src="js/ui/icons.js"></script>
+  <script src="js/ui/stickers.js"></script>
+  <script src="js/ui/motion.js"></script>
+  <script src="js/ui/components.js"></script>
+  <script src="js/ui/scrapbook.js"></script>
+  <script src="js/ui/scenes.js"></script>
+  <script src="js/views/cover.js"></script>
+  <script src="js/views/onboarding.js"></script>
+  <script src="js/views/today.js"></script>
+  <script src="js/views/calendar.js"></script>
+  <script src="js/views/routines.js"></script>
+  <script src="js/views/pages.js"></script>
+  <script src="js/views/year.js"></script>
+  <script src="js/views/settings.js"></script>
+  <script src="js/views/print.js"></script>
+  <script src="js/notify.js"></script>
+  <script src="js/pwa.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

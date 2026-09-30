@@ -42,6 +42,8 @@ html { scrollbar-color: color-mix(in srgb, var(--cloth-deep) 70%, var(--paper-ed
   outline-offset: 3px;
   border-radius: 4px;
 }
+/* Títulos que reciben el foco al navegar (para lectores de pantalla): sin anillo. */
+h1[tabindex='-1']:focus, h1[tabindex='-1']:focus-visible, main:focus-visible { outline: none; }
 
 /* Solo para lectores de pantalla */
 .sr-only {
