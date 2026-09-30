@@ -1,0 +1,148 @@
+/* MI CUADERNO — tokens. Única fuente de valores visuales (ver DESIGN.md). */
+
+@font-face {
+  font-family: 'Young Serif';
+  src: url('../assets/fonts/young-serif.woff2') format('woff2');
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'Castoro';
+  src: url('../assets/fonts/castoro.woff2') format('woff2');
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'Castoro';
+  src: url('../assets/fonts/castoro-italic.woff2') format('woff2');
+  font-weight: 400; font-style: italic; font-display: swap;
+}
+@font-face {
+  font-family: 'Atkinson Hyperlegible Next';
+  src: url('../assets/fonts/atkinson-hyperlegible-next.woff2') format('woff2');
+  font-weight: 200 800; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'Nanum Pen Script';
+  src: url('../assets/fonts/nanum-pen-script.woff2') format('woff2');
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+
+:root {
+  color-scheme: light;
+
+  /* Papel y tinta */
+  --paper: #FFF9ED;
+  --paper-shade: #F6EDDA;
+  --paper-edge: #EADFC8;
+  --rule: #E3DCEB;
+  --rule-strong: #D3C9DF;
+  --margin: #EDB9C4;
+  --ink: #493D3B;
+  --ink-soft: #796966;
+  --ink-faint: #B3A5A0;
+  --placeholder: #796966;
+
+  /* Pasteles de papelería (fondos de objetos) */
+  --butter: #F6D978;
+  --blush: #F4B9C6;
+  --rose: #D98FA1;
+  --peach: #F4C3A2;
+  --sage: #B9CBA7;
+  --lavender: #C9B8DE;
+
+  /* Hilos de ánimo (rampa ordinal validada; ver DESIGN §3.3) */
+  --mood-1: #584488;
+  --mood-2: #954A7E;
+  --mood-3: #C15C67;
+  --mood-4: #D67F46;
+  --mood-5: #CAAE31;
+  --mood-1-tint: color-mix(in srgb, var(--mood-1) 22%, var(--paper));
+  --mood-2-tint: color-mix(in srgb, var(--mood-2) 22%, var(--paper));
+  --mood-3-tint: color-mix(in srgb, var(--mood-3) 22%, var(--paper));
+  --mood-4-tint: color-mix(in srgb, var(--mood-4) 24%, var(--paper));
+  --mood-5-tint: color-mix(in srgb, var(--mood-5) 30%, var(--paper));
+
+  /* Hilos de estado */
+  --thread-done: #5F8150;
+  --thread-partial: #BF6E3F;
+  --thread-later: #6E5CA0;
+  --thread-skip: var(--ink-soft);
+
+  /* Tela de tapa (se redefine por [data-cover]) */
+  --cloth: #6F8A6A;
+  --cloth-deep: #5F7A5A;
+  --cloth-light: #86A081;
+  --cloth-ink: #FFF9ED;
+
+  /* Tipografía */
+  --font-display: 'Young Serif', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
+  --font-text: 'Castoro', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
+  --font-ui: 'Atkinson Hyperlegible Next', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-hand: 'Nanum Pen Script', 'Segoe Print', 'Bradley Hand', cursive;
+
+  --fs-xs: 0.8125rem;
+  --fs-sm: 0.9375rem;
+  --fs-md: 1.0625rem;
+  --fs-lg: 1.3125rem;
+  --fs-xl: 1.75rem;
+  --fs-2xl: clamp(2.25rem, 1.7rem + 2.2vw, 3.25rem);
+  --fs-cover: clamp(2.5rem, 1.9rem + 3vw, 4rem);
+  --fs-hand: 1.5rem;
+
+  --line: 1.75rem; /* interlineado de escritura = paso de renglones */
+
+  /* Espacio */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 24px;
+  --s-6: 32px;
+  --s-7: 48px;
+  --s-8: 64px;
+  --page-pad: clamp(20px, 4vw, 52px);
+  --margin-x: 40px;
+
+  /* Radios */
+  --radius-page: 4px 10px 10px 4px;
+  --radius-page-left: 10px 4px 4px 10px;
+  --radius-label: 6px;
+  --radius-note: 2px;
+
+  /* Elevación */
+  --shadow-page: 0 1px 0 var(--paper-edge), 0 2px 0 -1px var(--paper-shade), 0 22px 44px -26px rgb(40 30 28 / 0.55);
+  --shadow-note: 0 1px 1px rgb(73 61 59 / 0.12), 0 6px 12px -6px rgb(73 61 59 / 0.28);
+  --shadow-sticker: drop-shadow(0 1px 1px rgb(73 61 59 / 0.28)) drop-shadow(0 3px 3px rgb(73 61 59 / 0.12));
+  --shadow-tab: 0 2px 4px -1px rgb(40 30 28 / 0.25);
+
+  /* Motion (ver DESIGN §12) */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --dur-press: 120ms;
+  --dur-ui: 200ms;
+  --dur-panel: 260ms;
+  --dur-page: 420ms;
+  --dur-cover: 900ms;
+  --move: 1;      /* multiplicador de desplazamientos */
+
+  /* Foco */
+  --focus: var(--mood-1);
+
+  /* Texturas (SVG en data-URI, muy sutiles) */
+  --tex-paper: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .29 0 0 0 0 .24 0 0 0 0 .23 0 0 0 .5 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.07'/%3E%3C/svg%3E");
+  --tex-cloth: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Cpath d='M0 1.5h6M0 4.5h6' stroke='%23000' stroke-opacity='.07' stroke-width='1'/%3E%3Cpath d='M1.5 0v6M4.5 0v6' stroke='%23fff' stroke-opacity='.06' stroke-width='1'/%3E%3C/svg%3E");
+}
+
+/* Tapas */
+[data-cover='salvia'] { --cloth: #6F8A6A; --cloth-deep: #5F7A5A; --cloth-light: #86A081; --cloth-ink: #FFF9ED; }
+[data-cover='rosa'] { --cloth: #B07385; --cloth-deep: #9C6273; --cloth-light: #C48B9C; --cloth-ink: #FFF9ED; }
+[data-cover='lavanda'] { --cloth: #857AA8; --cloth-deep: #736896; --cloth-light: #9A90BA; --cloth-ink: #FFF9ED; }
+[data-cover='manteca'] { --cloth: #DDB450; --cloth-deep: #C99F3F; --cloth-light: #E8C56E; --cloth-ink: #493D3B; }
+
+/* Niveles de motion */
+[data-motion='suaves'] { --dur-page: 320ms; --dur-cover: 600ms; }
+[data-motion='reducidas'] { --move: 0; --dur-page: 180ms; --dur-cover: 250ms; --dur-panel: 180ms; }
+[data-motion='ninguna'] { --move: 0; --dur-press: 0ms; --dur-ui: 0ms; --dur-panel: 0ms; --dur-page: 0ms; --dur-cover: 0ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion='completas']):not([data-motion='suaves']) { --move: 0; }
+}
