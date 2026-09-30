@@ -1,0 +1,4 @@
+interface:
+  display_name: "CEE Enriquez"
+  short_description: "Marca y componentes para interfaces web y nativas"
+  default_prompt: "Aplicá $cee-enriquez-brand a esta interfaz usando el catálogo aprobado y los componentes existentes del proyecto."

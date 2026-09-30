@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Catálogo de identidad e interfaces CEE Enriquez. Estándar digital aprobado, versión 1.0.0.">
+  <title>CEE Enriquez · Sistema de diseño</title>
+  <link rel="icon" href="../brand/cee-enriquez-rgb.png">
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="inventory.js"></script>
+  <script defer src="catalog.js"></script>
+</head>
+<body>
+  <a class="skip" href="#main">Saltar al contenido</a>
+  <aside class="sidebar" id="sidebar" aria-label="Índice del catálogo">
+    <a class="brand" href="#inicio"><span class="logo-plate"><img src="../brand/cee-enriquez-rgb.png" width="98" height="63" alt="CEE Enriquez"></span><span>Sistema de diseño<small>Identidad e interfaces</small></span></a>
+    <div class="sidebar-caption">BIBLIOTECA / 01</div>
+    <nav id="index" aria-label="Familias de componentes"></nav>
+    <div class="sidebar-foot"><span class="version">Versión 1.0.0</span><p>Una identidad.<br>Todos nuestros sistemas.</p><small>Aprobado · 7 septiembre 2026</small></div>
+  </aside>
+  <div class="workspace">
+    <header class="topbar">
+      <button class="btn icon mobile-menu" id="menu-toggle" aria-label="Abrir índice" aria-expanded="false" aria-controls="sidebar">☰</button>
+      <span class="topbar-label">CEE ENRIQUEZ <span class="slash">/</span> ESTÁNDAR DIGITAL</span>
+      <div class="topbar-actions"><label class="search"><span aria-hidden="true">⌕</span><input id="catalog-search" type="search" placeholder="Buscar componente…" aria-label="Buscar componente"><kbd>/</kbd></label><button class="btn subtle" id="theme-toggle" aria-pressed="false">Tema oscuro</button></div>
+    </header>
+    <main id="main" tabindex="-1">
+      <section class="intro" id="inicio">
+        <div class="eyebrow">CRITERIO COMÚN · WEB Y APLICACIONES</div>
+        <div class="intro-row"><div><h1>Claridad en cada<br>punto de contacto.</h1><p class="lead">El lenguaje visual de CEE Enriquez.<br>Preciso, sobrio y pensado para trabajar.</p></div><div class="intro-note"><span class="label">ESTÁNDAR APROBADO</span><p>Explorá los componentes, probá sus estados y compará los dos temas.</p><span class="badge neutral">Versión 1.0.0 · Septiembre 2026</span></div></div>
+        <div class="overview"><div><strong id="example-count">—</strong><span>referencias visuales</span></div><div><strong>04</strong><span>frentes de producto</span></div><div><strong>02</strong><span>temas coordinados</span></div><div><strong>01</strong><span>identidad compartida</span></div></div>
+        <div class="notice neutral">Todos los datos son de demostración. Los ejemplos móviles representan criterios de diseño; la validación nativa se realizará al integrarlos.</div>
+      </section>
+      <p id="search-status" class="search-status" role="status" hidden></p>
+      <div id="catalog"></div>
+      <footer class="page-footer"><strong>CEE Enriquez</strong><span>Estándar digital aprobado · 1.0.0</span><a href="#inicio">Volver al inicio ↑</a></footer>
+    </main>
+  </div>
+  <dialog id="demo-dialog" aria-labelledby="dialog-title"><div id="dialog-content"></div></dialog>
+  <div id="toast" class="toast" role="status" hidden></div>
+</body>
+</html>

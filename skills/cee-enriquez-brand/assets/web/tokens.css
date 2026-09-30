@@ -1,0 +1,68 @@
+/* Generado por scripts/build.py desde assets/tokens.json. No editar. */
+:root {
+  --cee-color-bg: #f5f5f4;
+  --cee-color-surface: #fff;
+  --cee-color-surface-alt: #efefed;
+  --cee-color-text: #211c18;
+  --cee-color-muted: #5d6166;
+  --cee-color-line: #dededc;
+  --cee-color-control: #81817b;
+  --cee-color-primary: #211c18;
+  --cee-color-on-primary: #fff;
+  --cee-color-hover: #e6e6e2;
+  --cee-color-success: #285e46;
+  --cee-color-success-bg: #edf5ef;
+  --cee-color-warning: #795315;
+  --cee-color-warning-bg: #faf3e5;
+  --cee-color-danger: #a13632;
+  --cee-color-danger-bg: #fbefed;
+  --cee-color-info: #365c78;
+  --cee-color-info-bg: #edf3f8;
+  --cee-color-focus: #365c78;
+  --cee-color-shadow: 0 12px 36px #211c181c;
+  --cee-font-family: 'Mark Pro', Arial, sans-serif;
+  --cee-font-size-body: 16px;
+  --cee-font-size-control: 14px;
+  --cee-font-size-button: 13px;
+  --cee-font-size-table: 12px;
+  --cee-font-size-caption: 12px;
+  --cee-font-size-page-title: 28px;
+  --cee-font-size-section-title: 22px;
+  --cee-font-weight-regular: 400;
+  --cee-font-weight-medium: 500;
+  --cee-font-weight-bold: 700;
+  --cee-space-4: 4px;
+  --cee-space-8: 8px;
+  --cee-space-12: 12px;
+  --cee-space-16: 16px;
+  --cee-space-24: 24px;
+  --cee-space-32: 32px;
+  --cee-radius-control: 6px;
+  --cee-radius-panel: 8px;
+  --cee-height-compact: 32px;
+  --cee-height-default: 36px;
+  --cee-height-large: 44px;
+  --cee-height-touch: 48px;
+}
+html[data-theme=dark] {
+  --cee-color-bg: #191918;
+  --cee-color-surface: #232322;
+  --cee-color-surface-alt: #2d2d2b;
+  --cee-color-text: #f3f1ed;
+  --cee-color-muted: #b9b9b3;
+  --cee-color-line: #444440;
+  --cee-color-control: #888880;
+  --cee-color-primary: #eeeae3;
+  --cee-color-on-primary: #211c18;
+  --cee-color-hover: #3a3a36;
+  --cee-color-success: #a1cfb3;
+  --cee-color-success-bg: #23372c;
+  --cee-color-warning: #e3c382;
+  --cee-color-warning-bg: #3b3222;
+  --cee-color-danger: #f0aaa4;
+  --cee-color-danger-bg: #402c2b;
+  --cee-color-info: #afc9e0;
+  --cee-color-info-bg: #273743;
+  --cee-color-focus: #afc9e0;
+  --cee-color-shadow: 0 12px 36px #0005;
+}
