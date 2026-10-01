@@ -23,13 +23,13 @@
     var s = M.settings().notify;
     if (!supported || permission() !== 'granted' || s.mode === 'silencioso') return Promise.resolve(false);
     var msg = MESSAGES[kind];
-    var opts = { body: msg.body, icon: ICON, badge: BADGE, tag: 'mc-' + kind, silent: s.mode !== 'normal', data: { url: './#/hoy' }, lang: 'es-AR' };
+    var opts = { body: msg.body, icon: ICON, badge: BADGE, tag: 'mc-' + kind, silent: s.mode !== 'normal', data: { url: './' + MC.routes.today() }, lang: 'es-AR' };
     var viaSW = navigator.serviceWorker && navigator.serviceWorker.controller
       ? navigator.serviceWorker.ready.then(function (reg) { return reg.showNotification(msg.title, opts); })
       : Promise.reject();
     return viaSW.catch(function () {
       var n = new Notification(msg.title, opts);
-      n.onclick = function () { window.focus(); location.hash = '#/hoy'; n.close(); };
+      n.onclick = function () { window.focus(); location.hash = MC.routes.today(); n.close(); };
     }).then(function () { return true; });
   }
 

@@ -235,8 +235,41 @@
       '<g class="patch-glyph" stroke="#FFF9ED" transform="translate(4.8 4.8) scale(0.6)">' + MOOD_GLYPHS[mood].replace('class="fill"', 'fill="#FFF9ED"') + '</g></svg>';
   }
 
+  /** Glifo de ánimo solo en tinta (impresión): toma el color de `color` (currentColor). */
+  function inkGlyphMarkup(mood, cls) {
+    return '<svg class="' + (cls || 'ink-glyph') + '" viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
+      '<g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' +
+      MOOD_GLYPHS[mood].replace('class="fill"', 'fill="currentColor"') + '</g></svg>';
+  }
+
+  /* ---------- Puntadas de estado (24×24) ----------
+     Un solo dibujo para los 5 estados: la casilla que se toca (components.js), la semana y la impresión. */
+  var STITCH = {
+    x1: 'M6.5 6.5 17.5 17.5',
+    x2: 'M17.5 6.5 6.5 17.5',
+    later: 'M5.5 12h11M13 8.2l3.8 3.8-3.8 3.8',
+    knot: { cx: 12, cy: 12, r: 2.8 }
+  };
+  var STATUS_STITCHES = { pending: [], done: ['x1', 'x2'], partial: ['x1'], postponed: ['later'], skipped: ['knot'] };
+
+  /** Una puntada como string SVG; `attrs` agrega atributos (clase, pathLength…). */
+  function stitchMarkup(name, attrs) {
+    var extra = attrs ? ' ' + attrs : '';
+    if (name === 'knot') return '<circle' + extra + ' cx="' + STITCH.knot.cx + '" cy="' + STITCH.knot.cy + '" r="' + STITCH.knot.r + '"/>';
+    return '<path' + extra + ' d="' + STITCH[name] + '"/>';
+  }
+
+  /** Marca quieta del estado de una actividad (semana, impresión). Los colores van por CSS (.st-mark). */
+  function statusMarkup(status) {
+    var st = STATUS_STITCHES[status] ? status : 'pending';
+    return '<svg class="st-mark" data-status="' + st + '" viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
+      '<rect class="st-mark__box" x="3.5" y="3.5" width="17" height="17" rx="2.5"/>' +
+      '<g class="st-mark__thread">' + STATUS_STITCHES[st].map(function (n) { return stitchMarkup(n); }).join('') + '</g></svg>';
+  }
+
   MC.stickers = {
     ART: ART, GROUPS: GROUPS, COLORS: C, markup: markup, names: Object.keys(ART),
-    MOOD_GLYPHS: MOOD_GLYPHS, MOOD_HEX: MOOD_HEX, patchMarkup: patchMarkup, miniPatchMarkup: miniPatchMarkup
+    MOOD_GLYPHS: MOOD_GLYPHS, MOOD_HEX: MOOD_HEX, patchMarkup: patchMarkup, miniPatchMarkup: miniPatchMarkup, inkGlyphMarkup: inkGlyphMarkup,
+    STITCH: STITCH, stitchMarkup: stitchMarkup, statusMarkup: statusMarkup
   };
 })(typeof window !== 'undefined' ? window : globalThis);

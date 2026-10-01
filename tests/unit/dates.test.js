@@ -41,3 +41,11 @@ test('addMonths y etiquetas', () => {
   assert.equal(D.monthLabel('2026-02'), 'febrero 2026');
   assert.equal(D.relativeLabel('2026-09-29', '2026-09-30'), 'ayer');
 });
+
+test('fromISO: fecha local de un instante guardado', () => {
+  assert.equal(D.fromISO(new Date(2026, 9, 2, 23, 30).toISOString()), '2026-10-02');
+  assert.equal(D.fromISO(new Date(2026, 0, 1, 0, 5).toISOString()), '2026-01-01');
+  assert.equal(D.fromISO(null), null);
+  assert.equal(D.fromISO(''), null);
+  assert.equal(D.fromISO('no es fecha'), null);
+});

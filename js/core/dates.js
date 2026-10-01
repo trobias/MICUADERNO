@@ -31,6 +31,13 @@
 
   function fromDate(date) { return make(date.getFullYear(), date.getMonth() + 1, date.getDate()); }
 
+  /** Fecha local (AAAA-MM-DD) de un instante guardado (createdAt, updatedAt…); null si no se puede leer. */
+  function fromISO(iso) {
+    if (iso == null || iso === '') return null;
+    var t = Date.parse(iso);
+    return Number.isFinite(t) ? fromDate(new Date(t)) : null;
+  }
+
   function dayNumber(key) { var p = parse(key); return Math.round(Date.UTC(p.y, p.m - 1, p.d) / 864e5); }
 
   function fromDayNumber(n) {
@@ -100,7 +107,7 @@
 
   MC.dates = {
     DAYS: DAYS, DAYS_SHORT: DAYS_SHORT, DAYS_INITIAL: DAYS_INITIAL, MONTHS: MONTHS, MONTHS_SHORT: MONTHS_SHORT,
-    pad: pad, parse: parse, make: make, isValid: isValid, fromDate: fromDate, today: today,
+    pad: pad, parse: parse, make: make, isValid: isValid, fromDate: fromDate, fromISO: fromISO, today: today,
     daysInMonth: daysInMonth, dayNumber: dayNumber, fromDayNumber: fromDayNumber,
     addDays: addDays, diffDays: diffDays, weekday: weekday, startOfWeek: startOfWeek,
     monthKey: monthKey, addMonths: addMonths, range: range, monthGrid: monthGrid,

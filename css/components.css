@@ -157,6 +157,16 @@
 .stitch-box.is-sewing .mark--x1 { stroke-dasharray: 1; animation: sew 140ms var(--ease-out) both; }
 .stitch-box.is-sewing .mark--x2 { stroke-dasharray: 1; animation: sew 140ms var(--ease-out) 140ms both; }
 @keyframes sew { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+
+/* Marca quieta de estado (semana, impresión): mismas puntadas que la casilla, sin aida ni animación. */
+.status-mark, .mood-mark { display: inline-flex; align-items: center; flex: none; }
+.st-mark { width: 20px; height: 20px; flex: none; }
+.st-mark__box { fill: none; stroke: var(--ink-faint); stroke-width: 1; stroke-dasharray: 2 2; }
+.st-mark__thread { fill: none; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.st-mark[data-status='done'] .st-mark__thread { stroke: var(--thread-done); }
+.st-mark[data-status='partial'] .st-mark__thread { stroke: var(--thread-partial); }
+.st-mark[data-status='postponed'] .st-mark__thread { stroke: var(--thread-later); stroke-width: 2.2; }
+.st-mark[data-status='skipped'] .st-mark__thread { fill: var(--thread-skip); stroke: none; }
 @media (hover: hover) and (pointer: fine) {
   .stitch-box:hover .aida { stroke: var(--ink-soft); }
 }

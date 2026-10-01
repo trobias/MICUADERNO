@@ -153,3 +153,34 @@ test('summarize sin extra conserva la forma anterior', () => {
   assert.equal(sum['2026-09-01'].done, 0);
   assert.deepEqual(sum['2026-09-01'].pages, []);
 });
+
+test('summarize con rango ignora lo de afuera; “hecho” incluye un poquito', () => {
+  const day = (date, extra) => M.normalizeDay(Object.assign({ date }, extra), date);
+  const sum = M.summarize(
+    [day('2026-09-30', { notes: 'hola' }), day('2026-10-01', { evening: { mood: 4 } })],
+    [
+      { date: '2026-09-30', status: 'done', routineId: null },
+      { date: '2026-10-01', status: 'partial', routineId: null },
+      { date: '2026-10-01', status: 'skipped', routineId: null }
+    ],
+    { from: '2026-10-01', to: '2026-10-31' }
+  );
+  assert.deepEqual(Object.keys(sum), ['2026-10-01']);
+  assert.equal(sum['2026-10-01'].done, 1);
+  assert.equal(sum['2026-10-01'].total, 2);
+  assert.equal(sum['2026-10-01'].mood, 4);
+  assert.equal(M.countsAsDone('partial'), true);
+  assert.equal(M.countsAsDone('skipped'), false);
+});
+
+test('lecturas compartidas: escritura, nombre de ánimo, título y fecha de página', () => {
+  assert.equal(M.hasWriting(M.normalizeDay({ reflection: { lovely: 'el mate' } }, '2026-10-01')), true);
+  assert.equal(M.hasWriting(M.normalizeDay({ morning: { mood: 3 } }, '2026-10-01')), false);
+  assert.equal(M.hasWriting(null), false);
+  assert.equal(M.moodLabel(5, ['a', 'b', 'c', 'd', 'e']), 'e');
+  assert.equal(M.moodLabel(null), null);
+  assert.equal(M.pageTitle({ title: '   ' }), 'Sin título');
+  assert.equal(M.pageTitle({ title: 'Ideas' }), 'Ideas');
+  assert.equal(M.pageDate({ createdAt: new Date(2026, 9, 2, 23, 30).toISOString() }), '2026-10-02');
+  assert.equal(M.pageDate({}), null);
+});

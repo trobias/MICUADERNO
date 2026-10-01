@@ -2,7 +2,7 @@
 (function (root) {
   'use strict';
   var MC = root.MC;
-  var h = MC.h, D = MC.dates, M = MC.model, c = MC.c;
+  var h = MC.h, D = MC.dates, M = MC.model, R = MC.routes, c = MC.c;
 
   var TEMPLATES = [
     { id: 'blank', title: '', kind: 'text', paper: 'rayado', label: 'En blanco', hint: 'Una hoja libre.' },
@@ -31,7 +31,7 @@
       body: tpl.body || '', items: tpl.kind === 'list' ? [{ text: '' }] : [],
       stickers: tpl.sticker ? [{ id: MC.uid('stk'), sticker: tpl.sticker, x: 0.86, y: 0.07, rot: 8, scale: 0.9 }] : []
     };
-    return M.savePage(page).then(function (p) { location.hash = '#/pagina/' + p.id; });
+    return M.savePage(page).then(function (p) { location.hash = R.page(p.id); });
   }
 
   function templatePicker() {
@@ -65,9 +65,9 @@
       pages.forEach(function (p, i) {
         var preview = p.kind === 'list' ? p.items.filter(function (it) { return it.text.trim(); }).length + ' cosas' : (p.body.trim() ? p.body.trim().split('\n')[0].slice(0, 70) : 'en blanco');
         ol.appendChild(h('li.toc__item',
-          h('a.toc__link', { href: '#/pagina/' + p.id },
+          h('a.toc__link', { href: R.page(p.id) },
             p.pinned ? h('span.toc__pin', { 'aria-label': 'fijada' }, MC.icon('pin')) : null,
-            h('span.toc__title', p.title || 'Sin título'),
+            h('span.toc__title', M.pageTitle(p)),
             h('span.toc__dots', { 'aria-hidden': 'true' }),
             h('span.toc__num', String(i + 1))),
           h('p.toc__preview', preview)));
@@ -106,7 +106,7 @@
       } else if (draft) MC.ui.set(draftKey, null);
       if (!p) {
         sheet.appendChild(c.empty('No encontré esta página. Quizás la borraste.', 'nube'));
-        sheet.appendChild(h('a.label-btn', { href: '#/paginas' }, 'Volver al índice'));
+        sheet.appendChild(h('a.label-btn', { href: R.pages() }, 'Volver al índice'));
         return;
       }
       page = p;
@@ -130,7 +130,7 @@
         c.menu(more, items, 'Opciones de la página');
       });
       sheet.appendChild(h('header.free-head',
-        h('a.text-btn', { href: '#/paginas' }, MC.icon('arrow-left'), 'Índice'),
+        h('a.text-btn', { href: R.pages() }, MC.icon('arrow-left'), 'Índice'),
         h('span.free-head__right', saved, more)));
       sheet.appendChild(h('h1.sr-only', page.title || 'Página sin título'));
       sheet.appendChild(title);
@@ -138,7 +138,8 @@
         id: 'page-body', value: page.body, rows: 12, ariaLabel: 'Texto de la página', placeholder: 'Esta página todavía está en blanco.',
         onInput: function (v) { page.body = v; persist(); }
       }));
-      sheet.appendChild(h('p.page-meta.t-meta', 'Empezada el ' + D.longLabel(D.fromDate(new Date(page.createdAt)))));
+      var started = M.pageDate(page);
+      if (started) sheet.appendChild(h('p.page-meta.t-meta', 'Empezada el ' + D.longLabel(started)));
       scrap = MC.scrapbook.attach(sheet, { stickers: page.stickers, label: 'esta página', onChange: function (list) { page.stickers = list; persist(); } });
       sheet.appendChild(scrap.toolbar);
     }
@@ -202,7 +203,7 @@
         .then(function (ok) {
           if (!ok) return;
           persist.cancel();
-          M.deletePage(page.id).then(function () { page = null; c.toast('Página borrada.'); location.hash = '#/paginas'; });
+          M.deletePage(page.id).then(function () { page = null; c.toast('Página borrada.'); location.hash = R.pages(); });
         });
     }
 

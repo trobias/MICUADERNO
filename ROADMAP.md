@@ -6,7 +6,7 @@ Leyenda: **P1** = próximo · **P2** = después · **P3** = algún día · (brie
 
 ## v1.0 — hecho
 
-MVP completo del brief §64, con navegación de una sola pantalla (calendario al centro + cuadros desplegables, DECISIONS D17): abrir/cerrar/volver con los datos, ánimo al empezar y terminar, actividades con 5 estados, escribir, navegar fechas, rutinas con recurrencia, calendario semana/mes, año bordado, páginas con stickers, backup/restauración, TXT/CSV/XLSX, impresión A4/A5/Carta, PWA offline instalable, recordatorios locales, 5 escenas, 4 niveles de motion. El calendario reúne todo lo que tiene fecha: rutinas planeadas, páginas empezadas, lo hecho (D18). 31 unit + 17 E2E en verde. Historial de cambios en `CHANGELOG.md`.
+MVP completo del brief §64, con navegación de una sola pantalla (calendario al centro + cuadros desplegables, DECISIONS D17): abrir/cerrar/volver con los datos, ánimo al empezar y terminar, actividades con 5 estados, escribir, navegar fechas, rutinas con recurrencia, calendario semana/mes, año bordado, páginas con stickers, backup/restauración, TXT/CSV/XLSX, impresión A4/A5/Carta, PWA offline instalable, recordatorios locales, 5 escenas, 4 niveles de motion. El calendario reúne todo lo que tiene fecha: rutinas planeadas, páginas empezadas, lo hecho (D18). 40 unit + 17 E2E en verde. Rutas, cuentas y dibujos en un solo lugar (D19). Historial de cambios en `CHANGELOG.md`.
 
 ---
 
@@ -58,7 +58,7 @@ Lo construido no se probó todavía fuera de Chromium headless.
 |---|---|---|---|
 | T1 | Partir `js/views/today.js` (≈460 líneas) en encabezado, lista, cierre y cuerpo | skill `frontend-ui-engineering` (componentes > 200 líneas) | P2 |
 | T2 | E2E de “pasar a mañana”, deshacer al sacar una actividad, stickers con teclado, restaurar scroll al volver | cubiertos a mano, no automatizados | P2 |
-| T3 | Subir `CACHE_VERSION` en `sw.js` en cada entrega (hoy `v3`; nunca se publicó) — automatizarlo en `npm run dist` | AGENTS.md | P1 (al publicar) |
+| T3 | Subir `CACHE_VERSION` en `sw.js` en cada entrega (hoy `v4`; nunca se publicó) — automatizarlo en `npm run dist` | AGENTS.md | P1 (al publicar) |
 | T4 | `assets/fonts/*.woff2` y `css/fonts.css` duplican las fuentes; dejar los woff2 solo como fuente de `build-fonts` fuera del dist | tamaño del paquete | P3 |
 | T5 | Atajos de la PWA usan el mismo ícono; dibujar uno por atajo (hoy, nota, ánimo, calendario) | brief §85 | P3 |
 

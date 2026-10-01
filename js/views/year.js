@@ -2,7 +2,7 @@
 (function (root) {
   'use strict';
   var MC = root.MC;
-  var h = MC.h, D = MC.dates, M = MC.model, c = MC.c;
+  var h = MC.h, D = MC.dates, M = MC.model, R = MC.routes, c = MC.c;
 
   function render(main, params) {
     var year = params.year;
@@ -12,18 +12,19 @@
     var right = h('section.page.page--margin.year-notes');
     main.appendChild(h('div.spread', left, h('div.spine', { 'aria-hidden': 'true' }), right));
 
-    Promise.all([M.summaryRange(year + '-01-01', year + '-12-31'), M.everything()]).then(function (r) {
+    M.everything().then(function (all) {
       if (destroyed) return;
-      var sum = r[0], all = r[1];
+      // Misma cuenta que el calendario, sobre lo ya cargado. Sin rutinas: el año solo borda lo registrado.
+      var sum = M.summarize(all.days, all.activities, { from: year + '-01-01', to: year + '-12-31' });
       var labels = M.settings().moodLabels;
 
       // Encabezado
       var y = +year;
       left.appendChild(h('header.cal-head',
         h('div.cal-head__title',
-          h('a.icon-btn', { href: '#/anio/' + (y - 1), 'aria-label': 'Año anterior' }, MC.icon('arrow-left')),
+          h('a.icon-btn', { href: R.year(y - 1), 'aria-label': 'Año anterior' }, MC.icon('arrow-left')),
           h('h1.t-display', 'Mi año ', h('span.cal-head__year', year)),
-          h('a.icon-btn', { href: '#/anio/' + (y + 1), 'aria-label': 'Año siguiente' }, MC.icon('arrow-right')))));
+          h('a.icon-btn', { href: R.year(y + 1), 'aria-label': 'Año siguiente' }, MC.icon('arrow-right')))));
 
       var filled = Object.keys(sum).filter(function (k) { return sum[k].mood; }).length;
       left.appendChild(h('p.year-intro.t-text', filled
@@ -43,11 +44,11 @@
           var key = D.make(y, m, d);
           var info = sum[key];
           var mood = info && info.mood;
-          var label = d + ' de ' + D.MONTHS[m - 1] + (mood ? ': ' + labels[mood - 1] : info && (info.wrote || info.total > info.planned) ? ': sin ánimo registrado' : '');
+          var label = d + ' de ' + D.MONTHS[m - 1] + (mood ? ': ' + labels[mood - 1] : info && (info.wrote || info.total) ? ': sin ánimo registrado' : '');
           var cell = h('button.stitch-cell', {
             type: 'button', role: 'gridcell', tabindex: '-1', 'aria-label': label,
             dataset: { date: key, mood: mood ? String(mood) : null, row: String(d), col: String(m) },
-            class: [key === today ? 'is-today' : null, !mood && info && (info.wrote || info.total > info.planned) ? 'is-half' : null, key > today ? 'is-future' : null].filter(Boolean).join(' ')
+            class: [key === today ? 'is-today' : null, !mood && info && (info.wrote || info.total) ? 'is-half' : null, key > today ? 'is-future' : null].filter(Boolean).join(' ')
           });
           cell.addEventListener('click', go);
           cell.addEventListener('keydown', onKey);
@@ -61,10 +62,10 @@
       cells.forEach(function (x) { if (x.dataset.date === focusKey) x.tabIndex = 0; });
 
       left.appendChild(h('ul.mood-legend.year-legend', { 'aria-label': 'Referencias' },
-        [1, 2, 3, 4, 5].map(function (mm) { return h('li', h('span.stitch-cell.stitch-cell--key', { dataset: { mood: String(mm) }, 'aria-hidden': 'true' }), h('span', { html: MC.stickers.miniPatchMarkup(mm) }), labels[mm - 1]); }),
+        [1, 2, 3, 4, 5].map(function (mm) { return h('li', h('span.stitch-cell.stitch-cell--key', { dataset: { mood: String(mm) }, 'aria-hidden': 'true' }), c.moodMark(mm), labels[mm - 1]); }),
         h('li', h('span.stitch-cell.stitch-cell--key.is-half', { 'aria-hidden': 'true' }), 'escribiste, sin ánimo')));
 
-      function go(e) { location.hash = '#/dia/' + e.currentTarget.dataset.date; }
+      function go(e) { location.hash = R.day(e.currentTarget.dataset.date); }
       function onKey(e) {
         var el = e.currentTarget;
         var r0 = +el.dataset.row, c0 = +el.dataset.col;
@@ -99,7 +100,7 @@
         var SHOWN = 6;
         memories.forEach(function (dd, i) {
           list.appendChild(h('li.memory', { style: { '--tilt': ((MC.hash(dd.date) % 5) - 2) * 0.5 + 'deg' } },
-            h('a.memory__link', { href: '#/dia/' + dd.date },
+            h('a.memory__link', { href: R.day(dd.date) },
               h('span.memory__date', D.shortLabel(dd.date)),
               h('span.memory__text', dd.reflection.keep.trim()))));
           if (i >= SHOWN) list.lastChild.hidden = true;

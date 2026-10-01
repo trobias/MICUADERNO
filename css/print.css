@@ -38,7 +38,12 @@
   .p-day__intention { font-style: italic; margin-bottom: 2mm; }
   .p-acts { list-style: none; padding: 0; margin: 0 0 2mm; display: grid; gap: 1mm; }
   .p-acts li { display: flex; align-items: center; gap: 2mm; }
-  .p-box { width: 4.5mm; height: 4.5mm; }
+  .p-acts .st-mark { width: 4.5mm; height: 4.5mm; }
+  /* En papel todo va en tinta: los estados se leen por la forma de la puntada, no por el color. */
+  .print-doc .st-mark__box { stroke: var(--ink-soft); }
+  .print-doc .st-mark[data-status] .st-mark__thread { stroke: var(--ink); stroke-width: 2.4; }
+  .print-doc .st-mark[data-status='skipped'] .st-mark__thread { fill: var(--ink); stroke: none; }
+  .p-glyph { color: var(--ink); }
   .p-day__notes { white-space: pre-wrap; margin: 2mm 0; }
   .p-day__refl { margin: 1mm 0; white-space: pre-wrap; }
   .p-day__refl em { color: #796966; }

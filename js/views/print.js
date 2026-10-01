@@ -4,15 +4,12 @@
   var MC = root.MC;
   var h = MC.h, D = MC.dates, M = MC.model, c = MC.c;
 
-  var MARK = { pending: '', done: '<path d="M7 7l10 10M17 7 7 17"/>', partial: '<path d="M7 7l10 10"/>', postponed: '<path d="M6 12h10M13 8.5l3.5 3.5-3.5 3.5"/>', skipped: '<circle cx="12" cy="12" r="2.4" fill="currentColor"/>' };
   var REFL = [['good', 'Qué me hizo bien'], ['hard', 'Algo difícil'], ['lovely', 'Algo lindo'], ['keep', 'Qué quiero guardar'], ['free', 'Más']];
 
-  function box(status) {
-    return '<svg viewBox="0 0 24 24" class="p-box"><rect x="3.5" y="3.5" width="17" height="17" rx="2.5" fill="none" stroke="#9b8d89" stroke-dasharray="2 2"/><g fill="none" stroke="#493D3B" stroke-width="2.4" stroke-linecap="round">' + MARK[status] + '</g></svg>';
-  }
+  function glyph(n) { return h('span', { html: MC.stickers.inkGlyphMarkup(n, 'p-glyph') }); }
 
   function moodPrint(n, labels) {
-    return h('span.p-mood', h('span', { html: '<svg viewBox="0 0 24 24" class="p-glyph"><g fill="none" stroke="#493D3B" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' + MC.stickers.MOOD_GLYPHS[n].replace('class="fill"', 'fill="#493D3B"') + '</g></svg>' }), labels[n - 1]);
+    return h('span.p-mood', glyph(n), M.moodLabel(n, labels));
   }
 
   function build(all, opts) {
@@ -25,6 +22,8 @@
     days.forEach(function (d) { byDate[d.date] = { day: d, acts: [] }; });
     acts.forEach(function (a) { (byDate[a.date] = byDate[a.date] || { day: null, acts: [] }).acts.push(a); });
     var dates = Object.keys(byDate).sort();
+    // El calendario de cada mes sale de la misma cuenta que el calendario de la pantalla.
+    var sum = M.summarize(all.days, all.activities, { from: opts.from, to: opts.to });
     var doc = h('div.print-doc', { dataset: { size: opts.size } });
 
     if (opts.cover) {
@@ -48,13 +47,11 @@
         for (var w = 0; w < grid.length / 7; w++) {
           var tr = h('tr');
           grid.slice(w * 7, w * 7 + 7).forEach(function (k) {
-            var e = byDate[k];
-            var mood = e && e.day && (e.day.evening.mood || e.day.morning.mood);
-            var done = e ? e.acts.filter(function (a) { return a.status === 'done'; }).length : 0;
+            var info = D.monthKey(k) === m ? sum[k] : null;
             tr.appendChild(h('td', { class: D.monthKey(k) === m ? null : 'is-out' },
               h('span.p-month__num', String(D.parse(k).d)),
-              mood && D.monthKey(k) === m ? h('span', { html: '<svg viewBox="0 0 24 24" class="p-glyph"><g fill="none" stroke="#493D3B" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' + MC.stickers.MOOD_GLYPHS[mood].replace('class="fill"', 'fill="#493D3B"') + '</g></svg>' }) : null,
-              done && D.monthKey(k) === m ? h('span.p-month__done', '×' + done) : null));
+              info && info.mood ? glyph(info.mood) : null,
+              info && info.done ? h('span.p-month__done', '×' + info.done) : null));
           });
           tbody.appendChild(tr);
         }
@@ -76,7 +73,7 @@
         if (d && d.evening.mood) moods.push(h('span', 'Terminé: ', moodPrint(d.evening.mood, labels)));
         if (moods.length) block.appendChild(h('p.p-day__moods', moods));
         if (d && d.intention.trim()) block.appendChild(h('p.p-day__intention', 'Algo que quería cuidar: ' + d.intention.trim()));
-        if (e.acts.length) block.appendChild(h('ul.p-acts', e.acts.map(function (a) { return h('li', h('span', { html: box(a.status) }), a.title); })));
+        if (e.acts.length) block.appendChild(h('ul.p-acts', e.acts.map(function (a) { return h('li', h('span', { html: MC.stickers.statusMarkup(a.status) }), a.title); })));
         if (d && d.notes.trim()) block.appendChild(h('p.p-day__notes', d.notes.trim()));
         if (d) REFL.forEach(function (r) { if (d.reflection[r[0]].trim()) block.appendChild(h('p.p-day__refl', h('em', r[1] + ': '), d.reflection[r[0]].trim())); });
         flow.appendChild(block);
@@ -87,7 +84,7 @@
     if (opts.pages && all.pages.length) {
       all.pages.forEach(function (p) {
         doc.appendChild(h('section.p-sheet.p-page',
-          h('h2.p-h', p.title || 'Sin título'),
+          h('h2.p-h', M.pageTitle(p)),
           p.kind === 'list'
             ? h('ul.p-list', p.items.filter(function (it) { return it.text.trim(); }).map(function (it) { return h('li', it.text); }))
             : h('p.p-page__body', p.body)));
@@ -119,7 +116,7 @@
     main.appendChild(h('div.spread.spread--single', page));
     var state = { size: MC.ui.get('printSize', 'a4'), range: 'month', from: D.monthKey(today) + '-01', to: today, cover: true, months: true, days: true, pages: true, routines: true };
 
-    page.appendChild(h('header.page-head', h('h1.t-display', 'Imprimir mi cuaderno'), h('a.text-btn', { href: '#/ajustes' }, MC.icon('arrow-left'), 'Ajustes')));
+    page.appendChild(h('header.page-head', h('h1.t-display', 'Imprimir mi cuaderno'), h('a.text-btn', { href: MC.routes.settings() }, MC.icon('arrow-left'), 'Ajustes')));
     page.appendChild(h('p.page-intro.t-text', 'Arma unas hojas lindas para imprimir o guardar como PDF (en el diálogo de impresión elegí “Guardar como PDF”).'));
 
     function radioRow(label, name, options, current, onPick) {

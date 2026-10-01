@@ -351,38 +351,62 @@
   }
   function deletePage(id) { return S().del('pages', id); }
 
-  /* ---------- resúmenes para calendario y año ---------- */
+  /* ---------- lectura compartida (calendario, año, impresión, insights) ---------- */
+  /** ¿Escribió algo ese día? (notas, intención o alguna reflexión) */
+  function hasWriting(d) {
+    return !!(d && (d.notes.trim() || d.intention.trim() || Object.keys(d.reflection).some(function (k) { return d.reflection[k].trim(); })));
+  }
+
+  /** En calendario, impresión e insights, “hecho” incluye “un poquito”. Las exportaciones guardan el estado exacto. */
+  function countsAsDone(status) { return status === 'done' || status === 'partial'; }
+
+  function moodLabel(n, labels) {
+    var l = labels || settings().moodLabels;
+    return n ? l[n - 1] : null;
+  }
+
+  function pageTitle(p) { return (p && p.title && p.title.trim()) || 'Sin título'; }
+
+  /** Fecha de una página en el calendario: el día en que se empezó (createdAt no cambia al editar). */
+  function pageDate(p) { return D.fromISO(p && p.createdAt); }
+
+  /* ---------- resúmenes para calendario, año e impresión ---------- */
   function blankSummary(date) {
     return { date: date, morning: null, evening: null, mood: null, wrote: false, memory: '', done: 0, total: 0, pending: 0, planned: 0, routines: 0, pages: [] };
   }
 
   /**
-   * Resumen por fecha para el calendario y el año.
-   * `extra` (opcional): { from, to, routines, pages } suma las ocurrencias de rutina todavía sin marcar
-   * (cuentan como pendientes) y las páginas, en el día en que se empezaron.
+   * Resumen por fecha: la única cuenta de “qué hubo ese día” (calendario, semana, año, impresión).
+   * `extra` (opcional): { from, to, routines, pages }. Con from/to solo cuenta ese rango; con routines suma
+   * las ocurrencias todavía sin marcar (pendientes, `planned`); con pages, las ubica en el día en que se empezaron.
    */
   function summarize(days, activities, extra) {
+    extra = extra || {};
+    var from = D.isValid(extra.from) ? extra.from : null;
+    var to = D.isValid(extra.to) ? extra.to : null;
+    function inRange(k) { return (!from || k >= from) && (!to || k <= to); }
     var map = {};
     function at(date) { return map[date] || (map[date] = blankSummary(date)); }
     days.forEach(function (d) {
+      if (!inRange(d.date)) return;
       var s = at(d.date);
       s.morning = d.morning.mood;
       s.evening = d.evening.mood;
       s.mood = d.evening.mood || d.morning.mood;
-      s.wrote = !!(d.notes.trim() || d.intention.trim() || Object.keys(d.reflection).some(function (k) { return d.reflection[k].trim(); }));
+      s.wrote = hasWriting(d);
       s.memory = d.reflection.keep.trim();
     });
     var marked = {};
     activities.forEach(function (a) {
+      if (!inRange(a.date)) return;
       var s = at(a.date);
       s.total++;
-      if (a.status === 'done' || a.status === 'partial') s.done++;
+      if (countsAsDone(a.status)) s.done++;
       if (a.status === 'pending') s.pending++;
       if (a.routineId) { s.routines++; marked[a.routineId + '|' + a.date] = true; }
     });
-    extra = extra || {};
-    if (extra.routines && extra.routines.length && D.isValid(extra.from) && D.isValid(extra.to)) {
-      D.range(extra.from, extra.to).forEach(function (k) {
+    if (extra.routines && extra.routines.length && from && to) {
+      D.range(from, to).forEach(function (k) {
         extra.routines.forEach(function (r) {
           if (marked[r.id + '|' + k] || !R.occursOn(r, k)) return;
           var s = at(k);
@@ -391,11 +415,8 @@
       });
     }
     (extra.pages || []).forEach(function (p) {
-      var t = Date.parse(p.createdAt);
-      if (!Number.isFinite(t)) return;
-      var k = D.fromDate(new Date(t));
-      if (extra.from && k < extra.from) return;
-      if (extra.to && k > extra.to) return;
+      var k = pageDate(p);
+      if (!k || !inRange(k)) return;
       at(k).pages.push({ id: p.id, title: p.title });
     });
     return map;
@@ -409,9 +430,7 @@
 
   /** Páginas empezadas en una fecha local. */
   function pagesOn(date) {
-    return getPages().then(function (ps) {
-      return ps.filter(function (p) { var t = Date.parse(p.createdAt); return Number.isFinite(t) && D.fromDate(new Date(t)) === date; });
-    });
+    return getPages().then(function (ps) { return ps.filter(function (p) { return pageDate(p) === date; }); });
   }
 
   /** Todo lo necesario para exportar/insights. */
@@ -456,6 +475,7 @@
     normalizeRoutine: normalizeRoutine, getRoutines: getRoutines, saveRoutine: saveRoutine, deleteRoutine: deleteRoutine,
     normalizePage: normalizePage, getPages: getPages, getPage: getPage, savePage: savePage, deletePage: deletePage,
     sanitizeStickers: sanitizeStickers, summarize: summarize, summaryRange: summaryRange, pagesOn: pagesOn, everything: everything,
+    hasWriting: hasWriting, countsAsDone: countsAsDone, moodLabel: moodLabel, pageTitle: pageTitle, pageDate: pageDate,
     touchOpen: touchOpen
   };
 })(typeof window !== 'undefined' ? window : globalThis);

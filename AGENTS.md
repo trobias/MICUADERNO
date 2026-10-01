@@ -41,6 +41,7 @@ css/views.css           layouts por vista
 css/print.css           impresión
 js/core/ns.js           namespace, utilidades DOM (h, $, on), ids, debounce
 js/core/dates.js        fechas locales AAAA-MM-DD, nombres en español
+js/core/routes.js       rutas #/…: armar (MC.routes.day(fecha)…) y leer (parse); única fuente
 js/core/recurrence.js   reglas de rutinas → ¿ocurre en esta fecha? + descripción humana
 js/core/store.js        IndexedDB (con modo memoria de emergencia)
 js/core/model.js        operaciones de dominio (días, actividades, rutinas, páginas, settings)
@@ -119,6 +120,8 @@ Probar a mano además: doble clic en `index.html`; mobile 375px; teclado solo; `
 - Los datos del día se guardan con borrador local + IndexedDB (ver DECISIONS D13): no saltear `persist()`.
 - Pantalla única (DECISIONS D17): las vistas que no son el calendario se renderizan dentro de `#panel-body`. Menús/avisos van en `MC.c.layer()` (el diálogo abierto), no en `body`.
 - Las ocurrencias de rutina son virtuales hasta que se marcan (`item.virtual`); usá `MC.model.setStatus`, nunca escribas actividades de rutina a mano.
+- Rutas: nunca escribir `'#/…'` a mano; usar `MC.routes.*`. Una ruta nueva se agrega en `js/core/routes.js` con su test (D19).
+- Antes de dibujar o contar algo, buscá si ya existe (D19): `MC.model.summarize` / `countsAsDone` / `hasWriting` / `moodLabel` / `pageTitle`, `MC.dates.fromISO`, `MC.c.moodMark` / `statusMark` / `pageLink(s)`, `MC.stickers.statusMarkup`.
 - Todo lo que tiene fecha tiene que verse en el calendario (DECISIONS D18). Si agregás algo fechado, sumalo en `MC.model.summarize` (con test) y dale marca + texto en la celda y la leyenda de `js/views/calendar.js`. En días pasados, nunca mostrar lo que quedó sin hacer.
 
 ## Anti-patterns

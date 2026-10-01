@@ -2,7 +2,7 @@
 (function (root) {
   'use strict';
   var MC = root.MC;
-  var h = MC.h, D = MC.dates, M = MC.model, c = MC.c;
+  var h = MC.h, D = MC.dates, M = MC.model, R = MC.routes, c = MC.c;
 
   var REFLECTIONS = [
     { key: 'good', label: 'Qué me hizo bien' },
@@ -79,8 +79,8 @@
     function header() {
       var prev = h('button.icon-btn', { type: 'button', 'aria-label': 'Día anterior' }, MC.icon('arrow-left'));
       var next = h('button.icon-btn', { type: 'button', 'aria-label': 'Día siguiente' }, MC.icon('arrow-right'));
-      prev.addEventListener('click', function () { location.hash = '#/dia/' + D.addDays(date, -1); });
-      next.addEventListener('click', function () { location.hash = '#/dia/' + D.addDays(date, 1); });
+      prev.addEventListener('click', function () { location.hash = R.day(D.addDays(date, -1)); });
+      next.addEventListener('click', function () { location.hash = R.day(D.addDays(date, 1)); });
       var p = D.parse(date);
       var rel = D.relativeLabel(date, today);
 
@@ -95,7 +95,7 @@
             h('h1.t-display.day-head__weekday', D.capitalize(D.DAYS[D.weekday(date)])),
             h('p.day-head__long', p.d + ' de ' + D.MONTHS[p.m - 1] + (p.y !== +today.slice(0, 4) ? ' de ' + p.y : ''))),
           next),
-        !isToday ? h('div.day-head__tools', h('a.text-btn', { href: '#/hoy' }, MC.icon('hoy'), 'Ir a hoy')) : null
+        !isToday ? h('div.day-head__tools', h('a.text-btn', { href: R.today() }, MC.icon('hoy'), 'Ir a hoy')) : null
       );
     }
 
@@ -256,7 +256,7 @@
         } });
         opts.push({ label: 'Cambiar el nombre', icon: 'edit', onSelect: startRename });
         if (it.routineId && !it.routineGone) {
-          opts.push({ label: 'Ver la rutina', icon: 'rutinas', onSelect: function () { location.hash = '#/rutinas'; } });
+          opts.push({ label: 'Ver la rutina', icon: 'rutinas', onSelect: function () { location.hash = R.routines(); } });
         }
         if (!it.virtual) {
           opts.push({ label: 'Sacar de la lista', icon: 'trash', onSelect: function () {
@@ -313,11 +313,7 @@
 
     /* Páginas sueltas que se empezaron este día: así el calendario también las encuentra. */
     function pagesSection() {
-      var ul = h('ul.day-pages');
-      pagesToday.forEach(function (p) {
-        ul.appendChild(h('li', h('a.text-btn', { href: '#/pagina/' + p.id }, MC.icon('paginas'), p.title.trim() || 'Página sin título')));
-      });
-      return c.section(pagesToday.length === 1 ? 'Una página de este día' : 'Páginas de este día', ul, { id: 'q-pages' });
+      return c.section(pagesToday.length === 1 ? 'Una página de este día' : 'Páginas de este día', c.pageLinks(pagesToday), { id: 'q-pages' });
     }
 
     function bodySection() {
@@ -430,7 +426,9 @@
         if (destroyed || r[2].length < 3) return;
         var ref = r[0] || r[1];
         if (!ref) return;
-        var since = D.diffDays(D.fromDate(new Date(ref)), today);
+        var refDay = D.fromISO(ref);
+        if (!refDay) return;
+        var since = D.diffDays(refDay, today);
         if (since >= every) slip.hidden = false;
       });
       return slip;

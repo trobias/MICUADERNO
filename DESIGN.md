@@ -120,7 +120,7 @@ Escala (rem, base 16px):
 
 ## 6. Lenguaje de bordado (componentes firma)
 
-- **Casilla de punto cruz** (`.stitch-box`): cuadrado 22px de “tela aida” (4 agujeritos en las esquinas) con borde punteado suave.
+- **Casilla de punto cruz** (`.stitch-box`): cuadrado 22px de “tela aida” (4 agujeritos en las esquinas) con borde punteado suave. Las puntadas tienen **un solo dibujo** (`MC.stickers.STITCH`): lo usan la casilla que se toca, la marca quieta de la semana (`.st-mark`, mismos colores de hilo) y la impresión (`.st-mark` en tinta: el estado se lee por la forma, no por el color).
   - done: dos diagonales en `--thread-done`, trazo 2.5px, extremos redondeados. Animación: 1.ª diagonal 140ms, 2.ª 140ms (stroke-dashoffset), ease-out.
   - partial: una diagonal en `--thread-partial`.
   - postponed: puntada corrida horizontal con punta de flecha en `--thread-later` + anotación manuscrita “otro día”.

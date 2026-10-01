@@ -3,6 +3,7 @@
   'use strict';
   var MC = root.MC || (root.MC = {});
   var D = MC.dates;
+  var M = MC.model;
   var MIN_SAMPLE = 5;
   var MAX_INSIGHTS = 6;
 
@@ -27,7 +28,8 @@
     // 1. Desde cuándo
     // El comienzo es lo primero que hay registrado (un backup puede traer días anteriores a esta instalación).
     var candidates = [];
-    if (all.meta.createdAt) candidates.push(D.fromDate(new Date(all.meta.createdAt)));
+    var installed = D.fromISO(all.meta.createdAt);
+    if (installed) candidates.push(installed);
     if (all.days[0]) candidates.push(all.days[0].date);
     if (all.activities[0]) candidates.push(all.activities[0].date);
     var started = candidates.sort()[0];
@@ -38,10 +40,7 @@
 
     // 2. Escritura de esta semana
     var weekStart = D.startOfWeek(today);
-    var wrote = D.range(weekStart, today).filter(function (k) {
-      var d = byDay[k];
-      return d && (d.notes.trim() || d.intention.trim() || Object.keys(d.reflection).some(function (r) { return d.reflection[r].trim(); }));
-    }).length;
+    var wrote = D.range(weekStart, today).filter(function (k) { return M.hasWriting(byDay[k]); }).length;
     if (wrote > 0) out.push({ id: 'week-writing', text: 'Esta semana escribiste ' + times(wrote) + '.' });
 
     // 3. Rutina más acompañada del mes
@@ -50,7 +49,7 @@
     all.routines.forEach(function (r) { routineTitle[r.id] = r.title; });
     var perRoutine = {};
     all.activities.forEach(function (a) {
-      if (a.routineId && routineTitle[a.routineId] && a.date.slice(0, 7) === monthPrefix && (a.status === 'done' || a.status === 'partial')) {
+      if (a.routineId && routineTitle[a.routineId] && a.date.slice(0, 7) === monthPrefix && M.countsAsDone(a.status)) {
         perRoutine[a.routineId] = (perRoutine[a.routineId] || 0) + 1;
       }
     });

@@ -57,7 +57,7 @@ Pedido de la dueña del proyecto (DECISIONS D17): **sin secciones separadas**. T
 | `#/anio/AAAA` | cuadro con el bordado del año, lo que fui notando y lo que guardé |
 | `#/ajustes` · `#/imprimir` | cuadro de ajustes / impresión |
 
-Todas las rutas siguen siendo enlazables (atajos de la PWA, notificaciones).
+Todas las rutas siguen siendo enlazables (atajos de la PWA, notificaciones). Se arman y se leen en un solo lugar, `js/core/routes.js` (`MC.routes.day(fecha)`, `MC.routes.page(id)`, `MC.routes.parse(hash)`…): ninguna vista escribe `#/…` a mano (DECISIONS D19).
 
 ## 6. User journeys
 
@@ -266,7 +266,7 @@ index.html            entrada única
 manifest.webmanifest  PWA
 sw.js                 service worker (solo http/https)
 css/                  tokens, base, cuaderno, componentes, vistas, impresión
-js/core/              lógica pura + almacenamiento (sin DOM salvo store)
+js/core/              lógica pura + almacenamiento (sin DOM salvo store); rutas en routes.js
 js/ui/                íconos, stickers, componentes, motion, escenas
 js/views/             una vista por archivo
 js/app.js             router + arranque
@@ -279,7 +279,7 @@ skills/               colección de skills (no es parte de la app)
 
 - **Comandos (desarrollo, nunca para la persona usuaria):**
   - `npm test` — unit tests (node:test, sin dependencias).
-  - `npm run e2e` — 13 recorridos con `playwright-core` contra `file://` y `http://127.0.0.1` (usa el Chromium del sistema; `CHROMIUM=/ruta` para cambiarlo).
+  - `npm run e2e` — 17 recorridos con `playwright-core` contra `file://` y `http://127.0.0.1` (usa el Chromium del sistema; `CHROMIUM=/ruta` para cambiarlo).
   - `npm run check` — `node --check` de todos los JS + unit + e2e.
   - `npm run serve` — servidor estático en `http://localhost:4173` para probar la PWA.
   - `npm run icons` — regenera PNG/ICO desde los SVG maestros.

@@ -43,15 +43,17 @@
   };
 
   /* ---------- Casilla de punto cruz ---------- */
+  // Las puntadas salen del mismo dibujo que la semana y la impresión (MC.stickers.STITCH).
+  var st = MC.stickers.stitchMarkup;
   var BOX_SVG =
     '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
     '<rect class="aida" x="2.5" y="2.5" width="19" height="19" rx="2.5"/>' +
     '<circle class="hole" cx="6" cy="6" r=".9"/><circle class="hole" cx="18" cy="6" r=".9"/>' +
     '<circle class="hole" cx="6" cy="18" r=".9"/><circle class="hole" cx="18" cy="18" r=".9"/>' +
-    '<path class="mark mark--x1" pathLength="1" d="M6.5 6.5 17.5 17.5"/>' +
-    '<path class="mark mark--x2" pathLength="1" d="M17.5 6.5 6.5 17.5"/>' +
-    '<path class="mark mark--later" d="M5.5 12h11M13 8.2l3.8 3.8-3.8 3.8"/>' +
-    '<circle class="mark mark--knot" cx="12" cy="12" r="2.8"/>' +
+    st('x1', 'class="mark mark--x1" pathLength="1"') +
+    st('x2', 'class="mark mark--x2" pathLength="1"') +
+    st('later', 'class="mark mark--later"') +
+    st('knot', 'class="mark mark--knot"') +
     '</svg>';
 
   c.stitchBox = function (status, title) {
@@ -264,6 +266,29 @@
     // onInput se llama en cada tecla (barato); quien guarda decide cuándo escribir en disco.
     if (opts.onInput) ta.addEventListener('input', function () { MC.emit('typing'); opts.onInput(ta.value); });
     return ta;
+  };
+
+  /* ---------- Piezas que se repiten entre vistas ---------- */
+  /** Parche chico de ánimo. Con `label` también lo nombra (tooltip + texto para lectores de pantalla). */
+  c.moodMark = function (n, label) {
+    var el = h('span.mood-mark', { html: MC.stickers.miniPatchMarkup(n) });
+    if (label) { el.title = label; el.appendChild(h('span.sr-only', label)); }
+    return el;
+  };
+
+  /** Marca quieta del estado de una actividad (el texto del estado lo pone quien la usa). */
+  c.statusMark = function (status) {
+    return h('span.status-mark', { 'aria-hidden': 'true', html: MC.stickers.statusMarkup(status) });
+  };
+
+  /** Enlace a una página libre: ícono de hoja + título. */
+  c.pageLink = function (p) {
+    return h('a.text-btn.page-link', { href: MC.routes.page(p.id) }, MC.icon('paginas'), MC.model.pageTitle(p));
+  };
+
+  /** Lista de enlaces a páginas (la página del día, la semana). */
+  c.pageLinks = function (pages, className) {
+    return h('ul.day-pages', { class: className || null }, pages.map(function (p) { return h('li', c.pageLink(p)); }));
   };
 
   /* ---------- Vacío ---------- */

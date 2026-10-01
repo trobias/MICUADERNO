@@ -6,13 +6,14 @@
   var MC = root.MC;
   var h = MC.h;
   var D = MC.dates;
+  var R = MC.routes;
 
   var OPTS = [
-    { id: 'hoy', label: 'Hoy', icon: 'hoy', href: '#/hoy' },
-    { id: 'rutinas', label: 'Rutinas', icon: 'rutinas', href: '#/rutinas' },
-    { id: 'paginas', label: 'Páginas', icon: 'paginas', href: '#/paginas' },
-    { id: 'anio', label: 'Mi año', icon: 'anio', href: '#/anio' },
-    { id: 'ajustes', label: 'Ajustes', icon: 'ajustes', href: '#/ajustes' }
+    { id: 'hoy', label: 'Hoy', icon: 'hoy', href: R.today() },
+    { id: 'rutinas', label: 'Rutinas', icon: 'rutinas', href: R.routines() },
+    { id: 'paginas', label: 'Páginas', icon: 'paginas', href: R.pages() },
+    { id: 'anio', label: 'Mi año', icon: 'anio', href: R.year() },
+    { id: 'ajustes', label: 'Ajustes', icon: 'ajustes', href: R.settings() }
   ];
   var PANEL_LABEL = { today: 'Página del día', routines: 'Mis rutinas', pages: 'Mis páginas', page: 'Página', year: 'Mi año', settings: 'Ajustes', print: 'Imprimir mi cuaderno' };
 
@@ -25,32 +26,14 @@
   var base = null;          // { key, params, instance } — el calendario de fondo (o la bienvenida)
   var panel = null;         // { route, instance } — el cuadro abierto
   var lastHash = null;
-  var lastBaseHash = '#/calendario';
+  var lastBaseHash = R.calendar();
   var trail = [];           // rutas visitadas en esta sesión (para cerrar con “atrás” de verdad)
   var booted = false;
 
   MC.views = MC.views || {};
 
-  function parse(hash) {
-    var parts = (hash || '').replace(/^#\/?/, '').split('/').filter(Boolean).map(decodeURIComponent);
-    var p0 = parts[0] || 'calendario';
-    switch (p0) {
-      case 'calendario':
-        if (parts[1] === 'semana' && D.isValid(parts[2])) return { kind: 'base', name: 'calendar', params: { mode: 'semana', date: parts[2] } };
-        if (parts[1] === 'mes' && /^\d{4}-\d{2}$/.test(parts[2] || '')) return { kind: 'base', name: 'calendar', params: { mode: 'mes', month: parts[2] } };
-        return { kind: 'base', name: 'calendar', params: { mode: 'mes', month: MC.ui.get('calMonth', D.monthKey(D.today())) } };
-      case 'hoy': return { kind: 'panel', name: 'today', opt: 'hoy', params: { date: D.today(), isToday: true } };
-      case 'dia': return D.isValid(parts[1]) ? { kind: 'panel', name: 'today', opt: parts[1] === D.today() ? 'hoy' : null, params: { date: parts[1] } } : null;
-      case 'rutinas': return { kind: 'panel', name: 'routines', opt: 'rutinas', params: {} };
-      case 'paginas': return { kind: 'panel', name: 'pages', opt: 'paginas', params: {} };
-      case 'pagina': return parts[1] ? { kind: 'panel', name: 'page', opt: 'paginas', params: { id: parts[1] } } : null;
-      case 'anio': return { kind: 'panel', name: 'year', opt: 'anio', params: { year: /^\d{4}$/.test(parts[1] || '') ? parts[1] : D.today().slice(0, 4) } };
-      case 'ajustes': return { kind: 'panel', name: 'settings', opt: 'ajustes', params: { section: parts[1] || null } };
-      case 'imprimir': return { kind: 'panel', name: 'print', opt: 'ajustes', params: {} };
-      case 'bienvenida': return { kind: 'onboarding', name: 'onboarding', params: {} };
-      default: return null;
-    }
-  }
+  /** Lee una ruta (ver js/core/routes.js); “#/calendario” vuelve al mes que se estaba mirando. */
+  function parse(hash) { return R.parse(hash, { calMonth: MC.ui.get('calMonth', null) }); }
 
   /* ---------- Botoncitos ---------- */
   function buildOpts() {
@@ -92,7 +75,7 @@
       return base.params;
     }
     if (route.name === 'today') return { mode: 'mes', month: D.monthKey(route.params.date) };
-    return parse('#/calendario').params;
+    return parse(R.calendar()).params;
   }
 
   function renderOnboarding() {
@@ -157,15 +140,15 @@
 
   /* ---------- Router ---------- */
   function onHash() {
-    var hash = location.hash || '#/calendario';
+    var hash = location.hash || R.calendar();
     if (hash === lastHash) return;
     var prev = lastHash ? parse(lastHash) : null;
     lastHash = hash;
     if (trail.length >= 2 && trail[trail.length - 2] === hash) trail.pop(); else trail.push(hash);
     var route = parse(hash);
-    if (!route) { location.replace('#/calendario'); return; }
+    if (!route) { location.replace(R.calendar()); return; }
     var s = MC.model.settings();
-    if (!s.onboarded && route.kind !== 'onboarding') { location.replace('#/bienvenida'); return; }
+    if (!s.onboarded && route.kind !== 'onboarding') { location.replace(R.welcome()); return; }
     MC.ui.set('lastRoute', hash);
 
     if (route.kind === 'onboarding') { renderOnboarding(); MC.emit('route', route); return; }
@@ -211,7 +194,7 @@
     var params = new URLSearchParams(location.search);
     var go = params.get('go');
     if (!go) return false;
-    var map = { hoy: '#/hoy', nota: '#/hoy', animo: '#/hoy', calendario: '#/calendario' };
+    var map = { hoy: R.today(), nota: R.today(), animo: R.today(), calendario: R.calendar() };
     if (map[go]) {
       MC.ui.set('focusOnLoad', go === 'nota' ? 'notes' : go === 'animo' ? 'mood' : null);
       history.replaceState(null, '', location.pathname + map[go]);
@@ -275,8 +258,8 @@
       // Primera vez: siempre la tapa. Después, según ajuste.
       if (!s.onboarded || s.showCover) {
         // Debajo de la tapa pintamos el fondo real (calendario o bienvenida); los cuadros se abren después.
-        if (!s.onboarded) { history.replaceState(null, '', location.pathname + location.search + '#/bienvenida'); renderOnboarding(); }
-        else { var r = parse(location.hash); renderBase(r && r.kind === 'base' ? r.params : baseParamsFor(r || parse('#/calendario'))); }
+        if (!s.onboarded) { history.replaceState(null, '', location.pathname + location.search + R.welcome()); renderOnboarding(); }
+        else { var r = parse(location.hash); renderBase(r && r.kind === 'base' ? r.params : baseParamsFor(r || parse(R.calendar()))); }
         MC.views.cover.show({ firstTime: !s.onboarded, onOpen: start });
       } else {
         start();

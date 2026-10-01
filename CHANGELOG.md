@@ -2,6 +2,22 @@
 
 Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantiene. El porqué de cada decisión está en `DECISIONS.md` (Dn); lo que falta, en `ROADMAP.md`. Cada entrega que toca archivos de la app sube `CACHE_VERSION` en `sw.js` para que las PWA instaladas se actualicen.
 
+## 2026-10-01 · Un solo lugar para rutas, cuentas y dibujos (cache `v4`)
+
+**Para quien lo usa**
+- Casi nada cambia a la vista: es el orden de la casa antes de conectar las secciones entre sí.
+- La impresión cuenta lo hecho “un poquito” igual que el calendario (antes solo contaba lo hecho del todo).
+- En la semana, las puntadas de cada actividad son exactamente las mismas que en la casilla del día.
+
+**Para quien lo mantiene** (decisión **D19**)
+- Nuevo `js/core/routes.js`: `MC.routes.day(fecha)`, `month`, `week`, `page(id)`, `year`, `settings`… y `MC.routes.parse(hash, { calMonth })`. `app.js` y todas las vistas lo usan; ya no hay `'#/…'` escritos a mano (salvo en `sw.js`, cubierto por test). Una ruta con `%XX` roto ya no rompe el router.
+- `MC.model.summarize` es la única cuenta por día (mes, semana, *Mi año*, impresión), con filtro `from`/`to`. *Mi año* la calcula sobre lo ya cargado: una lectura de la base en vez de dos.
+- Reglas compartidas: `countsAsDone`, `hasWriting` (también la usan los insights), `moodLabel`, `pageTitle`, `pageDate` y `MC.dates.fromISO`.
+- Un solo dibujo de puntadas: `MC.stickers.STITCH`, `stitchMarkup` y `statusMarkup` (`.st-mark`, colores por CSS con tokens; la impresión los pasa a tinta). Glifo de ánimo en tinta para imprimir: `inkGlyphMarkup`.
+- Piezas en `MC.c`: `moodMark`, `statusMark`, `pageLink`, `pageLinks`.
+- Tests: 40 unit (rutas, `fromISO`, resumen con rango, lecturas compartidas, nombre de ejemplo) y 17 E2E.
+- Nombre de ejemplo en tests, docs y capturas: siempre **Nicole** (`tests/unit/names.test.js` lo vigila).
+
 ## 2026-10-01 · El calendario reúne todo (cache `v3`)
 
 **Para quien lo usa**

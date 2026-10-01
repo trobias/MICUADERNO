@@ -169,6 +169,8 @@ Validación al importar (en orden, con mensaje humano por cada falla):
 
 Las ocurrencias virtuales salen de `MC.recurrence.occursOn` sin contar las que ya tienen actividad `(routineId, date)`. `MC.model.pagesOn(fecha)` devuelve las páginas empezadas ese día (para la página del día).
 
+`MC.model.summarize(días, actividades, { from, to, routines, pages })` es la **única cuenta** de “qué hubo cada día”: la usan el mes, la semana, *Mi año* (sin `routines`, para bordar solo lo registrado) y la impresión. Con `from`/`to` ignora lo que cae afuera. Reglas compartidas en el modelo: `countsAsDone(estado)` (“hecho” = `done` o `partial`; las exportaciones conservan el estado exacto), `hasWriting(día)`, `moodLabel(n)`, `pageTitle(página)`, `pageDate(página)` y `MC.dates.fromISO(instante)` para pasar un `createdAt`/`updatedAt` a fecha local.
+
 ## Exportaciones derivadas
 
 - **TXT:** encabezado + un bloque por día (fecha larga, ánimos por nombre, intención, actividades con marca `[x] [/] [→] [·] [ ]`, notas, reflexiones) + páginas.

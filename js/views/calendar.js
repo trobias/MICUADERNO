@@ -2,35 +2,33 @@
 (function (root) {
   'use strict';
   var MC = root.MC;
-  var h = MC.h, D = MC.dates, M = MC.model;
+  var h = MC.h, D = MC.dates, M = MC.model, R = MC.routes, c = MC.c;
 
   function modeSwitch(mode, month, date) {
     var sw = h('div.choice-row.cal-mode', { role: 'group', 'aria-label': 'Cómo ver el calendario' });
     [['mes', 'Mes', 'grid'], ['semana', 'Semana', 'week']].forEach(function (m) {
       var b = h('button.choice', { type: 'button', 'aria-pressed': String(mode === m[0]) }, MC.icon(m[2]), m[1]);
       b.addEventListener('click', function () {
-        location.hash = m[0] === 'mes' ? '#/calendario/mes/' + (month || D.monthKey(date)) : '#/calendario/semana/' + (date || (month === D.monthKey(D.today()) ? D.today() : month + '-01'));
+        location.hash = m[0] === 'mes' ? R.month(month || D.monthKey(date)) : R.week(date || (month === D.monthKey(D.today()) ? D.today() : month + '-01'));
       });
       sw.appendChild(b);
     });
     return sw;
   }
 
-  function moodName(n) { return n ? M.settings().moodLabels[n - 1] : null; }
-
   /* ---------- MES (el centro de la app) ---------- */
   function monthsStrip(month) {
     var y = +month.slice(0, 4);
     var todayMonth = D.monthKey(D.today());
     var strip = h('nav.months', { 'aria-label': 'Meses de ' + y },
-      h('a.icon-btn.icon-btn--sm.months__year-btn', { href: '#/calendario/mes/' + (y - 1) + month.slice(4), 'aria-label': 'Año anterior' }, MC.icon('arrow-left')),
+      h('a.icon-btn.icon-btn--sm.months__year-btn', { href: R.month((y - 1) + month.slice(4)), 'aria-label': 'Año anterior' }, MC.icon('arrow-left')),
       h('span.months__year', String(y)),
-      h('a.icon-btn.icon-btn--sm.months__year-btn', { href: '#/calendario/mes/' + (y + 1) + month.slice(4), 'aria-label': 'Año siguiente' }, MC.icon('arrow-right')));
+      h('a.icon-btn.icon-btn--sm.months__year-btn', { href: R.month((y + 1) + month.slice(4)), 'aria-label': 'Año siguiente' }, MC.icon('arrow-right')));
     var list = h('ol.months__list');
     D.MONTHS_SHORT.forEach(function (m, i) {
       var key = y + '-' + D.pad(i + 1);
       list.appendChild(h('li', h('a.month-chip', {
-        href: '#/calendario/mes/' + key,
+        href: R.month(key),
         'aria-label': D.MONTHS[i] + ' ' + y + (key === todayMonth ? ' (este mes)' : ''),
         'aria-current': key === month ? 'date' : null,
         class: key === todayMonth ? 'is-now' : null
@@ -69,7 +67,7 @@
           var inMonth = D.monthKey(key) === month;
           var parts = [D.parse(key).d + ' de ' + D.MONTHS[D.parse(key).m - 1]];
           if (key === today) parts.push('hoy');
-          if (info && info.mood) parts.push(moodName(info.mood));
+          if (info && info.mood) parts.push(M.moodLabel(info.mood));
           // Pasado: solo lo hecho (sin cuentas de lo que quedó). Hoy y adelante: lo planeado, rutinas incluidas.
           var ahead = key >= today;
           var planned = ahead && info ? info.pending : 0;
@@ -95,7 +93,7 @@
               pages.length ? h('span.mark-page', { 'aria-hidden': 'true' }, MC.icon('paginas')) : null),
             key === marked ? h('span.day-cell__ribbon', { 'aria-hidden': 'true' }) : null);
           // Tocar un día abre su página en el cuadro desplegable.
-          btn.addEventListener('click', function () { MC.ui.set('calSelected', key); location.hash = '#/dia/' + key; });
+          btn.addEventListener('click', function () { MC.ui.set('calSelected', key); location.hash = R.day(key); });
           btn.addEventListener('keydown', onKey);
           cells.push(btn);
           r.appendChild(btn);
@@ -117,7 +115,7 @@
         if (j < 0 || j >= cells.length) {
           var target = D.addDays(cells[i].dataset.date, map[e.key]);
           MC.ui.set('calSelected', target);
-          location.hash = '#/calendario/mes/' + D.monthKey(target);
+          location.hash = R.month(D.monthKey(target));
           return;
         }
         cells[i].tabIndex = -1;
@@ -132,7 +130,7 @@
   function legend() {
     var labels = M.settings().moodLabels;
     return h('ul.mood-legend', { 'aria-label': 'Referencias' },
-      [1, 2, 3, 4, 5].map(function (m) { return h('li', h('span', { html: MC.stickers.miniPatchMarkup(m) }), labels[m - 1]); }),
+      [1, 2, 3, 4, 5].map(function (m) { return h('li', c.moodMark(m), labels[m - 1]); }),
       h('li', h('span.mark-ink'), 'escribiste'),
       h('li', h('span.mark-star', { html: '<svg viewBox="0 0 24 24"><use href="#i-star"/></svg>' }), 'recuerdo'),
       h('li', h('span.mark-x', '×'), 'hecho'),
@@ -161,10 +159,10 @@
         var title = sp.m === ep.m ? sp.d + ' al ' + ep.d + ' de ' + D.MONTHS[ep.m - 1] : sp.d + ' de ' + D.MONTHS[sp.m - 1] + ' al ' + ep.d + ' de ' + D.MONTHS[ep.m - 1];
         leftPage.appendChild(h('header.cal-head',
           h('div.cal-head__title',
-            h('a.icon-btn', { href: '#/calendario/semana/' + D.addDays(start, -7), 'aria-label': 'Semana anterior' }, MC.icon('arrow-left')),
+            h('a.icon-btn', { href: R.week(D.addDays(start, -7)), 'aria-label': 'Semana anterior' }, MC.icon('arrow-left')),
             h('h1.t-display.week-title', 'Semana', h('span.week-title__range', title)),
-            h('a.icon-btn', { href: '#/calendario/semana/' + D.addDays(start, 7), 'aria-label': 'Semana siguiente' }, MC.icon('arrow-right'))),
-          h('div.cal-head__tools', (today < start || today > end) ? h('a.text-btn', { href: '#/calendario/semana/' + today }, 'Esta semana') : null, modeSwitch('semana', D.monthKey(date), date))));
+            h('a.icon-btn', { href: R.week(D.addDays(start, 7)), 'aria-label': 'Semana siguiente' }, MC.icon('arrow-right'))),
+          h('div.cal-head__tools', (today < start || today > end) ? h('a.text-btn', { href: R.week(today) }, 'Esta semana') : null, modeSwitch('semana', D.monthKey(date), date))));
         D.range(start, end).forEach(function (k, i) {
           (i < 3 ? leftPage : rightPage).appendChild(dayBlock(k, byDay[k], lists[i], today, pagesByDay[k] ? pagesByDay[k].pages : []));
         });
@@ -179,15 +177,14 @@
   function dayBlock(k, day, list, today, pages) {
     var mood = day && (day.evening.mood || day.morning.mood);
     var p = D.parse(k);
-    var head = h('a.week-day__head', { href: '#/dia/' + k },
+    var head = h('a.week-day__head', { href: R.day(k) },
       h('span.week-day__name', D.capitalize(D.DAYS[D.weekday(k)])),
       h('span.week-day__num.t-display', String(p.d)),
-      mood ? h('span', { html: MC.stickers.miniPatchMarkup(mood), title: moodName(mood) }) : null,
-      mood ? h('span.sr-only', moodName(mood)) : null);
+      mood ? c.moodMark(mood, M.moodLabel(mood)) : null);
     var ul = h('ul.week-day__list');
     list.slice(0, 7).forEach(function (it) {
       ul.appendChild(h('li', { dataset: { status: it.status } },
-        h('span.week-mark', { 'aria-hidden': 'true', html: markSvg(it.status) }),
+        c.statusMark(it.status),
         h('span', it.title),
         h('span.sr-only', ' — ' + (it.status === 'pending' ? 'sin marcar' : M.STATUS_LABEL[it.status].toLowerCase()))));
     });
@@ -197,17 +194,8 @@
       head,
       list.length ? ul : null,
       firstLine ? h('p.week-day__line', firstLine.length > 90 ? firstLine.slice(0, 88) + '…' : firstLine) : null,
-      pages.length ? h('ul.day-pages.day-pages--week', pages.map(function (pg) {
-        return h('li', h('a.text-btn', { href: '#/pagina/' + pg.id }, MC.icon('paginas'), pg.title.trim() || 'Página sin título'));
-      })) : null,
+      pages.length ? c.pageLinks(pages, 'day-pages--week') : null,
       !list.length && !firstLine && !pages.length ? h('p.week-day__blank', k < today ? 'en blanco' : '') : null);
-  }
-
-  function markSvg(status) {
-    var col = { done: 'var(--thread-done)', partial: 'var(--thread-partial)', postponed: 'var(--thread-later)', skipped: 'var(--thread-skip)', pending: 'var(--ink-faint)' }[status];
-    var inner = status === 'done' ? '<path d="M7 7l10 10M17 7 7 17"/>' : status === 'partial' ? '<path d="M7 7l10 10"/>' :
-      status === 'postponed' ? '<path d="M6 12h10M13 8.5l3.5 3.5-3.5 3.5"/>' : status === 'skipped' ? '<circle cx="12" cy="12" r="2.5" fill="currentColor"/>' : '';
-    return '<svg viewBox="0 0 24 24" style="color:' + col + '"><rect x="3.5" y="3.5" width="17" height="17" rx="2.5" fill="none" stroke="var(--ink-faint)" stroke-dasharray="2 2"/><g fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round">' + inner + '</g></svg>';
   }
 
   function render(main, params) {
@@ -216,5 +204,5 @@
   }
 
   MC.views = MC.views || {};
-  MC.views.calendar = { render: render, markSvg: markSvg };
+  MC.views.calendar = { render: render };
 })(window);

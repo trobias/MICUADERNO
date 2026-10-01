@@ -207,7 +207,7 @@
       D.range(start, D.addDays(start, 6)).forEach(function (k) {
         var hits = active.filter(function (r) { return R.occursOn(r, k); });
         ul.appendChild(h('li.week-mini__day', { class: k === today ? 'is-today' : null },
-          h('a.week-mini__name', { href: '#/dia/' + k }, D.DAYS_SHORT[D.weekday(k)] + ' ' + D.parse(k).d),
+          h('a.week-mini__name', { href: MC.routes.day(k) }, D.DAYS_SHORT[D.weekday(k)] + ' ' + D.parse(k).d),
           h('span.week-mini__items', hits.length ? hits.slice(0, 5).map(function (r) { return r.title; }).join(' · ') + (hits.length > 5 ? ' · y ' + (hits.length - 5) + ' más' : '') : '—')));
       });
       right.appendChild(ul);

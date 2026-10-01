@@ -50,7 +50,7 @@
       c.dialog({
         title: 'Abrir esta copia',
         content: [
-          h('p.t-text', 'Es ' + (s.name ? 'el cuaderno de ' + s.name : 'un cuaderno') + (s.exportedAt ? ', guardado el ' + D.longLabel(D.fromDate(new Date(s.exportedAt))) : '') + '.'),
+          h('p.t-text', 'Es ' + (s.name ? 'el cuaderno de ' + s.name : 'un cuaderno') + (D.fromISO(s.exportedAt) ? ', guardado el ' + D.longLabel(D.fromISO(s.exportedAt)) : '') + '.'),
           h('p.t-text', 'Tiene ' + parts.join(', ') + (s.from ? ', del ' + D.shortLabel(s.from) + ' ' + s.from.slice(0, 4) + ' al ' + D.shortLabel(s.to) + ' ' + s.to.slice(0, 4) : '') + '.'),
           h('div.slip.slip--rose', h('p', 'Al abrirla, reemplaza todo lo que hay ahora en este cuaderno. Si querés conservarlo, descargá una copia primero.'))
         ],
@@ -62,7 +62,7 @@
             return MC.backup.restore(v.payload).then(function (settings) {
               MC.app.applySettings(settings);
               c.toast('Listo, tu cuaderno está de vuelta.');
-              if (location.hash === '#/hoy') MC.app.refresh(); else location.hash = '#/hoy';
+              if (location.hash === MC.routes.today()) MC.app.refresh(); else location.hash = MC.routes.today();
             }, function (err) {
               console.error(err);
               c.toast('No se pudo restaurar. Tu cuaderno actual quedó como estaba.');
@@ -91,7 +91,7 @@
           return MC.backup.wipe().then(function (s) {
             MC.app.applySettings(s);
             MC.ui.set('coverOpens', 0);
-            location.hash = '#/bienvenida';
+            location.hash = MC.routes.welcome();
           });
         } }
       ]
@@ -116,7 +116,7 @@
         var labels = MC.$$('input', moodInputs).map(function (x) { return x.value; });
         save({ moodLabels: labels }, 'Nombres guardados.');
       });
-      moodInputs.appendChild(h('li', h('span', { html: MC.stickers.miniPatchMarkup(i + 1) }), inp));
+      moodInputs.appendChild(h('li', c.moodMark(i + 1), inp));
     });
     left.appendChild(c.section('Vos', [
       h('div.field', h('label', { for: 'st-name' }, 'Cómo querés que te llame'), name),
@@ -173,7 +173,7 @@
     }));
     every.addEventListener('change', function () { save({ backupEveryDays: +every.value }, 'Guardado.'); });
     var lastBackup = h('p.t-meta');
-    M.getMeta('lastBackupAt', null).then(function (v) { lastBackup.textContent = v ? 'Última copia: ' + D.longLabel(D.fromDate(new Date(v))) : 'Todavía no guardaste ninguna copia.'; });
+    M.getMeta('lastBackupAt', null).then(function (v) { lastBackup.textContent = D.fromISO(v) ? 'Última copia: ' + D.longLabel(D.fromISO(v)) : 'Todavía no guardaste ninguna copia.'; });
 
     function action(icon, label, fn, cls) {
       var b = h('button.' + (cls || 'label-btn.label-btn--soft'), { type: 'button' }, MC.icon(icon), label);
@@ -191,7 +191,7 @@
       h('div.field', h('label', { for: 'st-every' }, 'Recordarme hacer una copia'), every),
       h('h3.subhead', 'Llevarme mi cuaderno'),
       h('div.data-actions',
-        action('print', 'Imprimir mi cuaderno', function () { location.hash = '#/imprimir'; }, 'label-btn'),
+        action('print', 'Imprimir mi cuaderno', function () { location.hash = MC.routes.print(); }, 'label-btn'),
         action('download', 'Texto (.txt)', function () { exportFile('txt'); }),
         action('download', 'Planilla (.xlsx)', function () { exportFile('xlsx'); }),
         action('download', 'Días (.csv)', function () { exportFile('csv-dias'); }),
