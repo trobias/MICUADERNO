@@ -51,13 +51,34 @@ Pedido de la dueña del proyecto (DECISIONS D17): **sin secciones separadas**. T
 | Ruta | Qué muestra |
 |---|---|
 | `#/calendario` · `#/calendario/mes/AAAA-MM` · `#/calendario/semana/AAAA-MM-DD` | la pantalla principal (sin cuadro) |
+| `#/calendario/mes/AAAA-MM/rutina/:id` | el mes con los días de esa rutina marcados |
 | `#/hoy` · `#/dia/AAAA-MM-DD` | cuadro con la página del día |
-| `#/rutinas` | cuadro de rutinas |
+| `#/rutinas` · `#/rutinas/:id` | cuadro de rutinas (con esa rutina resaltada) |
 | `#/paginas` · `#/pagina/:id` | cuadro con el índice o una página |
 | `#/anio/AAAA` | cuadro con el bordado del año, lo que fui notando y lo que guardé |
 | `#/ajustes` · `#/imprimir` | cuadro de ajustes / impresión |
 
 Todas las rutas siguen siendo enlazables (atajos de la PWA, notificaciones). Se arman y se leen en un solo lugar, `js/core/routes.js` (`MC.routes.day(fecha)`, `MC.routes.page(id)`, `MC.routes.parse(hash)`…): ninguna vista escribe `#/…` a mano (DECISIONS D19).
+
+### 5.1 Cómo se conectan las secciones
+
+Todo lo que tiene fecha lleva a su día, y cada día lleva a sus cosas (DECISIONS D20). Los enlaces son texto chiquito o íconos que ya estaban, nunca botones nuevos que compitan con el calendario.
+
+| Desde | Lleva a |
+|---|---|
+| Calendario: un día | la página de ese día |
+| Calendario: el año de la tira (“2026”) | *Mi año* de ese año; además el botoncito *Mi año* abre el año que se está mirando |
+| Página del día: “Ver la rutina” (menú de una actividad de rutina) | el cuadro de rutinas con esa rutina resaltada y con el foco |
+| Página del día: “viene del 30 sep” | el día de donde se pasó esa actividad |
+| Página del día: *Páginas de este día* | cada página empezada ese día |
+| Rutina: “próxima: …” | el día de la próxima vez |
+| Rutina: ícono de calendario | el mes con sus días marcados: de hoy en adelante los que tocan, para atrás solo los que se hicieron |
+| Calendario con una rutina marcada | “Ver la rutina”, “Dejar de mostrar”; cambiar de mes la mantiene |
+| Página libre: “Empezada el …” | el día en que se empezó |
+| *Mi año*: la inicial de cada mes | ese mes en el calendario |
+| *Mi año*: un punto cruz o un recuerdo | ese día |
+| *Lo que fui notando* | los días de los que habla cada observación (“Ir a ese día”, “Ver los días”, o la rutina en el calendario) |
+| Semana: un día o una página | ese día o esa página |
 
 ## 6. User journeys
 
@@ -128,12 +149,14 @@ El calendario es donde aparece **todo lo que tiene fecha**: ánimo, escritura, r
   Los días pasados **no** muestran lo que quedó sin marcar (sin cuentas de “pendientes” para atrás: amable, ver D18). Cada marca tiene su texto en el `aria-label` del día (“una cosa planeada”, “empezaste una página”) y su lugar en la leyenda. Hoy con borde a lápiz; el último día abierto lleva una cinta-marcador. Tocar un día → su página en el cuadro desplegable.
 - **Semana**: agenda de 7 días (desktop: lun-mié izquierda / jue-dom derecha). Cada día: ánimo, actividades (incluye rutinas futuras virtuales), primera línea escrita y enlaces a las páginas empezadas ese día. Tocar → abre el día.
 - **Mi año** sigue mostrando solo lo registrado: una rutina sin marcar no borda medio punto.
+- **Los días de una rutina** (desde Rutinas o *Lo que fui notando*): el mes marca con tinte de salvia + el ícono de rutinas los días que la tocan de hoy en adelante y los días pasados en que se hizo (también “un poquito”). Los días pasados en que no se hizo no se marcan. Arriba, un aviso con “Ver la rutina” y “Dejar de mostrar”.
 - Navegación anterior/siguiente, “hoy”.
 
 ### 7.4 Rutinas
 - Lista agrupada por momento del día (mañana / tarde / noche / cuando sea).
 - Frecuencias soportadas (§11). Descripción humana de la regla (“Lun · Mié · Vie”, “Cada 3 días”, “Primer sábado del mes”).
 - Pausar/reanudar (archivar), editar, borrar (con confirmación; el historial ya marcado se conserva como actividades sueltas).
+- Cada rutina: la próxima vez es un enlace a ese día; el ícono de calendario muestra sus días en el mes. Si se llega desde “Ver la rutina”, aparece resaltada y con el foco.
 
 ### 7.5 Páginas
 - **Índice** con título, fecha y número de página con puntos guía (como un índice real). Fijar páginas arriba.
@@ -142,12 +165,13 @@ El calendario es donde aparece **todo lo que tiene fecha**: ánimo, escritura, r
 - Papel: rayado, cuadriculado, punteado, liso.
 - Stickers (scrapbook).
 - Borrar con confirmación.
+- “Empezada el …” es un enlace al día en que se empezó (ese día la página también aparece en el calendario).
 
 ### 7.6 Mi año
 - **Bordado**: 12 columnas (meses) × 31 filas (días). Día sin registro = punto de cruz a lápiz sin llenar (bonito vacío). Día con ánimo = parche del color del hilo de ese ánimo + glifo accesible en tooltip/label.
 - Leyenda de ánimos siempre visible (glifo + nombre + color).
-- Tocar un día → abre su página.
-- **Lo que fui notando**: 3-6 observaciones descriptivas (§12).
+- Tocar un día → abre su página. La inicial de cada mes lleva a ese mes en el calendario.
+- **Lo que fui notando**: 3-6 observaciones descriptivas (§12), cada una con el camino a sus días.
 - **Lo que guardé**: lista de recuerdos (“qué quiero guardar”) del año, como papelitos.
 
 ### 7.7 Ajustes
@@ -215,6 +239,8 @@ Reglas:
 - Umbral mínimo: al menos 5 observaciones para comparar; si no, no se muestra ese insight.
 - Nunca más de 6 a la vez. Si no hay suficientes datos: “Cuando llenes algunas páginas más, acá voy a ir anotando lo que noto.”
 
+Cada observación dice de qué días habla (`day`, `days` o `routineId` + `month`), así se puede ir a verlos: “Ir a ese día”, “Ver los días” (lista desplegable de fechas) o “Ver en el calendario” (los días de la rutina). “Hoy empezaste este cuaderno” no lleva a ningún lado.
+
 Catálogo inicial: días desde que empezó el cuaderno; veces que escribió esta semana; rutina más acompañada del mes (“Caminaste 6 días este mes”); día de la semana que más suele empezar con ánimo alto; comparación entre empezar y terminar el día (“Terminaste el día igual o mejor de lo que empezaste 12 de 18 veces”); co-ocurrencia descriptiva actividad-ánimo (“Los días que caminaste terminaste el día bien o muy bien 8 de 11 veces”).
 
 ## 13. Datos, backup y exportación
@@ -279,7 +305,7 @@ skills/               colección de skills (no es parte de la app)
 
 - **Comandos (desarrollo, nunca para la persona usuaria):**
   - `npm test` — unit tests (node:test, sin dependencias).
-  - `npm run e2e` — 17 recorridos con `playwright-core` contra `file://` y `http://127.0.0.1` (usa el Chromium del sistema; `CHROMIUM=/ruta` para cambiarlo).
+  - `npm run e2e` — 18 recorridos con `playwright-core` contra `file://` y `http://127.0.0.1` (usa el Chromium del sistema; `CHROMIUM=/ruta` para cambiarlo).
   - `npm run check` — `node --check` de todos los JS + unit + e2e.
   - `npm run serve` — servidor estático en `http://localhost:4173` para probar la PWA.
   - `npm run icons` — regenera PNG/ICO desde los SVG maestros.

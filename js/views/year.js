@@ -34,7 +34,11 @@
       // Bastidor
       var hoop = h('div.hoop', { role: 'grid', 'aria-label': 'Ánimo de cada día de ' + year, style: { '--cols': 12 } });
       var head = h('div.hoop__row.hoop__row--head', { role: 'row' }, h('span.hoop__corner', { role: 'columnheader', 'aria-label': 'Día' }));
-      D.MONTHS_SHORT.forEach(function (m, i) { head.appendChild(h('span.hoop__month', { role: 'columnheader', 'aria-label': D.MONTHS[i] }, m.charAt(0).toUpperCase())); });
+      // Cada inicial de mes lleva a ese mes en el calendario.
+      D.MONTHS_SHORT.forEach(function (m, i) {
+        head.appendChild(h('span.hoop__month', { role: 'columnheader', 'aria-label': D.MONTHS[i] },
+          h('a', { href: R.month(year + '-' + D.pad(i + 1)), 'aria-label': 'Ver ' + D.MONTHS[i] + ' en el calendario', title: D.capitalize(D.MONTHS[i]) }, m.charAt(0).toUpperCase())));
+      });
       hoop.appendChild(head);
       var cells = [];
       for (var d = 1; d <= 31; d++) {
@@ -63,7 +67,7 @@
 
       left.appendChild(h('ul.mood-legend.year-legend', { 'aria-label': 'Referencias' },
         [1, 2, 3, 4, 5].map(function (mm) { return h('li', h('span.stitch-cell.stitch-cell--key', { dataset: { mood: String(mm) }, 'aria-hidden': 'true' }), c.moodMark(mm), labels[mm - 1]); }),
-        h('li', h('span.stitch-cell.stitch-cell--key.is-half', { 'aria-hidden': 'true' }), 'escribiste, sin ánimo')));
+        h('li', h('span.stitch-cell.stitch-cell--key.is-half', { 'aria-hidden': 'true' }), 'algo anotado, sin ánimo')));
 
       function go(e) { location.hash = R.day(e.currentTarget.dataset.date); }
       function onKey(e) {
@@ -88,7 +92,7 @@
       if (insights.length <= 1) {
         right.appendChild(h('p.section__hint', 'Cuando llenes algunas páginas más, acá voy a ir anotando lo que noto.'));
       }
-      right.appendChild(h('ul.noticed', insights.map(function (i) { return h('li', i.text); })));
+      right.appendChild(h('ul.noticed', insights.map(insightItem)));
       right.appendChild(h('p.noticed__foot.t-meta', 'Son solo cuentas de lo que registraste, no conclusiones.'));
 
       var memories = all.days.filter(function (dd) { return dd.date.slice(0, 4) === year && dd.reflection.keep.trim(); }).reverse();
@@ -119,6 +123,32 @@
     });
 
     return { destroy: function () { destroyed = true; } };
+  }
+
+  /** Una observación con el camino a los días de los que habla (ver MC.insights). */
+  function insightItem(i) {
+    var li = h('li', h('p', i.text));
+    var go = function (href, text) { return h('div.noticed__actions', h('a.text-btn', { href: href }, text)); };
+    if (i.routineId && i.month) { li.appendChild(go(R.month(i.month, { routine: i.routineId }), 'Ver en el calendario')); return li; }
+    var days = i.day ? [i.day] : (i.days || []);
+    if (days.length === 1) { li.appendChild(go(R.day(days[0]), 'Ir a ese día')); return li; }
+    if (!days.length) return li;
+    var thisYear = D.today().slice(0, 4);
+    var list = h('p.noticed__days', { id: MC.uid('days'), hidden: true });
+    days.forEach(function (k, n) {
+      if (n) list.appendChild(document.createTextNode(' · '));
+      list.appendChild(h('a', { href: R.day(k) }, D.shortLabel(k) + (k.slice(0, 4) === thisYear ? '' : ' ' + k.slice(0, 4))));
+    });
+    var btn = h('button.text-btn', { type: 'button', 'aria-expanded': 'false', 'aria-controls': list.id }, 'Ver los días');
+    btn.addEventListener('click', function () {
+      var open = list.hidden;
+      list.hidden = !open;
+      btn.setAttribute('aria-expanded', String(open));
+      btn.textContent = open ? 'Ocultar los días' : 'Ver los días';
+    });
+    li.appendChild(h('div.noticed__actions', btn));
+    li.appendChild(list);
+    return li;
   }
 
   MC.views = MC.views || {};

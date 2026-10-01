@@ -372,7 +372,7 @@
 
   /* ---------- resúmenes para calendario, año e impresión ---------- */
   function blankSummary(date) {
-    return { date: date, morning: null, evening: null, mood: null, wrote: false, memory: '', done: 0, total: 0, pending: 0, planned: 0, routines: 0, pages: [] };
+    return { date: date, morning: null, evening: null, mood: null, wrote: false, memory: '', done: 0, total: 0, pending: 0, planned: 0, routines: 0, byRoutine: {}, pages: [] };
   }
 
   /**
@@ -403,7 +403,7 @@
       s.total++;
       if (countsAsDone(a.status)) s.done++;
       if (a.status === 'pending') s.pending++;
-      if (a.routineId) { s.routines++; marked[a.routineId + '|' + a.date] = true; }
+      if (a.routineId) { s.routines++; s.byRoutine[a.routineId] = a.status; marked[a.routineId + '|' + a.date] = true; }
     });
     if (extra.routines && extra.routines.length && from && to) {
       D.range(from, to).forEach(function (k) {
@@ -411,6 +411,7 @@
           if (marked[r.id + '|' + k] || !R.occursOn(r, k)) return;
           var s = at(k);
           s.total++; s.pending++; s.planned++; s.routines++;
+          s.byRoutine[r.id] = 'pending';
         });
       });
     }

@@ -99,7 +99,7 @@ skills/                 colección de skills del proyecto (no es parte de la app
 ```
 npm test          # unit (node:test), sin instalar nada
 npm install       # solo para e2e/íconos: instala playwright-core (no descarga navegadores)
-npm run e2e       # 17 recorridos en file:// y http:// (Chromium en /opt/pw-browsers/chromium o CHROMIUM=/ruta)
+npm run e2e       # 18 recorridos en file:// y http:// (Chromium en /opt/pw-browsers/chromium o CHROMIUM=/ruta)
 npm run check     # sintaxis + unit + e2e
 npm run serve     # http://localhost:4173 (probar PWA/SW)
 ```
@@ -122,6 +122,7 @@ Probar a mano además: doble clic en `index.html`; mobile 375px; teclado solo; `
 - Las ocurrencias de rutina son virtuales hasta que se marcan (`item.virtual`); usá `MC.model.setStatus`, nunca escribas actividades de rutina a mano.
 - Rutas: nunca escribir `'#/…'` a mano; usar `MC.routes.*`. Una ruta nueva se agrega en `js/core/routes.js` con su test (D19).
 - Antes de dibujar o contar algo, buscá si ya existe (D19): `MC.model.summarize` / `countsAsDone` / `hasWriting` / `moodLabel` / `pageTitle`, `MC.dates.fromISO`, `MC.c.moodMark` / `statusMark` / `pageLink(s)`, `MC.stickers.statusMarkup`.
+- Conexiones (D20): una vista nueva se conecta con las demás por las fechas: de cada cosa a sus días y de cada día a sus cosas (SPEC §5.1). Enlaces sobre texto que ya existe, no botones nuevos.
 - Todo lo que tiene fecha tiene que verse en el calendario (DECISIONS D18). Si agregás algo fechado, sumalo en `MC.model.summarize` (con test) y dale marca + texto en la celda y la leyenda de `js/views/calendar.js`. En días pasados, nunca mostrar lo que quedó sin hacer.
 
 ## Anti-patterns

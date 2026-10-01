@@ -139,7 +139,8 @@
         onInput: function (v) { page.body = v; persist(); }
       }));
       var started = M.pageDate(page);
-      if (started) sheet.appendChild(h('p.page-meta.t-meta', 'Empezada el ' + D.longLabel(started)));
+      // La fecha lleva al día en que se empezó (ahí también aparece en el calendario).
+      if (started) sheet.appendChild(h('p.page-meta.t-meta', 'Empezada el ', h('a', { href: R.day(started) }, D.longLabel(started))));
       scrap = MC.scrapbook.attach(sheet, { stickers: page.stickers, label: 'esta página', onChange: function (list) { page.stickers = list; persist(); } });
       sheet.appendChild(scrap.toolbar);
     }

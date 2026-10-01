@@ -197,6 +197,7 @@
 .activity__note--skip { color: var(--ink-soft); }
 .activity__routine { display: inline-flex; align-items: center; gap: 3px; font-family: var(--font-ui); font-size: var(--fs-xs); color: var(--ink-soft); }
 .activity__routine svg { width: 14px; height: 14px; }
+.activity__from { text-decoration-style: dashed; text-decoration-color: var(--ink-faint); }
 .activity .icon-btn { margin-right: -8px; }
 .activity__edit { flex: 1; min-width: 0; }
 .add-activity { display: flex; align-items: center; gap: 10px; min-height: 48px; border-bottom: 1px solid var(--rule); }

@@ -189,7 +189,8 @@
         if (it.routineId) {
           meta.appendChild(h('span.activity__routine', MC.icon('rutinas'), it.routineGone ? 'rutina (ya no está)' : 'rutina'));
         }
-        if (it.movedFrom) meta.appendChild(h('span.activity__routine', MC.icon('later'), 'viene del ' + D.shortLabel(it.movedFrom)));
+        // “Viene del…” lleva al día de donde se pasó.
+        if (it.movedFrom) meta.appendChild(h('a.activity__routine.activity__from', { href: R.day(it.movedFrom) }, MC.icon('later'), 'viene del ' + D.shortLabel(it.movedFrom)));
         var n = statusNote(it);
         if (n) meta.appendChild(n);
         meta.hidden = !meta.firstChild;
@@ -256,7 +257,7 @@
         } });
         opts.push({ label: 'Cambiar el nombre', icon: 'edit', onSelect: startRename });
         if (it.routineId && !it.routineGone) {
-          opts.push({ label: 'Ver la rutina', icon: 'rutinas', onSelect: function () { location.hash = R.routines(); } });
+          opts.push({ label: 'Ver la rutina', icon: 'rutinas', onSelect: function () { location.hash = R.routine(it.routineId); } });
         }
         if (!it.virtual) {
           opts.push({ label: 'Sacar de la lista', icon: 'trash', onSelect: function () {

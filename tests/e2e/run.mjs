@@ -289,6 +289,91 @@ await test('el calendario reúne todo: rutinas planeadas, páginas del día y el
   await context.close();
 });
 
+await test('las secciones se conectan: rutina ↔ calendario, página → día, año ↔ mes, notando → días', async () => {
+  const { page, errors, context } = await newPage(browser);
+  await page.goto(FILE_URL);
+  await onboard(page);
+  const add = (k, n) => { const d = new Date(+k.slice(0, 4), +k.slice(5, 7) - 1, +k.slice(8, 10) + n); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+  const Y = add(TODAY, -1);
+  const ids = await page.evaluate(async ([today, y, start]) => {
+    const M = MC.model;
+    const r = await M.saveRoutine({ title: 'Estirar', rule: { type: 'daily' }, startDate: start });
+    const yItem = (await M.itemsForDay(y)).find((i) => i.routineId === r.id);
+    await M.setStatus(yItem, 'done');
+    const a = await M.addActivity(y, 'llamar a la abuela');
+    await M.moveToTomorrow(a);
+    const d = await M.getDay(today); d.notes = 'hoy escribí'; await M.saveDay(d);
+    const p = await M.savePage({ title: 'Ideas' });
+    return { routine: r.id, page: p.id };
+  }, [TODAY, Y, add(TODAY, -3)]);
+
+  // Día → “Ver la rutina” → la rutina, resaltada y con el foco.
+  await goto(page, '#/dia/' + TODAY);
+  await page.click('button[aria-label="Más opciones para Estirar"]');
+  await page.click('.menu__item:has-text("Ver la rutina")');
+  await page.waitForSelector('.routine.is-focus[aria-current="true"]');
+  assert.match(await page.textContent('.routine.is-focus'), /Estirar/);
+  await page.waitForTimeout(100);
+  assert.equal(await page.evaluate(() => document.activeElement.classList.contains('is-focus')), true, 'el foco queda en la rutina');
+
+  // Rutina → sus días en el calendario.
+  await page.click('.routine.is-focus a[aria-label^="Ver los días"]');
+  await page.waitForSelector('.routine-filter');
+  assert.equal(await page.locator('#panel').evaluate((d) => d.open), false, 'se cerró el cuadro');
+  assert.match(page.url(), new RegExp('/rutina/' + ids.routine + '$'));
+  const todayCell = page.locator(`.day-cell[data-date="${TODAY}"]`);
+  assert.equal(await todayCell.getAttribute('data-routine'), 'due');
+  assert.match(await todayCell.getAttribute('aria-label'), /toca «Estirar»/);
+  await goto(page, `#/calendario/mes/${Y.slice(0, 7)}/rutina/${ids.routine}`);
+  assert.equal(await page.locator(`.day-cell[data-date="${Y}"]`).getAttribute('data-routine'), 'done');
+  const before = page.locator(`.day-cell[data-date="${add(TODAY, -2)}"]`);
+  if (await before.count()) assert.equal(await before.getAttribute('data-routine'), null, 'lo que no se hizo no se marca');
+  // Cambiar de mes no apaga la rutina; “Dejar de mostrar” sí.
+  await page.click('.month-chip:not([aria-current])');
+  await page.waitForTimeout(350);
+  assert.match(page.url(), /\/rutina\//);
+  await page.waitForSelector('.routine-filter');
+  await page.click('.routine-filter a:has-text("Dejar de mostrar")');
+  await page.waitForTimeout(350);
+  assert.doesNotMatch(page.url(), /\/rutina\//);
+  assert.equal(await page.locator('.routine-filter').count(), 0);
+
+  // Mes ↔ año.
+  await goto(page, '#/calendario/mes/' + TODAY.slice(0, 7));
+  await page.click('a.months__year');
+  await page.waitForSelector('#panel[open] .hoop');
+  const monthName = await page.evaluate((k) => MC.dates.MONTHS[+k.slice(5, 7) - 1], TODAY);
+  await page.click(`.hoop__month a[aria-label="Ver ${monthName} en el calendario"]`);
+  await page.waitForTimeout(400);
+  assert.equal(await page.locator('#panel').evaluate((d) => d.open), false);
+  assert.match(page.url(), new RegExp('#/calendario/mes/' + TODAY.slice(0, 7) + '$'));
+  await goto(page, '#/calendario/mes/2025-03');
+  assert.match(await page.getAttribute('.mini-opt[data-opt="anio"]', 'href'), /#\/anio\/2025$/, 'Mi año sigue al calendario');
+  await goto(page, '#/calendario/mes/' + TODAY.slice(0, 7));
+  assert.match(await page.getAttribute('.mini-opt[data-opt="anio"]', 'href'), /#\/anio$/);
+
+  // Página → su día; “viene del…” → el día de donde se pasó.
+  await goto(page, '#/pagina/' + ids.page);
+  await page.click('.page-meta a');
+  await page.waitForSelector('#panel[open] .day-head');
+  assert.match(page.url(), new RegExp('#/dia/' + TODAY + '$'));
+  await page.click('.activity__from');
+  await page.waitForTimeout(400);
+  assert.match(page.url(), new RegExp('#/dia/' + Y + '$'));
+
+  // Lo que fui notando → los días.
+  await goto(page, '#/anio');
+  await page.click('.noticed li:has-text("empezaste este cuaderno") a:has-text("Ir a ese día")');
+  await page.waitForTimeout(400);
+  assert.match(page.url(), new RegExp('#/dia/' + Y + '$'), 'lo primero registrado fue ayer');
+  await goto(page, '#/anio');
+  await page.click('.noticed li:has-text("Esta semana escribiste") a:has-text("Ir a ese día")');
+  await page.waitForTimeout(400);
+  assert.match(page.url(), new RegExp('#/dia/' + TODAY + '$'));
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
 await test('mobile 375px: una pantalla, 5 botoncitos, sin scroll horizontal', async () => {
   const { page, errors, context } = await newPage(browser, { viewport: { width: 375, height: 760 } });
   await page.goto(FILE_URL);

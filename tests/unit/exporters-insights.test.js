@@ -85,3 +85,29 @@ test('insights: pocos datos → solo lo que corresponde', () => {
   const list = MC.insights.compute(s, '2026-09-02');
   assert.ok(list.every((i) => ['since', 'week-writing'].includes(i.id)));
 });
+
+test('insights: cada observación dice de qué días habla, y coinciden con la cuenta', () => {
+  const list = MC.insights.compute(sample(), '2026-09-20');
+  const by = Object.fromEntries(list.map((i) => [i.id, i]));
+  assert.equal(by.since.day, '2026-09-01');
+  // Semana del lunes 14 al domingo 20: notas los días impares (15, 17, 19) y recuerdos los múltiplos de 4 (16, 20).
+  assert.deepEqual(by['week-writing'].days, ['2026-09-15', '2026-09-16', '2026-09-17', '2026-09-19', '2026-09-20']);
+  assert.match(by['week-writing'].text, /5 veces/);
+  assert.equal(by['routine-month'].routineId, 'r1');
+  assert.equal(by['routine-month'].month, '2026-09');
+  for (const i of list) {
+    if (!i.days) continue;
+    assert.deepEqual(i.days, i.days.slice().sort(), i.id + ': en orden');
+    assert.ok(i.days.every((k) => MC.dates.isValid(k)), i.id);
+    const counted = (i.text.match(/(\d+) de \d+ veces/) || [])[1];
+    if (counted) assert.equal(i.days.length, +counted, i.id + ': tantos días como dice el texto');
+  }
+});
+
+test('insights: “hoy empezaste” no lleva a ningún lado', () => {
+  const s = sample();
+  s.meta.createdAt = new Date(2026, 8, 20, 9).toISOString();
+  s.days = []; s.activities = [];
+  const since = MC.insights.compute(s, '2026-09-20').find((i) => i.id === 'since');
+  assert.equal(since.day, null);
+});

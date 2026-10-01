@@ -43,6 +43,13 @@
     });
   }
 
+  /** El botoncito “Mi año” abre el año que se está mirando en el calendario. */
+  function followYear(params) {
+    var y = String(params.mode === 'semana' ? params.date : params.month).slice(0, 4);
+    var a = optsEl.querySelector('[data-opt="anio"]');
+    if (a) a.setAttribute('href', R.year(y === D.today().slice(0, 4) ? null : y));
+  }
+
   function markOpt(id) {
     MC.$$('.mini-opt', optsEl).forEach(function (a) {
       if (a.dataset.opt === id) a.setAttribute('aria-current', 'true'); else a.removeAttribute('aria-current');
@@ -57,13 +64,14 @@
   }
 
   function renderBase(params, force) {
-    var key = 'cal:' + params.mode + ':' + (params.mode === 'semana' ? params.date : params.month);
+    var key = 'cal:' + params.mode + ':' + (params.mode === 'semana' ? params.date : params.month + ':' + (params.routine || ''));
     if (base && base.key === key && !force) return;
     destroy(base);
     MC.clear(main);
     head.hidden = false;
     base = { key: key, params: params, instance: MC.views.calendar.render(main, params) };
     if (params.mode === 'mes') MC.ui.set('calMonth', params.month);
+    followYear(params);
   }
 
   function baseParamsFor(route) {

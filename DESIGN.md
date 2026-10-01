@@ -128,7 +128,7 @@ Escala (rem, base 16px):
   - El texto **nunca se tacha**; done lleva un subrayado de puntada corrida muy suave.
 - **Parche de ánimo** (`.mood-patch`): círculo 52px (44px mínimo táctil) con borde de puntada (dashed 1.5px en hilo) y glifo en hilo. Seleccionado: relleno `--mood-n-tint`, borde continuo, leve rotación (-4° a 4°, fija por ánimo) — como un parche cosido.
 - **Puntada corrida** (`.running-stitch`): separador de secciones = línea discontinua `8px trazo / 6px espacio` en `--rule` más oscuro. Reemplaza a `<hr>` y a bordes de cards.
-- **Bastidor del año**: tela aida (grilla de agujeritos) 12 × 31; día con ánimo = ✕ de punto cruz rellena en el hilo del ánimo; día escrito sin ánimo = medio punto en `--ink-faint`; día inexistente (30/02) = sin agujeros.
+- **Bastidor del año**: tela aida (grilla de agujeritos) 12 × 31; día con ánimo = ✕ de punto cruz rellena en el hilo del ánimo; día con algo anotado pero sin ánimo = medio punto en `--ink-faint` (leyenda: “algo anotado, sin ánimo”); día inexistente (30/02) = sin agujeros.
 - **Botón-etiqueta** (`.label-btn`): etiqueta tejida: fondo `--ink`, texto `--paper`, radio 6px, costura interna punteada `1px rgb(255 249 237 / .45)` a 3px. Variante suave: fondo `--paper-shade`, texto `--ink`.
 - **Cinta-marcador**: cinta de raso (butter o rose) que cuelga del borde superior de la hoja activa; en el calendario, cae sobre el día seleccionado.
 - **Marcas de la celda del mes** (`.day-cell__marks`, fila de 14px bajo el parche, 0.72rem): punto de tinta (`.mark-ink`, escribió) · estrella `--mood-5` (`.mark-star`, recuerdo) · `×n` en `--thread-done-text` (`.mark-x`, hechas) · cajita `box` 12px + número en `--ink-soft` (`.mark-plan`, planeado; solo hoy y adelante) · ícono `paginas` 12px en `--thread-later` (`.mark-page`, página empezada). Todas `aria-hidden`: el significado va en el `aria-label` del día. Nada de rojo ni de “faltan”.
@@ -140,7 +140,10 @@ Escala (rem, base 16px):
 - **Papelito** (`.slip`): tira de papel con borde rasgado (clip-path) para recuerdos y avisos suaves (backup, recordatorios).
 - **Botoncitos** (`.mini-opt`): etiquetas de papel pegadas sobre la tela, arriba del calendario, con costura punteada interna y color fijo: Hoy `--butter`, Rutinas `--sage`, Páginas `--lavender`, Mi año `--peach`, Ajustes `--paper-shade`. El que tiene su cuadro abierto lleva un anillo de hilo crema.
 - **Cuadro desplegable** (`.panel`, un `<dialog>` modal): tela de la tapa como fondo, adentro las mismas hojas de siempre; barra superior fija con “Volver al calendario”. Se abre con un fundido + 14px de caída (260 ms, `--ease-out`); en celular ocupa toda la pantalla.
-- **Tira de meses** (`.months`): 12 meses en minúscula Castoro; el actual con fondo manteca, el de hoy con un puntito rosa.
+- **Tira de meses** (`.months`): 12 meses en minúscula Castoro; el actual con fondo manteca, el de hoy con un puntito rosa. El año entre las flechas es un enlace a *Mi año* (subrayado punteado al pasar).
+- **Días de una rutina** (`.day-cell.is-routine` + `.mark-routine`): tinte `--sage` al 50 % sobre papel, borde de hilo `--thread-done` suave y el ícono de rutinas de 12px en las marcas (estado nunca solo por color). Aviso arriba (`.routine-filter`): papelito salvia con borde punteado, texto + “Ver la rutina” + “Dejar de mostrar”.
+- **Rutina resaltada** (`.routine.is-focus`): tinte salvia + hilo de 3px a la izquierda, sin animación; recibe el foco.
+- **Enlaces dentro del texto** (fechas, “viene del…”, “próxima: …”, iniciales del bastidor): mismo texto que antes, con subrayado fino o punteado; nunca botones nuevos.
 
 ## 8. Stickers
 

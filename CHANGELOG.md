@@ -2,6 +2,24 @@
 
 Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantiene. El porqué de cada decisión está en `DECISIONS.md` (Dn); lo que falta, en `ROADMAP.md`. Cada entrega que toca archivos de la app sube `CACHE_VERSION` en `sw.js` para que las PWA instaladas se actualicen.
 
+## 2026-10-01 · Las secciones se conectan (cache `v5`)
+
+**Para quien lo usa**
+- Desde un día, “Ver la rutina” abre **esa** rutina, resaltada.
+- Cada rutina tiene un ícono de calendario: muestra el mes con **sus días marcados** (los que tocan de hoy en adelante y los que ya hiciste). Al cambiar de mes se mantiene; “Dejar de mostrar” la apaga.
+- En Rutinas, “próxima: viernes 2 de octubre” lleva a ese día.
+- En una página libre, “Empezada el …” lleva a ese día.
+- En la página del día, “viene del 30 sep” lleva al día de donde pasaste esa actividad.
+- En el calendario, el año de la tira (“2026”) abre *Mi año*. El botoncito *Mi año* abre el año que estás mirando.
+- En *Mi año*, la inicial de cada mes lleva a ese mes. Cada observación de *Lo que fui notando* lleva a sus días: “Ir a ese día”, “Ver los días” o “Ver en el calendario”.
+- La leyenda del bastidor dice “algo anotado, sin ánimo” (antes decía “escribiste”, aunque el día solo tuviera actividades).
+
+**Para quien lo mantiene** (decisión **D20**, tabla en SPEC §5.1)
+- Rutas nuevas: `MC.routes.routine(id)` → `#/rutinas/:id` y `MC.routes.month(m, { routine })` → `#/calendario/mes/AAAA-MM/rutina/:id`.
+- `summarize` suma `byRoutine` (estado de cada rutina por día). `MC.insights.compute` devuelve `day`, `days` o `routineId` + `month` en cada observación.
+- `app.js`: la clave del calendario de fondo incluye la rutina; `followYear` actualiza el enlace de *Mi año*.
+- Tests: 43 unit y 18 E2E (recorrido nuevo que pasa por cada conexión).
+
 ## 2026-10-01 · Un solo lugar para rutas, cuentas y dibujos (cache `v4`)
 
 **Para quien lo usa**

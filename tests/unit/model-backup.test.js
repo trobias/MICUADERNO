@@ -140,6 +140,9 @@ test('el resumen del calendario incluye rutinas sin marcar y páginas', async ()
   assert.equal(sum['2026-10-07'].pending, 2);
   assert.equal(sum['2026-10-07'].planned, 1);
   assert.equal(sum['2026-10-07'].routines, 1);
+  // Estado de cada rutina por día: marcada (su estado) o planeada (pending).
+  assert.equal(sum['2026-09-30'].byRoutine[rut.id], 'done');
+  assert.equal(sum['2026-10-07'].byRoutine[rut.id], 'pending');
   // Página en su fecha local de creación.
   assert.deepEqual(sum['2026-10-02'].pages.map((p) => p.title), ['Ideas']);
   assert.equal((await M.pagesOn('2026-10-02')).length, 1);

@@ -63,3 +63,15 @@ test('las direcciones escritas en sw.js (que no carga MC.routes) siguen existien
   for (const hsh of hashes) assert.ok(R.parse(hsh, ctx), hsh);
   assert.ok(hashes.every((x) => x === R.today()), 'las notificaciones abren Hoy');
 });
+
+test('rutina: abrirla en su cuadro y ver sus días en el calendario', () => {
+  const r1 = R.parse(R.routine('rut_9'), ctx);
+  assert.equal(r1.name, 'routines');
+  assert.deepEqual(r1.params, { focus: 'rut_9' });
+  assert.deepEqual(R.parse(R.routines(), ctx).params, {});
+  const r2 = R.parse(R.month('2026-11', { routine: 'rut_9' }), ctx);
+  assert.equal(r2.kind, 'base');
+  assert.deepEqual(r2.params, { mode: 'mes', month: '2026-11', routine: 'rut_9' });
+  assert.equal(R.month('2026-11', {}), R.month('2026-11'));
+  assert.equal(R.parse('#/calendario/mes/2026-11/rutina', ctx).params.routine, undefined);
+});

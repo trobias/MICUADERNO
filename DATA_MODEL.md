@@ -162,6 +162,7 @@ Validación al importar (en orden, con mensaje humano por cada falla):
   pending,   // pendientes: guardadas en pending + ocurrencias de rutina sin marcar
   planned,   // solo las ocurrencias de rutina sin marcar (virtuales)
   routines,  // ítems de rutina del día (marcados o no)
+  byRoutine, // { routineId: estado } — 'pending' si todavía no se marcó (para “los días de una rutina”)
   total,     // guardadas + virtuales
   pages: [{ id, title }]  // páginas cuyo createdAt cae en esa fecha local
 }

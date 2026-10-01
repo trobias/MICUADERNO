@@ -4,12 +4,12 @@
   var MC = root.MC;
   var h = MC.h, D = MC.dates, M = MC.model, R = MC.routes, c = MC.c;
 
-  function modeSwitch(mode, month, date) {
+  function modeSwitch(mode, month, date, keep) {
     var sw = h('div.choice-row.cal-mode', { role: 'group', 'aria-label': 'Cómo ver el calendario' });
     [['mes', 'Mes', 'grid'], ['semana', 'Semana', 'week']].forEach(function (m) {
       var b = h('button.choice', { type: 'button', 'aria-pressed': String(mode === m[0]) }, MC.icon(m[2]), m[1]);
       b.addEventListener('click', function () {
-        location.hash = m[0] === 'mes' ? R.month(month || D.monthKey(date)) : R.week(date || (month === D.monthKey(D.today()) ? D.today() : month + '-01'));
+        location.hash = m[0] === 'mes' ? R.month(month || D.monthKey(date), keep) : R.week(date || (month === D.monthKey(D.today()) ? D.today() : month + '-01'));
       });
       sw.appendChild(b);
     });
@@ -17,18 +17,20 @@
   }
 
   /* ---------- MES (el centro de la app) ---------- */
-  function monthsStrip(month) {
+  /** keep: { routine } para que cambiar de mes no apague los días marcados de una rutina. */
+  function monthsStrip(month, keep) {
     var y = +month.slice(0, 4);
     var todayMonth = D.monthKey(D.today());
     var strip = h('nav.months', { 'aria-label': 'Meses de ' + y },
-      h('a.icon-btn.icon-btn--sm.months__year-btn', { href: R.month((y - 1) + month.slice(4)), 'aria-label': 'Año anterior' }, MC.icon('arrow-left')),
-      h('span.months__year', String(y)),
-      h('a.icon-btn.icon-btn--sm.months__year-btn', { href: R.month((y + 1) + month.slice(4)), 'aria-label': 'Año siguiente' }, MC.icon('arrow-right')));
+      h('a.icon-btn.icon-btn--sm.months__year-btn', { href: R.month((y - 1) + month.slice(4), keep), 'aria-label': 'Año anterior' }, MC.icon('arrow-left')),
+      // El año lleva a Mi año: del mes al bastidor con un toque.
+      h('a.months__year', { href: R.year(y), 'aria-label': 'Mi año ' + y, title: 'Ver Mi año ' + y }, String(y)),
+      h('a.icon-btn.icon-btn--sm.months__year-btn', { href: R.month((y + 1) + month.slice(4), keep), 'aria-label': 'Año siguiente' }, MC.icon('arrow-right')));
     var list = h('ol.months__list');
     D.MONTHS_SHORT.forEach(function (m, i) {
       var key = y + '-' + D.pad(i + 1);
       list.appendChild(h('li', h('a.month-chip', {
-        href: R.month(key),
+        href: R.month(key, keep),
         'aria-label': D.MONTHS[i] + ' ' + y + (key === todayMonth ? ' (este mes)' : ''),
         'aria-current': key === month ? 'date' : null,
         class: key === todayMonth ? 'is-now' : null
@@ -38,8 +40,20 @@
     return strip;
   }
 
-  function renderMonth(main, month) {
+  /** Aviso arriba de la grilla cuando se muestran los días de una rutina. */
+  function routineFilter(routine, month) {
+    var off = h('a.text-btn', { href: R.month(month) }, MC.icon('close'), 'Dejar de mostrar');
+    if (!routine) return h('div.routine-filter', h('p.routine-filter__text', 'Esa rutina ya no está en el cuaderno.'), off);
+    return h('div.routine-filter',
+      h('span.mark-routine', { 'aria-hidden': 'true' }, MC.icon('rutinas')),
+      h('p.routine-filter__text', 'Días de ', h('strong', '«' + routine.title + '»'), ': los que tocan de hoy en adelante y los que ya hiciste.'),
+      h('a.text-btn', { href: R.routine(routine.id) }, 'Ver la rutina'),
+      off);
+  }
+
+  function renderMonth(main, month, routineId) {
     var today = D.today();
+    var keep = routineId ? { routine: routineId } : null;
     var grid = D.monthGrid(month);
     var marked = MC.ui.get('calSelected', null);
     if (!marked || D.monthKey(marked) !== month) marked = D.monthKey(today) === month ? today : null;
@@ -47,15 +61,18 @@
     main.appendChild(h('div.spread.spread--single', page));
     var destroyed = false;
 
-    M.summaryRange(grid[0], grid[grid.length - 1]).then(function (sum) {
+    Promise.all([M.summaryRange(grid[0], grid[grid.length - 1]), routineId ? M.getRoutines() : null]).then(function (res) {
       if (destroyed) return;
+      var sum = res[0];
+      var routine = routineId ? (res[1] || []).filter(function (x) { return x.id === routineId; })[0] || null : null;
       var label = D.monthLabel(month);
       page.appendChild(h('header.cal-head',
         h('h1.t-display.cal-head__month', D.capitalize(label.split(' ')[0]), h('span.cal-head__year', ' ' + label.split(' ')[1])),
-        h('div.cal-head__tools', modeSwitch('mes', month, marked))));
-      page.appendChild(monthsStrip(month));
+        h('div.cal-head__tools', modeSwitch('mes', month, marked, keep))));
+      page.appendChild(monthsStrip(month, keep));
+      if (routineId) page.appendChild(routineFilter(routine, month));
 
-      var table = h('div.month', { role: 'grid', 'aria-label': D.capitalize(label) + '. Tocá un día para abrir su página.' });
+      var table = h('div.month', { role: 'grid', 'aria-label': D.capitalize(label) + (routine ? ', con los días de «' + routine.title + '»' : '') + '. Tocá un día para abrir su página.' });
       var headRow = h('div.month__row.month__row--head', { role: 'row' });
       [1, 2, 3, 4, 5, 6, 0].forEach(function (wd) { headRow.appendChild(h('div.month__wd', { role: 'columnheader', 'aria-label': D.DAYS[wd] }, D.DAYS_SHORT[wd])); });
       table.appendChild(headRow);
@@ -77,11 +94,16 @@
           if (info && info.wrote) parts.push('escribiste');
           if (info && info.memory) parts.push('guardaste un recuerdo');
           if (pages.length) parts.push(pages.length === 1 ? 'empezaste una página' : 'empezaste ' + pages.length + ' páginas');
+          // Con una rutina elegida: lo que ya se hizo, y de hoy en adelante los días que toca (nunca lo que no se hizo, D18).
+          var rStatus = routine && info ? info.byRoutine[routine.id] : null;
+          var rMark = !rStatus ? null : M.countsAsDone(rStatus) ? 'done' : ahead ? 'due' : null;
+          if (rMark === 'done') parts.push((rStatus === 'partial' ? 'hiciste un poquito de «' : 'hiciste «') + routine.title + '»');
+          if (rMark === 'due') parts.push('toca «' + routine.title + '»');
           var btn = h('button.day-cell', {
             type: 'button', role: 'gridcell', tabindex: '-1',
             'aria-label': parts.join(', '), 'aria-selected': String(key === marked),
-            dataset: { date: key, mood: info && info.mood ? String(info.mood) : null },
-            class: [inMonth ? null : 'is-out', key === today ? 'is-today' : null, key > today ? 'is-future' : null].filter(Boolean).join(' ')
+            dataset: { date: key, mood: info && info.mood ? String(info.mood) : null, routine: rMark },
+            class: [inMonth ? null : 'is-out', key === today ? 'is-today' : null, key > today ? 'is-future' : null, rMark ? 'is-routine' : null].filter(Boolean).join(' ')
           },
             h('span.day-cell__num', String(D.parse(key).d)),
             info && info.mood ? h('span.day-cell__patch', { html: MC.stickers.miniPatchMarkup(info.mood) }) : null,
@@ -90,7 +112,8 @@
               info && info.memory ? h('span.mark-star', { html: '<svg viewBox="0 0 24 24"><use href="#i-star"/></svg>' }) : null,
               info && info.done ? h('span.mark-x', { 'aria-hidden': 'true' }, '×' + info.done) : null,
               planned ? h('span.mark-plan', { 'aria-hidden': 'true' }, MC.icon('box'), String(planned)) : null,
-              pages.length ? h('span.mark-page', { 'aria-hidden': 'true' }, MC.icon('paginas')) : null),
+              pages.length ? h('span.mark-page', { 'aria-hidden': 'true' }, MC.icon('paginas')) : null,
+              rMark ? h('span.mark-routine', { 'aria-hidden': 'true' }, MC.icon('rutinas')) : null),
             key === marked ? h('span.day-cell__ribbon', { 'aria-hidden': 'true' }) : null);
           // Tocar un día abre su página en el cuadro desplegable.
           btn.addEventListener('click', function () { MC.ui.set('calSelected', key); location.hash = R.day(key); });
@@ -101,7 +124,7 @@
         table.appendChild(r);
       }
       page.appendChild(table);
-      page.appendChild(legend());
+      page.appendChild(legend(routine));
 
       var focusKey = marked || month + '-01';
       cells.forEach(function (b) { if (b.dataset.date === focusKey) b.tabIndex = 0; });
@@ -115,7 +138,7 @@
         if (j < 0 || j >= cells.length) {
           var target = D.addDays(cells[i].dataset.date, map[e.key]);
           MC.ui.set('calSelected', target);
-          location.hash = R.month(D.monthKey(target));
+          location.hash = R.month(D.monthKey(target), keep);
           return;
         }
         cells[i].tabIndex = -1;
@@ -127,7 +150,7 @@
     return { destroy: function () { destroyed = true; } };
   }
 
-  function legend() {
+  function legend(routine) {
     var labels = M.settings().moodLabels;
     return h('ul.mood-legend', { 'aria-label': 'Referencias' },
       [1, 2, 3, 4, 5].map(function (m) { return h('li', c.moodMark(m), labels[m - 1]); }),
@@ -135,7 +158,8 @@
       h('li', h('span.mark-star', { html: '<svg viewBox="0 0 24 24"><use href="#i-star"/></svg>' }), 'recuerdo'),
       h('li', h('span.mark-x', '×'), 'hecho'),
       h('li', h('span.mark-plan', MC.icon('box')), 'planeado (con rutinas)'),
-      h('li', h('span.mark-page', MC.icon('paginas')), 'página empezada'));
+      h('li', h('span.mark-page', MC.icon('paginas')), 'página empezada'),
+      routine ? h('li', h('span.mark-routine', MC.icon('rutinas')), '«' + routine.title + '»') : null);
   }
 
   /* ---------- SEMANA ---------- */
@@ -200,7 +224,7 @@
 
   function render(main, params) {
     if (params.mode === 'semana') return renderWeek(main, params.date || D.today());
-    return renderMonth(main, params.month || D.monthKey(D.today()));
+    return renderMonth(main, params.month || D.monthKey(D.today()), params.routine || null);
   }
 
   MC.views = MC.views || {};

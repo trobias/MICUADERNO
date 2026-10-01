@@ -15,7 +15,9 @@
 
   /**
    * all: resultado de MC.model.everything(); today: 'AAAA-MM-DD'.
-   * Devuelve [{ id, text }] (máx. 6).
+   * Devuelve [{ id, text, day?, days?, routineId?, month? }] (máx. 6). Los campos opcionales dicen de qué días
+   * habla cada observación, para poder ir a verlos: `day` (uno), `days` (varios, en orden), o
+   * `routineId` + `month` (los días de esa rutina en ese mes, en el calendario).
    */
   function compute(all, today) {
     today = today || D.today();
@@ -35,13 +37,13 @@
     var started = candidates.sort()[0];
     if (started && started <= today) {
       var n = D.diffDays(started, today);
-      out.push({ id: 'since', text: n === 0 ? 'Hoy empezaste este cuaderno.' : 'Hace ' + days(n) + ' que empezaste este cuaderno.' });
+      out.push({ id: 'since', text: n === 0 ? 'Hoy empezaste este cuaderno.' : 'Hace ' + days(n) + ' que empezaste este cuaderno.', day: n === 0 ? null : started });
     }
 
     // 2. Escritura de esta semana
     var weekStart = D.startOfWeek(today);
-    var wrote = D.range(weekStart, today).filter(function (k) { return M.hasWriting(byDay[k]); }).length;
-    if (wrote > 0) out.push({ id: 'week-writing', text: 'Esta semana escribiste ' + times(wrote) + '.' });
+    var wroteDays = D.range(weekStart, today).filter(function (k) { return M.hasWriting(byDay[k]); });
+    if (wroteDays.length > 0) out.push({ id: 'week-writing', text: 'Esta semana escribiste ' + times(wroteDays.length) + '.', days: wroteDays });
 
     // 3. Rutina más acompañada del mes
     var monthPrefix = today.slice(0, 7);
@@ -55,7 +57,7 @@
     });
     var topRoutine = Object.keys(perRoutine).sort(function (a, b) { return perRoutine[b] - perRoutine[a]; })[0];
     if (topRoutine && perRoutine[topRoutine] >= 3) {
-      out.push({ id: 'routine-month', text: '«' + routineTitle[topRoutine] + '» te acompañó ' + days(perRoutine[topRoutine]) + ' este mes.' });
+      out.push({ id: 'routine-month', text: '«' + routineTitle[topRoutine] + '» te acompañó ' + days(perRoutine[topRoutine]) + ' este mes.', routineId: topRoutine, month: monthPrefix });
     }
 
     // 4. Día de la semana que más veces arranca bien
@@ -64,28 +66,28 @@
       var perWd = {};
       mornings.forEach(function (d) {
         var wd = D.weekday(d.date);
-        var st = perWd[wd] || (perWd[wd] = { n: 0, good: 0 });
+        var st = perWd[wd] || (perWd[wd] = { n: 0, good: 0, goodDays: [] });
         st.n++;
-        if (d.morning.mood >= 4) st.good++;
+        if (d.morning.mood >= 4) { st.good++; st.goodDays.push(d.date); }
       });
       var best = null;
       Object.keys(perWd).forEach(function (wd) {
         var st = perWd[wd];
         if (st.n < 3 || st.good === 0) return;
         if (!best || st.good / st.n > best.ratio || (st.good / st.n === best.ratio && st.n > best.n)) {
-          best = { wd: +wd, ratio: st.good / st.n, good: st.good, n: st.n };
+          best = { wd: +wd, ratio: st.good / st.n, good: st.good, n: st.n, days: st.goodDays };
         }
       });
       if (best && best.ratio >= 0.5) {
-        out.push({ id: 'weekday', text: 'Los ' + plural(best.wd) + ' arrancaste ' + good + ' ' + best.good + ' de ' + best.n + ' veces.' });
+        out.push({ id: 'weekday', text: 'Los ' + plural(best.wd) + ' arrancaste ' + good + ' ' + best.good + ' de ' + best.n + ' veces.', days: best.days.slice().sort() });
       }
     }
 
     // 5. Cómo empieza vs. cómo termina
     var both = all.days.filter(function (d) { return d.morning.mood && d.evening.mood; });
     if (both.length >= MIN_SAMPLE) {
-      var same = both.filter(function (d) { return d.evening.mood >= d.morning.mood; }).length;
-      out.push({ id: 'start-end', text: 'Terminaste el día igual o mejor de lo que empezaste ' + same + ' de ' + both.length + ' veces.' });
+      var sameDays = both.filter(function (d) { return d.evening.mood >= d.morning.mood; }).map(function (d) { return d.date; }).sort();
+      out.push({ id: 'start-end', text: 'Terminaste el día igual o mejor de lo que empezaste ' + sameDays.length + ' de ' + both.length + ' veces.', days: sameDays });
     }
 
     // 6. Co-ocurrencia actividad → cierre del día (descriptivo)
@@ -95,11 +97,11 @@
       var d = byDay[a.date];
       if (!d || !d.evening.mood) return;
       var key = a.routineId && routineTitle[a.routineId] ? 'r:' + a.routineId : 't:' + norm(a.title);
-      var st = perTitle[key] || (perTitle[key] = { title: a.routineId && routineTitle[a.routineId] ? routineTitle[a.routineId] : a.title.trim(), dates: {}, good: 0, n: 0 });
+      var st = perTitle[key] || (perTitle[key] = { title: a.routineId && routineTitle[a.routineId] ? routineTitle[a.routineId] : a.title.trim(), dates: {}, good: 0, n: 0, goodDays: [] });
       if (st.dates[a.date]) return;
       st.dates[a.date] = true;
       st.n++;
-      if (d.evening.mood >= 4) st.good++;
+      if (d.evening.mood >= 4) { st.good++; st.goodDays.push(a.date); }
     });
     var bestPair = null;
     Object.keys(perTitle).forEach(function (k) {
@@ -108,7 +110,7 @@
       if (!bestPair || st.n > bestPair.n) bestPair = st;
     });
     if (bestPair) {
-      out.push({ id: 'activity-mood', text: 'Los días que hiciste «' + bestPair.title + '» terminaste ' + good + ' ' + bestPair.good + ' de ' + bestPair.n + ' veces.' });
+      out.push({ id: 'activity-mood', text: 'Los días que hiciste «' + bestPair.title + '» terminaste ' + good + ' ' + bestPair.good + ' de ' + bestPair.n + ' veces.', days: bestPair.goodDays.slice().sort() });
     }
 
     // 7. Recuerdos del año

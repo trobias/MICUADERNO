@@ -64,6 +64,8 @@
 /* Tira de meses: saltar de mes con un toque. */
 .months { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; margin: calc(var(--s-3) * -1) 0 var(--s-5); }
 .months__year { font-family: var(--font-display); font-size: var(--fs-md); font-variant-numeric: tabular-nums; min-width: 3ch; text-align: center; }
+a.months__year { text-decoration: none; padding: 4px 6px; border-radius: 6px; }
+@media (hover: hover) and (pointer: fine) { a.months__year:hover { text-decoration: underline; text-decoration-style: dashed; } }
 .months__list { display: flex; flex-wrap: wrap; gap: 4px; margin-left: 6px; }
 .month-chip {
   display: inline-grid;
@@ -113,6 +115,13 @@
 .mark-page { display: inline-flex; color: var(--thread-later); }
 .mood-legend .mark-x { color: var(--thread-done-text); font-weight: 650; }
 .day-cell.is-out { opacity: 0.4; background: transparent; }
+/* Días de una rutina elegida: tinte de salvia (el color del botoncito Rutinas) + su ícono; nunca solo color. */
+.day-cell.is-routine { background: color-mix(in srgb, var(--sage) 50%, var(--paper)); border-color: color-mix(in srgb, var(--thread-done) 40%, transparent); }
+.mark-routine { display: inline-flex; color: var(--thread-done-text); }
+.mark-routine .icon { width: 12px; height: 12px; stroke-width: 2; }
+.routine-filter { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; margin: 0 0 var(--s-4); padding: 8px 12px; border: 1px dashed color-mix(in srgb, var(--thread-done) 55%, transparent); border-radius: 8px; background: color-mix(in srgb, var(--sage) 30%, var(--paper)); font-size: var(--fs-sm); }
+.routine-filter .mark-routine .icon { width: 18px; height: 18px; stroke-width: 1.75; }
+.routine-filter__text { flex: 1 1 14rem; }
 .day-cell.is-today { border: 1.5px dashed var(--ink); }
 .day-cell.is-future .day-cell__num { color: var(--ink-soft); }
 .day-cell[aria-selected='true'] { background: color-mix(in srgb, var(--butter) 35%, var(--paper)); }
@@ -151,6 +160,10 @@
 .routine__rule { font-size: var(--fs-sm); color: var(--ink); }
 .routine__next { font-family: var(--font-hand); font-size: 1.3rem; line-height: 1.05; color: var(--thread-later); }
 .routine.is-paused .routine__title { color: var(--ink-soft); }
+.routine__next a { text-decoration: none; }
+@media (hover: hover) and (pointer: fine) { .routine__next a:hover { text-decoration: underline; text-decoration-thickness: 1px; } }
+/* Llegó desde “Ver la rutina”: queda resaltada (salvia + hilo a la izquierda), sin animación. */
+.routine.is-focus { background: color-mix(in srgb, var(--sage) 35%, var(--paper)); box-shadow: inset 3px 0 0 var(--thread-done); padding-left: 10px; border-radius: 4px; }
 .week-mini__title { font-size: var(--fs-xl); margin: 44px 0 var(--s-4); }
 .week-mini { display: grid; }
 .week-mini__day { display: grid; grid-template-columns: 5.5em 1fr; gap: var(--s-3); align-items: baseline; padding: 12px 0; border-bottom: 1px solid var(--rule); font-family: var(--font-text); }
@@ -223,6 +236,8 @@
 .hoop { display: grid; gap: 2px; min-width: 306px; padding: 6px 4px; }
 .hoop__row { display: grid; grid-template-columns: 18px repeat(12, minmax(22px, 1fr)); column-gap: 2px; align-items: center; }
 .hoop__month, .hoop__daynum { font-size: 0.68rem; color: var(--ink-soft); text-align: center; font-variant-numeric: tabular-nums; }
+.hoop__month a { display: block; text-decoration: none; border-radius: 3px; }
+@media (hover: hover) and (pointer: fine) { .hoop__month a:hover { color: var(--ink); text-decoration: underline; } }
 .hoop__daynum { text-align: right; padding-right: 3px; }
 .hoop__gap { height: 22px; }
 /* Cada día es un blanco de 22px (centros a 24px: WCAG 2.2 · 2.5.8); el punto cruz se dibuja adentro. */
@@ -275,6 +290,10 @@
   background: linear-gradient(45deg, transparent 40%, var(--rose) 40% 60%, transparent 60%), linear-gradient(-45deg, transparent 40%, var(--rose) 40% 60%, transparent 60%);
 }
 .noticed__foot { margin-top: var(--s-3); }
+.noticed__actions { margin: -6px 0 -8px -4px; }
+.noticed__actions .text-btn { font-size: var(--fs-xs); }
+.noticed__days { margin: 2px 0 var(--s-2); font-size: var(--fs-sm); line-height: 1.9; color: var(--ink-soft); }
+.noticed__days a { white-space: nowrap; }
 .memories { display: grid; gap: var(--s-4); }
 .memory { transform: rotate(var(--tilt, 0deg)); }
 .memory__link {
