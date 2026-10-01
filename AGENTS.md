@@ -1,6 +1,6 @@
 # AGENTS.md — MI CUADERNO
 
-Leé esto primero. Después `SPEC.md` (qué hace), `DESIGN.md` (cómo se ve y se mueve) y `DATA_MODEL.md` (qué se guarda). Lo que falta está en `ROADMAP.md`. Recién ahí abrí el código relevante.
+Leé esto primero. Después `SPEC.md` (qué hace), `DESIGN.md` (cómo se ve y se mueve) y `DATA_MODEL.md` (qué se guarda). Hacia dónde va: `VISION.md` (la experiencia que se busca, **referencia, no implementación literal**). Lo que falta: `ROADMAP.md` (fases) y `BACKLOG.md` (cada idea con su estado). Recién ahí abrí el código relevante.
 
 ## Qué es
 
@@ -21,6 +21,15 @@ Un diario personal digital con forma de **cuaderno de tela bordado**: registro d
 - Silencio visual: la pantalla puede estar quieta; motion con propósito; escenas raras.
 - Privacidad: nada sale del dispositivo. Sin analytics, sin CDNs en runtime, sin fetch a terceros.
 - Nombre de ejemplo (tests, docs, capturas, textos de prueba): siempre **Nicole**. Ningún otro nombre, ni de ejemplo ni de broma (lo vigila `tests/unit/names.test.js`).
+
+## Antes de tomar algo de la visión o del backlog
+
+1. Leé `VISION.md` §0–§1 y `DECISIONS.md` D25 (arquitectura común ya fijada).
+2. Buscá la primitiva que ya existe antes de crear otra: motor de elementos (`Placed` → `PageElement`), referencias (`marks`), privacidad en la fuente, `summarize`, `MC.routes`, `activityRow`, `askDate`, `images`/`files`, `draw.js`.
+3. **Opcionalidad**: ningún campo nuevo se vuelve obligatorio ni deuda; un día vacío es válido y no se interpreta.
+4. **Progressive disclosure**: lo nuevo se descubre; nada de sumar botones a la barra inicial.
+5. Todo lo nuevo entra en la copia (`backup.js`, `schemaVersion` + migración + test) y degrada con elegancia si falta una API.
+6. Al terminar: sacá el ítem de `BACKLOG.md`, anotalo en `CHANGELOG.md`, actualizá `ROADMAP.md` si cerró una fase.
 
 ## Stack
 
@@ -68,6 +77,9 @@ tests/unit/             node:test sobre js/core
 tests/e2e/              Playwright
 tools/                  serve.mjs, make-icons.mjs, build-fonts.mjs, dist.mjs, check.mjs, shot.mjs (captura para QA)
 CHANGELOG.md            qué cambió en cada entrega (actualizarlo al commitear algo visible)
+VISION.md               visión de memoria/scrapbook/privacidad (referencia, con numeración del pedido)
+ROADMAP.md              fases y verificación pendiente
+BACKLOG.md              cada idea pendiente con estado NOW/NEXT/LATER/NEEDS DESIGN/…
 PRODUCT.md              verdad de producto (usada por la skill impeccable)
 skills/                 colección de skills del proyecto (no es parte de la app; no se distribuye)
 ```

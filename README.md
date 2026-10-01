@@ -22,7 +22,7 @@ Un diario personal con forma de cuaderno de tela bordado: cómo arrancó y cómo
 
 ## Para quien desarrolla
 
-Leé primero [`AGENTS.md`](AGENTS.md), después [`SPEC.md`](SPEC.md), [`DESIGN.md`](DESIGN.md) y [`DATA_MODEL.md`](DATA_MODEL.md). Decisiones en [`DECISIONS.md`](DECISIONS.md). Lo que falta, en [`ROADMAP.md`](ROADMAP.md).
+Leé primero [`AGENTS.md`](AGENTS.md), después [`SPEC.md`](SPEC.md), [`DESIGN.md`](DESIGN.md) y [`DATA_MODEL.md`](DATA_MODEL.md). Decisiones en [`DECISIONS.md`](DECISIONS.md). Hacia dónde va, en [`VISION.md`](VISION.md); lo que falta, en [`ROADMAP.md`](ROADMAP.md) (fases) y [`BACKLOG.md`](BACKLOG.md) (cada idea con su estado).
 
 ```
 npm test          # pruebas unitarias (sin dependencias)

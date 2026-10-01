@@ -2,6 +2,15 @@
 
 Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantiene. El porqué de cada decisión está en `DECISIONS.md` (Dn); lo que falta, en `ROADMAP.md`. Cada entrega que toca archivos de la app sube `CACHE_VERSION` en `sw.js` para que las PWA instaladas se actualicen.
 
+## 2026-10-01 · La visión, documentada (sin cambios en la app)
+
+**Para quien mantiene el cuaderno**
+- `VISION.md`: la visión de memoria, scrapbook, privacidad y experiencia personal (80 ideas, con su numeración original), agrupada por la infraestructura que comparten y con lo que ya existe en el código en cada grupo. Es referencia, no implementación literal.
+- `ROADMAP.md` reescrito por **fases** (1 cimientos · 2 motor de elementos · 3 memorias · 4 buscar y ordenar · 5 escribir tranquila · 6 media · 7 revisiones · 8 cartas y cosas sueltas · 9 hacerlo propio · 10 privacidad local y notificaciones).
+- `BACKLOG.md` nuevo: cada idea con estado NOW/NEXT/LATER/NEEDS DESIGN/NEEDS RESEARCH/EXPERIMENTAL/BLOCKED, dependencias y lo que hay hoy. El backlog viejo (B*, I*, T*) se mudó acá.
+- Decisión **D25**: arquitectura común (un motor de elementos que nace de los stickers, memorias por referencia, privacidad en la fuente, papelera como borrado suave, deshacer por superficie, modo calma aparte del motion, canciones sin fetch a terceros por defecto, bloqueo honesto, `.micuaderno` como ZIP).
+- `AGENTS.md`: qué leer y qué revisar antes de tomar algo de la visión.
+
 ## 2026-10-01 · Dibujar, Mis stickers y adjuntos (cache `v9`)
 
 **Para quien lo usa**

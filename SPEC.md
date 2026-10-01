@@ -10,6 +10,9 @@ MI CUADERNO es un cuaderno personal digital: diario, agenda, registro de ánimo,
 
 **Promesa:** *abrís, registrás algo en menos de un minuto, cerrás. Y con el tiempo, el cuaderno te devuelve tu propia historia.*
 
+### Hacia dónde va
+La visión de memoria, scrapbook, privacidad y experiencia personal (revisiones, recuerdos, privacidad por página, buscador, etiquetas, colecciones, victorias, sobres, portada propia, modo calma…) está en `VISION.md` como **referencia**; el orden, en `ROADMAP.md`; cada idea, en `BACKLOG.md`. Esta SPEC describe solo lo que ya funciona.
+
 ## 2. No es
 
 - No es una app clínica. No diagnostica, no infiere trastornos, no dice que algo “cura” o “mejora tu salud mental”.

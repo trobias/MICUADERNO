@@ -5,7 +5,7 @@ import { execFileSync } from 'node:child_process';
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
 const out = path.join(root, 'dist', 'MI-CUADERNO');
-const include = ['index.html', 'manifest.webmanifest', 'sw.js', 'css', 'js', 'assets', 'README.md', 'SPEC.md', 'DESIGN.md', 'AGENTS.md', 'DATA_MODEL.md', 'DECISIONS.md', 'ROADMAP.md', 'CHANGELOG.md'];
+const include = ['index.html', 'manifest.webmanifest', 'sw.js', 'css', 'js', 'assets', 'README.md', 'SPEC.md', 'DESIGN.md', 'AGENTS.md', 'DATA_MODEL.md', 'DECISIONS.md', 'ROADMAP.md', 'BACKLOG.md', 'VISION.md', 'CHANGELOG.md'];
 
 fs.rmSync(path.join(root, 'dist'), { recursive: true, force: true });
 fs.mkdirSync(out, { recursive: true });
