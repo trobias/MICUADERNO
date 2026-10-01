@@ -68,7 +68,7 @@ await test('primera apertura (file://): tapa → onboarding → Hoy, sin errores
   assert.equal(await page.getAttribute('body', 'data-cover'), 'lavanda');
   assert.match(await page.textContent('.day-head__greet'), /Nicole/);
   assert.equal(await page.locator('#panel').evaluate((d) => d.open), true, 'Hoy se abre como cuadro sobre el calendario');
-  assert.equal(await page.locator('#home-head').isVisible(), true);
+  assert.equal(await page.locator('#panel .tabs').isVisible(), true, 'los marcadores siguen a mano con el cuadro abierto');
   assert.deepEqual(errors, []);
   await context.close();
 });
@@ -138,7 +138,7 @@ await test('backup: exportar → borrar todo → restaurar deja el cuaderno igua
   await download.saveAs(file);
   const json = JSON.parse(fs.readFileSync(file, 'utf8'));
   assert.equal(json.app, 'mi-cuaderno');
-  assert.equal(json.schemaVersion, 1);
+  assert.equal(json.schemaVersion, 2);
   assert.equal(json.data.days[0].notes, 'esto tiene que volver');
 
   await page.click('button:has-text("Borrar todo el cuaderno")');
@@ -348,9 +348,9 @@ await test('las secciones se conectan: rutina ↔ calendario, página → día, 
   assert.equal(await page.locator('#panel').evaluate((d) => d.open), false);
   assert.match(page.url(), new RegExp('#/calendario/mes/' + TODAY.slice(0, 7) + '$'));
   await goto(page, '#/calendario/mes/2025-03');
-  assert.match(await page.getAttribute('.mini-opt[data-opt="anio"]', 'href'), /#\/anio\/2025$/, 'Mi año sigue al calendario');
+  assert.match(await page.getAttribute('.tab[data-tab="anio"]', 'href'), /#\/anio\/2025$/, 'Mi año sigue al calendario');
   await goto(page, '#/calendario/mes/' + TODAY.slice(0, 7));
-  assert.match(await page.getAttribute('.mini-opt[data-opt="anio"]', 'href'), /#\/anio$/);
+  assert.match(await page.getAttribute('.tab[data-tab="anio"]', 'href'), /#\/anio$/);
 
   // Página → su día; “viene del…” → el día de donde se pasó.
   await goto(page, '#/pagina/' + ids.page);
@@ -418,6 +418,53 @@ await test('calendario en vivo: se actualiza detrás del cuadro y desde otra pes
   await context.close();
 });
 
+await test('agenda: anotar en cualquier día, verlo en el mes, pasarlo a otro día, sacarlo; páginas con su día', async () => {
+  const { page, errors, context } = await newPage(browser);
+  await page.goto(FILE_URL);
+  await onboard(page);
+  const add = (k, n) => { const d = new Date(+k.slice(0, 4), +k.slice(5, 7) - 1, +k.slice(8, 10) + n); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+  const later = add(TODAY, 3);
+  await page.click('#panel .tab[data-tab="agenda"]');
+  await page.waitForSelector('#panel #ag-what');
+  // Sin nombre: el error aparece junto al campo.
+  await page.click('#panel button:has-text("Poner en el calendario")');
+  assert.match(await page.textContent('#ag-what-err'), /Escribí qué/);
+  await page.fill('#ag-what', 'turno con la dentista');
+  await page.fill('#ag-when', later);
+  await page.click('#panel button:has-text("Poner en el calendario")');
+  await page.waitForSelector(`#panel .agenda-day[data-date="${later}"] .activity`);
+  // Detrás del cuadro, el mes ya lo cuenta como planeado.
+  if (later.slice(0, 7) === TODAY.slice(0, 7)) {
+    await page.waitForFunction((k) => { const c = document.querySelector(`#main .day-cell[data-date="${k}"] .mark-plan`); return c && /1/.test(c.textContent); }, later, { timeout: 4000 });
+  }
+  // Pasar a otro día desde su menú.
+  const moved = add(TODAY, 5);
+  await page.click('#panel button[aria-label="Más opciones para turno con la dentista"]');
+  await page.click('.menu__item:has-text("Pasar a otro día")');
+  await page.fill('dialog.sheet input[type="date"]', moved);
+  await page.click('dialog.sheet button:has-text("Pasar")');
+  await page.waitForSelector(`#panel .agenda-day[data-date="${moved}"] .activity`);
+  assert.equal(await page.locator(`#panel .agenda-day[data-date="${later}"]`).count(), 0);
+  // Sacar y deshacer.
+  await page.click('#panel button[aria-label="Más opciones para turno con la dentista"]');
+  await page.click('.menu__item:has-text("Sacar de la lista")');
+  await page.waitForFunction(() => !document.querySelector('#panel .agenda-day .activity'));
+  await page.click('.toast button:has-text("Deshacer")');
+  await page.waitForSelector(`#panel .agenda-day[data-date="${moved}"] .activity`);
+  // Una página para un día elegido aparece en ese día.
+  await page.click('#panel button:has-text("Una página para ese día")');
+  await page.fill('dialog.sheet #tp-day', moved);
+  await page.click('dialog.sheet .template:has-text("En blanco")');
+  await page.waitForSelector('#panel .page-meta a');
+  assert.match(page.url(), /#\/pagina\//);
+  assert.match(await page.getAttribute('#panel .page-meta a', 'href'), new RegExp('#/dia/' + moved + '$'));
+  await goto(page, '#/dia/' + moved);
+  await page.waitForSelector('#panel .day-pages a');
+  assert.equal(await page.locator('#panel .activity').count(), 1, 'la actividad está en su día');
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
 await test('mobile 375px: una pantalla, 5 botoncitos, sin scroll horizontal', async () => {
   const { page, errors, context } = await newPage(browser, { viewport: { width: 375, height: 760 } });
   await page.goto(FILE_URL);
@@ -429,10 +476,11 @@ await test('mobile 375px: una pantalla, 5 botoncitos, sin scroll horizontal', as
     assert.ok(over <= 0, `${h} desborda ${over}px: ${culprit}`);
   }
   await goto(page, '#/calendario');
-  const opts = await page.$$eval('#mini-opts .mini-opt', (els) => els.map((e) => { const r = e.getBoundingClientRect(); return { w: r.width, h: r.height, top: r.top }; }));
-  assert.equal(opts.length, 5, 'cinco botoncitos');
-  assert.ok(opts.every((o) => o.h >= 44), 'botoncitos de al menos 44px de alto');
-  assert.ok(opts.every((o) => o.top < 120), 'botoncitos arriba, a la vista');
+  const tabs = await page.$$eval('#tabs .tab', (els) => els.map((e) => { const r = e.getBoundingClientRect(); return { w: r.width, h: r.height, bottom: r.bottom }; }));
+  assert.equal(tabs.length, 6, 'cinco marcadores + ajustes');
+  assert.ok(tabs.every((o) => o.h >= 44 && o.w >= 44), 'marcadores de al menos 44px');
+  const vh = await page.evaluate(() => window.innerHeight);
+  assert.ok(tabs.every((o) => o.bottom <= vh + 8 && o.bottom > vh - 80), 'marcadores abajo, a la vista (asoman apenas)');
   assert.equal(await page.locator('.month-chip').count(), 12, 'los 12 meses a mano');
   await goto(page, '#/anio');
   const cell = await page.locator('.stitch-cell[data-date]').first().boundingBox();
@@ -463,14 +511,17 @@ await test('pantalla única: tocar un día abre su cuadro, cerrar vuelve al cale
   await page.waitForSelector('.month-chip[aria-current="date"]');
   assert.match(await page.textContent('.month-chip[aria-current="date"]'), /ene/);
   assert.match(page.url(), /#\/calendario\/mes\/\d{4}-01/);
-  // Botoncitos: cada uno abre su cuadro
-  for (const [opt, sel] of [['rutinas', 'button:has-text("Nueva rutina")'], ['paginas', 'button:has-text("Nueva página")'], ['anio', '.hoop'], ['ajustes', '#st-name']]) {
-    await page.click(`.mini-opt[data-opt="${opt}"]`);
+  // Marcadores: cada uno abre su cuadro, y con el cuadro abierto se pasa de uno a otro sin cerrar.
+  await page.click('.tab[data-tab="agenda"]');
+  await page.waitForSelector('#panel #ag-what');
+  for (const [tab, sel] of [['rutinas', 'button:has-text("Nueva rutina")'], ['paginas', 'button:has-text("Nueva página")'], ['anio', '.hoop'], ['ajustes', '#st-name'], ['hoy', '.day-head']]) {
+    await page.click(`#panel .tab[data-tab="${tab}"]`);
     await page.waitForSelector(`#panel ${sel}`);
-    assert.equal(await page.getAttribute(`.mini-opt[data-opt="${opt}"]`, 'aria-current'), 'true');
-    await page.click('#panel-close');
-    await page.waitForFunction(() => !document.getElementById('panel').open);
+    assert.equal(await page.getAttribute(`.tab[data-tab="${tab}"]`, 'aria-current'), 'page');
   }
+  await page.click('#panel-close');
+  await page.waitForFunction(() => !document.getElementById('panel').open);
+  assert.equal(await page.locator('#book > .tabs').count(), 1, 'al cerrar, los marcadores vuelven al costado del calendario');
   assert.deepEqual(errors, []);
   await context.close();
 });

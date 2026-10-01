@@ -15,6 +15,7 @@ test('cada ruta armada se lee como la vista que corresponde', () => {
     [R.week('2026-10-05'), 'base', 'calendar', { mode: 'semana', date: '2026-10-05' }],
     [R.today(), 'panel', 'today', { date: '2026-10-01', isToday: true }],
     [R.day('2026-09-12'), 'panel', 'today', { date: '2026-09-12' }],
+    [R.agenda(), 'panel', 'agenda', {}],
     [R.routines(), 'panel', 'routines', {}],
     [R.pages(), 'panel', 'pages', {}],
     [R.page('pag_x1'), 'panel', 'page', { id: 'pag_x1' }],

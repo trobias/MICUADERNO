@@ -51,14 +51,15 @@ js/core/exporters.js    TXT, CSV, XLSX
 js/core/insights.js     “Lo que fui notando”
 js/ui/icons.js          sprite SVG de íconos
 js/ui/stickers.js       arte SVG de stickers + glifos de ánimo
-js/ui/components.js     parche de ánimo, casilla de punto cruz, diálogos, toasts, etc.
+js/ui/components.js     parche de ánimo, casilla de punto cruz, diálogos, toasts, askDate, etc.
+js/ui/activity.js       fila de actividad (casilla + menú: estados, pasar a otro día, renombrar, sacar); Hoy y Agenda
 js/ui/motion.js         nivel de motion, helpers WAAPI, transiciones de vista
 js/ui/scenes.js         director de escenas ocasionales
 js/ui/scrapbook.js      capa de stickers (arrastrar, rotar, teclado)
-js/views/*.js           cover, onboarding, today, calendar, routines, pages, year, settings, print
+js/views/*.js           cover, onboarding, today, calendar, agenda, routines, pages, year, settings, print
 js/notify.js            recordatorios locales
 js/pwa.js               registro de SW, instalación, aviso de actualización
-js/app.js               router por hash + arranque: calendario de fondo + cuadro desplegable (dialog #panel)
+js/app.js               router por hash + arranque: calendario de fondo + cuadro desplegable (dialog #panel) + marcadores
 assets/fonts/           woff2 autoalojadas
 assets/icons/           favicon, iconos PWA, notificación (generados por tools/make-icons.mjs)
 tests/unit/             node:test sobre js/core
@@ -99,7 +100,7 @@ skills/                 colección de skills del proyecto (no es parte de la app
 ```
 npm test          # unit (node:test), sin instalar nada
 npm install       # solo para e2e/íconos: instala playwright-core (no descarga navegadores)
-npm run e2e       # 19 recorridos en file:// y http:// (Chromium en /opt/pw-browsers/chromium o CHROMIUM=/ruta)
+npm run e2e       # 20 recorridos en file:// y http:// (Chromium en /opt/pw-browsers/chromium o CHROMIUM=/ruta)
 npm run check     # sintaxis + unit + e2e
 npm run serve     # http://localhost:4173 (probar PWA/SW)
 ```
@@ -118,6 +119,7 @@ Probar a mano además: doble clic en `index.html`; mobile 375px; teclado solo; `
 
 - `file://` bloquea: módulos ES, `fetch` de archivos locales, `@font-face` locales y el manifest. Por eso: scripts clásicos, fuentes embebidas, manifest inyectado solo en http(s).
 - Los datos del día se guardan con borrador local + IndexedDB (ver DECISIONS D13): no saltear `persist()`.
+- Marcadores (D22): la `nav#tabs` se muda adentro del cuadro abierto y vuelve al cerrarlo (`placeTabs`); no la dupliques.
 - Pantalla única (DECISIONS D17): las vistas que no son el calendario se renderizan dentro de `#panel-body`. Menús/avisos van en `MC.c.layer()` (el diálogo abierto), no en `body`.
 - Las ocurrencias de rutina son virtuales hasta que se marcan (`item.virtual`); usá `MC.model.setStatus`, nunca escribas actividades de rutina a mano.
 - Rutas: nunca escribir `'#/…'` a mano; usar `MC.routes.*`. Una ruta nueva se agrega en `js/core/routes.js` con su test (D19).

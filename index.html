@@ -30,32 +30,33 @@
   THESIS: el registro diario como bordado lento en un diario de tela; rechaza el dashboard de hábitos (cards, rachas, gráficos).
   OWN-WORLD: tela de encuadernar a página completa (salvia/rosa viejo/lavanda/manteca), hojas crema con renglones lavanda y margen rosado, hilos de bordar como color de dato, papelería troquelada (cintas, washi, stickers). Young Serif · Castoro · Atkinson Hyperlegible Next · Nanum Pen Script.
   STORY: abrís la tapa, sellás cómo arrancaste, bordás lo que hiciste, escribís si querés, cerrás el día; el año se va llenando de puntos cruz.
-  FIRST VIEWPORT: cuaderno abierto sobre su tela; calendario del mes al centro con la tira de meses para saltar rápido y cinco botoncitos (Hoy, Rutinas, Páginas, Mi año, Ajustes) que despliegan cuadros encima; tocar un día abre su página en un cuadro.
+  FIRST VIEWPORT: cuaderno abierto sobre su tela; calendario del mes al centro con la tira de meses para saltar rápido y marcadores de tela al costado (Hoy, Agenda, Rutinas, Páginas, Mi año, Ajustes) que despliegan cuadros encima; tocar un día abre su página en un cuadro.
   FORM: diario encuadernado en tela con bordado, candidato 3 de 7 propios; seed ebc51b2e (tirada degradada, sin retadores).
   FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
 -->
   <a class="skip-link" href="#main">Ir al contenido</a>
 
   <div class="desk" id="app">
-    <header class="home-head" id="home-head" hidden>
-      <p class="home-head__title" aria-hidden="true">MI CUADERNO</p>
-      <nav class="mini-opts" id="mini-opts" aria-label="Opciones del cuaderno"></nav>
-    </header>
-    <div class="book">
+    <div class="book" id="book">
       <main class="pages" id="main" tabindex="-1">
         <noscript>
           <div class="page"><p class="t-text">MI CUADERNO necesita JavaScript activado para funcionar. Tus datos quedan en este dispositivo.</p></div>
         </noscript>
       </main>
+      <!-- Marcadores: cada uno abre su cuadro. Con un cuadro abierto se mudan a su costado (siguen a mano). -->
+      <nav class="tabs" id="tabs" aria-label="Marcadores del cuaderno" hidden></nav>
     </div>
   </div>
 
-  <!-- Cuadro desplegable: Hoy, un día, Rutinas, Páginas, Mi año y Ajustes se abren acá, encima del calendario. -->
+  <!-- Cuadro desplegable: Hoy, un día, Agenda, Rutinas, Páginas, Mi año y Ajustes se abren acá, encima del calendario. -->
   <dialog class="panel" id="panel" aria-label="Cuaderno">
     <div class="panel__bar">
       <button type="button" class="panel__close" id="panel-close"><span>Volver al calendario</span></button>
     </div>
-    <div class="panel__body" id="panel-body"></div>
+    <div class="panel__book">
+      <div class="panel__body" id="panel-body"></div>
+      <div class="panel__tabs" id="panel-tabs"></div>
+    </div>
     <div class="scene-layer scene-layer--panel" id="panel-scene-layer" aria-hidden="true"></div>
   </dialog>
 
@@ -76,12 +77,14 @@
   <script src="js/ui/stickers.js"></script>
   <script src="js/ui/motion.js"></script>
   <script src="js/ui/components.js"></script>
+  <script src="js/ui/activity.js"></script>
   <script src="js/ui/scrapbook.js"></script>
   <script src="js/ui/scenes.js"></script>
   <script src="js/views/cover.js"></script>
   <script src="js/views/onboarding.js"></script>
   <script src="js/views/today.js"></script>
   <script src="js/views/calendar.js"></script>
+  <script src="js/views/agenda.js"></script>
   <script src="js/views/routines.js"></script>
   <script src="js/views/pages.js"></script>
   <script src="js/views/year.js"></script>

@@ -358,3 +358,31 @@ a.months__year { text-decoration: none; padding: 4px 6px; border-radius: 6px; }
   .mood-patch svg { width: 46px; height: 46px; }
   .moods { gap: 4px 0; justify-content: space-between; }
 }
+
+/* ---------- Agenda (poner cosas en el calendario) ---------- */
+.agenda-form { display: grid; gap: var(--s-4); margin-top: var(--s-4); }
+.agenda-form .field { display: grid; gap: 6px; }
+.agenda-quick { margin-top: 4px; }
+.agenda-form__actions { display: flex; justify-content: flex-start; }
+.agenda-more__title { font-family: var(--font-text); font-style: italic; font-size: var(--fs-lg); font-weight: 400; margin: var(--s-6) 0 var(--s-2); color: var(--ink-soft); }
+.agenda-more { display: grid; gap: var(--s-2); }
+.agenda-more__btn {
+  display: flex; align-items: center; gap: 12px; width: 100%; min-height: 56px;
+  padding: 10px 14px; text-align: start; border-radius: 8px;
+  border: 1px dashed var(--rule-strong); background: color-mix(in srgb, var(--paper-shade) 55%, transparent);
+  transition: transform var(--dur-press) var(--ease-out), background-color var(--dur-ui) var(--ease-out);
+}
+.agenda-more__btn svg { width: 22px; height: 22px; flex: none; color: var(--ink-soft); }
+.agenda-more__btn > span { display: grid; gap: 2px; }
+.agenda-more__btn strong { font-family: var(--font-text); font-size: var(--fs-md); font-weight: 400; }
+.agenda-more__hint { font-size: var(--fs-xs); color: var(--ink-soft); }
+.agenda-more__btn:active { transform: scale(0.99); }
+@media (hover: hover) and (pointer: fine) { .agenda-more__btn:hover { background: var(--paper-shade); } }
+.agenda-list__title { font-size: var(--fs-xl); margin: 0 0 var(--s-4); }
+.agenda-day + .agenda-day { margin-top: var(--s-5); }
+.agenda-day__head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; margin-bottom: var(--s-1); font-family: var(--font-text); font-style: italic; font-weight: 400; font-size: var(--fs-lg); }
+.agenda-day__head a { text-decoration: none; }
+@media (hover: hover) and (pointer: fine) { .agenda-day__head a:hover { text-decoration: underline; text-decoration-thickness: 1px; } }
+.agenda-day__when { font-family: var(--font-hand); font-style: normal; font-size: 1.3rem; color: var(--thread-later); }
+.agenda-day .day-pages { margin-top: var(--s-1); }
+.agenda-list__hint { margin-top: var(--s-5); }

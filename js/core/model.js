@@ -273,6 +273,27 @@
     });
   }
 
+  /**
+   * Mover a otro día. Una actividad propia cambia de fecha (y recuerda de dónde viene);
+   * una de rutina queda “lo dejé para otro día” en su fecha y se copia suelta al día nuevo.
+   */
+  function moveActivity(item, date) {
+    if (!D.isValid(date) || date === item.date) return Promise.resolve(null);
+    if (item.routineId || item.virtual) {
+      return setStatus(item, 'postponed').then(function () {
+        return S().put('activities', normalizeActivity({ date: date, title: item.title, order: Date.now(), movedFrom: item.date }));
+      });
+    }
+    return saveItem(item, { date: date, movedFrom: item.movedFrom || item.date, order: Date.now() });
+  }
+
+  /** Lo que viene: actividades propias desde `from` (rutinas no: aparecen solas en sus días). */
+  function upcoming(from, days) {
+    return activitiesInRange(from, D.addDays(from, days || 365)).then(function (list) {
+      return list.filter(function (a) { return !a.routineId; }).sort(function (a, b) { return byDate(a, b) || a.order - b.order; });
+    });
+  }
+
   function activitiesInRange(from, to) {
     return S().getRange('activities', 'date', from, to).then(function (rows) { return rows.map(normalizeActivity); });
   }
@@ -330,6 +351,8 @@
         return { id: typeof it.id === 'string' ? it.id : MC.uid('itm'), text: str(it.text).slice(0, 500) };
       }),
       pinned: !!p.pinned,
+      // Día en el calendario (elegible). Si no hay, el día en que se empezó.
+      date: D.isValid(p.date) ? p.date : (D.fromISO(p.createdAt) || D.today()),
       stickers: sanitizeStickers(p.stickers),
       createdAt: p.createdAt || MC.nowISO(),
       updatedAt: p.updatedAt || MC.nowISO()
@@ -367,8 +390,8 @@
 
   function pageTitle(p) { return (p && p.title && p.title.trim()) || 'Sin título'; }
 
-  /** Fecha de una página en el calendario: el día en que se empezó (createdAt no cambia al editar). */
-  function pageDate(p) { return D.fromISO(p && p.createdAt); }
+  /** Día de una página en el calendario: el elegido o, si no hay, el día en que se empezó. */
+  function pageDate(p) { return p ? (D.isValid(p.date) ? p.date : D.fromISO(p.createdAt)) : null; }
 
   /* ---------- resúmenes para calendario, año e impresión ---------- */
   function blankSummary(date) {
@@ -472,6 +495,7 @@
     emptyDay: emptyDay, normalizeDay: normalizeDay, isEmptyDay: isEmptyDay, getDay: getDay, saveDay: saveDay, daysInRange: daysInRange,
     normalizeActivity: normalizeActivity, itemsForDay: itemsForDay, addActivity: addActivity, saveItem: saveItem,
     setStatus: setStatus, renameActivity: renameActivity, deleteActivity: deleteActivity, moveToTomorrow: moveToTomorrow,
+    moveActivity: moveActivity, upcoming: upcoming,
     activitiesInRange: activitiesInRange,
     normalizeRoutine: normalizeRoutine, getRoutines: getRoutines, saveRoutine: saveRoutine, deleteRoutine: deleteRoutine,
     normalizePage: normalizePage, getPages: getPages, getPage: getPage, savePage: savePage, deletePage: deletePage,

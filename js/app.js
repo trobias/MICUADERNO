@@ -8,18 +8,21 @@
   var D = MC.dates;
   var R = MC.routes;
 
-  var OPTS = [
+  // Marcadores (como las pestañas de un cuaderno): cada uno abre su cuadro sobre el calendario (DECISIONS D22).
+  var TABS = [
     { id: 'hoy', label: 'Hoy', icon: 'hoy', href: R.today() },
+    { id: 'agenda', label: 'Agenda', icon: 'calendario', href: R.agenda() },
     { id: 'rutinas', label: 'Rutinas', icon: 'rutinas', href: R.routines() },
     { id: 'paginas', label: 'Páginas', icon: 'paginas', href: R.pages() },
     { id: 'anio', label: 'Mi año', icon: 'anio', href: R.year() },
     { id: 'ajustes', label: 'Ajustes', icon: 'ajustes', href: R.settings() }
   ];
-  var PANEL_LABEL = { today: 'Página del día', routines: 'Mis rutinas', pages: 'Mis páginas', page: 'Página', year: 'Mi año', settings: 'Ajustes', print: 'Imprimir mi cuaderno' };
+  var PANEL_LABEL = { today: 'Página del día', agenda: 'Agenda', routines: 'Mis rutinas', pages: 'Mis páginas', page: 'Página', year: 'Mi año', settings: 'Ajustes', print: 'Imprimir mi cuaderno' };
 
   var main = document.getElementById('main');
-  var head = document.getElementById('home-head');
-  var optsEl = document.getElementById('mini-opts');
+  var book = document.getElementById('book');
+  var tabsEl = document.getElementById('tabs');
+  var panelTabs = document.getElementById('panel-tabs');
   var panelEl = document.getElementById('panel');
   var panelBody = document.getElementById('panel-body');
 
@@ -35,25 +38,31 @@
   /** Lee una ruta (ver js/core/routes.js); “#/calendario” vuelve al mes que se estaba mirando. */
   function parse(hash) { return R.parse(hash, { calMonth: MC.ui.get('calMonth', null) }); }
 
-  /* ---------- Botoncitos ---------- */
-  function buildOpts() {
-    MC.clear(optsEl);
-    OPTS.forEach(function (o) {
-      optsEl.appendChild(h('a.mini-opt', { href: o.href, dataset: { opt: o.id } }, MC.icon(o.icon), h('span', o.label)));
+  /* ---------- Marcadores ---------- */
+  function buildTabs() {
+    MC.clear(tabsEl);
+    TABS.forEach(function (t) {
+      tabsEl.appendChild(h('a.tab', { href: t.href, dataset: { tab: t.id }, title: t.label }, MC.icon(t.icon), h('span', t.label)));
     });
   }
 
-  /** El botoncito “Mi año” abre el año que se está mirando en el calendario. */
+  /** El marcador “Mi año” abre el año que se está mirando en el calendario. */
   function followYear(params) {
     var y = String(params.mode === 'semana' ? params.date : params.month).slice(0, 4);
-    var a = optsEl.querySelector('[data-opt="anio"]');
+    var a = tabsEl.querySelector('[data-tab="anio"]');
     if (a) a.setAttribute('href', R.year(y === D.today().slice(0, 4) ? null : y));
   }
 
   function markOpt(id) {
-    MC.$$('.mini-opt', optsEl).forEach(function (a) {
-      if (a.dataset.opt === id) a.setAttribute('aria-current', 'true'); else a.removeAttribute('aria-current');
+    MC.$$('.tab', tabsEl).forEach(function (a) {
+      if (a.dataset.tab === id) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
     });
+  }
+
+  /** Con un cuadro abierto los marcadores se mudan a su costado (el resto de la página queda inerte). */
+  function placeTabs(inPanel) {
+    var target = inPanel ? panelTabs : book;
+    if (tabsEl.parentNode !== target) target.appendChild(tabsEl);
   }
 
   /* ---------- Fondo: calendario ---------- */
@@ -73,7 +82,7 @@
     if (base && base.key === key) return false;
     destroy(base);
     MC.clear(main);
-    head.hidden = false;
+    tabsEl.hidden = false;
     refreshSoon.cancel();
     baseDirty = false;
     base = { key: key, params: params, day: D.today(), instance: MC.views.calendar.render(main, params) };
@@ -145,7 +154,7 @@
     closePanel();
     destroy(base);
     MC.clear(main);
-    head.hidden = true;
+    tabsEl.hidden = true;
     base = { key: 'onboarding', params: null, instance: MC.views.onboarding.render(main, {}) };
   }
 
@@ -163,11 +172,15 @@
     markOpt(route.opt);
     if (!panelEl.open) {
       render();
+      placeTabs(true);
       panelEl.showModal();
       panelEl.scrollTop = 0;
       if (MC.motion.allows('fade') && panelEl.animate) {
-        var dy = MC.motion.allows('move') ? -14 : 0;
-        panelEl.animate([{ opacity: 0, transform: 'translateY(' + dy + 'px) scale(0.99)' }, { opacity: 1, transform: 'none' }],
+        // Sale desde el lado de los marcadores (abajo en el celular), como una hoja que se despliega.
+        var move = MC.motion.allows('move');
+        var narrow = window.matchMedia && window.matchMedia('(max-width: 699px)').matches;
+        var from = !move ? 'none' : narrow ? 'translateY(14px)' : 'translateX(18px)';
+        panelEl.animate([{ opacity: 0, transform: from }, { opacity: 1, transform: 'none' }],
           { duration: MC.motion.duration('panel'), easing: 'cubic-bezier(0.23, 1, 0.32, 1)' });
       }
     } else {
@@ -183,6 +196,7 @@
     destroy(panel);
     panel = null;
     MC.c.closeMenu(false);
+    placeTabs(false);
     if (panelEl.open) panelEl.close();
     MC.clear(panelBody);
     markOpt(null);
@@ -283,7 +297,7 @@
 
   function boot() {
     MC.icons.injectSprite();
-    buildOpts();
+    buildTabs();
     document.getElementById('panel-close').appendChild(MC.icon('close'));
     document.getElementById('panel-close').addEventListener('click', requestClose);
     // Esc cierra el cuadro, pero por el router (así el historial queda coherente).

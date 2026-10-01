@@ -45,7 +45,7 @@ MI CUADERNO es un cuaderno personal digital: diario, agenda, registro de ánimo,
 Pedido de la dueña del proyecto (DECISIONS D17): **sin secciones separadas**. Todo pasa en una pantalla:
 
 - **Centro: el calendario del mes**, con la **tira de los 12 meses** (y flechas de año) para saltar de mes con un toque. Interruptor chico *Mes / Semana*.
-- **Cinco botoncitos arriba**: *Hoy · Rutinas · Páginas · Mi año · Ajustes*. Cada uno abre un **cuadro desplegable** encima del calendario (un `<dialog>`), sin salir de la pantalla.
+- **Marcadores de tela al costado del cuaderno** (como las pestañas de antes; en el celular, abajo): *Hoy · Agenda · Rutinas · Páginas · Mi año* y, separado, *Ajustes* (en el celular, solo el carretel). Cada uno abre un **cuadro desplegable** encima del calendario (un `<dialog>`), sin salir de la pantalla. Con un cuadro abierto los marcadores se mudan a su costado: se pasa de uno a otro sin cerrar (DECISIONS D22). Todos giran en torno a **poner cosas en el calendario**.
 - **Tocar un día** del calendario abre la página de ese día en el cuadro. Al cerrarlo (botón “Volver al calendario”, `Esc`, tocar afuera o *atrás* del navegador) se vuelve al calendario. El calendario de atrás **se actualiza solo** mientras el cuadro está abierto y cuando otra pestaña cambia algo, sin parpadeo y sin tocar lo que se está escribiendo (DECISIONS D21). Al volver, la cinta y el foco quedan en el último día abierto; si el cuadro se abrió con un botoncito, el foco vuelve a ese botoncito.
 
 | Ruta | Qué muestra |
@@ -159,6 +159,7 @@ El calendario es donde aparece **todo lo que tiene fecha**: ánimo, escritura, r
 - Cada rutina: la próxima vez es un enlace a ese día; el ícono de calendario muestra sus días en el mes. Si se llega desde “Ver la rutina”, aparece resaltada y con el foco.
 
 ### 7.5 Páginas
+- Cada página tiene **su día en el calendario**: se elige al crearla (“Para el día”, por defecto hoy o el día desde donde se empezó) y se cambia con “Cambiar el día” (debajo de la hoja o en su menú). Desde la página de un día: “Empezar una página para este día”.
 - **Índice** con título, fecha y número de página con puntos guía (como un índice real). Fijar páginas arriba.
 - **Nueva página**: en blanco o plantillas: *Cosas que me hacen bien, Lugares que amo, Personas importantes, Canciones de este momento, Mis pequeñas victorias, Cosas que quiero probar, Carta para mi yo futuro, Brain dump, Gratitud, Sueños, Lista de deseos, Reflexión del mes*.
 - Tipos: `text` (renglones) o `list` (ítems con viñeta dibujada).
@@ -173,6 +174,12 @@ El calendario es donde aparece **todo lo que tiene fecha**: ánimo, escritura, r
 - Tocar un día → abre su página. La inicial de cada mes lleva a ese mes en el calendario.
 - **Lo que fui notando**: 3-6 observaciones descriptivas (§12), cada una con el camino a sus días.
 - **Lo que guardé**: lista de recuerdos (“qué quiero guardar”) del año, como papelitos.
+
+### 7.8 Agenda (poner cosas en el calendario)
+- **Anotar**: qué + qué día (atajos *Hoy · Mañana · En una semana*; por defecto el día marcado en el calendario si es de hoy en adelante) → “Poner en el calendario”. Aparece en ese día, en su página y en el mes.
+- **También podés poner**: algo que se repite (abre el editor de rutinas) o una página para ese día (elige plantilla con el día ya puesto).
+- **Lo que viene**: lo anotado de hoy en adelante, agrupado por día (el día es un enlace, con “en 2 días”, “en 3 semanas”…), más las páginas de esos días. Cada cosa tiene su menú completo: estados, pasar a mañana, **pasar a otro día**, cambiar el nombre, sacar (con deshacer). Las rutinas no se listan: aparecen solas en sus días.
+- La fila de cada actividad es la misma que en la página del día (`js/ui/activity.js`).
 
 ### 7.7 Ajustes
 - **Vos**: nombre, tapa, nombres de los 5 ánimos (editables), qué registrar.
@@ -305,7 +312,7 @@ skills/               colección de skills (no es parte de la app)
 
 - **Comandos (desarrollo, nunca para la persona usuaria):**
   - `npm test` — unit tests (node:test, sin dependencias).
-  - `npm run e2e` — 19 recorridos con `playwright-core` contra `file://` y `http://127.0.0.1` (usa el Chromium del sistema; `CHROMIUM=/ruta` para cambiarlo).
+  - `npm run e2e` — 20 recorridos con `playwright-core` contra `file://` y `http://127.0.0.1` (usa el Chromium del sistema; `CHROMIUM=/ruta` para cambiarlo).
   - `npm run check` — `node --check` de todos los JS + unit + e2e.
   - `npm run serve` — servidor estático en `http://localhost:4173` para probar la PWA.
   - `npm run icons` — regenera PNG/ICO desde los SVG maestros.

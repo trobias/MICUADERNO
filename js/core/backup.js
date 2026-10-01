@@ -5,12 +5,19 @@
   var D = MC.dates;
   var M = function () { return MC.model; };
 
-  var SCHEMA_VERSION = 1;
+  var SCHEMA_VERSION = 2;
   var APP_ID = 'mi-cuaderno';
 
   /** Migraciones: MIGRATIONS[v] transforma `data` de la versión v-1 a v. */
   var MIGRATIONS = {
-    1: function (data) { return data; }
+    1: function (data) { return data; },
+    // v2: cada página tiene su día en el calendario (antes: el día en que se empezó).
+    2: function (data) {
+      (data.pages || []).forEach(function (p) {
+        if (p && typeof p === 'object' && !D.isValid(p.date)) p.date = D.fromISO(p.createdAt) || null;
+      });
+      return data;
+    }
   };
 
   function build(everything) {

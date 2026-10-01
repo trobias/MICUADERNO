@@ -18,6 +18,8 @@
     week: function (date) { return '#/calendario/semana/' + date; },
     today: function () { return '#/hoy'; },
     day: function (date) { return '#/dia/' + date; },
+    /** Agenda: poner cosas en cualquier día del calendario y ver lo que viene. */
+    agenda: function () { return '#/agenda'; },
     routines: function () { return '#/rutinas'; },
     /** El cuadro de rutinas, con esa rutina a la vista y resaltada. */
     routine: function (id) { return '#/rutinas/' + enc(id); },
@@ -56,6 +58,7 @@
         return { kind: 'base', name: 'calendar', opt: null, params: { mode: 'mes', month: MONTH_RE.test(ctx.calMonth || '') ? ctx.calMonth : D.monthKey(today) } };
       case 'hoy': return { kind: 'panel', name: 'today', opt: 'hoy', params: { date: today, isToday: true } };
       case 'dia': return D.isValid(parts[1]) ? { kind: 'panel', name: 'today', opt: parts[1] === today ? 'hoy' : null, params: { date: parts[1] } } : null;
+      case 'agenda': return { kind: 'panel', name: 'agenda', opt: 'agenda', params: {} };
       case 'rutinas': return { kind: 'panel', name: 'routines', opt: 'rutinas', params: parts[1] ? { focus: parts[1] } : {} };
       case 'paginas': return { kind: 'panel', name: 'pages', opt: 'paginas', params: {} };
       case 'pagina': return parts[1] ? { kind: 'panel', name: 'page', opt: 'paginas', params: { id: parts[1] } } : null;

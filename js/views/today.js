@@ -169,116 +169,14 @@
       return c.section(isToday ? 'Lo de hoy' : 'Lo de ese día', [empty, listEl, add], { id: 'q-list' });
     }
 
-    function statusNote(it) {
-      if (it.status === 'postponed') return h('span.activity__note', 'otro día');
-      if (it.status === 'partial') return h('span.activity__note.activity__note--partial', 'un poquito');
-      if (it.status === 'skipped') return h('span.activity__note.activity__note--skip', 'hoy no salió');
-      return null;
-    }
-
+    /** La fila es la misma que en la Agenda (js/ui/activity.js). */
     function row(it) {
-      var li = h('li.activity', { dataset: { status: it.status, id: it.id } });
-      var box = c.stitchBox(it.status, it.title);
-      var title = h('span.activity__title', it.title);
-      var meta = h('span.activity__meta');
-      var text = h('div.activity__text', title, meta);
-      var more = h('button.icon-btn.icon-btn--sm', { type: 'button', 'aria-label': 'Más opciones para ' + it.title, 'aria-haspopup': 'menu', 'aria-expanded': 'false' }, MC.icon('more'));
-
-      function paintMeta() {
-        MC.clear(meta);
-        if (it.routineId) {
-          meta.appendChild(h('span.activity__routine', MC.icon('rutinas'), it.routineGone ? 'rutina (ya no está)' : 'rutina'));
-        }
-        // “Viene del…” lleva al día de donde se pasó.
-        if (it.movedFrom) meta.appendChild(h('a.activity__routine.activity__from', { href: R.day(it.movedFrom) }, MC.icon('later'), 'viene del ' + D.shortLabel(it.movedFrom)));
-        var n = statusNote(it);
-        if (n) meta.appendChild(n);
-        meta.hidden = !meta.firstChild;
-      }
-      paintMeta();
-
-      function setStatus(status) {
-        var prev = it.status;
-        it.status = status;
-        li.dataset.status = status;
-        c.setStitch(box, status, it.title, prev !== status);
-        paintMeta();
-        return M.setStatus(it, status).then(function (stored) {
-          Object.assign(it, { id: stored.id, virtual: undefined, updatedAt: stored.updatedAt });
-          li.dataset.id = stored.id;
-          saved.flash();
-          MC.emit('activity:status', { item: it, prev: prev });
-        });
-      }
-
-      box.addEventListener('click', function () { setStatus(it.status === 'done' ? 'pending' : 'done'); });
-
-      title.addEventListener('dblclick', startRename);
-
-      function startRename() {
-        var input = h('input.activity__edit.write', { type: 'text', value: it.title, 'aria-label': 'Nombre de la actividad', maxlength: 200 });
-        var done = false;
-        function finish(save) {
-          if (done) return;
-          done = true;
-          var v = input.value.trim();
-          if (save && v && v !== it.title) {
-            M.renameActivity(it, v).then(function (stored) { Object.assign(it, { id: stored.id, title: stored.title, virtual: undefined }); title.textContent = it.title; saved.flash(); });
-            title.textContent = v;
-          }
-          input.replaceWith(title);
-          box.setAttribute('aria-label', 'Lo hice: ' + (v || it.title));
-          more.focus();
-        }
-        input.addEventListener('keydown', function (e) {
-          if (e.key === 'Enter') { e.preventDefault(); finish(true); }
-          if (e.key === 'Escape') { e.preventDefault(); finish(false); }
-        });
-        input.addEventListener('blur', function () { finish(true); });
-        title.replaceWith(input);
-        input.focus();
-        input.select();
-      }
-
-      more.addEventListener('click', function () {
-        var opts = M.STATUSES.map(function (st) {
-          return {
-            label: st === 'pending' ? 'Sin marcar' : M.STATUS_LABEL[st], role: 'menuitemradio', checked: it.status === st,
-            icon: { pending: 'box', done: 'stitch', partial: 'half', postponed: 'later', skipped: 'knot' }[st],
-            onSelect: function () { setStatus(st); }
-          };
-        });
-        opts.push('sep');
-        opts.push({ label: 'Pasar a mañana', icon: 'later', onSelect: function () {
-          M.moveToTomorrow(it).then(function () {
-            it.status = 'postponed'; li.dataset.status = 'postponed'; c.setStitch(box, 'postponed', it.title, false); paintMeta();
-            c.toast('Quedó anotado para mañana.');
-          });
-        } });
-        opts.push({ label: 'Cambiar el nombre', icon: 'edit', onSelect: startRename });
-        if (it.routineId && !it.routineGone) {
-          opts.push({ label: 'Ver la rutina', icon: 'rutinas', onSelect: function () { location.hash = R.routine(it.routineId); } });
-        }
-        if (!it.virtual) {
-          opts.push({ label: 'Sacar de la lista', icon: 'trash', onSelect: function () {
-            var snapshot = MC.clone(it);
-            M.deleteActivity(it).then(function () {
-              li.remove();
-              items = items.filter(function (x) { return x !== it; });
-              listEl.updateEmpty();
-              c.toast('Lo saqué de la lista.', { action: 'Deshacer', onAction: function () {
-                MC.store.put('activities', M.normalizeActivity(snapshot)).then(refreshList);
-              } });
-            });
-          } });
-        }
-        c.menu(more, opts, 'Opciones de ' + it.title);
+      return MC.activityRow(it, {
+        saved: saved,
+        onRemoved: function (gone) { items = items.filter(function (x) { return x !== gone; }); listEl.updateEmpty(); },
+        onRestored: refreshList,
+        onMoved: refreshList
       });
-
-      li.appendChild(box);
-      li.appendChild(text);
-      li.appendChild(more);
-      return li;
     }
 
     function refreshList() {
@@ -298,7 +196,7 @@
         c.writeArea({ id: 'notes', value: day.notes, rows: 5, ariaLabel: 'Durante el día', placeholder: 'Cuando quieras, escribí la primera línea.', onInput: function (v) { day.notes = v; persist(); } }),
         { id: 'q-notes' }));
 
-      if (pagesToday.length) right.appendChild(pagesSection());
+      right.appendChild(pagesSection());
       if (!isFuture && (s.track.energy || s.track.sleep)) right.appendChild(bodySection());
       if (!isFuture && (s.track.evening || s.track.reflection)) right.appendChild(closingSection());
 
@@ -314,7 +212,10 @@
 
     /* Páginas sueltas que se empezaron este día: así el calendario también las encuentra. */
     function pagesSection() {
-      return c.section(pagesToday.length === 1 ? 'Una página de este día' : 'Páginas de este día', c.pageLinks(pagesToday), { id: 'q-pages' });
+      var start = h('button.text-btn', { type: 'button' }, MC.icon('plus'), 'Empezar una página para este día');
+      start.addEventListener('click', function () { MC.views.pages.newPage(date); });
+      return c.section(pagesToday.length === 1 ? 'Una página de este día' : 'Páginas de este día',
+        [pagesToday.length ? c.pageLinks(pagesToday) : null, start], { id: 'q-pages' });
     }
 
     function bodySection() {

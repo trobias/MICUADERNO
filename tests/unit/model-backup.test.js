@@ -187,3 +187,47 @@ test('lecturas compartidas: escritura, nombre de ánimo, título y fecha de pág
   assert.equal(M.pageDate({ createdAt: new Date(2026, 9, 2, 23, 30).toISOString() }), '2026-10-02');
   assert.equal(M.pageDate({}), null);
 });
+
+test('mover a otro día: propia cambia de fecha; de rutina queda para otro día y se copia', async () => {
+  await fresh();
+  const own = await M.addActivity('2026-10-05', 'turno con la dentista');
+  await M.moveActivity(own, '2026-10-09');
+  assert.equal((await M.itemsForDay('2026-10-05')).length, 0);
+  const moved = (await M.itemsForDay('2026-10-09'))[0];
+  assert.equal(moved.id, own.id, 'es la misma, no una copia');
+  assert.equal(moved.movedFrom, '2026-10-05');
+  const rut = await M.saveRoutine({ title: 'Regar', rule: { type: 'daily' }, startDate: '2026-10-01' });
+  const occ = (await M.itemsForDay('2026-10-06')).find((i) => i.routineId === rut.id);
+  await M.moveActivity(occ, '2026-10-08');
+  assert.equal((await M.itemsForDay('2026-10-06')).find((i) => i.routineId === rut.id).status, 'postponed');
+  const copy = (await M.itemsForDay('2026-10-08')).find((i) => !i.routineId && i.title === 'Regar');
+  assert.equal(copy.movedFrom, '2026-10-06');
+  assert.equal(await M.moveActivity(moved, '2026-10-09'), null, 'mismo día: no hace nada');
+});
+
+test('lo que viene: propias desde hoy, en orden, sin rutinas', async () => {
+  await fresh();
+  await M.saveRoutine({ title: 'Regar', rule: { type: 'daily' }, startDate: '2026-10-01' });
+  await M.addActivity('2026-10-20', 'cumple');
+  await M.addActivity('2026-10-03', 'feria');
+  await M.addActivity('2026-09-20', 'ya pasó');
+  const list = await M.upcoming('2026-10-01', 60);
+  assert.deepEqual(list.map((a) => a.title), ['feria', 'cumple']);
+});
+
+test('páginas: tienen día en el calendario (elegible) y la copia v1 se migra', async () => {
+  await fresh();
+  const p = await M.savePage({ title: 'Lista del viaje', date: '2026-12-20' });
+  assert.equal(M.pageDate(p), '2026-12-20');
+  const sum = await M.summaryRange('2026-12-01', '2026-12-31');
+  assert.deepEqual(sum['2026-12-20'].pages.map((x) => x.title), ['Lista del viaje']);
+  assert.equal((await M.pagesOn('2026-12-20')).length, 1);
+  const old = M.normalizePage({ title: 'vieja', createdAt: new Date(2026, 2, 4, 10).toISOString() });
+  assert.equal(old.date, '2026-03-04', 'sin día: el día en que se empezó');
+  const v = MC.backup.validate({ app: 'mi-cuaderno', kind: 'backup', schemaVersion: 1, data: {
+    days: [], activities: [], routines: [], pages: [{ id: 'p1', title: 'x', createdAt: new Date(2026, 4, 1, 12).toISOString() }]
+  } });
+  assert.equal(v.ok, true);
+  assert.equal(v.payload.pages[0].date, '2026-05-01');
+  assert.equal(MC.backup.SCHEMA_VERSION, 2);
+});

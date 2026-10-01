@@ -3,14 +3,14 @@
    NO pasan por acá: viven en IndexedDB. Al cambiar cualquier archivo de SHELL, subir CACHE_VERSION. */
 'use strict';
 
-var CACHE_VERSION = 'mi-cuaderno-v6';
+var CACHE_VERSION = 'mi-cuaderno-v7';
 var SHELL = [
   './', 'index.html', 'manifest.webmanifest',
   'css/fonts.css', 'css/tokens.css', 'css/base.css', 'css/notebook.css', 'css/components.css', 'css/views.css', 'css/print.css',
   'js/core/ns.js', 'js/core/dates.js', 'js/core/routes.js', 'js/core/recurrence.js', 'js/core/store.js', 'js/core/model.js', 'js/core/backup.js',
   'js/core/zip.js', 'js/core/exporters.js', 'js/core/insights.js',
-  'js/ui/icons.js', 'js/ui/stickers.js', 'js/ui/motion.js', 'js/ui/components.js', 'js/ui/scrapbook.js', 'js/ui/scenes.js',
-  'js/views/cover.js', 'js/views/onboarding.js', 'js/views/today.js', 'js/views/calendar.js', 'js/views/routines.js',
+  'js/ui/icons.js', 'js/ui/stickers.js', 'js/ui/motion.js', 'js/ui/components.js', 'js/ui/activity.js', 'js/ui/scrapbook.js', 'js/ui/scenes.js',
+  'js/views/cover.js', 'js/views/onboarding.js', 'js/views/today.js', 'js/views/calendar.js', 'js/views/agenda.js', 'js/views/routines.js',
   'js/views/pages.js', 'js/views/year.js', 'js/views/settings.js', 'js/views/print.js',
   'js/notify.js', 'js/pwa.js', 'js/app.js',
   'assets/icons/favicon.ico', 'assets/icons/favicon.svg', 'assets/icons/favicon-16x16.png', 'assets/icons/favicon-32x32.png',

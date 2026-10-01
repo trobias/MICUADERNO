@@ -24,9 +24,11 @@
 
   function templateFor(id) { return TEMPLATES.filter(function (t) { return t.id === id; })[0] || TEMPLATES[0]; }
 
-  function create(tpl) {
+  function create(tpl, date) {
+    var day = D.isValid(date) ? date : D.today();
     var page = {
-      title: tpl.id === 'month' ? tpl.title + ' · ' + D.monthLabel(D.monthKey(D.today())) : tpl.title,
+      date: day,
+      title: tpl.id === 'month' ? tpl.title + ' · ' + D.monthLabel(D.monthKey(day)) : tpl.title,
       template: tpl.id, kind: tpl.kind, paper: tpl.paper || (tpl.kind === 'list' ? 'punteado' : 'rayado'),
       body: tpl.body || '', items: tpl.kind === 'list' ? [{ text: '' }] : [],
       stickers: tpl.sticker ? [{ id: MC.uid('stk'), sticker: tpl.sticker, x: 0.86, y: 0.07, rot: 8, scale: 0.9 }] : []
@@ -34,17 +36,21 @@
     return M.savePage(page).then(function (p) { location.hash = R.page(p.id); });
   }
 
-  function templatePicker() {
+  /** Elegir plantilla y día. `date`: día propuesto (por defecto, hoy). La página aparece en ese día del calendario. */
+  function templatePicker(date) {
+    var dayInput = h('input.input', { id: 'tp-day', type: 'date', value: D.isValid(date) ? date : D.today() });
     var grid = h('div.template-grid');
     TEMPLATES.forEach(function (t) {
       var b = h('button.template', { type: 'button' },
         t.sticker ? h('span.template__sticker', { 'aria-hidden': 'true', html: MC.stickers.markup(t.sticker) }) : null,
         h('span.template__title', t.label),
         h('span.template__kind', t.kind === 'list' ? 'lista' : 'texto'));
-      b.addEventListener('click', function () { dlg.close(); create(t); });
+      b.addEventListener('click', function () { dlg.close(); create(t, dayInput.value); });
       grid.appendChild(b);
     });
-    var dlg = c.dialog({ title: 'Nueva página', content: [h('p.section__hint', 'Empezá en blanco o con una idea. Todo se puede cambiar.'), grid] });
+    var dlg = c.dialog({ title: 'Nueva página', content: [
+      h('div.field.field--inline', h('label', { for: 'tp-day' }, 'Para el día'), dayInput),
+      h('p.section__hint', 'Empezá en blanco o con una idea. Todo se puede cambiar, también el día.'), grid] });
   }
 
   /* ---------- Índice ---------- */
@@ -55,7 +61,7 @@
     M.getPages().then(function (pages) {
       if (destroyed) return;
       var add = h('button.label-btn', { type: 'button' }, MC.icon('plus'), 'Nueva página');
-      add.addEventListener('click', templatePicker);
+      add.addEventListener('click', function () { templatePicker(); });
       page.appendChild(h('header.page-head', h('h1.t-display', 'Mis páginas'), add));
       if (!pages.length) {
         page.appendChild(c.empty('Todavía no hay páginas. Una lista, una carta, lo que quieras: esta parte del cuaderno es libre.', 'libro'));
@@ -64,6 +70,7 @@
       var ol = h('ol.toc', { 'aria-label': 'Índice' });
       pages.forEach(function (p, i) {
         var preview = p.kind === 'list' ? p.items.filter(function (it) { return it.text.trim(); }).length + ' cosas' : (p.body.trim() ? p.body.trim().split('\n')[0].slice(0, 70) : 'en blanco');
+        preview += ' · ' + D.shortLabel(M.pageDate(p));
         ol.appendChild(h('li.toc__item',
           h('a.toc__link', { href: R.page(p.id) },
             p.pinned ? h('span.toc__pin', { 'aria-label': 'fijada' }, MC.icon('pin')) : null,
@@ -125,6 +132,7 @@
         });
         items.push('sep');
         items.push({ label: page.kind === 'list' ? 'Pasar a texto' : 'Pasar a lista', icon: page.kind === 'list' ? 'text' : 'list', onSelect: switchKind });
+        items.push({ label: 'Cambiar el día…', icon: 'calendario', onSelect: changeDay });
         items.push({ label: page.pinned ? 'Desfijar del índice' : 'Fijar arriba en el índice', icon: 'pin', onSelect: function () { page.pinned = !page.pinned; persist(); persist.flush(); } });
         items.push({ label: 'Borrar la página', icon: 'trash', onSelect: remove });
         c.menu(more, items, 'Opciones de la página');
@@ -138,11 +146,32 @@
         id: 'page-body', value: page.body, rows: 12, ariaLabel: 'Texto de la página', placeholder: 'Esta página todavía está en blanco.',
         onInput: function (v) { page.body = v; persist(); }
       }));
-      var started = M.pageDate(page);
-      // La fecha lleva al día en que se empezó (ahí también aparece en el calendario).
-      if (started) sheet.appendChild(h('p.page-meta.t-meta', 'Empezada el ', h('a', { href: R.day(started) }, D.longLabel(started))));
+      metaEl = null;
+      sheet.appendChild(dayMeta());
       scrap = MC.scrapbook.attach(sheet, { stickers: page.stickers, label: 'esta página', onChange: function (list) { page.stickers = list; persist(); } });
       sheet.appendChild(scrap.toolbar);
+    }
+
+    /** “En el calendario: jueves 8 de octubre · Cambiar el día”. La fecha lleva a ese día. */
+    var metaEl = null;
+    function dayMeta() {
+      var k = M.pageDate(page);
+      var change = h('button.text-btn', { type: 'button' }, 'Cambiar el día');
+      change.addEventListener('click', changeDay);
+      var el = h('p.page-meta.t-meta', 'En el calendario: ', h('a', { href: R.day(k) }, D.longLabel(k) + (k.slice(0, 4) !== D.today().slice(0, 4) ? ' de ' + k.slice(0, 4) : '')), ' · ', change);
+      if (metaEl && metaEl.isConnected) metaEl.replaceWith(el);
+      metaEl = el;
+      return el;
+    }
+
+    function changeDay() {
+      c.askDate({ title: '¿En qué día va esta página?', value: M.pageDate(page), confirm: 'Cambiar', hint: 'La página aparece en ese día del calendario.' }).then(function (k) {
+        if (!k || !page) return;
+        page.date = k;
+        persist(); persist.flush();
+        dayMeta();
+        c.toast('La página quedó en el ' + D.longLabel(k) + '.');
+      });
     }
 
     function listEditor() {
@@ -215,6 +244,6 @@
   }
 
   MC.views = MC.views || {};
-  MC.views.pages = { render: function (main) { return renderIndex(main); }, TEMPLATES: TEMPLATES, templateFor: templateFor };
+  MC.views.pages = { render: function (main) { return renderIndex(main); }, TEMPLATES: TEMPLATES, templateFor: templateFor, newPage: templatePicker };
   MC.views.page = { render: function (main, params) { return renderPage(main, params.id); } };
 })(window);

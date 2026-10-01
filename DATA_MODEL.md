@@ -1,6 +1,6 @@
 # MI CUADERNO — Modelo de datos
 
-`schemaVersion: 1` · Base IndexedDB `mi-cuaderno` (versión IDB 1).
+`schemaVersion: 2` · Base IndexedDB `mi-cuaderno` (versión IDB 1: la v2 no agrega índices).
 
 ## Principios
 
@@ -16,7 +16,7 @@
 
 | key | value |
 |---|---|
-| `schemaVersion` | `1` |
+| `schemaVersion` | `2` |
 | `settings` | objeto Settings (abajo) |
 | `createdAt` | ISO del primer arranque |
 | `lastBackupAt` | ISO de la última copia descargada, o `null` |
@@ -113,6 +113,7 @@ Unicidad lógica: para ocurrencias de rutina, a lo sumo una actividad por `(rout
   body: '',                       // kind 'text'
   items: [{ id, text }],          // kind 'list'
   pinned: false,
+  date: 'AAAA-MM-DD',             // día en el calendario (v2; elegible). Si falta: el día local de createdAt
   stickers: [Placed],
   createdAt, updatedAt
 }
@@ -130,7 +131,7 @@ Unicidad lógica: para ocurrencias de rutina, a lo sumo una actividad por `(rout
 {
   app: 'mi-cuaderno',
   kind: 'backup',
-  schemaVersion: 1,
+  schemaVersion: 2,
   exportedAt: ISO,
   data: {
     meta: { createdAt, settings },
@@ -149,6 +150,9 @@ Validación al importar (en orden, con mensaje humano por cada falla):
 ## Migraciones
 
 `js/core/backup.js` exporta `MIGRATIONS = { 1: d => d }`. Para agregar la v2: escribir `2: d => {...}` que transforme datos v1 → v2, subir `SCHEMA_VERSION`, y en `store.js` subir la versión IDB con `onupgradeneeded` que cree índices nuevos y reescriba registros con la misma función. Un backup v1 importado en v2 pasa por la migración.
+
+### Migración v1 → v2 (2026-10-01)
+Las páginas ganan `date` (su día en el calendario). `MIGRATIONS[2]` lo completa con el día local de `createdAt` al importar una copia v1; en IndexedDB no hace falta reescribir nada porque `normalizePage` hace lo mismo al leer. Sin índices nuevos: la versión IDB sigue en 1.
 
 ## Resumen del calendario (derivado, no se guarda)
 

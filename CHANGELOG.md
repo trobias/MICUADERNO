@@ -2,6 +2,20 @@
 
 Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantiene. El porqué de cada decisión está en `DECISIONS.md` (Dn); lo que falta, en `ROADMAP.md`. Cada entrega que toca archivos de la app sube `CACHE_VERSION` en `sw.js` para que las PWA instaladas se actualicen.
 
+## 2026-10-01 · Vuelven los marcadores; la Agenda (cache `v7`)
+
+**Para quien lo usa**
+- Los botoncitos vuelven a ser **marcadores de tela** al costado del cuaderno, como antes (en el celular, abajo, con el carretel de Ajustes al final). Cada uno abre su **cuadro** encima del calendario; con un cuadro abierto, los marcadores quedan a su costado y se pasa de uno a otro sin cerrar. El cuadro se despliega desde el lado de los marcadores.
+- Nuevo marcador **Agenda**: anotás algo para cualquier día (con atajos Hoy · Mañana · En una semana) y aparece en el calendario. Abajo, **Lo que viene**, día por día, con todo para editar: marcar, renombrar, **pasar a otro día**, sacar (con deshacer). Desde ahí también podés crear una rutina o una página para ese día.
+- **“Pasar a otro día…”** también en la página de cada día.
+- Las **páginas tienen su día**: lo elegís al crearla y lo cambiás cuando quieras (“Cambiar el día”). Desde un día: “Empezar una página para este día”.
+
+**Para quien lo mantiene** (decisión **D22**)
+- `js/ui/activity.js` (`MC.activityRow`, `MC.c.askDate`) reemplaza la fila de `today.js`; `js/views/agenda.js`; ruta `#/agenda`.
+- `MC.model.moveActivity`, `MC.model.upcoming`; `page.date` con `schemaVersion` 2 y migración (DATA_MODEL).
+- `app.js`: `TABS`, `buildTabs`, `placeTabs`; los marcadores se mudan al `<dialog>` abierto.
+- Tests: 46 unit y 20 E2E (recorrido nuevo de la Agenda; los marcadores se recorren con el cuadro abierto).
+
 ## 2026-10-01 · El calendario se actualiza solo (cache `v6`)
 
 **Para quien lo usa**
