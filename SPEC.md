@@ -102,20 +102,32 @@ Nunca se piden permisos al abrir. Después de ≥ 3 días distintos con registro
 ### 7.2 Hoy (página del día)
 Secciones, en orden de lectura (mobile) o repartidas en doble página (desktop: izquierda = mañana y lista; derecha = durante y cierre):
 
-1. **Encabezado**: saludo según hora (“Buenos días / Buenas tardes / Buenas noches, {nombre} ♡”), día de semana + fecha. Flechas día anterior/siguiente, “volver a hoy” si no es hoy. Selector de fecha nativo accesible.
+1. **Encabezado**: saludo según hora (“Buenos días / Buenas tardes / Buenas noches, {nombre} ♡”), día de semana + fecha. Flechas día anterior/siguiente y “Ir a hoy” si no es hoy (para saltar lejos se usa el calendario, que queda debajo).
 2. **¿Cómo arrancaste hoy?** — 5 sellos de ánimo (ver §9). Tocar el mismo sello lo quita.
 3. **Algo que quiero cuidar hoy…** — nota adhesiva, una línea o dos.
 4. **Lo de hoy** — lista de actividades: propias del día + ocurrencias de rutinas. Cada una con 5 estados (§10). Agregar inline. Editar texto, borrar, mover a mañana (“lo dejo para otro día” ofrece “pasar a mañana”).
 5. **Durante el día** — texto libre sobre renglones.
 6. **Energía / sueño** (si están activados) — energía 1-3 (“poquita / media / mucha”), horas de sueño (0–14, pasos de 0,5).
 7. **¿Cómo terminó tu día?** — sellos de ánimo + reflexiones: *qué me hizo bien*, *algo difícil*, *algo lindo*, *qué quiero guardar* (⇒ recuerdo), *texto libre*. Se muestra plegado como “cerrar el día” antes de las 17 h si está vacío; siempre se puede desplegar.
-8. **Capa de stickers** del día (scrapbook) — botón “stickers”.
+8. **Páginas de este día** — si ese día se empezó alguna página libre, un enlace a cada una (así el calendario también encuentra las páginas).
+9. **Capa de stickers** del día (scrapbook) — botón “stickers”.
 
 Guardado automático: cada cambio se anota al instante como borrador local y se escribe en IndexedDB a los 400 ms; si la pestaña se cierra antes, el borrador se recupera al volver. Un “guardado” manuscrito discreto confirma. Días futuros: editables (planear). Días pasados: editables.
 
 ### 7.3 Calendario
-- **Mes** (pantalla principal): tira de 12 meses + grilla lunes-domingo. Cada día muestra: número, parche del ánimo final (o inicial si no hay final), punto de tinta si escribió, estrellita si guardó un recuerdo y la cantidad de cosas hechas. Hoy con borde a lápiz; el último día abierto lleva una cinta-marcador. Tocar un día → su página en el cuadro desplegable.
-- **Semana**: agenda de 7 días (desktop: lun-mié izquierda / jue-dom derecha). Cada día: ánimo, actividades (incluye rutinas futuras virtuales), primera línea escrita. Tocar → abre el día.
+El calendario es donde aparece **todo lo que tiene fecha**: ánimo, escritura, recuerdos, actividades, rutinas y páginas.
+
+- **Mes** (pantalla principal): tira de 12 meses + grilla lunes-domingo. Cada día muestra:
+  - número;
+  - parche del ánimo final (o inicial si no hay final);
+  - punto de tinta si escribió; estrellita si guardó un recuerdo;
+  - **×n** cosas hechas (o a medias);
+  - **hoy y días que vienen:** cajita vacía **□n** con lo que queda planeado, *contando las rutinas que tocan ese día* aunque todavía no se hayan marcado;
+  - **hoja chiquita** si ese día se empezó una página libre.
+  
+  Los días pasados **no** muestran lo que quedó sin marcar (sin cuentas de “pendientes” para atrás: amable, ver D18). Cada marca tiene su texto en el `aria-label` del día (“una cosa planeada”, “empezaste una página”) y su lugar en la leyenda. Hoy con borde a lápiz; el último día abierto lleva una cinta-marcador. Tocar un día → su página en el cuadro desplegable.
+- **Semana**: agenda de 7 días (desktop: lun-mié izquierda / jue-dom derecha). Cada día: ánimo, actividades (incluye rutinas futuras virtuales), primera línea escrita y enlaces a las páginas empezadas ese día. Tocar → abre el día.
+- **Mi año** sigue mostrando solo lo registrado: una rutina sin marcar no borda medio punto.
 - Navegación anterior/siguiente, “hoy”.
 
 ### 7.4 Rutinas

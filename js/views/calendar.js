@@ -70,9 +70,15 @@
           var parts = [D.parse(key).d + ' de ' + D.MONTHS[D.parse(key).m - 1]];
           if (key === today) parts.push('hoy');
           if (info && info.mood) parts.push(moodName(info.mood));
-          if (info && info.total) parts.push(info.done + ' de ' + info.total + ' cosas');
+          // Pasado: solo lo hecho (sin cuentas de lo que quedó). Hoy y adelante: lo planeado, rutinas incluidas.
+          var ahead = key >= today;
+          var planned = ahead && info ? info.pending : 0;
+          var pages = info ? info.pages : [];
+          if (info && info.done) parts.push(info.done === 1 ? 'una cosa hecha' : info.done + ' cosas hechas');
+          if (planned) parts.push(planned === 1 ? 'una cosa planeada' : planned + ' cosas planeadas');
           if (info && info.wrote) parts.push('escribiste');
           if (info && info.memory) parts.push('guardaste un recuerdo');
+          if (pages.length) parts.push(pages.length === 1 ? 'empezaste una página' : 'empezaste ' + pages.length + ' páginas');
           var btn = h('button.day-cell', {
             type: 'button', role: 'gridcell', tabindex: '-1',
             'aria-label': parts.join(', '), 'aria-selected': String(key === marked),
@@ -84,7 +90,9 @@
             h('span.day-cell__marks',
               info && info.wrote ? h('span.mark-ink', { title: 'escribiste' }) : null,
               info && info.memory ? h('span.mark-star', { html: '<svg viewBox="0 0 24 24"><use href="#i-star"/></svg>' }) : null,
-              info && info.done ? h('span.mark-x', { title: info.done + ' hechas' }, '×' + info.done) : null),
+              info && info.done ? h('span.mark-x', { 'aria-hidden': 'true' }, '×' + info.done) : null,
+              planned ? h('span.mark-plan', { 'aria-hidden': 'true' }, MC.icon('box'), String(planned)) : null,
+              pages.length ? h('span.mark-page', { 'aria-hidden': 'true' }, MC.icon('paginas')) : null),
             key === marked ? h('span.day-cell__ribbon', { 'aria-hidden': 'true' }) : null);
           // Tocar un día abre su página en el cuadro desplegable.
           btn.addEventListener('click', function () { MC.ui.set('calSelected', key); location.hash = '#/dia/' + key; });
@@ -126,7 +134,10 @@
     return h('ul.mood-legend', { 'aria-label': 'Referencias' },
       [1, 2, 3, 4, 5].map(function (m) { return h('li', h('span', { html: MC.stickers.miniPatchMarkup(m) }), labels[m - 1]); }),
       h('li', h('span.mark-ink'), 'escribiste'),
-      h('li', h('span.mark-star', { html: '<svg viewBox="0 0 24 24"><use href="#i-star"/></svg>' }), 'recuerdo'));
+      h('li', h('span.mark-star', { html: '<svg viewBox="0 0 24 24"><use href="#i-star"/></svg>' }), 'recuerdo'),
+      h('li', h('span.mark-x', '×'), 'hecho'),
+      h('li', h('span.mark-plan', MC.icon('box')), 'planeado (con rutinas)'),
+      h('li', h('span.mark-page', MC.icon('paginas')), 'página empezada'));
   }
 
   /* ---------- SEMANA ---------- */
@@ -139,10 +150,11 @@
     var rightPage = h('section.page.week-page');
     main.appendChild(h('div.spread', leftPage, h('div.spine', { 'aria-hidden': 'true' }), rightPage));
 
-    Promise.all([M.getRoutines(), M.daysInRange(start, end)]).then(function (r) {
+    Promise.all([M.getRoutines(), M.daysInRange(start, end), M.getPages()]).then(function (r) {
       var routines = r[0];
       var byDay = {};
       r[1].forEach(function (d) { byDay[d.date] = d; });
+      var pagesByDay = M.summarize([], [], { from: start, to: end, pages: r[2] });
       return Promise.all(D.range(start, end).map(function (k) { return M.itemsForDay(k, routines); })).then(function (lists) {
         if (destroyed) return;
         var sp = D.parse(start), ep = D.parse(end);
@@ -154,9 +166,9 @@
             h('a.icon-btn', { href: '#/calendario/semana/' + D.addDays(start, 7), 'aria-label': 'Semana siguiente' }, MC.icon('arrow-right'))),
           h('div.cal-head__tools', (today < start || today > end) ? h('a.text-btn', { href: '#/calendario/semana/' + today }, 'Esta semana') : null, modeSwitch('semana', D.monthKey(date), date))));
         D.range(start, end).forEach(function (k, i) {
-          (i < 3 ? leftPage : rightPage).appendChild(dayBlock(k, byDay[k], lists[i], today));
+          (i < 3 ? leftPage : rightPage).appendChild(dayBlock(k, byDay[k], lists[i], today, pagesByDay[k] ? pagesByDay[k].pages : []));
         });
-        if (!r[1].length && lists.every(function (l) { return !l.length; })) {
+        if (!r[1].length && !Object.keys(pagesByDay).length && lists.every(function (l) { return !l.length; })) {
           leftPage.appendChild(h('p.section__hint.week-empty', 'Tu semana recién empieza.'));
         }
       });
@@ -164,7 +176,7 @@
     return { destroy: function () { destroyed = true; } };
   }
 
-  function dayBlock(k, day, list, today) {
+  function dayBlock(k, day, list, today, pages) {
     var mood = day && (day.evening.mood || day.morning.mood);
     var p = D.parse(k);
     var head = h('a.week-day__head', { href: '#/dia/' + k },
@@ -185,7 +197,10 @@
       head,
       list.length ? ul : null,
       firstLine ? h('p.week-day__line', firstLine.length > 90 ? firstLine.slice(0, 88) + '…' : firstLine) : null,
-      !list.length && !firstLine ? h('p.week-day__blank', k < today ? 'en blanco' : '') : null);
+      pages.length ? h('ul.day-pages.day-pages--week', pages.map(function (pg) {
+        return h('li', h('a.text-btn', { href: '#/pagina/' + pg.id }, MC.icon('paginas'), pg.title.trim() || 'Página sin título'));
+      })) : null,
+      !list.length && !firstLine && !pages.length ? h('p.week-day__blank', k < today ? 'en blanco' : '') : null);
   }
 
   function markSvg(status) {

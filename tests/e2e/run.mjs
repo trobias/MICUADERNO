@@ -249,6 +249,46 @@ await test('calendario, semana y año muestran lo registrado; teclado en el mes'
   await context.close();
 });
 
+await test('el calendario reúne todo: rutinas planeadas, páginas del día y el año sin falsos puntos', async () => {
+  const { page, errors, context } = await newPage(browser);
+  await page.goto(FILE_URL);
+  await onboard(page);
+  await goto(page, '#/rutinas');
+  await page.click('button:has-text("Nueva rutina")');
+  await page.fill('#rt-title', 'Estirar');
+  await page.selectOption('#rt-freq', 'daily');
+  await page.click('dialog.sheet button:has-text("Crear rutina")');
+  await page.waitForSelector('.routine__title:has-text("Estirar")');
+  await goto(page, '#/paginas');
+  await page.click('button:has-text("Nueva página")');
+  await page.click('.template:has-text("Lugares que amo")');
+  await page.waitForSelector('.free-list input');
+  await page.waitForTimeout(500);
+  const d = new Date(); d.setDate(d.getDate() + 1);
+  const TOMORROW = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  await goto(page, '#/calendario/mes/' + TOMORROW.slice(0, 7));
+  const next = page.locator(`.day-cell[data-date="${TOMORROW}"]`);
+  assert.equal((await next.locator('.mark-plan').textContent()).trim(), '1');
+  assert.match(await next.getAttribute('aria-label'), /una cosa planeada/);
+  await goto(page, '#/calendario/mes/' + TODAY.slice(0, 7));
+  const cell = page.locator(`.day-cell[data-date="${TODAY}"]`);
+  assert.equal(await cell.locator('.mark-page').count(), 1, 'marca de página en hoy');
+  assert.match(await cell.getAttribute('aria-label'), /empezaste una página/);
+  await cell.click();
+  await page.waitForSelector('#panel[open] #q-pages');
+  await page.click('#panel .day-pages a:has-text("Lugares que amo")');
+  await page.waitForSelector('#panel[open] .free-list input');
+  await goto(page, '#/calendario/semana/' + TODAY);
+  await page.waitForSelector('.week-day');
+  assert.equal(await page.locator('.week-day .day-pages a').count(), 1, 'página en la semana');
+  if (TOMORROW.slice(0, 4) === TODAY.slice(0, 4)) {
+    await goto(page, '#/anio');
+    assert.equal(await page.locator(`.stitch-cell[data-date="${TOMORROW}"].is-half`).count(), 0, 'una rutina sin marcar no borda medio punto');
+  }
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
 await test('mobile 375px: una pantalla, 5 botoncitos, sin scroll horizontal', async () => {
   const { page, errors, context } = await newPage(browser, { viewport: { width: 375, height: 760 } });
   await page.goto(FILE_URL);

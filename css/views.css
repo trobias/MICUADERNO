@@ -108,6 +108,10 @@
 .mark-star { display: inline-block; width: 13px; height: 13px; color: var(--mood-5); }
 .mark-star svg { width: 13px; height: 13px; fill: var(--mood-5); }
 .mark-x { font-variant-numeric: tabular-nums; }
+.mark-plan { display: inline-flex; align-items: center; gap: 1px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.mark-plan .icon, .mark-page .icon { width: 12px; height: 12px; stroke-width: 2; }
+.mark-page { display: inline-flex; color: var(--thread-later); }
+.mood-legend .mark-x { color: var(--thread-done-text); font-weight: 650; }
 .day-cell.is-out { opacity: 0.4; background: transparent; }
 .day-cell.is-today { border: 1.5px dashed var(--ink); }
 .day-cell.is-future .day-cell__num { color: var(--ink-soft); }
@@ -115,6 +119,9 @@
 .day-cell__ribbon { position: absolute; top: -5px; right: 8px; width: 11px; height: 28px; background: var(--rose); clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%); pointer-events: none; }
 @media (hover: hover) and (pointer: fine) { .day-cell:hover { border-color: var(--rule-strong); } }
 
+.day-pages { display: grid; gap: var(--s-1); }
+.day-pages .text-btn { justify-content: flex-start; text-align: start; }
+.day-pages--week { margin-top: var(--s-1); font-size: var(--fs-xs); }
 .mood-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: var(--s-5) 0 var(--s-4); font-size: var(--fs-xs); color: var(--ink-soft); }
 .mood-legend li { display: inline-flex; align-items: center; gap: 6px; }
 .mood-legend .mini-patch { width: 18px; height: 18px; }

@@ -62,6 +62,7 @@ assets/icons/           favicon, iconos PWA, notificación (generados por tools/
 tests/unit/             node:test sobre js/core
 tests/e2e/              Playwright
 tools/                  serve.mjs, make-icons.mjs, build-fonts.mjs, dist.mjs, check.mjs, shot.mjs (captura para QA)
+CHANGELOG.md            qué cambió en cada entrega (actualizarlo al commitear algo visible)
 PRODUCT.md              verdad de producto (usada por la skill impeccable)
 skills/                 colección de skills del proyecto (no es parte de la app; no se distribuye)
 ```
@@ -96,7 +97,7 @@ skills/                 colección de skills del proyecto (no es parte de la app
 ```
 npm test          # unit (node:test), sin instalar nada
 npm install       # solo para e2e/íconos: instala playwright-core (no descarga navegadores)
-npm run e2e       # 16 recorridos en file:// y http:// (Chromium en /opt/pw-browsers/chromium o CHROMIUM=/ruta)
+npm run e2e       # 17 recorridos en file:// y http:// (Chromium en /opt/pw-browsers/chromium o CHROMIUM=/ruta)
 npm run check     # sintaxis + unit + e2e
 npm run serve     # http://localhost:4173 (probar PWA/SW)
 ```
@@ -117,6 +118,7 @@ Probar a mano además: doble clic en `index.html`; mobile 375px; teclado solo; `
 - Los datos del día se guardan con borrador local + IndexedDB (ver DECISIONS D13): no saltear `persist()`.
 - Pantalla única (DECISIONS D17): las vistas que no son el calendario se renderizan dentro de `#panel-body`. Menús/avisos van en `MC.c.layer()` (el diálogo abierto), no en `body`.
 - Las ocurrencias de rutina son virtuales hasta que se marcan (`item.virtual`); usá `MC.model.setStatus`, nunca escribas actividades de rutina a mano.
+- Todo lo que tiene fecha tiene que verse en el calendario (DECISIONS D18). Si agregás algo fechado, sumalo en `MC.model.summarize` (con test) y dale marca + texto en la celda y la leyenda de `js/views/calendar.js`. En días pasados, nunca mostrar lo que quedó sin hacer.
 
 ## Anti-patterns
 

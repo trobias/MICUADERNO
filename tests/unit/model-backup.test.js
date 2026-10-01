@@ -121,3 +121,35 @@ test('backup inválido: mensajes claros', () => {
   assert.equal(ok.payload.activities.length, 1);
   assert.equal(ok.payload.activities[0].status, 'pending');
 });
+
+test('el resumen del calendario incluye rutinas sin marcar y páginas', async () => {
+  await fresh();
+  // Miércoles 30/09 y 07/10 (weekdays 3).
+  const rut = await M.saveRoutine({ title: 'Regar', rule: { type: 'weekdays', days: [3] }, startDate: '2026-09-01' });
+  await M.addActivity('2026-10-07', 'llamar a la abuela');
+  const items = await M.itemsForDay('2026-09-30');
+  await M.setStatus(items.find((i) => i.routineId === rut.id), 'done');
+  await M.savePage({ title: 'Ideas', createdAt: new Date(2026, 9, 2, 23, 30).toISOString() });
+
+  const sum = await M.summaryRange('2026-09-28', '2026-10-11');
+  // Marcada: no se cuenta dos veces.
+  assert.equal(sum['2026-09-30'].total, 1);
+  assert.equal(sum['2026-09-30'].done, 1);
+  assert.equal(sum['2026-09-30'].pending, 0);
+  // Futura: la rutina virtual + la propia, ambas pendientes; solo la rutina es “planned”.
+  assert.equal(sum['2026-10-07'].pending, 2);
+  assert.equal(sum['2026-10-07'].planned, 1);
+  assert.equal(sum['2026-10-07'].routines, 1);
+  // Página en su fecha local de creación.
+  assert.deepEqual(sum['2026-10-02'].pages.map((p) => p.title), ['Ideas']);
+  assert.equal((await M.pagesOn('2026-10-02')).length, 1);
+  // Días sin nada no aparecen.
+  assert.equal(sum['2026-10-01'], undefined);
+});
+
+test('summarize sin extra conserva la forma anterior', () => {
+  const sum = M.summarize([], [{ date: '2026-09-01', status: 'skipped', routineId: null }]);
+  assert.equal(sum['2026-09-01'].total, 1);
+  assert.equal(sum['2026-09-01'].done, 0);
+  assert.deepEqual(sum['2026-09-01'].pages, []);
+});

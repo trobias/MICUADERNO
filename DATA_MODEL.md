@@ -150,6 +150,25 @@ Validación al importar (en orden, con mensaje humano por cada falla):
 
 `js/core/backup.js` exporta `MIGRATIONS = { 1: d => d }`. Para agregar la v2: escribir `2: d => {...}` que transforme datos v1 → v2, subir `SCHEMA_VERSION`, y en `store.js` subir la versión IDB con `onupgradeneeded` que cree índices nuevos y reescriba registros con la misma función. Un backup v1 importado en v2 pasa por la migración.
 
+## Resumen del calendario (derivado, no se guarda)
+
+`MC.model.summaryRange(desde, hasta)` arma, para cada fecha con algo, un objeto calculado en el momento (no hay store ni cambio de `schemaVersion`):
+
+```js
+{
+  date, morning, evening, mood,   // ánimos del día (mood = final || inicial)
+  wrote, memory,                  // escribió algo / texto de “qué quiero guardar”
+  done,      // actividades guardadas en done o partial
+  pending,   // pendientes: guardadas en pending + ocurrencias de rutina sin marcar
+  planned,   // solo las ocurrencias de rutina sin marcar (virtuales)
+  routines,  // ítems de rutina del día (marcados o no)
+  total,     // guardadas + virtuales
+  pages: [{ id, title }]  // páginas cuyo createdAt cae en esa fecha local
+}
+```
+
+Las ocurrencias virtuales salen de `MC.recurrence.occursOn` sin contar las que ya tienen actividad `(routineId, date)`. `MC.model.pagesOn(fecha)` devuelve las páginas empezadas ese día (para la página del día).
+
 ## Exportaciones derivadas
 
 - **TXT:** encabezado + un bloque por día (fecha larga, ánimos por nombre, intención, actividades con marca `[x] [/] [→] [·] [ ]`, notas, reflexiones) + páginas.

@@ -56,10 +56,12 @@
     spread.appendChild(right);
     main.appendChild(spread);
 
-    Promise.all([M.getDay(date), M.itemsForDay(date)]).then(function (res) {
+    var pagesToday = [];
+    Promise.all([M.getDay(date), M.itemsForDay(date), M.pagesOn(date)]).then(function (res) {
       if (destroyed) return;
       day = recoverDraft(res[0]);
       items = res[1];
+      pagesToday = res[2];
       build();
     });
 
@@ -295,6 +297,7 @@
         c.writeArea({ id: 'notes', value: day.notes, rows: 5, ariaLabel: 'Durante el día', placeholder: 'Cuando quieras, escribí la primera línea.', onInput: function (v) { day.notes = v; persist(); } }),
         { id: 'q-notes' }));
 
+      if (pagesToday.length) right.appendChild(pagesSection());
       if (!isFuture && (s.track.energy || s.track.sleep)) right.appendChild(bodySection());
       if (!isFuture && (s.track.evening || s.track.reflection)) right.appendChild(closingSection());
 
@@ -306,6 +309,15 @@
         onChange: function (list) { day.stickers = list; persist(); }
       });
       right.appendChild(scrap.toolbar);
+    }
+
+    /* Páginas sueltas que se empezaron este día: así el calendario también las encuentra. */
+    function pagesSection() {
+      var ul = h('ul.day-pages');
+      pagesToday.forEach(function (p) {
+        ul.appendChild(h('li', h('a.text-btn', { href: '#/pagina/' + p.id }, MC.icon('paginas'), p.title.trim() || 'Página sin título')));
+      });
+      return c.section(pagesToday.length === 1 ? 'Una página de este día' : 'Páginas de este día', ul, { id: 'q-pages' });
     }
 
     function bodySection() {

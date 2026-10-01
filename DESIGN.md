@@ -131,6 +131,7 @@ Escala (rem, base 16px):
 - **Bastidor del año**: tela aida (grilla de agujeritos) 12 × 31; día con ánimo = ✕ de punto cruz rellena en el hilo del ánimo; día escrito sin ánimo = medio punto en `--ink-faint`; día inexistente (30/02) = sin agujeros.
 - **Botón-etiqueta** (`.label-btn`): etiqueta tejida: fondo `--ink`, texto `--paper`, radio 6px, costura interna punteada `1px rgb(255 249 237 / .45)` a 3px. Variante suave: fondo `--paper-shade`, texto `--ink`.
 - **Cinta-marcador**: cinta de raso (butter o rose) que cuelga del borde superior de la hoja activa; en el calendario, cae sobre el día seleccionado.
+- **Marcas de la celda del mes** (`.day-cell__marks`, fila de 14px bajo el parche, 0.72rem): punto de tinta (`.mark-ink`, escribió) · estrella `--mood-5` (`.mark-star`, recuerdo) · `×n` en `--thread-done-text` (`.mark-x`, hechas) · cajita `box` 12px + número en `--ink-soft` (`.mark-plan`, planeado; solo hoy y adelante) · ícono `paginas` 12px en `--thread-later` (`.mark-page`, página empezada). Todas `aria-hidden`: el significado va en el `aria-label` del día. Nada de rojo ni de “faltan”.
 
 ## 7. Papelería
 

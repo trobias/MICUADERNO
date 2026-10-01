@@ -352,30 +352,65 @@
   function deletePage(id) { return S().del('pages', id); }
 
   /* ---------- resúmenes para calendario y año ---------- */
-  function summarize(days, activities) {
+  function blankSummary(date) {
+    return { date: date, morning: null, evening: null, mood: null, wrote: false, memory: '', done: 0, total: 0, pending: 0, planned: 0, routines: 0, pages: [] };
+  }
+
+  /**
+   * Resumen por fecha para el calendario y el año.
+   * `extra` (opcional): { from, to, routines, pages } suma las ocurrencias de rutina todavía sin marcar
+   * (cuentan como pendientes) y las páginas, en el día en que se empezaron.
+   */
+  function summarize(days, activities, extra) {
     var map = {};
+    function at(date) { return map[date] || (map[date] = blankSummary(date)); }
     days.forEach(function (d) {
-      map[d.date] = {
-        date: d.date,
-        morning: d.morning.mood,
-        evening: d.evening.mood,
-        mood: d.evening.mood || d.morning.mood,
-        wrote: !!(d.notes.trim() || d.intention.trim() || Object.keys(d.reflection).some(function (k) { return d.reflection[k].trim(); })),
-        memory: d.reflection.keep.trim(),
-        done: 0, total: 0
-      };
+      var s = at(d.date);
+      s.morning = d.morning.mood;
+      s.evening = d.evening.mood;
+      s.mood = d.evening.mood || d.morning.mood;
+      s.wrote = !!(d.notes.trim() || d.intention.trim() || Object.keys(d.reflection).some(function (k) { return d.reflection[k].trim(); }));
+      s.memory = d.reflection.keep.trim();
     });
+    var marked = {};
     activities.forEach(function (a) {
-      var s = map[a.date] || (map[a.date] = { date: a.date, morning: null, evening: null, mood: null, wrote: false, memory: '', done: 0, total: 0 });
+      var s = at(a.date);
       s.total++;
       if (a.status === 'done' || a.status === 'partial') s.done++;
+      if (a.status === 'pending') s.pending++;
+      if (a.routineId) { s.routines++; marked[a.routineId + '|' + a.date] = true; }
+    });
+    extra = extra || {};
+    if (extra.routines && extra.routines.length && D.isValid(extra.from) && D.isValid(extra.to)) {
+      D.range(extra.from, extra.to).forEach(function (k) {
+        extra.routines.forEach(function (r) {
+          if (marked[r.id + '|' + k] || !R.occursOn(r, k)) return;
+          var s = at(k);
+          s.total++; s.pending++; s.planned++; s.routines++;
+        });
+      });
+    }
+    (extra.pages || []).forEach(function (p) {
+      var t = Date.parse(p.createdAt);
+      if (!Number.isFinite(t)) return;
+      var k = D.fromDate(new Date(t));
+      if (extra.from && k < extra.from) return;
+      if (extra.to && k > extra.to) return;
+      at(k).pages.push({ id: p.id, title: p.title });
     });
     return map;
   }
 
   function summaryRange(from, to) {
-    return Promise.all([daysInRange(from, to), activitiesInRange(from, to)]).then(function (r) {
-      return summarize(r[0], r[1]);
+    return Promise.all([daysInRange(from, to), activitiesInRange(from, to), getRoutines(), getPages()]).then(function (r) {
+      return summarize(r[0], r[1], { from: from, to: to, routines: r[2], pages: r[3] });
+    });
+  }
+
+  /** Páginas empezadas en una fecha local. */
+  function pagesOn(date) {
+    return getPages().then(function (ps) {
+      return ps.filter(function (p) { var t = Date.parse(p.createdAt); return Number.isFinite(t) && D.fromDate(new Date(t)) === date; });
     });
   }
 
@@ -420,7 +455,7 @@
     activitiesInRange: activitiesInRange,
     normalizeRoutine: normalizeRoutine, getRoutines: getRoutines, saveRoutine: saveRoutine, deleteRoutine: deleteRoutine,
     normalizePage: normalizePage, getPages: getPages, getPage: getPage, savePage: savePage, deletePage: deletePage,
-    sanitizeStickers: sanitizeStickers, summarize: summarize, summaryRange: summaryRange, everything: everything,
+    sanitizeStickers: sanitizeStickers, summarize: summarize, summaryRange: summaryRange, pagesOn: pagesOn, everything: everything,
     touchOpen: touchOpen
   };
 })(typeof window !== 'undefined' ? window : globalThis);

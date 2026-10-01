@@ -43,11 +43,11 @@
           var key = D.make(y, m, d);
           var info = sum[key];
           var mood = info && info.mood;
-          var label = d + ' de ' + D.MONTHS[m - 1] + (mood ? ': ' + labels[mood - 1] : info && (info.wrote || info.total) ? ': sin ánimo registrado' : '');
+          var label = d + ' de ' + D.MONTHS[m - 1] + (mood ? ': ' + labels[mood - 1] : info && (info.wrote || info.total > info.planned) ? ': sin ánimo registrado' : '');
           var cell = h('button.stitch-cell', {
             type: 'button', role: 'gridcell', tabindex: '-1', 'aria-label': label,
             dataset: { date: key, mood: mood ? String(mood) : null, row: String(d), col: String(m) },
-            class: [key === today ? 'is-today' : null, !mood && info && (info.wrote || info.total) ? 'is-half' : null, key > today ? 'is-future' : null].filter(Boolean).join(' ')
+            class: [key === today ? 'is-today' : null, !mood && info && (info.wrote || info.total > info.planned) ? 'is-half' : null, key > today ? 'is-future' : null].filter(Boolean).join(' ')
           });
           cell.addEventListener('click', go);
           cell.addEventListener('keydown', onKey);
