@@ -76,7 +76,7 @@ test('settings viejos o raros se mezclan con defaults', () => {
 
 test('backup: exportar → borrar → restaurar deja todo igual', async () => {
   await fresh();
-  await M.saveSettings({ name: 'Sofi', cover: 'lavanda', onboarded: true });
+  await M.saveSettings({ name: 'Nicole', cover: 'lavanda', onboarded: true });
   const day = M.emptyDay('2026-09-30');
   day.morning.mood = 2; day.notes = 'hoy llovió, "tranquilo"'; day.reflection.keep = 'el té de la tarde';
   day.stickers = [{ id: 's1', sticker: 'mariposa', x: 0.9, y: 0.1, rot: 8, scale: 1 }];
@@ -93,7 +93,7 @@ test('backup: exportar → borrar → restaurar deja todo igual', async () => {
   const v = MC.backup.validate(json);
   assert.equal(v.ok, true, v.error);
   assert.equal(v.summary.days, 1);
-  assert.equal(v.summary.name, 'Sofi');
+  assert.equal(v.summary.name, 'Nicole');
   await MC.backup.restore(v.payload);
   const after = await M.everything();
   assert.deepEqual(after.days, before.days);

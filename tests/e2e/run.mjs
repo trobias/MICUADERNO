@@ -42,7 +42,7 @@ async function openCover(page) {
   await cover.waitFor({ state: 'detached', timeout: 4000 });
 }
 
-async function onboard(page, name = 'Sofi') {
+async function onboard(page, name = 'Nicole') {
   await openCover(page);
   await page.fill('#ob-name', name);
   await page.click('button:has-text("Seguir")');
@@ -66,7 +66,7 @@ await test('primera apertura (file://): tapa → onboarding → Hoy, sin errores
   await page.goto(FILE_URL);
   await onboard(page);
   assert.equal(await page.getAttribute('body', 'data-cover'), 'lavanda');
-  assert.match(await page.textContent('.day-head__greet'), /Sofi/);
+  assert.match(await page.textContent('.day-head__greet'), /Nicole/);
   assert.equal(await page.locator('#panel').evaluate((d) => d.open), true, 'Hoy se abre como cuadro sobre el calendario');
   assert.equal(await page.locator('#home-head').isVisible(), true);
   assert.deepEqual(errors, []);

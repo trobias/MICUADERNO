@@ -20,6 +20,7 @@ Un diario personal digital con forma de **cuaderno de tela bordado**: registro d
 - No clínico: insights descriptivos con conteos, nunca causalidad ni diagnóstico.
 - Silencio visual: la pantalla puede estar quieta; motion con propósito; escenas raras.
 - Privacidad: nada sale del dispositivo. Sin analytics, sin CDNs en runtime, sin fetch a terceros.
+- Nombre de ejemplo (tests, docs, capturas, textos de prueba): siempre **Nicole**. Ningún otro nombre, ni de ejemplo ni de broma (lo vigila `tests/unit/names.test.js`).
 
 ## Stack
 

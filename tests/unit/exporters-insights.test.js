@@ -9,7 +9,7 @@ const MC = require('./_load').load();
 const M = MC.model;
 
 function sample() {
-  const settings = M.mergeSettings({ name: 'Sofi' });
+  const settings = M.mergeSettings({ name: 'Nicole' });
   const days = [];
   const activities = [];
   const routines = [{ id: 'r1', title: 'Caminar', rule: { type: 'daily' }, startDate: '2026-09-01', endDate: null, moment: null, archived: false }];
@@ -38,7 +38,7 @@ test('csv: comillas, saltos, BOM y fórmulas neutralizadas', () => {
 
 test('txt: incluye días, marcas y reflexiones', () => {
   const txt = MC.exporters.toTXT(sample());
-  assert.match(txt, /MI CUADERNO · Sofi/);
+  assert.match(txt, /MI CUADERNO · Nicole/);
   assert.match(txt, /\[x\] Caminar/);
   assert.match(txt, /\[·\] Caminar/);
   assert.match(txt, /Qué quiero guardar: recuerdo 4/);
