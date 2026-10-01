@@ -365,7 +365,8 @@
     });
 
     MC.store.init().then(function () {
-      return MC.model.loadSettings();
+      // Las imágenes propias se cargan antes: los stickers se dibujan sin esperar.
+      return Promise.all([MC.model.loadSettings(), MC.model.loadImages()]).then(function (r) { return r[0]; });
     }).then(function (s) {
       applySettings(s);
       if (fellBack) storageWarning();
@@ -374,7 +375,8 @@
       MC.on('settings', applySettings);
       MC.on('store:changed', markBaseDirty);
       MC.on('store:remote', function () {
-        MC.model.loadSettings().then(function (s) {
+        Promise.all([MC.model.loadSettings(), MC.model.loadImages()]).then(function (r) {
+          var s = r[0];
           applySettings(s);
           markBaseDirty(); // el fondo se puede redibujar siempre: no pisa el cuadro
           var active = document.activeElement;

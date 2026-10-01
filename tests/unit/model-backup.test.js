@@ -230,7 +230,7 @@ test('páginas: tienen día en el calendario (elegible) y la copia v1 se migra',
   } });
   assert.equal(v.ok, true);
   assert.equal(v.payload.pages[0].date, '2026-05-01');
-  assert.equal(MC.backup.SCHEMA_VERSION, 2);
+  assert.ok(MC.backup.SCHEMA_VERSION >= 2);
 });
 
 test('motion: “Completas” por defecto; el valor de fábrica viejo no se respeta, una elección sí', () => {
@@ -240,4 +240,54 @@ test('motion: “Completas” por defecto; el valor de fábrica viejo no se resp
   assert.equal(M.mergeSettings({ motion: 'ninguna' }).motion, 'ninguna', '“Ninguna” siempre fue una elección');
   assert.equal(M.mergeSettings({ motion: 'reducidas', motionChosen: true }).motion, 'reducidas');
   assert.equal(M.mergeSettings({ motion: 'cualquiera', motionChosen: true }).motion, 'completas');
+});
+
+const PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+
+test('imágenes propias: se guardan, quedan en memoria para los stickers y se borran', async () => {
+  await fresh();
+  const img = await M.saveImage({ kind: 'upload', name: 'mi gato', src: PNG, w: 1, h: 1 });
+  assert.equal(M.imageById(img.id).name, 'mi gato');
+  const drawn = await M.saveImage({ kind: 'drawing', src: PNG, drawing: { strokes: [{ color: '#584488', width: 6, points: [[1, 2], [3, 4]] }], texts: [{ text: 'hola', x: 10, y: 10, font: 'hand' }] } });
+  assert.equal(drawn.drawing.strokes[0].points.length, 2);
+  assert.equal((await M.loadImages()).length, 2);
+  await M.deleteImage(img.id);
+  assert.equal(M.imageById(img.id), null);
+  // Solo imágenes rasterizadas por la app (nada de SVG ni HTML).
+  assert.equal(M.normalizeImage({ src: 'data:image/svg+xml;base64,PHN2Zz4=' }), null);
+  assert.equal(M.normalizeImage({ src: 'javascript:alert(1)' }), null);
+  assert.equal(M.sanitizeStickers([{ sticker: 'img:' + drawn.id, scale: 2.8 }])[0].scale, 2.8);
+});
+
+test('adjuntos: cualquier archivo, guardado en un día o una página', async () => {
+  await fresh();
+  const data = 'data:application/pdf;base64,JVBERi0xLjQK';
+  await M.addFile({ owner: 'day:2026-10-01', name: 'entrada.pdf', type: 'application/pdf', size: 9, data });
+  await M.addFile({ owner: 'page:pag_1', name: 'nota.txt', type: 'text/plain', size: 4, data: 'data:text/plain;base64,aG9sYQ==' });
+  const list = await M.filesFor('day:2026-10-01');
+  assert.deepEqual(list.map((f) => f.name), ['entrada.pdf']);
+  await M.deleteFile(list[0].id);
+  assert.equal((await M.filesFor('day:2026-10-01')).length, 0);
+  await assert.rejects(M.addFile({ owner: 'cualquier-cosa', name: 'x', data }));
+});
+
+test('backup v3: imágenes y adjuntos van y vuelven; una copia v2 se migra', async () => {
+  await fresh();
+  await M.saveSettings({ name: 'Nicole', onboarded: true });
+  await M.saveImage({ kind: 'upload', name: 'flor', src: PNG, w: 1, h: 1 });
+  await M.addFile({ owner: 'day:2026-10-01', name: 'a.txt', type: 'text/plain', size: 4, data: 'data:text/plain;base64,aG9sYQ==' });
+  const json = MC.backup.build(await M.everything());
+  assert.equal(json.schemaVersion, 3);
+  assert.equal(json.data.images.length, 1);
+  await MC.backup.wipe();
+  assert.equal((await M.loadImages()).length, 0);
+  const v = MC.backup.validate(JSON.parse(JSON.stringify(json)));
+  assert.equal(v.ok, true);
+  assert.equal(v.summary.images, 1);
+  await MC.backup.restore(v.payload);
+  assert.equal(M.images()[0].name, 'flor');
+  assert.equal((await M.filesFor('day:2026-10-01')).length, 1);
+  const old = MC.backup.validate({ app: 'mi-cuaderno', kind: 'backup', schemaVersion: 2, data: { days: [], activities: [], routines: [], pages: [] } });
+  assert.equal(old.ok, true);
+  assert.deepEqual([old.payload.images, old.payload.files], [[], []]);
 });

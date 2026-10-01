@@ -146,11 +146,11 @@
     return list.filter(function (s) { return s && typeof s.sticker === 'string'; }).slice(0, 80).map(function (s) {
       return {
         id: typeof s.id === 'string' ? s.id : MC.uid('stk'),
-        sticker: s.sticker.slice(0, 40),
+        sticker: s.sticker.slice(0, 60), // nombre del arte, o 'img:<id>' para una imagen propia
         x: MC.clamp(Number(s.x) || 0, 0, 1),
         y: MC.clamp(Number(s.y) || 0, 0, 1),
         rot: MC.clamp(Number(s.rot) || 0, -45, 45),
-        scale: MC.clamp(Number(s.scale) || 1, 0.5, 2)
+        scale: MC.clamp(Number(s.scale) || 1, 0.4, 3)
       };
     });
   }
@@ -377,6 +377,102 @@
   }
   function deletePage(id) { return S().del('pages', id); }
 
+  /* ---------- imágenes propias: subidas o dibujadas (se usan como stickers, D24) ---------- */
+  var IMAGE_SRC = /^data:image\/(png|webp|jpeg);base64,[A-Za-z0-9+/=]+$/;
+  var MAX_IMAGE = 3 * 1024 * 1024;     // largo máximo del data URL (≈2,2 MB de imagen)
+  var imageCache = {};
+
+  function num(v, lo, hi, def) { var n = Number(v); return Number.isFinite(n) ? MC.clamp(n, lo, hi) : def; }
+
+  /** Trazos y textos de un dibujo, para poder volver a editarlo. Coordenadas 0..1000. */
+  function sanitizeDrawing(d) {
+    if (!d || typeof d !== 'object') return null;
+    var color = function (c) { return typeof c === 'string' && /^#[0-9a-fA-F]{6}$/.test(c) ? c : '#493D3B'; };
+    return {
+      strokes: (Array.isArray(d.strokes) ? d.strokes : []).slice(0, 2000).map(function (s) {
+        return {
+          color: s && s.erase ? null : color(s && s.color),
+          erase: !!(s && s.erase),
+          width: num(s && s.width, 1, 80, 6),
+          points: (Array.isArray(s && s.points) ? s.points : []).slice(0, 4000).map(function (p) { return [num(p && p[0], 0, 1000, 0), num(p && p[1], 0, 1000, 0)]; })
+        };
+      }).filter(function (s) { return s.points.length; }),
+      texts: (Array.isArray(d.texts) ? d.texts : []).slice(0, 200).map(function (t) {
+        return {
+          text: str(t && t.text).slice(0, 300),
+          x: num(t && t.x, 0, 1000, 500), y: num(t && t.y, 0, 1000, 500),
+          size: num(t && t.size, 10, 200, 48),
+          font: ['display', 'text', 'ui', 'hand'].indexOf(t && t.font) !== -1 ? t.font : 'hand',
+          color: color(t && t.color)
+        };
+      }).filter(function (t) { return t.text.trim(); })
+    };
+  }
+
+  function normalizeImage(r) {
+    if (!r || typeof r.src !== 'string' || r.src.length > MAX_IMAGE || !IMAGE_SRC.test(r.src)) return null;
+    var kind = r.kind === 'drawing' ? 'drawing' : 'upload';
+    return {
+      id: typeof r.id === 'string' ? r.id : MC.uid('img'),
+      kind: kind,
+      name: str(r.name).trim().slice(0, 80) || (kind === 'drawing' ? 'Dibujo' : 'Imagen'),
+      src: r.src,
+      w: Math.round(num(r.w, 1, 4000, 400)), h: Math.round(num(r.h, 1, 4000, 400)),
+      drawing: kind === 'drawing' ? sanitizeDrawing(r.drawing) : null,
+      createdAt: r.createdAt || MC.nowISO(),
+      updatedAt: r.updatedAt || MC.nowISO()
+    };
+  }
+
+  /** Carga todas las imágenes en memoria (los stickers se dibujan sin esperar). */
+  function loadImages() {
+    return S().getAll('images').then(function (rows) {
+      imageCache = {};
+      rows.map(normalizeImage).filter(Boolean).forEach(function (r) { imageCache[r.id] = r; });
+      return getImagesSync();
+    });
+  }
+  function getImagesSync() {
+    return Object.keys(imageCache).map(function (k) { return imageCache[k]; }).sort(function (a, b) { return a.createdAt < b.createdAt ? 1 : -1; });
+  }
+  function imageById(id) { return imageCache[id] || null; }
+  function saveImage(r) {
+    var n = normalizeImage(r);
+    if (!n) return Promise.reject(new Error('Esa imagen no se pudo guardar.'));
+    n.updatedAt = MC.nowISO();
+    return S().put('images', n).then(function (v) { imageCache[v.id] = v; MC.emit('images', v); return v; });
+  }
+  function deleteImage(id) {
+    return S().del('images', id).then(function () { delete imageCache[id]; MC.emit('images', null); });
+  }
+
+  /* ---------- adjuntos: cualquier archivo, guardado en un día o una página ---------- */
+  var MAX_FILE = 14 * 1024 * 1024;     // largo máximo del data URL (≈10 MB de archivo)
+  function ownerOk(o) { return typeof o === 'string' && (/^day:\d{4}-\d{2}-\d{2}$/.test(o) ? D.isValid(o.slice(4)) : /^page:[\w-]{1,80}$/.test(o)); }
+  function normalizeFile(f) {
+    if (!f || !ownerOk(f.owner) || typeof f.data !== 'string' || f.data.length > MAX_FILE || !/^data:[\w.+\/-]*(;[\w=.+-]+)*;base64,/.test(f.data)) return null;
+    return {
+      id: typeof f.id === 'string' ? f.id : MC.uid('fil'),
+      owner: f.owner,
+      name: str(f.name).trim().slice(0, 160) || 'archivo',
+      type: typeof f.type === 'string' ? f.type.slice(0, 100) : '',
+      size: Math.round(num(f.size, 0, 1e9, 0)),
+      data: f.data,
+      createdAt: f.createdAt || MC.nowISO()
+    };
+  }
+  function filesFor(owner) {
+    return S().getAllByIndex('files', 'owner', owner).then(function (rows) {
+      return rows.map(normalizeFile).filter(Boolean).sort(function (a, b) { return a.createdAt < b.createdAt ? -1 : 1; });
+    });
+  }
+  function addFile(f) {
+    var n = normalizeFile(f);
+    if (!n) return Promise.reject(new Error('Ese archivo no se pudo guardar.'));
+    return S().put('files', n);
+  }
+  function deleteFile(id) { return S().del('files', id); }
+
   /* ---------- lectura compartida (calendario, año, impresión, insights) ---------- */
   /** ¿Escribió algo ese día? (notas, intención o alguna reflexión) */
   function hasWriting(d) {
@@ -472,7 +568,9 @@
         days: all.days.map(function (d) { return normalizeDay(d, d.date); }).sort(byDate),
         activities: all.activities.map(normalizeActivity).sort(function (a, b) { return byDate(a, b) || a.order - b.order; }),
         routines: all.routines.map(normalizeRoutine).filter(Boolean),
-        pages: all.pages.map(normalizePage)
+        pages: all.pages.map(normalizePage),
+        images: (all.images || []).map(normalizeImage).filter(Boolean),
+        files: (all.files || []).map(normalizeFile).filter(Boolean)
       };
     });
   }
@@ -501,6 +599,9 @@
     normalizeActivity: normalizeActivity, itemsForDay: itemsForDay, addActivity: addActivity, saveItem: saveItem,
     setStatus: setStatus, renameActivity: renameActivity, deleteActivity: deleteActivity, moveToTomorrow: moveToTomorrow,
     moveActivity: moveActivity, upcoming: upcoming,
+    normalizeImage: normalizeImage, sanitizeDrawing: sanitizeDrawing, loadImages: loadImages, images: getImagesSync, imageById: imageById,
+    saveImage: saveImage, deleteImage: deleteImage, MAX_IMAGE: MAX_IMAGE,
+    normalizeFile: normalizeFile, filesFor: filesFor, addFile: addFile, deleteFile: deleteFile, MAX_FILE: MAX_FILE,
     activitiesInRange: activitiesInRange,
     normalizeRoutine: normalizeRoutine, getRoutines: getRoutines, saveRoutine: saveRoutine, deleteRoutine: deleteRoutine,
     normalizePage: normalizePage, getPages: getPages, getPage: getPage, savePage: savePage, deletePage: deletePage,

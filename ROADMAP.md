@@ -6,7 +6,7 @@ Leyenda: **P1** = próximo · **P2** = después · **P3** = algún día · (brie
 
 ## v1.0 — hecho
 
-MVP completo del brief §64, con navegación de una sola pantalla (calendario al centro + cuadros desplegables, DECISIONS D17): abrir/cerrar/volver con los datos, ánimo al empezar y terminar, actividades con 5 estados, escribir, navegar fechas, rutinas con recurrencia, calendario semana/mes, año bordado, páginas con stickers, backup/restauración, TXT/CSV/XLSX, impresión A4/A5/Carta, PWA offline instalable, recordatorios locales, 5 escenas, 4 niveles de motion. El calendario reúne todo lo que tiene fecha: rutinas planeadas, páginas empezadas, lo hecho (D18). 47 unit + 20 E2E en verde. Rutas, cuentas y dibujos en un solo lugar (D19); las secciones se conectan por las fechas (D20); el calendario se actualiza solo (D21); marcadores que abren cuadros y Agenda (D22); el mes muestra todo y todo se anima (D23). Historial de cambios en `CHANGELOG.md`.
+MVP completo del brief §64, con navegación de una sola pantalla (calendario al centro + cuadros desplegables, DECISIONS D17): abrir/cerrar/volver con los datos, ánimo al empezar y terminar, actividades con 5 estados, escribir, navegar fechas, rutinas con recurrencia, calendario semana/mes, año bordado, páginas con stickers, backup/restauración, TXT/CSV/XLSX, impresión A4/A5/Carta, PWA offline instalable, recordatorios locales, 5 escenas, 4 niveles de motion. El calendario reúne todo lo que tiene fecha: rutinas planeadas, páginas empezadas, lo hecho (D18). 50 unit + 21 E2E en verde. Rutas, cuentas y dibujos en un solo lugar (D19); las secciones se conectan por las fechas (D20); el calendario se actualiza solo (D21); marcadores que abren cuadros y Agenda (D22); el mes muestra todo y todo se anima (D23); dibujar, imágenes propias y adjuntos (D24). Historial de cambios en `CHANGELOG.md`.
 
 ---
 
@@ -30,7 +30,6 @@ Lo construido no se probó todavía fuera de Chromium headless.
 |---|---|---|---|
 | B1 | **Tema “papel de noche”** para escribir a oscuras (hojas tinta, hilos claros, validado con `dataviz` en modo oscuro) | skill `ui-ux-pro-max` (diseñar claro/oscuro juntos); uso real: cerrar el día en la cama | P1 |
 | B2 | **Scrapbook más completo**: nota adhesiva y texto sueltos pegables, fecha-sello, cinta con texto | brief §30 (sticker, texto, cinta, nota, doodle, fecha) | P2 |
-| B3 | Foto local opcional en páginas (guardada en IndexedDB como Blob, incluida en el backup) | brief §30 “foto local opcional en futuro” | P3 |
 | B4 | Escenas que faltan: ventana con lluvia, cortina que se mueve, flor con viento, esquina de hoja con brisa | brief §39 (hay 5 de 9) | P2 |
 | B5 | Recordatorios “frases suaves” y “pequeños mensajes sorpresa” (opt-in, máx. 1 por semana) | brief §91 | P3 |
 | B6 | Papelito tras completar algo (“Guardaste algo de hoy. ¿Querés escribir cómo te hizo sentir?”), como aviso dentro de la app, no notificación | brief §90 | P2 |
@@ -49,6 +48,8 @@ Lo construido no se probó todavía fuera de Chromium headless.
 | I5 | “Mi año” alternando ánimo al empezar / al terminar | hoy muestra el final (o el inicial si no hay final) | P3 |
 | I6 | Reordenar actividades del día arrastrando (con alternativa de teclado) | hoy el orden es rutinas → propias por fecha de alta | P3 |
 | I7 | Hora opcional por rutina y recordatorio por rutina | hoy el recordatorio de rutinas va con el de la mañana | P3 |
+| I10 | Exportar un dibujo como PNG suelto y dibujar en capas | D24 lo dejó simple a propósito | P3 |
+| I11 | Avisar cuando la copia de seguridad pasa de cierto tamaño (fotos y adjuntos) | D24 | P2 |
 | I9 | En el mes, tocar la marca de página para abrirla directo (hoy se entra por el día) | D18 | P3 |
 
 ## Deuda técnica
@@ -57,7 +58,7 @@ Lo construido no se probó todavía fuera de Chromium headless.
 |---|---|---|---|
 | T1 | Partir `js/views/today.js` (≈370 líneas; la fila ya está en `js/ui/activity.js`) en encabezado, cierre y cuerpo | skill `frontend-ui-engineering` (componentes > 200 líneas) | P2 |
 | T2 | E2E de “pasar a mañana”, deshacer al sacar una actividad, stickers con teclado, restaurar scroll al volver | cubiertos a mano, no automatizados | P2 |
-| T3 | Subir `CACHE_VERSION` en `sw.js` en cada entrega (hoy `v8`; nunca se publicó) — automatizarlo en `npm run dist` | AGENTS.md | P1 (al publicar) |
+| T3 | Subir `CACHE_VERSION` en `sw.js` en cada entrega (hoy `v9`; nunca se publicó) — automatizarlo en `npm run dist` | AGENTS.md | P1 (al publicar) |
 | T4 | `assets/fonts/*.woff2` y `css/fonts.css` duplican las fuentes; dejar los woff2 solo como fuente de `build-fonts` fuera del dist | tamaño del paquete | P3 |
 | T5 | Atajos de la PWA usan el mismo ícono; dibujar uno por atajo (hoy, nota, ánimo, calendario) | brief §85 | P3 |
 

@@ -1,6 +1,6 @@
 # MI CUADERNO — Modelo de datos
 
-`schemaVersion: 2` · Base IndexedDB `mi-cuaderno` (versión IDB 1: la v2 no agrega índices).
+`schemaVersion: 3` · Base IndexedDB `mi-cuaderno` (versión IDB 2: stores `images` y `files`).
 
 ## Principios
 
@@ -16,7 +16,7 @@
 
 | key | value |
 |---|---|
-| `schemaVersion` | `2` |
+| `schemaVersion` | `3` |
 | `settings` | objeto Settings (abajo) |
 | `createdAt` | ISO del primer arranque |
 | `lastBackupAt` | ISO de la última copia descargada, o `null` |
@@ -119,9 +119,28 @@ Unicidad lógica: para ocurrencias de rutina, a lo sumo una actividad por `(rout
 }
 ```
 
+### `images` (keyPath `id`) — Mis stickers (v3)
+```js
+{
+  id: 'img_…',
+  kind: 'upload' | 'drawing',
+  name: 'mi gato',
+  src: 'data:image/webp;base64,…',   // solo png/webp/jpeg rasterizados por la app; máx. ≈3 MB
+  w, h,
+  drawing: { strokes: [{ color, erase, width, points: [[x, y], …] }], texts: [{ text, x, y, size, font, color }] } | null,
+  createdAt, updatedAt                // coordenadas del dibujo: 0..1000
+}
+```
+Un sticker pegado la usa con `sticker: 'img:<id>'`. Si la imagen se saca de la colección, el sticker deja de dibujarse (no se rompe nada).
+
+### `files` (keyPath `id`, índice `owner`) — adjuntos (v3)
+```js
+{ id: 'fil_…', owner: 'day:AAAA-MM-DD' | 'page:<id>', name, type, size, data: 'data:…;base64,…', createdAt }  // máx. 10 MB
+```
+
 ### `Placed` (sticker pegado)
 ```js
-{ id: 'stk_…', sticker: 'mariposa', x: 0..1, y: 0..1, rot: -30..30, scale: 0.6..1.6 }
+{ id: 'stk_…', sticker: 'mariposa' | 'img:<id>', x: 0..1, y: 0..1, rot: -45..45, scale: 0.4..3 }
 ```
 `x`, `y` son fracciones del ancho/alto de la hoja → el scrapbook sobrevive a cambios de tamaño de pantalla.
 
@@ -131,7 +150,7 @@ Unicidad lógica: para ocurrencias de rutina, a lo sumo una actividad por `(rout
 {
   app: 'mi-cuaderno',
   kind: 'backup',
-  schemaVersion: 2,
+  schemaVersion: 3,
   exportedAt: ISO,
   data: {
     meta: { createdAt, settings },
@@ -153,6 +172,9 @@ Validación al importar (en orden, con mensaje humano por cada falla):
 
 ### Migración v1 → v2 (2026-10-01)
 Las páginas ganan `date` (su día en el calendario). `MIGRATIONS[2]` lo completa con el día local de `createdAt` al importar una copia v1; en IndexedDB no hace falta reescribir nada porque `normalizePage` hace lo mismo al leer. Sin índices nuevos: la versión IDB sigue en 1.
+
+### Migración v2 → v3 (2026-10-01)
+Suma `images` y `files` (vacíos en una copia v2). IndexedDB pasa a la versión 2 y crea los dos stores. `Placed.scale` ahora va de 0,4 a 3 (antes 0,5–2: los datos viejos siguen valiendo).
 
 ## Resumen del calendario (derivado, no se guarda)
 

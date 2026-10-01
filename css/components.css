@@ -405,3 +405,49 @@ dialog.sheet[open] { animation: sheet-in var(--dur-panel) var(--ease-out); }
 /* ---------- Escenas ---------- */
 .scene-layer { position: fixed; inset: 0; z-index: 60; pointer-events: none; overflow: hidden; }
 .scene { position: absolute; }
+
+/* ---------- Mis stickers: imágenes subidas y dibujos (D24) ---------- */
+.sticker--img { width: 110px; height: auto; margin: 0; border-radius: 4px; transform: translate(-50%, -50%) rotate(var(--rot, 0deg)) scale(var(--scale, 1)); }
+.sticker--img img { display: block; width: 100%; height: auto; pointer-events: none; user-select: none;
+  /* borde troquelado de papel alrededor de la imagen */
+  filter: drop-shadow(0 0 1px var(--paper)) drop-shadow(0 0 1px var(--paper)) drop-shadow(0 0 1px var(--paper)); }
+.sticker--img.is-settling { animation: settle-img var(--dur-panel) var(--ease-out); }
+@keyframes settle-img { from { transform: translate(-50%, -50%) rotate(calc(var(--rot, 0deg) + 2deg * var(--move))) scale(calc(var(--scale, 1) * 1.06)); } }
+.sticker-tray--own { grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); }
+.sticker-own { position: relative; }
+.sticker-pick--img { width: 100%; background: color-mix(in srgb, var(--paper-shade) 60%, transparent); }
+.sticker-pick--img img { max-width: 100%; max-height: 100%; object-fit: contain; filter: var(--shadow-sticker); }
+.sticker-pick__del { position: absolute; top: -4px; right: -4px; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--paper); color: var(--ink-soft); box-shadow: var(--shadow-tab); }
+.sticker-pick__del svg { width: 14px; height: 14px; }
+.sticker-tray__own-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* ---------- Dibujar ---------- */
+dialog.sheet.sheet--draw { width: min(760px, calc(100vw - 16px)); max-height: calc(100dvh - 16px); }
+.draw { display: grid; gap: var(--s-3); }
+.draw__bar { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
+.draw__bar--end { justify-content: space-between; }
+.draw__row { display: flex; flex-wrap: wrap; gap: 4px; }
+.draw__opt { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 44px; min-height: 44px; padding: 4px 10px; border-radius: 8px; border: 1px dashed transparent; font-size: var(--fs-sm); }
+.draw__opt svg { width: 18px; height: 18px; }
+.draw__opt[aria-checked='true'] { border-color: var(--ink); background: color-mix(in srgb, var(--butter) 45%, var(--paper)); }
+.draw__colors .draw__opt { min-width: 36px; padding: 4px; }
+.draw__swatch { display: block; width: 22px; height: 22px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgb(73 61 59 / 0.25); }
+.draw__width { display: block; width: 24px; height: var(--w); border-radius: 99px; background: var(--ink); }
+.draw__text { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.draw__text[hidden] { display: none; }
+.draw__text-input { flex: 1 1 14rem; }
+.draw__text .select { width: auto; flex: 0 1 auto; }
+.draw__paper { border-radius: 6px; background: var(--paper); background-image: var(--tex-paper); box-shadow: inset 0 0 0 1px var(--rule-strong); }
+.draw__canvas { display: block; width: auto; height: auto; max-width: 100%; max-height: 48dvh; aspect-ratio: 1; margin: 0 auto; touch-action: none; cursor: crosshair; }
+.draw__canvas[data-tool='text'] { cursor: text; }
+.draw__name { display: flex; align-items: center; gap: 8px; font-size: var(--fs-sm); color: var(--ink-soft); }
+.draw__name .input { width: 12rem; }
+@media (max-width: 520px) { .draw__tools .draw__opt span { display: none; } .draw__name .input { width: 9rem; } .sheet--draw .sheet__body { padding-inline: 14px; } }
+
+/* ---------- Adjuntos ---------- */
+.attachments { display: grid; gap: 4px; }
+.attachment { display: flex; align-items: center; gap: 4px; border-bottom: 1px solid var(--rule); }
+.attachment__open { flex: 1; min-width: 0; justify-content: flex-start; text-decoration: none; }
+.attachment__name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink); }
+.attachment__size { margin-left: auto; padding-left: 8px; font-size: var(--fs-xs); color: var(--ink-soft); white-space: nowrap; }
+.attachment__thumb { width: 34px; height: 34px; object-fit: cover; border-radius: 4px; flex: none; }

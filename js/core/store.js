@@ -6,13 +6,15 @@
   var MC = root.MC || (root.MC = {});
 
   var DB_NAME = 'mi-cuaderno';
-  var DB_VERSION = 1;
+  var DB_VERSION = 2; // v2: images (stickers propios y dibujos) y files (adjuntos)
   var STORES = {
     meta: { keyPath: 'key' },
     days: { keyPath: 'date' },
     activities: { keyPath: 'id', indexes: [['date', 'date'], ['routineId', 'routineId']] },
     routines: { keyPath: 'id' },
-    pages: { keyPath: 'id', indexes: [['updatedAt', 'updatedAt']] }
+    pages: { keyPath: 'id', indexes: [['updatedAt', 'updatedAt']] },
+    images: { keyPath: 'id' },
+    files: { keyPath: 'id', indexes: [['owner', 'owner']] }
   };
   var STORE_NAMES = Object.keys(STORES);
 

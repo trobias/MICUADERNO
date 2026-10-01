@@ -138,7 +138,7 @@ await test('backup: exportar → borrar todo → restaurar deja el cuaderno igua
   await download.saveAs(file);
   const json = JSON.parse(fs.readFileSync(file, 'utf8'));
   assert.equal(json.app, 'mi-cuaderno');
-  assert.equal(json.schemaVersion, 2);
+  assert.equal(json.schemaVersion, 3);
   assert.equal(json.data.days[0].notes, 'esto tiene que volver');
 
   await page.click('button:has-text("Borrar todo el cuaderno")');
@@ -465,6 +465,65 @@ await test('agenda: anotar en cualquier día, verlo en el mes, pasarlo a otro d�
   await context.close();
 });
 
+await test('dibujar, subir imágenes como stickers y adjuntar archivos', async () => {
+  const { page, errors, context } = await newPage(browser);
+  await page.goto(FILE_URL);
+  await onboard(page);
+  // Dibujar uno desde el sobre de stickers del día.
+  await page.click('#panel .sticker-tools button:has-text("Pegar un sticker")');
+  await page.click('dialog.sheet button:has-text("Dibujar uno")');
+  await page.waitForSelector('dialog.sheet--draw canvas');
+  await page.click('dialog.sheet--draw .draw__colors .draw__opt >> nth=1');
+  const box = await page.locator('dialog.sheet--draw canvas').boundingBox();
+  await page.mouse.move(box.x + box.width * 0.3, box.y + box.height * 0.3);
+  await page.mouse.down();
+  for (let i = 1; i <= 10; i++) await page.mouse.move(box.x + box.width * (0.3 + i * 0.04), box.y + box.height * (0.3 + (i % 2) * 0.1));
+  await page.mouse.up();
+  await page.click('dialog.sheet--draw button:has-text("Pegar en la hoja")');
+  await page.waitForSelector('#panel .sticker--img img');
+  // Editarlo: sumar un texto.
+  await page.click('#panel .sticker--img');
+  await page.click('#panel .sticker-tools button:has-text("Editar el dibujo")');
+  await page.click('dialog.sheet--draw .draw__opt[aria-label="Texto"]');
+  await page.fill('dialog.sheet--draw .draw__text-input', 'hola');
+  await page.click('dialog.sheet--draw button:has-text("Ponerlo en el medio")');
+  await page.click('dialog.sheet--draw button:has-text("Guardar")');
+  await page.waitForFunction(() => !document.querySelector('dialog.sheet--draw'));
+  assert.equal(await page.evaluate(() => MC.model.images()[0].drawing.texts[0].text), 'hola');
+  assert.equal(await page.locator('#panel .sticker--img').count(), 1);
+  // Subir una imagen (un SVG: se guarda pasado a imagen, nunca como SVG).
+  await page.click('#panel .sticker-tools button:has-text("Sticker")');
+  const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.click('dialog.sheet button:has-text("Subir una imagen")')]);
+  await chooser.setFiles({ name: 'sol.svg', mimeType: 'image/svg+xml', buffer: Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40"><circle cx="20" cy="20" r="16" fill="#CAAE31"/></svg>') });
+  await page.waitForFunction(() => document.querySelectorAll('#panel .sticker--img').length === 2);
+  assert.match(await page.evaluate(() => MC.model.images().find((i) => i.name === 'sol').src), /^data:image\/(webp|png);base64,/);
+  // El sobre muestra “Mis stickers” y se pueden sacar.
+  await page.click('#panel .sticker-tools button:has-text("Sticker")');
+  assert.equal(await page.locator('dialog.sheet .sticker-own').count(), 2);
+  await page.click('dialog.sheet button[aria-label="Sacar «sol» de mis stickers"]');
+  await page.click('dialog.sheet >> nth=-1 >> button:has-text("Sacar")');
+  await page.waitForFunction(() => MC.model.images().length === 1);
+  await page.keyboard.press('Escape');
+  await page.click('#panel .sticker-tools button:has-text("Listo")');
+  // Adjuntar un archivo al día, descargarlo y sacarlo.
+  const [chooser2] = await Promise.all([page.waitForEvent('filechooser'), page.click('#panel button:has-text("Adjuntar un archivo")')]);
+  await chooser2.setFiles({ name: 'entrada.txt', mimeType: 'text/plain', buffer: Buffer.from('fila 7, asiento 12') });
+  await page.waitForSelector('#panel .attachment:has-text("entrada.txt")');
+  const [dl] = await Promise.all([page.waitForEvent('download'), page.click('#panel .attachment__open')]);
+  assert.equal(dl.suggestedFilename(), 'entrada.txt');
+  await page.click('#panel button[aria-label="Sacar el adjunto entrada.txt"]');
+  await page.click('dialog.sheet button:has-text("Sacar")');
+  await page.waitForFunction(() => !document.querySelector('#panel .attachment'));
+  // Plantilla “Para dibujar”: la hoja abre con el lápiz listo.
+  await goto(page, '#/paginas');
+  await page.click('#panel button:has-text("Nueva página")');
+  await page.click('.template:has-text("Para dibujar")');
+  await page.waitForSelector('dialog.sheet--draw canvas');
+  await page.keyboard.press('Escape');
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
 await test('mobile 375px: una pantalla, 5 botoncitos, sin scroll horizontal', async () => {
   const { page, errors, context } = await newPage(browser, { viewport: { width: 375, height: 760 } });
   await page.goto(FILE_URL);
@@ -498,7 +557,7 @@ await test('pantalla única: tocar un día abre su cuadro, cerrar vuelve al cale
   await page.click('#panel-close');
   await page.waitForFunction(() => !document.getElementById('panel').open);
   assert.match(page.url(), /#\/calendario/);
-  assert.equal(await page.locator(`.day-cell[data-date="${TODAY}"]`).getAttribute('data-mood'), '3', 'el calendario se actualiza al cerrar');
+  await page.waitForFunction((k) => { const c = document.querySelector(`#main .day-cell[data-date="${k}"]`); return c && c.dataset.mood === '3'; }, TODAY, { timeout: 4000 }); // el calendario ya tiene el ánimo
   // Otro día del mes
   const other = await page.$eval('.day-cell:not(.is-out)', (el) => el.dataset.date);
   await page.click(`.day-cell[data-date="${other}"]`);

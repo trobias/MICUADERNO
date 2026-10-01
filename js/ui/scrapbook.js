@@ -4,6 +4,46 @@
   var MC = root.MC;
   var h = MC.h;
 
+  var M = MC.model;
+
+  /** Un sticker puede ser arte del cuaderno ('mariposa') o una imagen propia ('img:<id>', subida o dibujada). */
+  function ownImage(name) { return typeof name === 'string' && name.indexOf('img:') === 0 ? M.imageById(name.slice(4)) : null; }
+  function isOwn(name) { return typeof name === 'string' && name.indexOf('img:') === 0; }
+
+  /** “Mis stickers”: imágenes subidas y dibujos, con su alta (subir, dibujar) y baja. */
+  function ownGroup(dlg, onPick) {
+    var grid = h('div.sticker-tray.sticker-tray--own');
+    function paint() {
+      MC.clear(grid);
+      M.images().forEach(function (img) {
+        var pick = h('button.sticker-pick.sticker-pick--img', { type: 'button', 'aria-label': img.name + (img.kind === 'drawing' ? ' (dibujo)' : '') },
+          h('img', { src: img.src, alt: '' }));
+        pick.addEventListener('click', function () { dlg.close('img:' + img.id); });
+        var del = h('button.sticker-pick__del', { type: 'button', 'aria-label': 'Sacar «' + img.name + '» de mis stickers', title: 'Sacar de mis stickers' }, MC.icon('close'));
+        del.addEventListener('click', function () {
+          MC.c.confirm({ title: '¿Sacar «' + img.name + '» de tus stickers?', text: 'También se despega de las hojas donde esté pegado.', confirm: 'Sacar', danger: true })
+            .then(function (ok) { if (ok) M.deleteImage(img.id).then(paint); });
+        });
+        grid.appendChild(h('div.sticker-own', pick, del));
+      });
+    }
+    paint();
+    var upload = h('button.label-btn.label-btn--soft', { type: 'button' }, MC.icon('upload'), 'Subir una imagen');
+    upload.addEventListener('click', function () {
+      dlg.close(null);
+      MC.images.uploadStickers().then(function (saved) { saved.forEach(function (img) { onPick('img:' + img.id); }); });
+    });
+    var draw = h('button.label-btn.label-btn--soft', { type: 'button' }, MC.icon('edit'), 'Dibujar uno');
+    draw.addEventListener('click', function () {
+      dlg.close(null);
+      MC.draw.open().then(function (img) { if (img) onPick('img:' + img.id); });
+    });
+    return h('div.sticker-tray__group',
+      h('h3', 'Mis stickers'),
+      M.images().length ? grid : h('p.section__hint', 'Subí una foto o una imagen (PNG, JPG, lo que tengas) o dibujá uno: quedan acá para pegarlos en cualquier hoja.'),
+      h('div.sticker-tray__own-actions', upload, draw));
+  }
+
   function openTray(onPick) {
     var groups = MC.stickers.GROUPS.map(function (g) {
       var grid = h('div.sticker-tray');
@@ -19,6 +59,7 @@
       content: [h('p.section__hint', 'Elegí uno y después movelo a donde quieras.')].concat(groups),
       onClose: function (v) { if (v) onPick(v); }
     });
+    dlg.body.insertBefore(ownGroup(dlg, onPick), dlg.body.children[2] || null);
   }
 
   /**
@@ -43,15 +84,22 @@
       el.style.setProperty('--scale', s.scale);
     }
 
-    function describe(s) { return (MC.stickers.ART[s.sticker] || { label: 'sticker' }).label; }
+    function describe(s) { var img = ownImage(s.sticker); return img ? img.name : (MC.stickers.ART[s.sticker] || { label: 'sticker' }).label; }
 
     function renderAll() {
       MC.clear(layer);
-      list.forEach(function (s) { layer.appendChild(node(s)); });
+      list.forEach(function (s) { var el = node(s); if (el) layer.appendChild(el); });
     }
 
     function node(s) {
-      var el = h('div.sticker', { dataset: { id: s.id }, html: MC.stickers.markup(s.sticker) });
+      var el;
+      if (isOwn(s.sticker)) {
+        var img = ownImage(s.sticker);
+        if (!img) return null; // la imagen se sacó de “Mis stickers”
+        el = h('div.sticker.sticker--img', { dataset: { id: s.id } }, h('img', { src: img.src, alt: '', draggable: 'false' }));
+      } else {
+        el = h('div.sticker', { dataset: { id: s.id }, html: MC.stickers.markup(s.sticker) });
+      }
       place(el, s);
       syncA11y(el, s);
       el.addEventListener('pointerdown', function (e) { if (decorating) startDrag(e, el, s); });
@@ -128,8 +176,8 @@
         case 'ArrowDown': s.y = MC.clamp(s.y + step * 0.6, 0.01, 0.99); break;
         case '[': s.rot = MC.clamp(s.rot - 5, -45, 45); break;
         case ']': s.rot = MC.clamp(s.rot + 5, -45, 45); break;
-        case '+': case '=': s.scale = MC.clamp(+(s.scale + 0.1).toFixed(2), 0.5, 2); break;
-        case '-': s.scale = MC.clamp(+(s.scale - 0.1).toFixed(2), 0.5, 2); break;
+        case '+': case '=': s.scale = MC.clamp(+(s.scale + 0.1).toFixed(2), 0.4, 3); break;
+        case '-': s.scale = MC.clamp(+(s.scale - 0.1).toFixed(2), 0.4, 3); break;
         case 'Delete': case 'Backspace': remove(s); return;
         case 'Escape': select(null); el.blur(); return;
         default: handled = false;
@@ -138,18 +186,20 @@
     }
     var saveSoon = MC.debounce(save, 350);
 
-    function add(name) {
+    /** at (opcional): { x, y, rot, scale } — p. ej. un dibujo grande en el medio de la hoja. */
+    function add(name, at) {
       var n = list.length;
-      var s = {
+      var s = Object.assign({
         id: MC.uid('stk'), sticker: name,
         // Primero en el margen derecho, bajando; así no tapa lo escrito.
         x: MC.clamp(0.93 - (Math.floor(n / 6) % 3) * 0.05, 0.1, 0.96),
         y: MC.clamp(0.2 + (n % 6) * 0.12, 0.05, 0.92),
         rot: Math.round((Math.random() * 24 - 12)),
         scale: 1
-      };
+      }, at || {});
       list.push(s);
       var el = node(s);
+      if (!el) return;
       layer.appendChild(el);
       settle(el);
       select(s);
@@ -209,13 +259,26 @@
       }
       var none = !selected;
       toolbar.appendChild(h('button.label-btn.label-btn--soft', { type: 'button', on: { click: function () { openTray(add); } } }, MC.icon('plus'), 'Sticker'));
+      toolbar.appendChild(h('button.label-btn.label-btn--soft', { type: 'button', on: { click: function () { drawNew(); } } }, MC.icon('edit'), 'Dibujar'));
+      var selImg = selected && ownImage(selected.sticker);
+      if (selImg && selImg.kind === 'drawing') {
+        toolbar.appendChild(h('button.text-btn', { type: 'button', on: { click: function () {
+          MC.draw.open({ image: selImg }).then(function (img) { if (img) { renderAll(); select(selected); } });
+        } } }, 'Editar el dibujo'));
+      }
       toolbar.appendChild(btn('rotate-left', 'Girar a la izquierda', function () { transform(function (s) { s.rot = MC.clamp(s.rot - 8, -45, 45); }); }, none));
       toolbar.appendChild(btn('rotate', 'Girar a la derecha', function () { transform(function (s) { s.rot = MC.clamp(s.rot + 8, -45, 45); }); }, none));
-      toolbar.appendChild(btn('shrink', 'Más chico', function () { transform(function (s) { s.scale = MC.clamp(+(s.scale - 0.15).toFixed(2), 0.5, 2); }); }, none));
-      toolbar.appendChild(btn('grow', 'Más grande', function () { transform(function (s) { s.scale = MC.clamp(+(s.scale + 0.15).toFixed(2), 0.5, 2); }); }, none));
+      toolbar.appendChild(btn('shrink', 'Más chico', function () { transform(function (s) { s.scale = MC.clamp(+(s.scale - 0.15).toFixed(2), 0.4, 3); }); }, none));
+      toolbar.appendChild(btn('grow', 'Más grande', function () { transform(function (s) { s.scale = MC.clamp(+(s.scale + 0.15).toFixed(2), 0.4, 3); }); }, none));
       toolbar.appendChild(btn('trash', 'Despegar', function () { if (selected) remove(selected); }, none));
       toolbar.appendChild(h('button.label-btn', { type: 'button', on: { click: function () { setDecorating(false); } } }, 'Listo'));
       toolbar.appendChild(status);
+    }
+
+    /** Dibujar uno nuevo y pegarlo acá (big: grande y al medio, para una hoja de dibujo). */
+    function drawNew(big) {
+      if (!decorating) setDecorating(true);
+      MC.draw.open().then(function (img) { if (img) add('img:' + img.id, big === true ? { x: 0.5, y: 0.42, rot: 0, scale: 2.4 } : null); });
     }
 
     // Tocar el fondo de la capa deselecciona
@@ -226,6 +289,9 @@
 
     return {
       toolbar: toolbar,
+      draw: drawNew,
+      /** Pegar una imagen propia (p. ej. un adjunto usado como sticker). */
+      addImage: function (img) { if (!decorating) setDecorating(true); add('img:' + img.id); },
       destroy: function () { saveSoon.flush(); layer.remove(); toolbar.remove(); pageEl.classList.remove('is-decorating'); }
     };
   }

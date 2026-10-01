@@ -6,6 +6,7 @@
 
   var TEMPLATES = [
     { id: 'blank', title: '', kind: 'text', paper: 'rayado', label: 'En blanco', hint: 'Una hoja libre.' },
+    { id: 'drawing', title: 'Un dibujo', kind: 'text', paper: 'liso', label: 'Para dibujar', hint: 'Una hoja lisa y el lápiz listo.' },
     { id: 'goodThings', title: 'Cosas que me hacen bien', kind: 'list', label: 'Cosas que me hacen bien', sticker: 'sol' },
     { id: 'places', title: 'Lugares que amo', kind: 'list', label: 'Lugares que amo', sticker: 'hoja' },
     { id: 'people', title: 'Personas importantes', kind: 'list', label: 'Personas importantes', sticker: 'corazon' },
@@ -33,7 +34,10 @@
       body: tpl.body || '', items: tpl.kind === 'list' ? [{ text: '' }] : [],
       stickers: tpl.sticker ? [{ id: MC.uid('stk'), sticker: tpl.sticker, x: 0.86, y: 0.07, rot: 8, scale: 0.9 }] : []
     };
-    return M.savePage(page).then(function (p) { location.hash = R.page(p.id); });
+    return M.savePage(page).then(function (p) {
+      if (tpl.id === 'drawing') MC.ui.set('drawOnOpen', p.id); // la hoja abre con el lápiz en la mano
+      location.hash = R.page(p.id);
+    });
   }
 
   /** Elegir plantilla y día. `date`: día propuesto (por defecto, hoy). La página aparece en ese día del calendario. */
@@ -148,8 +152,13 @@
       }));
       metaEl = null;
       sheet.appendChild(dayMeta());
+      sheet.appendChild(MC.images.attachments('page:' + page.id, { onSticker: function (img) { if (scrap) scrap.addImage(img); } }));
       scrap = MC.scrapbook.attach(sheet, { stickers: page.stickers, label: 'esta página', onChange: function (list) { page.stickers = list; persist(); } });
       sheet.appendChild(scrap.toolbar);
+      if (MC.ui.get('drawOnOpen', null) === page.id) {
+        MC.ui.set('drawOnOpen', null);
+        setTimeout(function () { if (!destroyed && scrap) scrap.draw(true); }, 280);
+      }
     }
 
     /** “En el calendario: jueves 8 de octubre · Cambiar el día”. La fecha lleva a ese día. */
@@ -233,7 +242,12 @@
         .then(function (ok) {
           if (!ok) return;
           persist.cancel();
-          M.deletePage(page.id).then(function () { page = null; c.toast('Página borrada.'); location.hash = R.pages(); });
+          var owner = 'page:' + page.id;
+          M.deletePage(page.id).then(function () {
+            // Sus adjuntos se van con ella.
+            M.filesFor(owner).then(function (fs) { fs.forEach(function (f) { M.deleteFile(f.id); }); });
+            page = null; c.toast('Página borrada.'); location.hash = R.pages();
+          });
         });
     }
 

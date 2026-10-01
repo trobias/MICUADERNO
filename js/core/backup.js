@@ -5,7 +5,7 @@
   var D = MC.dates;
   var M = function () { return MC.model; };
 
-  var SCHEMA_VERSION = 2;
+  var SCHEMA_VERSION = 3;
   var APP_ID = 'mi-cuaderno';
 
   /** Migraciones: MIGRATIONS[v] transforma `data` de la versión v-1 a v. */
@@ -16,6 +16,12 @@
       (data.pages || []).forEach(function (p) {
         if (p && typeof p === 'object' && !D.isValid(p.date)) p.date = D.fromISO(p.createdAt) || null;
       });
+      return data;
+    },
+    // v3: imágenes propias (stickers subidos y dibujos) y adjuntos.
+    3: function (data) {
+      if (data.images == null) data.images = [];
+      if (data.files == null) data.files = [];
       return data;
     }
   };
@@ -31,7 +37,9 @@
         days: everything.days,
         activities: everything.activities,
         routines: everything.routines,
-        pages: everything.pages
+        pages: everything.pages,
+        images: everything.images || [],
+        files: everything.files || []
       }
     };
   }
@@ -58,7 +66,7 @@
       if (!MIGRATIONS[step]) return fail('No sé cómo actualizar esta copia (falta la migración ' + step + ').');
       data = MIGRATIONS[step](data);
     }
-    var arrays = ['days', 'activities', 'routines', 'pages'];
+    var arrays = ['days', 'activities', 'routines', 'pages', 'images', 'files'];
     for (var i = 0; i < arrays.length; i++) {
       if (data[arrays[i]] != null && !Array.isArray(data[arrays[i]])) return fail('La sección “' + arrays[i] + '” de la copia está dañada.');
     }
@@ -82,6 +90,8 @@
       .filter(function (r) { return r && r.title; });
 
     var pages = (data.pages || []).filter(function (p) { return p && typeof p === 'object'; }).map(model.normalizePage);
+    var images = (data.images || []).map(model.normalizeImage).filter(Boolean);
+    var files = (data.files || []).map(model.normalizeFile).filter(Boolean);
 
     var meta = data.meta || {};
     var settings = model.mergeSettings(meta.settings);
@@ -95,10 +105,10 @@
     var dates = days.map(function (d) { return d.date; }).concat(activities.map(function (a) { return a.date; })).sort();
     return {
       ok: true,
-      payload: { meta: metaRows, days: days, activities: activities, routines: routines, pages: pages },
+      payload: { meta: metaRows, days: days, activities: activities, routines: routines, pages: pages, images: images, files: files },
       summary: {
         exportedAt: typeof obj.exportedAt === 'string' ? obj.exportedAt : null,
-        days: days.length, activities: activities.length, routines: routines.length, pages: pages.length,
+        days: days.length, activities: activities.length, routines: routines.length, pages: pages.length, images: images.length, files: files.length,
         from: dates[0] || null, to: dates[dates.length - 1] || null,
         name: settings.name
       }
@@ -121,13 +131,15 @@
   /** Reemplaza todo el cuaderno con el payload validado. */
   function restore(payload) {
     return MC.store.replaceAll(payload).then(function () {
+      return M().loadImages();
+    }).then(function () {
       return M().setMeta('lastBackupAt', new Date().toISOString());
     }).then(function () { return M().loadSettings(); });
   }
 
   /** Borra todo (mantiene el cuaderno usable, vuelve al onboarding). */
   function wipe() {
-    return MC.store.replaceAll({ meta: [], days: [], activities: [], routines: [], pages: [] }).then(function () {
+    return MC.store.replaceAll({ meta: [], days: [], activities: [], routines: [], pages: [], images: [], files: [] }).then(function () {
       return M().loadSettings();
     });
   }

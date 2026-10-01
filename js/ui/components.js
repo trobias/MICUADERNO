@@ -157,7 +157,7 @@
    */
   c.dialog = function (opts) {
     var titleId = MC.uid('dlg');
-    var dlg = h('dialog.sheet', { 'aria-labelledby': titleId });
+    var dlg = h('dialog.sheet', { 'aria-labelledby': titleId, class: opts.className || null });
     var body = h('div.sheet__body');
     var closeBtn = h('button.icon-btn.sheet__close', { type: 'button', 'aria-label': 'Cerrar' }, MC.icon('close'));
     body.appendChild(h('h2.sheet__title', { id: titleId }, opts.title));

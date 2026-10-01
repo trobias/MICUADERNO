@@ -197,6 +197,8 @@
         { id: 'q-notes' }));
 
       right.appendChild(pagesSection());
+      // Adjuntos del día: una foto, una entrada, un PDF… (una imagen se puede pegar como sticker).
+      right.appendChild(MC.images.attachments('day:' + date, { onSticker: function (img) { if (scrap) scrap.addImage(img); } }));
       if (!isFuture && (s.track.energy || s.track.sleep)) right.appendChild(bodySection());
       if (!isFuture && (s.track.evening || s.track.reflection)) right.appendChild(closingSection());
 

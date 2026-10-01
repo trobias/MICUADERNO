@@ -131,7 +131,8 @@ Secciones, en orden de lectura (mobile) o repartidas en doble página (desktop: 
 6. **Energía / sueño** (si están activados) — energía 1-3 (“poquita / media / mucha”), horas de sueño (0–14, pasos de 0,5).
 7. **¿Cómo terminó tu día?** — sellos de ánimo + reflexiones: *qué me hizo bien*, *algo difícil*, *algo lindo*, *qué quiero guardar* (⇒ recuerdo), *texto libre*. Se muestra plegado como “cerrar el día” antes de las 17 h si está vacío; siempre se puede desplegar.
 8. **Páginas de este día** — si ese día se empezó alguna página libre, un enlace a cada una (así el calendario también encuentra las páginas).
-9. **Capa de stickers** del día (scrapbook) — botón “stickers”.
+9. **Adjuntos** del día: cualquier archivo (una foto, una entrada, un PDF, un audio) para abrirlo desde ahí; una imagen adjunta se puede pegar como sticker.
+10. **Capa de stickers** del día (scrapbook) — botón “stickers”: arte del cuaderno, **Mis stickers** (imágenes subidas y dibujos) y **Dibujar**.
 
 Guardado automático: cada cambio se anota al instante como borrador local y se escribe en IndexedDB a los 400 ms; si la pestaña se cierra antes, el borrador se recupera al volver. Un “guardado” manuscrito discreto confirma. Días futuros: editables (planear). Días pasados: editables.
 
@@ -166,7 +167,8 @@ El calendario es donde aparece **todo lo que tiene fecha**: ánimo, escritura, r
 - **Nueva página**: en blanco o plantillas: *Cosas que me hacen bien, Lugares que amo, Personas importantes, Canciones de este momento, Mis pequeñas victorias, Cosas que quiero probar, Carta para mi yo futuro, Brain dump, Gratitud, Sueños, Lista de deseos, Reflexión del mes*.
 - Tipos: `text` (renglones) o `list` (ítems con viñeta dibujada).
 - Papel: rayado, cuadriculado, punteado, liso.
-- Stickers (scrapbook).
+- Stickers (scrapbook), con dibujos e imágenes propias; plantilla **Para dibujar** (hoja lisa que abre con el lápiz listo; el dibujo queda grande en el medio).
+- **Adjuntos** de la página (se borran con ella).
 - Borrar con confirmación.
 - “Empezada el …” es un enlace al día en que se empezó (ese día la página también aparece en el calendario).
 
@@ -176,6 +178,11 @@ El calendario es donde aparece **todo lo que tiene fecha**: ánimo, escritura, r
 - Tocar un día → abre su página. La inicial de cada mes lleva a ese mes en el calendario.
 - **Lo que fui notando**: 3-6 observaciones descriptivas (§12), cada una con el camino a sus días.
 - **Lo que guardé**: lista de recuerdos (“qué quiero guardar”) del año, como papelitos.
+
+### 7.9 Dibujar, Mis stickers y adjuntos (D24)
+- **Dibujar** (desde el sobre de stickers, la barra de decorar o la plantilla *Para dibujar*): hoja cuadrada con **lápiz**, **goma**, **texto** (letra a mano / de libro / de título / simple; chica, mediana, grande), los 12 colores de los hilos y la papelería, 3 grosores, **deshacer** y *borrar todo*. Al guardar se recorta y se pega como sticker; queda en *Mis stickers* y se puede **editar después** (“Editar el dibujo”: cambia en todas las hojas donde esté). Sin capas, sin vectores para exportar: no es un programa de diseño.
+- **Subir una imagen** (PNG, JPG, WebP, GIF, SVG, AVIF… lo que el navegador sepa leer; HEIC solo donde el navegador lo abra): se achica a 900 px y se guarda como WebP/PNG (un SVG se convierte en imagen; nunca se guarda como código). Va a *Mis stickers* y se pega en cualquier hoja. Se puede sacar de la colección (se despega de las hojas).
+- **Adjuntos**: cualquier archivo de hasta 10 MB en un día o una página; se descarga/abre con un toque y se saca con confirmación. Sirven para guardar con el día lo que no es texto: la entrada del recital, el PDF de un turno, una foto, un audio. Van en la copia de seguridad (que puede crecer: se avisa al adjuntar archivos grandes).
 
 ### 7.8 Agenda (poner cosas en el calendario)
 - **Anotar**: qué + qué día (atajos *Hoy · Mañana · En una semana*; por defecto el día marcado en el calendario si es de hoy en adelante) → “Poner en el calendario”. Aparece en ese día, en su página y en el mes.
@@ -314,7 +321,7 @@ skills/               colección de skills (no es parte de la app)
 
 - **Comandos (desarrollo, nunca para la persona usuaria):**
   - `npm test` — unit tests (node:test, sin dependencias).
-  - `npm run e2e` — 20 recorridos con `playwright-core` contra `file://` y `http://127.0.0.1` (usa el Chromium del sistema; `CHROMIUM=/ruta` para cambiarlo).
+  - `npm run e2e` — 21 recorridos con `playwright-core` contra `file://` y `http://127.0.0.1` (usa el Chromium del sistema; `CHROMIUM=/ruta` para cambiarlo).
   - `npm run check` — `node --check` de todos los JS + unit + e2e.
   - `npm run serve` — servidor estático en `http://localhost:4173` para probar la PWA.
   - `npm run icons` — regenera PNG/ICO desde los SVG maestros.

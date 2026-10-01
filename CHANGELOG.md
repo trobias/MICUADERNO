@@ -2,6 +2,19 @@
 
 Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantiene. El porqué de cada decisión está en `DECISIONS.md` (Dn); lo que falta, en `ROADMAP.md`. Cada entrega que toca archivos de la app sube `CACHE_VERSION` en `sw.js` para que las PWA instaladas se actualicen.
 
+## 2026-10-01 · Dibujar, Mis stickers y adjuntos (cache `v9`)
+
+**Para quien lo usa**
+- **Dibujar**: en cualquier hoja (Decorar → Dibujar, o en el sobre de stickers → Dibujar uno) y con la plantilla nueva **Para dibujar**. Lápiz, goma, texto con las letras del cuaderno, los colores de los hilos, tres grosores y deshacer. El dibujo se pega como sticker y lo podés **editar después**.
+- **Subí tus imágenes** (PNG, JPG, WebP, GIF, SVG…) y usalas como stickers en todos lados: quedan en **Mis stickers**, al principio del sobre. Las podés sacar cuando quieras.
+- **Adjuntos**: guardá cualquier archivo en un día o una página (la entrada del recital, el PDF de un turno, una foto, un audio). Se abren con un toque; una foto adjunta se puede pegar como sticker.
+- Todo va en la copia de seguridad.
+
+**Para quien lo mantiene** (decisión **D24**)
+- `js/ui/draw.js` (`MC.draw.open`), `js/ui/images.js` (`importImage`, `uploadStickers`, `attachments`); scrapbook con `img:<id>`, `draw()` y `addImage()`; `c.dialog` acepta `className`.
+- Modelo: `images` (con caché en memoria para dibujar sin esperar) y `files`; `schemaVersion` 3, IDB v2. Las imágenes se rasterizan siempre (nada de SVG guardado).
+- Tests: 50 unit y 21 E2E (dibujar, editar, subir SVG, sacar de la colección, adjuntar/descargar/sacar, plantilla Para dibujar).
+
 ## 2026-10-01 · El mes muestra todo, todo se anima (cache `v8`)
 
 **Para quien lo usa**
