@@ -46,7 +46,7 @@ Pedido de la dueña del proyecto (DECISIONS D17): **sin secciones separadas**. T
 
 - **Centro: el calendario del mes**, con la **tira de los 12 meses** (y flechas de año) para saltar de mes con un toque. Interruptor chico *Mes / Semana*.
 - **Cinco botoncitos arriba**: *Hoy · Rutinas · Páginas · Mi año · Ajustes*. Cada uno abre un **cuadro desplegable** encima del calendario (un `<dialog>`), sin salir de la pantalla.
-- **Tocar un día** del calendario abre la página de ese día en el cuadro. Al cerrarlo (botón “Volver al calendario”, `Esc`, tocar afuera o *atrás* del navegador) se vuelve al calendario, que se actualiza con lo registrado.
+- **Tocar un día** del calendario abre la página de ese día en el cuadro. Al cerrarlo (botón “Volver al calendario”, `Esc`, tocar afuera o *atrás* del navegador) se vuelve al calendario. El calendario de atrás **se actualiza solo** mientras el cuadro está abierto y cuando otra pestaña cambia algo, sin parpadeo y sin tocar lo que se está escribiendo (DECISIONS D21). Al volver, la cinta y el foco quedan en el último día abierto; si el cuadro se abrió con un botoncito, el foco vuelve a ese botoncito.
 
 | Ruta | Qué muestra |
 |---|---|
@@ -275,7 +275,7 @@ WCAG 2.2 AA como piso: contraste de texto ≥ 4.5:1, foco visible propio, todo o
 
 ## 17. Casos borde que deben funcionar
 
-Sin datos · un día · 30 días · un año (365 días + 1000 actividades) · muchas rutinas (30+) · rutina borrada con historial · fecha pasada y futura · cambio de mes/año · 29 de febrero · regla “día 31” en meses cortos · import del mismo backup dos veces (reemplaza, no duplica) · backup inválido / de otra app / versión futura · almacenamiento lleno o IndexedDB no disponible (aviso + modo de emergencia en memoria con exportación) · dos pestañas abiertas (BroadcastChannel refresca).
+Sin datos · un día · 30 días · un año (365 días + 1000 actividades) · muchas rutinas (30+) · rutina borrada con historial · fecha pasada y futura · cambio de mes/año · 29 de febrero · regla “día 31” en meses cortos · import del mismo backup dos veces (reemplaza, no duplica) · backup inválido / de otra app / versión futura · almacenamiento lleno o IndexedDB no disponible (aviso + modo de emergencia en memoria con exportación) · dos pestañas abiertas (BroadcastChannel: el calendario de la otra pestaña se redibuja solo; el cuadro abierto se refresca solo si no se está escribiendo).
 
 ## 18. MVP (criterio de “funciona”)
 
@@ -305,7 +305,7 @@ skills/               colección de skills (no es parte de la app)
 
 - **Comandos (desarrollo, nunca para la persona usuaria):**
   - `npm test` — unit tests (node:test, sin dependencias).
-  - `npm run e2e` — 18 recorridos con `playwright-core` contra `file://` y `http://127.0.0.1` (usa el Chromium del sistema; `CHROMIUM=/ruta` para cambiarlo).
+  - `npm run e2e` — 19 recorridos con `playwright-core` contra `file://` y `http://127.0.0.1` (usa el Chromium del sistema; `CHROMIUM=/ruta` para cambiarlo).
   - `npm run check` — `node --check` de todos los JS + unit + e2e.
   - `npm run serve` — servidor estático en `http://localhost:4173` para probar la PWA.
   - `npm run icons` — regenera PNG/ICO desde los SVG maestros.

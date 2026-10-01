@@ -63,15 +63,70 @@
     }
   }
 
-  function renderBase(params, force) {
-    var key = 'cal:' + params.mode + ':' + (params.mode === 'semana' ? params.date : params.month + ':' + (params.routine || ''));
-    if (base && base.key === key && !force) return;
+  function baseKey(params) {
+    return 'cal:' + params.mode + ':' + (params.mode === 'semana' ? params.date : params.month + ':' + (params.routine || ''));
+  }
+
+  /** Dibuja el calendario de fondo si cambió de mes/semana. Devuelve true si dibujó uno nuevo. */
+  function renderBase(params) {
+    var key = baseKey(params);
+    if (base && base.key === key) return false;
     destroy(base);
     MC.clear(main);
     head.hidden = false;
-    base = { key: key, params: params, instance: MC.views.calendar.render(main, params) };
+    refreshSoon.cancel();
+    baseDirty = false;
+    base = { key: key, params: params, day: D.today(), instance: MC.views.calendar.render(main, params) };
     if (params.mode === 'mes') MC.ui.set('calMonth', params.month);
     followYear(params);
+    return true;
+  }
+
+  /* ---------- Calendario en vivo (DECISIONS D21) ----------
+     Cada cambio guardado (en el cuadro abierto o en otra pestaña) marca el calendario de fondo.
+     Se redibuja aparte y se cambia entero cuando está listo: sin parpadeo, sin tocar el cuadro
+     abierto ni lo que se está escribiendo. */
+  var baseDirty = false;
+  var refreshSoon = MC.debounce(function () { refreshBase(); }, 600);
+
+  function markBaseDirty() {
+    if (!base || !base.params) return;
+    baseDirty = true;
+    refreshSoon();
+  }
+
+  function refreshBase() {
+    refreshSoon.cancel();
+    if (!base || !base.params) return Promise.resolve();
+    baseDirty = false;
+    var entry = base;
+    var holder = document.createElement('div');
+    var inst = MC.views.calendar.render(holder, entry.params);
+    return Promise.resolve(inst && inst.ready).then(function () {
+      if (base !== entry) { destroy({ instance: inst }); return; } // mientras tanto se fue a otro mes
+      var focused = main.contains(document.activeElement) ? document.activeElement : null;
+      var focusDate = focused && focused.dataset ? focused.dataset.date : null;
+      destroy(entry);
+      MC.clear(main);
+      while (holder.firstChild) main.appendChild(holder.firstChild);
+      entry.instance = inst;
+      entry.day = D.today();
+      if (!focused) return;
+      // Si la persona estaba recorriendo el mes con el teclado, sigue en el mismo día.
+      var again = focusDate && main.querySelector('.day-cell[data-date="' + focusDate + '"]');
+      if (again) {
+        MC.$$('.day-cell', main).forEach(function (cell) { cell.tabIndex = cell === again ? 0 : -1; });
+        again.focus({ preventScroll: true });
+      } else focusMarkedDay();
+    }).catch(function (err) { console.error(err); });
+  }
+
+  /** Al volver al calendario, el foco va al día marcado (salvo que ya esté en otro lado, p. ej. el botoncito que abrió el cuadro). */
+  function focusMarkedDay() {
+    var a = document.activeElement;
+    if (a && a !== document.body && a.isConnected && !panelEl.contains(a)) return;
+    var cell = main.querySelector('.day-cell[tabindex="0"]') || main.querySelector('.week-day__head');
+    if (cell) cell.focus({ preventScroll: true });
   }
 
   function baseParamsFor(route) {
@@ -163,23 +218,34 @@
     if (route.kind === 'base') {
       var hadPanel = !!panel;
       closePanel();
-      renderBase(route.params, hadPanel);
+      var fresh = renderBase(route.params);
       lastBaseHash = hash;
+      if (!fresh && hadPanel) {
+        // Volver del cuadro: si algo cambió (o pasó la medianoche) se redibuja sin parpadeo; el foco vuelve al día.
+        if (baseDirty || base.day !== D.today()) refreshBase().then(focusMarkedDay);
+        else focusMarkedDay();
+      }
       MC.emit('route', route);
       return;
     }
-    renderBase(baseParamsFor(route));
+    // La cinta del calendario marca el último día abierto (SPEC §7.3), también al pasar de día en el cuadro.
+    var moved = route.name === 'today' && MC.ui.get('calSelected', null) !== route.params.date;
+    if (moved) MC.ui.set('calSelected', route.params.date);
+    if (!renderBase(baseParamsFor(route)) && moved) markBaseDirty();
     var dir = prev && prev.name === 'today' && route.name === 'today' ? (route.params.date > prev.params.date ? 1 : -1) : 0;
     openPanel(route, dir);
   }
 
-  /** Re-renderiza lo que está a la vista (p. ej. otra pestaña del navegador cambió datos). */
+  function refreshPanel() {
+    if (!panel) return;
+    if (panel.instance && typeof panel.instance.refresh === 'function') panel.instance.refresh();
+    else openPanel(panel.route, 0);
+  }
+
+  /** Re-renderiza lo que está a la vista (p. ej. después de abrir una copia). */
   function refresh() {
-    if (panel) {
-      if (panel.instance && typeof panel.instance.refresh === 'function') panel.instance.refresh();
-      else openPanel(panel.route, 0);
-    }
-    if (base && base.params) renderBase(base.params, true);
+    refreshPanel();
+    refreshBase();
   }
 
   function applySettings(s) {
@@ -244,12 +310,14 @@
       return MC.model.touchOpen();
     }).then(function (openInfo) {
       MC.on('settings', applySettings);
+      MC.on('store:changed', markBaseDirty);
       MC.on('store:remote', function () {
         MC.model.loadSettings().then(function (s) {
           applySettings(s);
+          markBaseDirty(); // el fondo se puede redibujar siempre: no pisa el cuadro
           var active = document.activeElement;
           if (active && /TEXTAREA|INPUT/.test(active.tagName)) return; // no pisar lo que se está escribiendo
-          refresh();
+          refreshPanel();
         });
       });
       MC.on('store:versionchange', function () { location.reload(); });

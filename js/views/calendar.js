@@ -61,7 +61,8 @@
     main.appendChild(h('div.spread.spread--single', page));
     var destroyed = false;
 
-    Promise.all([M.summaryRange(grid[0], grid[grid.length - 1]), routineId ? M.getRoutines() : null]).then(function (res) {
+    // `ready` avisa cuando el mes está dibujado (app.js lo usa para cambiarlo sin parpadeo).
+    var ready = Promise.all([M.summaryRange(grid[0], grid[grid.length - 1]), routineId ? M.getRoutines() : null]).then(function (res) {
       if (destroyed) return;
       var sum = res[0];
       var routine = routineId ? (res[1] || []).filter(function (x) { return x.id === routineId; })[0] || null : null;
@@ -147,7 +148,7 @@
       }
     });
 
-    return { destroy: function () { destroyed = true; } };
+    return { destroy: function () { destroyed = true; }, ready: ready };
   }
 
   function legend(routine) {
@@ -172,7 +173,7 @@
     var rightPage = h('section.page.week-page');
     main.appendChild(h('div.spread', leftPage, h('div.spine', { 'aria-hidden': 'true' }), rightPage));
 
-    Promise.all([M.getRoutines(), M.daysInRange(start, end), M.getPages()]).then(function (r) {
+    var ready = Promise.all([M.getRoutines(), M.daysInRange(start, end), M.getPages()]).then(function (r) {
       var routines = r[0];
       var byDay = {};
       r[1].forEach(function (d) { byDay[d.date] = d; });
@@ -195,7 +196,7 @@
         }
       });
     });
-    return { destroy: function () { destroyed = true; } };
+    return { destroy: function () { destroyed = true; }, ready: ready };
   }
 
   function dayBlock(k, day, list, today, pages) {

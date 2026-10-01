@@ -374,6 +374,50 @@ await test('las secciones se conectan: rutina ↔ calendario, página → día, 
   await context.close();
 });
 
+await test('calendario en vivo: se actualiza detrás del cuadro y desde otra pestaña, sin tocar lo que se escribe', async () => {
+  const { page, errors, context } = await newPage(browser);
+  await page.goto(HTTP_URL);
+  await onboard(page);
+  await page.click('#panel-close');
+  await page.waitForSelector('#panel:not([open])', { state: 'attached' });
+  const cell = (k) => page.locator(`#main .day-cell[data-date="${k}"]`);
+  // Abrir hoy con el teclado y registrar el ánimo: el calendario de atrás se entera solo.
+  await cell(TODAY).focus();
+  await page.keyboard.press('Enter');
+  await page.waitForSelector('#panel[open] .day-head');
+  await page.click('#panel .section--mood .mood-patch[data-mood="4"]');
+  const moodIs = (k, m) => page.waitForFunction(([k, m]) => { const c = document.querySelector(`#main .day-cell[data-date="${k}"]`); return c && c.dataset.mood === m; }, [k, m], { timeout: 4000 });
+  await moodIs(TODAY, '4'); // el día ya muestra el ánimo detrás del cuadro
+  assert.equal(await page.locator('#panel').evaluate((d) => d.open), true, 'el cuadro sigue abierto');
+  // Escribir mientras el fondo se redibuja: no se pierde ni una letra, ni el foco.
+  await page.click('#notes');
+  await page.keyboard.type('hola ');
+  await page.waitForTimeout(1300);
+  await page.keyboard.type('mundo');
+  assert.equal(await page.inputValue('#notes'), 'hola mundo');
+  assert.equal(await page.evaluate(() => document.activeElement.id), 'notes');
+  // Pasar a otro día en el cuadro y volver: la cinta y el foco quedan en ese día.
+  const add = (k, n) => { const d = new Date(+k.slice(0, 4), +k.slice(5, 7) - 1, +k.slice(8, 10) + n); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+  const first = TODAY.slice(8) === '01';
+  const other = add(TODAY, first ? 1 : -1);
+  await page.click(first ? '#panel button[aria-label="Día siguiente"]' : '#panel button[aria-label="Día anterior"]');
+  await page.waitForTimeout(400);
+  await page.keyboard.press('Escape');
+  await page.waitForFunction((k) => !document.getElementById('panel').open && document.activeElement && document.activeElement.dataset.date === k, other, { timeout: 4000 });
+  assert.equal(await cell(other).getAttribute('aria-selected'), 'true', 'la cinta marca el último día abierto');
+  assert.equal(await page.evaluate(() => document.activeElement.dataset.date), other, 'el foco vuelve a ese día');
+  // Otra pestaña cambia algo: este calendario se actualiza sin recargar.
+  const other2 = await context.newPage();
+  const errors2 = watchErrors(other2);
+  await other2.goto(HTTP_URL);
+  await other2.waitForFunction(() => window.MC && MC.store && MC.store.kind && MC.store.kind());
+  await other2.evaluate(async (k) => { const d = await MC.model.getDay(k); d.evening.mood = 2; await MC.model.saveDay(d); }, TODAY);
+  await moodIs(TODAY, '2'); // llegó el cambio de la otra pestaña, sin recargar
+  assert.deepEqual(errors, []);
+  assert.deepEqual(errors2, []);
+  await context.close();
+});
+
 await test('mobile 375px: una pantalla, 5 botoncitos, sin scroll horizontal', async () => {
   const { page, errors, context } = await newPage(browser, { viewport: { width: 375, height: 760 } });
   await page.goto(FILE_URL);

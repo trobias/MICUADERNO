@@ -2,6 +2,18 @@
 
 Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantiene. El porqué de cada decisión está en `DECISIONS.md` (Dn); lo que falta, en `ROADMAP.md`. Cada entrega que toca archivos de la app sube `CACHE_VERSION` en `sw.js` para que las PWA instaladas se actualicen.
 
+## 2026-10-01 · El calendario se actualiza solo (cache `v6`)
+
+**Para quien lo usa**
+- Mientras tenés un cuadro abierto, el calendario de atrás ya muestra lo que vas registrando (el ánimo, lo hecho, lo planeado…), sin parpadear y sin tocar lo que estás escribiendo.
+- Si tenés el cuaderno abierto en otra pestaña y cambiás algo, esta pestaña se entera sola.
+- Al cerrar un cuadro, la cinta y el foco quedan en el último día que abriste (si pasaste de día con las flechas, en ese). Si lo abriste con un botoncito, el foco vuelve a ese botoncito.
+
+**Para quien lo mantiene** (decisión **D21**)
+- `app.js`: `markBaseDirty` (escucha `store:changed` y `store:remote`) + `refreshBase` (dibuja aparte, cambia entero cuando `ready`) + `focusMarkedDay`. `renderBase` ya no tiene `force` y devuelve si dibujó uno nuevo.
+- Las vistas del calendario devuelven `{ destroy, ready }`.
+- Tests: 19 E2E. El recorrido nuevo cubre el fondo actualizado con el cuadro abierto, escribir sin perder letras ni foco, la cinta y el foco al volver, y el cambio desde otra pestaña.
+
 ## 2026-10-01 · Las secciones se conectan (cache `v5`)
 
 **Para quien lo usa**

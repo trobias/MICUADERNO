@@ -180,6 +180,7 @@ Un solo sistema, `js/ui/icons.js` (sprite SVG): 24×24, trazo 1.75px, `stroke-li
 - Decoración (`.deco`, stickers de la tapa, escenas) con `aria-hidden="true"`.
 - `aria-live="polite"` para “guardado” y avisos.
 - Idioma `es-AR`.
+- Al cerrar un cuadro el foco vuelve a donde estaba: al botoncito que lo abrió o, si se abrió desde un día, al último día abierto (aunque el calendario se haya redibujado mientras tanto).
 
 ## 12. Motion
 
@@ -195,6 +196,7 @@ Tokens: `--ease-out: cubic-bezier(0.23, 1, 0.32, 1)` · `--ease-in-out: cubic-be
 | Cambiar de pestaña | varias/día | crossfade 200ms; la pestaña avanza 6px |
 | Soltar sticker | ocasional | asentamiento: escala 1.06→1 y rotación ±2°, 260ms |
 | Seleccionar día (calendario) | ocasional | la cinta baja 16px → 0, 260ms |
+| Calendario que se actualiza solo | con cada cambio | **ninguno**: se redibuja aparte y se cambia entero (sin parpadeo, sin animar los números ni las marcas) |
 | Abrir tapa | 1/sesión | primeras 3 veces: elástico se corre + tapa gira sobre bisagra izquierda, 900ms; luego fade 250ms |
 | Cierre del día guardado | 1/día | una ramita/luna aparece a su lado, 600ms, una vez |
 | Escenas ambientales | rara | ver §13 |
