@@ -2,14 +2,13 @@
 (function (root) {
   'use strict';
   var MC = root.MC;
-  var h = MC.h, D = MC.dates, M = MC.model, c = MC.c;
+  var h = MC.h, D = MC.dates, M = MC.model;
 
   function modeSwitch(mode, month, date) {
     var sw = h('div.choice-row.cal-mode', { role: 'group', 'aria-label': 'Cómo ver el calendario' });
     [['mes', 'Mes', 'grid'], ['semana', 'Semana', 'week']].forEach(function (m) {
       var b = h('button.choice', { type: 'button', 'aria-pressed': String(mode === m[0]) }, MC.icon(m[2]), m[1]);
       b.addEventListener('click', function () {
-        MC.ui.set('calMode', m[0]);
         location.hash = m[0] === 'mes' ? '#/calendario/mes/' + (month || D.monthKey(date)) : '#/calendario/semana/' + (date || (month === D.monthKey(D.today()) ? D.today() : month + '-01'));
       });
       sw.appendChild(b);
@@ -19,30 +18,49 @@
 
   function moodName(n) { return n ? M.settings().moodLabels[n - 1] : null; }
 
-  /* ---------- MES ---------- */
+  /* ---------- MES (el centro de la app) ---------- */
+  function monthsStrip(month) {
+    var y = +month.slice(0, 4);
+    var todayMonth = D.monthKey(D.today());
+    var strip = h('nav.months', { 'aria-label': 'Meses de ' + y },
+      h('a.icon-btn.icon-btn--sm.months__year-btn', { href: '#/calendario/mes/' + (y - 1) + month.slice(4), 'aria-label': 'Año anterior' }, MC.icon('arrow-left')),
+      h('span.months__year', String(y)),
+      h('a.icon-btn.icon-btn--sm.months__year-btn', { href: '#/calendario/mes/' + (y + 1) + month.slice(4), 'aria-label': 'Año siguiente' }, MC.icon('arrow-right')));
+    var list = h('ol.months__list');
+    D.MONTHS_SHORT.forEach(function (m, i) {
+      var key = y + '-' + D.pad(i + 1);
+      list.appendChild(h('li', h('a.month-chip', {
+        href: '#/calendario/mes/' + key,
+        'aria-label': D.MONTHS[i] + ' ' + y + (key === todayMonth ? ' (este mes)' : ''),
+        'aria-current': key === month ? 'date' : null,
+        class: key === todayMonth ? 'is-now' : null
+      }, m)));
+    });
+    strip.appendChild(list);
+    return strip;
+  }
+
   function renderMonth(main, month) {
     var today = D.today();
     var grid = D.monthGrid(month);
-    var selected = MC.ui.get('calSelected', null);
-    if (!selected || D.monthKey(selected) !== month) selected = D.monthKey(today) === month ? today : null;
+    var marked = MC.ui.get('calSelected', null);
+    if (!marked || D.monthKey(marked) !== month) marked = D.monthKey(today) === month ? today : null;
     var page = h('section.page.cal-page');
     main.appendChild(h('div.spread.spread--single', page));
     var destroyed = false;
 
     M.summaryRange(grid[0], grid[grid.length - 1]).then(function (sum) {
       if (destroyed) return;
-      var prev = h('a.icon-btn', { href: '#/calendario/mes/' + D.addMonths(month, -1), 'aria-label': 'Mes anterior' }, MC.icon('arrow-left'));
-      var next = h('a.icon-btn', { href: '#/calendario/mes/' + D.addMonths(month, 1), 'aria-label': 'Mes siguiente' }, MC.icon('arrow-right'));
       var label = D.monthLabel(month);
       page.appendChild(h('header.cal-head',
-        h('div.cal-head__title', prev, h('h1.t-display', D.capitalize(label.split(' ')[0]), h('span.cal-head__year', ' ' + label.split(' ')[1])), next),
-        h('div.cal-head__tools', month !== D.monthKey(today) ? h('a.text-btn', { href: '#/calendario/mes/' + D.monthKey(today) }, 'Este mes') : null, modeSwitch('mes', month, selected))));
+        h('h1.t-display.cal-head__month', D.capitalize(label.split(' ')[0]), h('span.cal-head__year', ' ' + label.split(' ')[1])),
+        h('div.cal-head__tools', modeSwitch('mes', month, marked))));
+      page.appendChild(monthsStrip(month));
 
-      var table = h('div.month', { role: 'grid', 'aria-label': D.capitalize(label) });
+      var table = h('div.month', { role: 'grid', 'aria-label': D.capitalize(label) + '. Tocá un día para abrir su página.' });
       var headRow = h('div.month__row.month__row--head', { role: 'row' });
       [1, 2, 3, 4, 5, 6, 0].forEach(function (wd) { headRow.appendChild(h('div.month__wd', { role: 'columnheader', 'aria-label': D.DAYS[wd] }, D.DAYS_SHORT[wd])); });
       table.appendChild(headRow);
-      var detail = h('div.cal-detail', { 'aria-live': 'polite' });
       var cells = [];
       for (var w = 0; w < grid.length / 7; w++) {
         var r = h('div.month__row', { role: 'row' });
@@ -50,13 +68,14 @@
           var info = sum[key];
           var inMonth = D.monthKey(key) === month;
           var parts = [D.parse(key).d + ' de ' + D.MONTHS[D.parse(key).m - 1]];
+          if (key === today) parts.push('hoy');
           if (info && info.mood) parts.push(moodName(info.mood));
           if (info && info.total) parts.push(info.done + ' de ' + info.total + ' cosas');
           if (info && info.wrote) parts.push('escribiste');
           if (info && info.memory) parts.push('guardaste un recuerdo');
           var btn = h('button.day-cell', {
             type: 'button', role: 'gridcell', tabindex: '-1',
-            'aria-label': parts.join(', '), 'aria-selected': String(key === selected),
+            'aria-label': parts.join(', '), 'aria-selected': String(key === marked),
             dataset: { date: key, mood: info && info.mood ? String(info.mood) : null },
             class: [inMonth ? null : 'is-out', key === today ? 'is-today' : null, key > today ? 'is-future' : null].filter(Boolean).join(' ')
           },
@@ -65,9 +84,10 @@
             h('span.day-cell__marks',
               info && info.wrote ? h('span.mark-ink', { title: 'escribiste' }) : null,
               info && info.memory ? h('span.mark-star', { html: '<svg viewBox="0 0 24 24"><use href="#i-star"/></svg>' }) : null,
-              info && info.done ? h('span.mark-x', { title: info.done + ' hechas' }, '×' + info.done) : null));
-          btn.addEventListener('click', function () { select(key, true); });
-          btn.addEventListener('dblclick', function () { location.hash = '#/dia/' + key; });
+              info && info.done ? h('span.mark-x', { title: info.done + ' hechas' }, '×' + info.done) : null),
+            key === marked ? h('span.day-cell__ribbon', { 'aria-hidden': 'true' }) : null);
+          // Tocar un día abre su página en el cuadro desplegable.
+          btn.addEventListener('click', function () { MC.ui.set('calSelected', key); location.hash = '#/dia/' + key; });
           btn.addEventListener('keydown', onKey);
           cells.push(btn);
           r.appendChild(btn);
@@ -76,65 +96,25 @@
       }
       page.appendChild(table);
       page.appendChild(legend());
-      page.appendChild(detail);
 
-      var focusKey = selected || (D.monthKey(today) === month ? today : month + '-01');
+      var focusKey = marked || month + '-01';
       cells.forEach(function (b) { if (b.dataset.date === focusKey) b.tabIndex = 0; });
-      if (selected) select(selected, false);
 
       function onKey(e) {
         var i = cells.indexOf(e.currentTarget);
         var map = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 };
-        if (map[e.key] != null) {
-          e.preventDefault();
-          var j = i + map[e.key];
-          if (j < 0 || j >= cells.length) {
-            var target = D.addDays(cells[i].dataset.date, map[e.key]);
-            MC.ui.set('calSelected', target);
-            location.hash = '#/calendario/mes/' + D.monthKey(target);
-            return;
-          }
-          cells[i].tabIndex = -1;
-          cells[j].tabIndex = 0;
-          cells[j].focus();
-          select(cells[j].dataset.date, false);
-        } else if (e.key === 'Enter') {
-          e.preventDefault();
-          location.hash = '#/dia/' + cells[i].dataset.date;
+        if (map[e.key] == null) return;
+        e.preventDefault();
+        var j = i + map[e.key];
+        if (j < 0 || j >= cells.length) {
+          var target = D.addDays(cells[i].dataset.date, map[e.key]);
+          MC.ui.set('calSelected', target);
+          location.hash = '#/calendario/mes/' + D.monthKey(target);
+          return;
         }
-      }
-
-      function select(key, userClick) {
-        selected = key;
-        MC.ui.set('calSelected', key);
-        cells.forEach(function (b) {
-          var on = b.dataset.date === key;
-          b.setAttribute('aria-selected', String(on));
-          var rib = b.querySelector('.day-cell__ribbon');
-          if (on && !rib) {
-            rib = h('span.day-cell__ribbon', { 'aria-hidden': 'true' });
-            b.appendChild(rib);
-            if (userClick && MC.motion.allows('move') && rib.animate) {
-              rib.animate([{ transform: 'translateY(-16px)', opacity: 0 }, { transform: 'translateY(0)', opacity: 1 }], { duration: 260, easing: 'cubic-bezier(0.23, 1, 0.32, 1)' });
-            }
-          } else if (!on && rib) rib.remove();
-        });
-        paintDetail(key);
-      }
-
-      function paintDetail(key) {
-        MC.clear(detail);
-        var info = sum[key];
-        var lines = [];
-        if (info && info.morning) lines.push('Arrancó ' + moodName(info.morning) + '.');
-        if (info && info.evening) lines.push('Terminó ' + moodName(info.evening) + '.');
-        if (info && info.total) lines.push(info.done + ' de ' + info.total + (info.total === 1 ? ' cosa' : ' cosas') + ' con puntada.');
-        if (!lines.length) lines.push(key > today ? 'Todavía no llegó. Podés anotar algo para ese día.' : 'Esta página quedó en blanco. Está bien así.');
-        detail.appendChild(h('div.slip.cal-slip',
-          h('p.cal-slip__date.t-display', D.capitalize(D.longLabel(key))),
-          h('p', lines.join(' ')),
-          info && info.memory ? h('p.cal-slip__memory', '“' + info.memory + '”') : null,
-          h('div.slip__actions', h('a.label-btn', { href: '#/dia/' + key }, 'Abrir la página'))));
+        cells[i].tabIndex = -1;
+        cells[j].tabIndex = 0;
+        cells[j].focus();
       }
     });
 

@@ -137,7 +137,9 @@ Escala (rem, base 16px):
 - **Nota adhesiva** (`.sticky`): butter, rotación ±1.5°, cinta washi arriba. Para “Algo que quiero cuidar hoy”.
 - **Washi tape**: rectángulo 64×18px con bordes dentados (clip-path), 75 % opacidad.
 - **Papelito** (`.slip`): tira de papel con borde rasgado (clip-path) para recuerdos y avisos suaves (backup, recordatorios).
-- **Pestañas del índice**: una por destino, color fijo: Hoy `--butter`, Calendario `--blush`, Rutinas `--sage`, Páginas `--lavender`, Mi año `--peach`, Ajustes `--paper-shade`. Activa: sobresale 6px más y pierde la sombra (queda “adentro”).
+- **Botoncitos** (`.mini-opt`): etiquetas de papel pegadas sobre la tela, arriba del calendario, con costura punteada interna y color fijo: Hoy `--butter`, Rutinas `--sage`, Páginas `--lavender`, Mi año `--peach`, Ajustes `--paper-shade`. El que tiene su cuadro abierto lleva un anillo de hilo crema.
+- **Cuadro desplegable** (`.panel`, un `<dialog>` modal): tela de la tapa como fondo, adentro las mismas hojas de siempre; barra superior fija con “Volver al calendario”. Se abre con un fundido + 14px de caída (260 ms, `--ease-out`); en celular ocupa toda la pantalla.
+- **Tira de meses** (`.months`): 12 meses en minúscula Castoro; el actual con fondo manteca, el de hoy con un puntito rosa.
 
 ## 8. Stickers
 
@@ -157,10 +159,11 @@ Un solo sistema, `js/ui/icons.js` (sprite SVG): 24×24, trazo 1.75px, `stroke-li
 
 ## 10. Layout y responsive
 
-- **≥ 1100px — doble página:** dos hojas de ~560px con lomo central (sombra interior + 5 puntadas de costura). Pestañas en el borde derecho.
-- **700–1099px — una hoja ancha:** máx. 720px; pestañas en el borde derecho.
-- **< 700px — una hoja:** ancho completo menos 8px de tela a cada lado; barra superior de tela con el nombre del cuaderno y el carretel de Ajustes; abajo, **5 pestañas** (máximo recomendado para navegación inferior) con ícono + etiqueta, altura 58px + `env(safe-area-inset-bottom)`.
-- Qué va en cada hoja (desktop): Hoy → izq. encabezado + ánimo inicial + intención + lista; der. notas + energía/sueño + cierre. Calendario-semana → lun–mié / jue–dom. Mes y Año → una sola hoja ancha (no forzar doble página).
+- **Pantalla principal (todas las medidas):** nombre del cuaderno + cinco botoncitos arriba; debajo, la hoja ancha del calendario (máx. 1040px) con la tira de meses.
+- **Cuadros, ≥ 1100px — doble página:** dos hojas de ~560px con lomo central (sombra interior + costura).
+- **Cuadros, 700–1099px — una hoja:** máx. 780px.
+- **< 700px:** los cinco botoncitos en una fila (ícono + etiqueta chica, 54px de alto); la tira de meses en dos filas de seis; el calendario entra entero en la pantalla. Los cuadros ocupan toda la pantalla.
+- Qué va en cada hoja del cuadro (desktop): Hoy → izq. encabezado + ánimo inicial + intención + lista; der. notas + energía/sueño + cierre. Semana → lun–mié / jue–dom. Año → bastidor / notas.
 - Teclado móvil: el campo activo se desplaza a la vista (`scrollIntoView({block:'center'})`); nada fijo tapa inputs (la barra de pestañas se oculta con el teclado abierto vía `visualViewport`).
 
 ## 11. Accesibilidad

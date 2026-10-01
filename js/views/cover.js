@@ -52,6 +52,7 @@
         var pending = MC.pendingFocus && document.querySelector(MC.pendingFocus);
         MC.pendingFocus = null;
         if (pending) { pending.focus(); pending.scrollIntoView({ block: 'center' }); return; }
+        if (MC.app && MC.app.panelOpen()) return; // el cuadro abierto ya maneja su foco
         var heading = document.getElementById('main').querySelector('h1');
         if (heading) { heading.setAttribute('tabindex', '-1'); heading.focus({ preventScroll: true }); }
       };

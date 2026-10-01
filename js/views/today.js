@@ -81,8 +81,6 @@
       next.addEventListener('click', function () { location.hash = '#/dia/' + D.addDays(date, 1); });
       var p = D.parse(date);
       var rel = D.relativeLabel(date, today);
-      var dateInput = h('input.day-head__picker', { type: 'date', value: date, 'aria-label': 'Ir a una fecha' });
-      dateInput.addEventListener('change', function () { if (D.isValid(dateInput.value)) location.hash = '#/dia/' + dateInput.value; });
 
       return h('header.day-head',
         h('div.day-head__top',
@@ -95,9 +93,7 @@
             h('h1.t-display.day-head__weekday', D.capitalize(D.DAYS[D.weekday(date)])),
             h('p.day-head__long', p.d + ' de ' + D.MONTHS[p.m - 1] + (p.y !== +today.slice(0, 4) ? ' de ' + p.y : ''))),
           next),
-        h('div.day-head__tools',
-          !isToday ? h('a.text-btn', { href: '#/hoy' }, MC.icon('hoy'), 'Volver a hoy') : null,
-          h('label.text-btn.day-head__pick', MC.icon('calendario'), h('span', 'Ir a una fecha'), dateInput))
+        !isToday ? h('div.day-head__tools', h('a.text-btn', { href: '#/hoy' }, MC.icon('hoy'), 'Ir a hoy')) : null
       );
     }
 

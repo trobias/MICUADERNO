@@ -82,10 +82,7 @@
       wrap.appendChild(choices);
       wrap.appendChild(nav('Abrir mi cuaderno', function () {
         s.onboarded = true;
-        M.saveSettings(s).then(function () {
-          document.getElementById('tabs').hidden = false;
-          location.hash = '#/hoy';
-        });
+        M.saveSettings(s).then(function () { location.hash = '#/hoy'; });
       }));
       page.appendChild(wrap);
     }

@@ -5,6 +5,12 @@
   var h = MC.h;
   var c = MC.c = {};
 
+  /** Dónde colgar menús y avisos: dentro del diálogo abierto de más arriba (si no, quedan inertes debajo). */
+  c.layer = function () {
+    var open = MC.$$('dialog[open]');
+    return open.length ? open[open.length - 1] : document.body;
+  };
+
   /* ---------- Parches de ánimo ---------- */
   /**
    * Grupo de 5 botones-toggle (aria-pressed). Tocar el elegido lo quita.
@@ -110,7 +116,7 @@
       else if (e.key === 'Escape') { e.preventDefault(); closeMenu(true); }
       else if (e.key === 'Tab') { closeMenu(false); }
     });
-    document.body.appendChild(menu);
+    c.layer().appendChild(menu);
     if (supportsPopover) menu.showPopover(); else menu.classList.add('is-open');
     position(menu, anchor);
     anchor.setAttribute('aria-expanded', 'true');
@@ -121,7 +127,7 @@
     };
     openMenu = state;
     var observer = new MutationObserver(function () { if (!menu.isConnected) { anchor.setAttribute('aria-expanded', 'false'); observer.disconnect(); } });
-    observer.observe(document.body, { childList: true });
+    observer.observe(menu.parentNode, { childList: true });
     setTimeout(function () { document.addEventListener('pointerdown', state.onOutside, true); }, 0);
     window.addEventListener('resize', state.onResize);
     var checked = buttons.filter(function (b) { return b.getAttribute('aria-checked') === 'true'; })[0];
@@ -220,8 +226,8 @@
     opts = opts || {};
     if (!toastEl) {
       toastEl = h('div.toast', { role: 'status', 'aria-live': 'polite', hidden: true });
-      document.body.appendChild(toastEl);
     }
+    if (toastEl.parentNode !== c.layer()) c.layer().appendChild(toastEl);
     MC.clear(toastEl);
     toastEl.appendChild(h('span', text));
     if (opts.action) {

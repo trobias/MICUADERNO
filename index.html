@@ -30,16 +30,16 @@
   THESIS: el registro diario como bordado lento en un diario de tela; rechaza el dashboard de hábitos (cards, rachas, gráficos).
   OWN-WORLD: tela de encuadernar a página completa (salvia/rosa viejo/lavanda/manteca), hojas crema con renglones lavanda y margen rosado, hilos de bordar como color de dato, papelería troquelada (cintas, washi, stickers). Young Serif · Castoro · Atkinson Hyperlegible Next · Nanum Pen Script.
   STORY: abrís la tapa, sellás cómo arrancaste, bordás lo que hiciste, escribís si querés, cerrás el día; el año se va llenando de puntos cruz.
-  FIRST VIEWPORT: cuaderno abierto sobre su tela; hoja izquierda con la fecha grande y los 5 parches de ánimo (acción principal), la lista del día con casillas de punto cruz; hoja derecha con notas y cierre; pestañas de índice al borde.
+  FIRST VIEWPORT: cuaderno abierto sobre su tela; calendario del mes al centro con la tira de meses para saltar rápido y cinco botoncitos (Hoy, Rutinas, Páginas, Mi año, Ajustes) que despliegan cuadros encima; tocar un día abre su página en un cuadro.
   FORM: diario encuadernado en tela con bordado, candidato 3 de 7 propios; seed ebc51b2e (tirada degradada, sin retadores).
   FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
 -->
   <a class="skip-link" href="#main">Ir al contenido</a>
 
   <div class="desk" id="app">
-    <header class="mobile-bar" id="mobile-bar" hidden>
-      <span class="mobile-bar__title" aria-hidden="true">MI CUADERNO</span>
-      <a class="mobile-bar__settings" id="mobile-settings" href="#/ajustes" aria-label="Ajustes"></a>
+    <header class="home-head" id="home-head" hidden>
+      <p class="home-head__title" aria-hidden="true">MI CUADERNO</p>
+      <nav class="mini-opts" id="mini-opts" aria-label="Opciones del cuaderno"></nav>
     </header>
     <div class="book">
       <main class="pages" id="main" tabindex="-1">
@@ -47,9 +47,17 @@
           <div class="page"><p class="t-text">MI CUADERNO necesita JavaScript activado para funcionar. Tus datos quedan en este dispositivo.</p></div>
         </noscript>
       </main>
-      <nav class="tabs" id="tabs" aria-label="Secciones del cuaderno" hidden></nav>
     </div>
   </div>
+
+  <!-- Cuadro desplegable: Hoy, un día, Rutinas, Páginas, Mi año y Ajustes se abren acá, encima del calendario. -->
+  <dialog class="panel" id="panel" aria-label="Cuaderno">
+    <div class="panel__bar">
+      <button type="button" class="panel__close" id="panel-close"><span>Volver al calendario</span></button>
+    </div>
+    <div class="panel__body" id="panel-body"></div>
+    <div class="scene-layer scene-layer--panel" id="panel-scene-layer" aria-hidden="true"></div>
+  </dialog>
 
   <div class="scene-layer" id="scene-layer" aria-hidden="true"></div>
   <div id="print-root" aria-hidden="true"></div>

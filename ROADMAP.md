@@ -6,7 +6,7 @@ Leyenda: **P1** = próximo · **P2** = después · **P3** = algún día · (brie
 
 ## v1.0 — hecho
 
-MVP completo del brief §64: abrir/cerrar/volver con los datos, ánimo al empezar y terminar, actividades con 5 estados, escribir, navegar fechas, rutinas con recurrencia, calendario semana/mes, año bordado, páginas con stickers, backup/restauración, TXT/CSV/XLSX, impresión A4/A5/Carta, PWA offline instalable, recordatorios locales, 5 escenas, 4 niveles de motion. 29 unit + 15 E2E en verde.
+MVP completo del brief §64, con navegación de una sola pantalla (calendario al centro + cuadros desplegables, DECISIONS D17): abrir/cerrar/volver con los datos, ánimo al empezar y terminar, actividades con 5 estados, escribir, navegar fechas, rutinas con recurrencia, calendario semana/mes, año bordado, páginas con stickers, backup/restauración, TXT/CSV/XLSX, impresión A4/A5/Carta, PWA offline instalable, recordatorios locales, 5 escenas, 4 niveles de motion. 29 unit + 16 E2E en verde.
 
 ---
 

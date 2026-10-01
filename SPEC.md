@@ -40,20 +40,24 @@ MI CUADERNO es un cuaderno personal digital: diario, agenda, registro de ánimo,
 6. **Local y exportable.** Los datos son de la persona. Siempre puede llevárselos (JSON, TXT, CSV, XLSX, impresión).
 7. **Descriptivo, nunca causal.** Los insights cuentan (“8 de 11 veces”), no concluyen.
 
-## 5. Navegación (destinos)
+## 5. Navegación: una sola pantalla
 
-Cinco pestañas de papel + ajustes. Nunca más de seis destinos. En celular, la barra inferior tiene solo las cinco pestañas y Ajustes vive en una barra superior con el nombre del cuaderno.
+Pedido de la dueña del proyecto (DECISIONS D17): **sin secciones separadas**. Todo pasa en una pantalla:
 
-| Pestaña | Ruta | Qué es |
-|---|---|---|
-| **Hoy** | `#/hoy` · `#/dia/AAAA-MM-DD` | La página del día (hoy o cualquier fecha). Corazón del producto. |
-| **Calendario** | `#/calendario/semana/AAAA-MM-DD` · `#/calendario/mes/AAAA-MM` | Semana como agenda, mes como calendario ilustrado. |
-| **Rutinas** | `#/rutinas` | Crear/editar/pausar rutinas recurrentes. |
-| **Páginas** | `#/paginas` · `#/pagina/:id` | Índice de páginas libres + editor con stickers. |
-| **Mi año** | `#/anio/AAAA` | Bordado de 365 días + “Lo que fui notando” + “Lo que guardé” (recuerdos). |
-| Ajustes | `#/ajustes` | Nombre, tapa, qué registrar, animaciones, recordatorios, datos. |
+- **Centro: el calendario del mes**, con la **tira de los 12 meses** (y flechas de año) para saltar de mes con un toque. Interruptor chico *Mes / Semana*.
+- **Cinco botoncitos arriba**: *Hoy · Rutinas · Páginas · Mi año · Ajustes*. Cada uno abre un **cuadro desplegable** encima del calendario (un `<dialog>`), sin salir de la pantalla.
+- **Tocar un día** del calendario abre la página de ese día en el cuadro. Al cerrarlo (botón “Volver al calendario”, `Esc`, tocar afuera o *atrás* del navegador) se vuelve al calendario, que se actualiza con lo registrado.
 
-“Recuerdos” no es un destino propio: vive dentro de *Mi año* como “Lo que guardé” para no sumar una pestaña más.
+| Ruta | Qué muestra |
+|---|---|
+| `#/calendario` · `#/calendario/mes/AAAA-MM` · `#/calendario/semana/AAAA-MM-DD` | la pantalla principal (sin cuadro) |
+| `#/hoy` · `#/dia/AAAA-MM-DD` | cuadro con la página del día |
+| `#/rutinas` | cuadro de rutinas |
+| `#/paginas` · `#/pagina/:id` | cuadro con el índice o una página |
+| `#/anio/AAAA` | cuadro con el bordado del año, lo que fui notando y lo que guardé |
+| `#/ajustes` · `#/imprimir` | cuadro de ajustes / impresión |
+
+Todas las rutas siguen siendo enlazables (atajos de la PWA, notificaciones).
 
 ## 6. User journeys
 
@@ -67,10 +71,10 @@ Cinco pestañas de papel + ajustes. Nunca más de seis destinos. En celular, la 
 4. “Abrir mi cuaderno” → **Hoy**, con foco visual en “¿Cómo arrancaste hoy?”.
 
 ### 6.2 Uso diario
-Abrir → (tapa breve o directo, según ajuste) → **Hoy** → sello de ánimo → ver actividades del día (propias + rutinas) → marcar estados → escribir → más tarde “¿Cómo terminó tu día?” + reflexiones.
+Abrir → (tapa breve o directo, según ajuste) → calendario → botoncito **Hoy** (o tocar el día) → sello de ánimo → ver actividades del día (propias + rutinas) → marcar estados → escribir → más tarde “¿Cómo terminó tu día?” + reflexiones.
 
 ### 6.3 Revisión
-Calendario → Mes → tocar un día → se apoya un marcador → “abrir página” → la página de ese día (editable, pasada o futura).
+Calendario → tocar un mes en la tira → tocar un día → se abre su página en el cuadro (editable, pasada o futura) → cerrar y seguir mirando.
 
 ### 6.4 Rutinas
 Rutinas → “nueva rutina” → nombre + frecuencia (+ desde/hasta opcional, momento del día opcional) → aparece sola en los días que corresponde, en Hoy y en la Semana.
@@ -110,7 +114,7 @@ Secciones, en orden de lectura (mobile) o repartidas en doble página (desktop: 
 Guardado automático: cada cambio se anota al instante como borrador local y se escribe en IndexedDB a los 400 ms; si la pestaña se cierra antes, el borrador se recupera al volver. Un “guardado” manuscrito discreto confirma. Días futuros: editables (planear). Días pasados: editables.
 
 ### 7.3 Calendario
-- **Mes**: grilla lunes-domingo. Cada día muestra: número, mancha de acuarela del ánimo final (o inicial si no hay final), punto de tinta si escribió, estrellita si guardó un recuerdo, trazo pequeño con cantidad de actividades hechas. Hoy con círculo a lápiz. Seleccionar día → cae una cinta-marcador y aparece una ficha con resumen + “abrir página”.
+- **Mes** (pantalla principal): tira de 12 meses + grilla lunes-domingo. Cada día muestra: número, parche del ánimo final (o inicial si no hay final), punto de tinta si escribió, estrellita si guardó un recuerdo y la cantidad de cosas hechas. Hoy con borde a lápiz; el último día abierto lleva una cinta-marcador. Tocar un día → su página en el cuadro desplegable.
 - **Semana**: agenda de 7 días (desktop: lun-mié izquierda / jue-dom derecha). Cada día: ánimo, actividades (incluye rutinas futuras virtuales), primera línea escrita. Tocar → abre el día.
 - Navegación anterior/siguiente, “hoy”.
 

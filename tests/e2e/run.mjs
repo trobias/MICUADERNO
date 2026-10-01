@@ -67,7 +67,8 @@ await test('primera apertura (file://): tapa → onboarding → Hoy, sin errores
   await onboard(page);
   assert.equal(await page.getAttribute('body', 'data-cover'), 'lavanda');
   assert.match(await page.textContent('.day-head__greet'), /Sofi/);
-  assert.equal(await page.locator('#tabs').isVisible(), true);
+  assert.equal(await page.locator('#panel').evaluate((d) => d.open), true, 'Hoy se abre como cuadro sobre el calendario');
+  assert.equal(await page.locator('#home-head').isVisible(), true);
   assert.deepEqual(errors, []);
   await context.close();
 });
@@ -110,7 +111,7 @@ await test('rutina: se crea y aparece sola en Hoy; marcarla la guarda', async ()
   await page.click('button:has-text("Nueva rutina")');
   await page.fill('#rt-title', 'Regar las plantas');
   await page.selectOption('#rt-freq', 'daily');
-  await page.click('dialog button:has-text("Crear rutina")');
+  await page.click('dialog.sheet button:has-text("Crear rutina")');
   await page.waitForSelector('.routine__title:has-text("Regar las plantas")');
   await goto(page, '#/hoy');
   await page.waitForSelector('.activity');
@@ -142,7 +143,7 @@ await test('backup: exportar → borrar todo → restaurar deja el cuaderno igua
 
   await page.click('button:has-text("Borrar todo el cuaderno")');
   await page.fill('#wipe-confirm', 'borrar');
-  await page.click('dialog button:has-text("Borrar todo")');
+  await page.click('dialog.sheet button:has-text("Borrar todo")');
   await page.waitForSelector('#ob-name');
   await page.click('button:has-text("Saltar")');
   await page.click('button:has-text("Seguir")');
@@ -152,9 +153,9 @@ await test('backup: exportar → borrar todo → restaurar deja el cuaderno igua
 
   await goto(page, '#/ajustes');
   await page.setInputFiles('#st-restore', file);
-  await page.waitForSelector('dialog:has-text("Abrir esta copia")');
-  assert.match(await page.textContent('dialog'), /1 día/);
-  await page.click('dialog button:has-text("Reemplazar mi cuaderno")');
+  await page.waitForSelector('dialog.sheet:has-text("Abrir esta copia")');
+  assert.match(await page.textContent('dialog.sheet'), /1 día/);
+  await page.click('dialog.sheet button:has-text("Reemplazar mi cuaderno")');
   await page.waitForSelector('.day-head');
   await page.waitForTimeout(300);
   assert.equal(await page.inputValue('#notes'), 'esto tiene que volver');
@@ -171,8 +172,8 @@ await test('backup inválido: aviso claro y nada cambia', async () => {
   fs.writeFileSync(bad, JSON.stringify({ app: 'otra-app', kind: 'backup' }));
   await goto(page, '#/ajustes');
   await page.setInputFiles('#st-restore', bad);
-  await page.waitForSelector('dialog:has-text("no se puede abrir")');
-  assert.match(await page.textContent('dialog'), /no parece una copia de MI CUADERNO/);
+  await page.waitForSelector('dialog.sheet:has-text("no se puede abrir")');
+  assert.match(await page.textContent('dialog.sheet'), /no parece una copia de MI CUADERNO/);
   await context.close();
 });
 
@@ -248,24 +249,59 @@ await test('calendario, semana y año muestran lo registrado; teclado en el mes'
   await context.close();
 });
 
-await test('mobile 375px: una hoja, pestañas abajo, sin scroll horizontal', async () => {
+await test('mobile 375px: una pantalla, 5 botoncitos, sin scroll horizontal', async () => {
   const { page, errors, context } = await newPage(browser, { viewport: { width: 375, height: 760 } });
   await page.goto(FILE_URL);
   await onboard(page);
   for (const h of ['#/hoy', '#/calendario', '#/rutinas', '#/paginas', '#/anio', '#/ajustes']) {
     await goto(page, h);
-    const over = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+    const over = await page.evaluate(() => { const p = document.getElementById('panel'); return Math.max(document.documentElement.scrollWidth - window.innerWidth, p.open ? p.scrollWidth - p.clientWidth : 0); });
     const culprit = over > 0 ? await page.evaluate(() => [...document.querySelectorAll('body *')].filter((e) => e.getBoundingClientRect().right > window.innerWidth + 1).slice(0, 4).map((e) => e.className || e.tagName).join(' | ')) : '';
     assert.ok(over <= 0, `${h} desborda ${over}px: ${culprit}`);
   }
-  const tabsBox = await page.locator('#tabs').boundingBox();
-  assert.ok(tabsBox.y + tabsBox.height >= 750, 'pestañas abajo');
-  const visibleTabs = await page.$$eval('#tabs .tab', (els) => els.filter((e) => e.offsetParent !== null).length);
-  assert.ok(visibleTabs <= 5, `barra inferior con ${visibleTabs} destinos (máx. 5)`);
-  assert.equal(await page.locator('#mobile-settings').isVisible(), true, 'Ajustes accesible arriba');
+  await goto(page, '#/calendario');
+  const opts = await page.$$eval('#mini-opts .mini-opt', (els) => els.map((e) => { const r = e.getBoundingClientRect(); return { w: r.width, h: r.height, top: r.top }; }));
+  assert.equal(opts.length, 5, 'cinco botoncitos');
+  assert.ok(opts.every((o) => o.h >= 44), 'botoncitos de al menos 44px de alto');
+  assert.ok(opts.every((o) => o.top < 120), 'botoncitos arriba, a la vista');
+  assert.equal(await page.locator('.month-chip').count(), 12, 'los 12 meses a mano');
   await goto(page, '#/anio');
   const cell = await page.locator('.stitch-cell[data-date]').first().boundingBox();
   assert.ok(cell.width >= 22 && cell.height >= 22, `celda del año ${cell.width}x${cell.height} (mín. 22)`);
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+await test('pantalla única: tocar un día abre su cuadro, cerrar vuelve al calendario, meses con un toque', async () => {
+  const { page, errors, context } = await newPage(browser);
+  await page.goto(FILE_URL);
+  await onboard(page);
+  await page.click('.section--mood .mood-patch[data-mood="3"]');
+  await page.waitForTimeout(400);
+  await page.click('#panel-close');
+  await page.waitForFunction(() => !document.getElementById('panel').open);
+  assert.match(page.url(), /#\/calendario/);
+  assert.equal(await page.locator(`.day-cell[data-date="${TODAY}"]`).getAttribute('data-mood'), '3', 'el calendario se actualiza al cerrar');
+  // Otro día del mes
+  const other = await page.$eval('.day-cell:not(.is-out)', (el) => el.dataset.date);
+  await page.click(`.day-cell[data-date="${other}"]`);
+  await page.waitForFunction(() => document.getElementById('panel').open);
+  assert.match(page.url(), new RegExp('#/dia/' + other));
+  await page.keyboard.press('Escape');
+  await page.waitForFunction(() => !document.getElementById('panel').open);
+  // Saltar de mes con la tira
+  await page.click('.month-chip >> nth=0');
+  await page.waitForSelector('.month-chip[aria-current="date"]');
+  assert.match(await page.textContent('.month-chip[aria-current="date"]'), /ene/);
+  assert.match(page.url(), /#\/calendario\/mes\/\d{4}-01/);
+  // Botoncitos: cada uno abre su cuadro
+  for (const [opt, sel] of [['rutinas', 'button:has-text("Nueva rutina")'], ['paginas', 'button:has-text("Nueva página")'], ['anio', '.hoop'], ['ajustes', '#st-name']]) {
+    await page.click(`.mini-opt[data-opt="${opt}"]`);
+    await page.waitForSelector(`#panel ${sel}`);
+    assert.equal(await page.getAttribute(`.mini-opt[data-opt="${opt}"]`, 'aria-current'), 'true');
+    await page.click('#panel-close');
+    await page.waitForFunction(() => !document.getElementById('panel').open);
+  }
   assert.deepEqual(errors, []);
   await context.close();
 });
@@ -277,7 +313,7 @@ await test('320px y celular apaisado: sin scroll horizontal', async () => {
     await onboard(page);
     for (const h of ['#/hoy', '#/calendario', '#/anio', '#/ajustes']) {
       await goto(page, h);
-      const over = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+      const over = await page.evaluate(() => { const p = document.getElementById('panel'); return Math.max(document.documentElement.scrollWidth - window.innerWidth, p.open ? p.scrollWidth - p.clientWidth : 0); });
       assert.ok(over <= 0, `${viewport.width}px ${h} desborda ${over}px`);
     }
     assert.deepEqual(errors, []);
@@ -291,7 +327,7 @@ await test('rutina sin nombre: el error aparece junto al campo', async () => {
   await onboard(page);
   await goto(page, '#/rutinas');
   await page.click('button:has-text("Nueva rutina")');
-  await page.click('dialog button:has-text("Crear rutina")');
+  await page.click('dialog.sheet button:has-text("Crear rutina")');
   assert.equal(await page.getAttribute('#rt-title', 'aria-invalid'), 'true');
   assert.match(await page.textContent('#rt-title-err'), /nombre/);
   assert.equal(await page.evaluate(() => document.activeElement.id), 'rt-title');

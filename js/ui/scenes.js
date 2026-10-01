@@ -52,8 +52,14 @@
     return pool[Math.floor(Math.random() * pool.length)];
   }
 
+  function currentLayer() {
+    var panel = document.getElementById('panel');
+    return panel && panel.open ? document.getElementById('panel-scene-layer') : document.getElementById('scene-layer');
+  }
+
   function pageRect() {
-    var pages = MC.$$('#main .page');
+    var panel = document.getElementById('panel');
+    var pages = MC.$$(panel && panel.open ? '#panel .page' : '#main .page');
     var p = pages[pages.length - 1];
     return p ? p.getBoundingClientRect() : null;
   }
@@ -146,6 +152,7 @@
   };
 
   function play(name) {
+    layer = currentLayer();
     var r = pageRect();
     if (!r || !SCENES[name] || !layer.animate) { schedule(false); return; }
     running = SCENES[name](r);
@@ -163,6 +170,7 @@
     MC.on('dialog:closed', function () { dialogs = Math.max(0, dialogs - 1); });
     MC.on('decorating', function (on) { decorating = on; if (on) stop(); });
     MC.on('route', function () { stop(); schedule(true); });
+    MC.on('panel', function () { stop(); schedule(true); });
     MC.on('settings', function () { stop(); schedule(true); });
     document.addEventListener('visibilitychange', function () { if (document.hidden) { stop(); clearTimeout(timer); } else schedule(true); });
     schedule(true);
