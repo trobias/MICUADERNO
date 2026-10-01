@@ -152,7 +152,7 @@
         h('span.motion-choice__name', MOTION_INFO[m][0]), h('span.motion-choice__desc', MOTION_INFO[m][1]));
       b.addEventListener('click', function () {
         MC.$$('.motion-choice', motion).forEach(function (x) { x.setAttribute('aria-checked', String(x === b)); });
-        save({ motion: m });
+        save({ motion: m, motionChosen: true });
       });
       motion.appendChild(b);
     });
@@ -160,7 +160,7 @@
       checkRow('st-scenes', 'Escenas ocasionales', s.scenes, function (on) { save({ scenes: on }); }, 'Una mariposa, un poco de vapor… muy de vez en cuando, nunca mientras escribís.'),
       checkRow('st-cover-show', 'Mostrar la tapa al abrir', s.showCover, function (on) { save({ showCover: on }); }));
     left.appendChild(c.section('Cómo se mueve', [motion, motionExtras],
-      { id: 'st-motion', hint: MC.motion.systemReduced() ? 'Tu dispositivo pide menos movimiento; por eso empezamos en “Reducidas”.' : null }));
+      { id: 'st-motion', hint: MC.motion.systemReduced() ? 'Tu dispositivo pide menos movimiento: si las animaciones te marean, elegí “Reducidas” o “Ninguna”.' : null }));
 
     // Recordatorios
     if (MC.notify) right.appendChild(MC.notify.settingsSection());

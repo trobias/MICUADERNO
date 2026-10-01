@@ -142,6 +142,7 @@ Escala (rem, base 16px):
 - **Cuadro desplegable al abrirse**: sale desde el lado de los marcadores (18px desde la derecha; en el celular 14px desde abajo) + fundido, 260ms `--ease-out`.
 - **Cuadro desplegable** (`.panel`, un `<dialog>` modal): tela de la tapa como fondo, adentro las mismas hojas de siempre; barra superior fija con “Volver al calendario”. Se abre con un fundido + 14px de caída (260 ms, `--ease-out`); en celular ocupa toda la pantalla.
 - **Tira de meses** (`.months`): 12 meses en minúscula Castoro; el actual con fondo manteca, el de hoy con un puntito rosa. El año entre las flechas es un enlace a *Mi año* (subrayado punteado al pasar).
+- **Hilitos del mes** (`.cell-line`, ≥700px): línea de 0,68rem en Atkinson con hilo de 3px a la izquierda del color de su marcador (`--rose` agenda, `--thread-done` rutina, `--thread-later` página) y fondo al 22 %; máx. 3 por día + “+N más”. En el celular no se muestran (quedan las marcas).
 - **Días de una rutina** (`.day-cell.is-routine` + `.mark-routine`): tinte `--sage` al 50 % sobre papel, borde de hilo `--thread-done` suave y el ícono de rutinas de 12px en las marcas (estado nunca solo por color). Aviso arriba (`.routine-filter`): papelito salvia con borde punteado, texto + “Ver la rutina” + “Dejar de mostrar”.
 - **Rutina resaltada** (`.routine.is-focus`): tinte salvia + hilo de 3px a la izquierda, sin animación; recibe el foco.
 - **Enlaces dentro del texto** (fechas, “viene del…”, “próxima: …”, iniciales del bastidor): mismo texto que antes, con subrayado fino o punteado; nunca botones nuevos.
@@ -197,6 +198,10 @@ Tokens: `--ease-out: cubic-bezier(0.23, 1, 0.32, 1)` · `--ease-in-out: cubic-be
 | Cambiar de pestaña | varias/día | crossfade 200ms; la pestaña avanza 6px |
 | Soltar sticker | ocasional | asentamiento: escala 1.06→1 y rotación ±2°, 260ms |
 | Seleccionar día (calendario) | ocasional | la cinta baja 16px → 0, 260ms |
+| Cambiar de mes | varias/sesión | la hoja nueva entra 28px desde ese lado + fundido, ≤300ms (armada aparte, sin parpadeo) |
+| Mes ↔ semana | ocasional | la hoja entra con escala 0,97 → 1 + fundido, ≤300ms |
+| Pasar de un marcador a otro | varias/sesión | la hoja del cuadro sube 8px + fundido, 200ms |
+| Tocar un día | varias/sesión | la celda se hunde a 0,97, 120ms |
 | Calendario que se actualiza solo | con cada cambio | **ninguno**: se redibuja aparte y se cambia entero (sin parpadeo, sin animar los números ni las marcas) |
 | Abrir tapa | 1/sesión | primeras 3 veces: elástico se corre + tapa gira sobre bisagra izquierda, 900ms; luego fade 250ms |
 | Cierre del día guardado | 1/día | una ramita/luna aparece a su lado, 600ms, una vez |
@@ -205,9 +210,9 @@ Tokens: `--ease-out: cubic-bezier(0.23, 1, 0.32, 1)` · `--ease-in-out: cubic-be
 Nunca: `transition: all`, `scale(0)`, `ease-in` en UI, rebotes, motion en atajos de teclado, parallax, cosas siguiendo al cursor. Hover con movimiento solo en `@media (hover: hover) and (pointer: fine)`.
 
 ### Niveles (Ajustes → Cómo se mueve)
-- **Completas:** todo lo anterior + escenas.
-- **Suaves (default):** sin giro 3D de tapa (fade), escenas menos frecuentes.
-- **Reducidas (default si `prefers-reduced-motion`):** solo opacidad/color; sin desplazamientos, sin escenas; el bordado de la ✕ aparece instantáneo.
+- **Completas (default para todas las personas, D23):** todo lo anterior + escenas.
+- **Suaves:** sin giro 3D de tapa (fade), escenas menos frecuentes.
+- **Reducidas:** solo opacidad/color; sin desplazamientos, sin escenas; el bordado de la ✕ aparece instantáneo.
 - **Ninguna:** duraciones 0.
 
 Se aplica con `html[data-motion]` y las variables `--motion-scale` (1 / 0.85 / 0 para movimiento) y `--fade-scale`.

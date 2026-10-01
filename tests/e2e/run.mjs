@@ -273,7 +273,7 @@ await test('el calendario reúne todo: rutinas planeadas, páginas del día y el
   await goto(page, '#/calendario/mes/' + TODAY.slice(0, 7));
   const cell = page.locator(`.day-cell[data-date="${TODAY}"]`);
   assert.equal(await cell.locator('.mark-page').count(), 1, 'marca de página en hoy');
-  assert.match(await cell.getAttribute('aria-label'), /empezaste una página/);
+  assert.match(await cell.getAttribute('aria-label'), /una página: «Lugares que amo»/);
   await cell.click();
   await page.waitForSelector('#panel[open] #q-pages');
   await page.click('#panel .day-pages a:has-text("Lugares que amo")');
@@ -554,12 +554,20 @@ await test('rutina sin nombre: el error aparece junto al campo', async () => {
   await context.close();
 });
 
-await test('reduced motion: arranca en “Reducidas” y sin escenas', async () => {
+await test('motion: todas las personas empiezan en “Completas”; se puede bajar en Ajustes y queda', async () => {
   const { page, context } = await newPage(browser, { reducedMotion: 'reduce' });
   await page.goto(FILE_URL);
   await onboard(page);
+  assert.equal(await page.getAttribute('html', 'data-motion'), 'completas');
+  await goto(page, '#/ajustes');
+  assert.match(await page.textContent('#panel'), /si las animaciones te marean/);
+  await page.click('.motion-choice:has-text("Reducidas")');
+  await page.waitForTimeout(300);
   assert.equal(await page.getAttribute('html', 'data-motion'), 'reducidas');
   assert.equal(await page.evaluate(() => MC.motion.allows('scenes')), false);
+  await page.reload();
+  await openCover(page);
+  await page.waitForFunction(() => document.documentElement.dataset.motion === 'reducidas');
   await context.close();
 });
 

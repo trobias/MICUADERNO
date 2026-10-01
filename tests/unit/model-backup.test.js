@@ -143,6 +143,7 @@ test('el resumen del calendario incluye rutinas sin marcar y páginas', async ()
   // Estado de cada rutina por día: marcada (su estado) o planeada (pending).
   assert.equal(sum['2026-09-30'].byRoutine[rut.id], 'done');
   assert.equal(sum['2026-10-07'].byRoutine[rut.id], 'pending');
+  assert.deepEqual(sum['2026-10-07'].items.map((i) => [i.kind, i.title]).sort(), [['own', 'llamar a la abuela'], ['routine', 'Regar']]);
   // Página en su fecha local de creación.
   assert.deepEqual(sum['2026-10-02'].pages.map((p) => p.title), ['Ideas']);
   assert.equal((await M.pagesOn('2026-10-02')).length, 1);
@@ -230,4 +231,13 @@ test('páginas: tienen día en el calendario (elegible) y la copia v1 se migra',
   assert.equal(v.ok, true);
   assert.equal(v.payload.pages[0].date, '2026-05-01');
   assert.equal(MC.backup.SCHEMA_VERSION, 2);
+});
+
+test('motion: “Completas” por defecto; el valor de fábrica viejo no se respeta, una elección sí', () => {
+  assert.equal(M.defaultSettings().motion, 'completas');
+  assert.equal(M.mergeSettings({ motion: 'suaves' }).motion, 'completas');
+  assert.equal(M.mergeSettings({ motion: 'reducidas' }).motion, 'completas');
+  assert.equal(M.mergeSettings({ motion: 'ninguna' }).motion, 'ninguna', '“Ninguna” siempre fue una elección');
+  assert.equal(M.mergeSettings({ motion: 'reducidas', motionChosen: true }).motion, 'reducidas');
+  assert.equal(M.mergeSettings({ motion: 'cualquiera', motionChosen: true }).motion, 'completas');
 });

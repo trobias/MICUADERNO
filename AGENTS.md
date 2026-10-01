@@ -86,7 +86,7 @@ skills/                 colección de skills del proyecto (no es parte de la app
 ## Reglas de motion
 
 - Solo `transform`/`opacity` (y `stroke-dashoffset` para bordar). Easing `--ease-out`. UI ≤ 300ms salvo rituales raros (tapa).
-- Respetar `html[data-motion]` (completas/suaves/reducidas/ninguna) y `prefers-reduced-motion`.
+- Respetar `html[data-motion]` (completas/suaves/reducidas/ninguna). El default es **Completas** para todas las personas (D23, pedido de la dueña); quien elige menos en Ajustes, lo tiene.
 - Escenas solo vía `MC.scenes` (respeta frecuencia, foco, tecleo, `document.hidden`).
 
 ## Almacenamiento y privacidad

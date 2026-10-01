@@ -18,13 +18,14 @@
   var MAX_TEXT = 20000;
 
   function defaultSettings() {
-    var reduce = root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches;
     return {
       name: '',
       cover: 'salvia',
       moodLabels: ['pesado', 'bajito', 'normal', 'bien', 'muy bien'],
       track: { morning: true, evening: true, activities: true, reflection: true, energy: false, sleep: false },
-      motion: reduce ? 'reducidas' : 'suaves',
+      // Pedido de la dueña del proyecto (D23): todas las personas empiezan con “Completas”; se baja en Ajustes.
+      motion: 'completas',
+      motionChosen: false,
       scenes: true,
       showCover: true,
       onboarded: false,
@@ -57,7 +58,9 @@
     if (saved.track && typeof saved.track === 'object') {
       Object.keys(out.track).forEach(function (k) { if (typeof saved.track[k] === 'boolean') out.track[k] = saved.track[k]; });
     }
-    if (MOTION.indexOf(saved.motion) !== -1) out.motion = saved.motion;
+    // Se respeta un nivel elegido. “Ninguna” nunca fue de fábrica: siempre fue una elección. Los viejos
+    // valores de fábrica sin elección (“suaves”, o “reducidas” por el sistema) pasan a “completas” (D23).
+    if (MOTION.indexOf(saved.motion) !== -1 && (saved.motionChosen === true || saved.motion === 'ninguna')) { out.motion = saved.motion; out.motionChosen = true; }
     ['scenes', 'showCover', 'onboarded', 'notifyAsked'].forEach(function (k) {
       if (typeof saved[k] === 'boolean') out[k] = saved[k];
     });
@@ -395,7 +398,7 @@
 
   /* ---------- resúmenes para calendario, año e impresión ---------- */
   function blankSummary(date) {
-    return { date: date, morning: null, evening: null, mood: null, wrote: false, memory: '', done: 0, total: 0, pending: 0, planned: 0, routines: 0, byRoutine: {}, pages: [] };
+    return { date: date, morning: null, evening: null, mood: null, wrote: false, memory: '', done: 0, total: 0, pending: 0, planned: 0, routines: 0, byRoutine: {}, items: [], pages: [] };
   }
 
   /**
@@ -427,6 +430,7 @@
       if (countsAsDone(a.status)) s.done++;
       if (a.status === 'pending') s.pending++;
       if (a.routineId) { s.routines++; s.byRoutine[a.routineId] = a.status; marked[a.routineId + '|' + a.date] = true; }
+      s.items.push({ title: a.title, kind: a.routineId ? 'routine' : 'own', status: a.status });
     });
     if (extra.routines && extra.routines.length && from && to) {
       D.range(from, to).forEach(function (k) {
@@ -435,6 +439,7 @@
           var s = at(k);
           s.total++; s.pending++; s.planned++; s.routines++;
           s.byRoutine[r.id] = 'pending';
+          s.items.push({ title: r.title, kind: 'routine', status: 'pending' });
         });
       });
     }

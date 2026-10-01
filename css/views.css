@@ -92,9 +92,10 @@ a.months__year { text-decoration: none; padding: 4px 6px; border-radius: 6px; }
 .month__wd { text-align: center; font-size: var(--fs-xs); color: var(--ink-soft); padding-bottom: 4px; }
 .day-cell {
   position: relative;
-  display: grid;
-  grid-template-rows: auto 1fr auto;
-  justify-items: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
   min-height: 84px;
   padding: 6px 4px 6px;
   border-radius: 6px;
@@ -102,10 +103,10 @@ a.months__year { text-decoration: none; padding: 4px 6px; border-radius: 6px; }
   background: color-mix(in srgb, var(--paper-shade) 45%, transparent);
   text-align: center;
 }
-.day-cell__num { font-family: var(--font-display); font-size: 1.05rem; line-height: 1; justify-self: start; padding-left: 4px; font-variant-numeric: tabular-nums; }
+.day-cell__num { font-family: var(--font-display); font-size: 1.05rem; line-height: 1; align-self: flex-start; padding-left: 4px; font-variant-numeric: tabular-nums; }
 .day-cell__patch { align-self: center; }
 .day-cell__patch .mini-patch { width: 26px; height: 26px; }
-.day-cell__marks { display: flex; gap: 5px; align-items: center; min-height: 14px; font-size: 0.72rem; color: var(--thread-done-text); font-weight: 650; }
+.day-cell__marks { display: flex; gap: 5px; align-items: center; margin-top: auto; min-height: 14px; font-size: 0.72rem; color: var(--thread-done-text); font-weight: 650; }
 .mark-ink { display: inline-block; width: 7px; height: 7px; border-radius: 50% 40% 55% 45%; background: var(--ink); }
 .mark-star { display: inline-block; width: 13px; height: 13px; color: var(--mood-5); }
 .mark-star svg { width: 13px; height: 13px; fill: var(--mood-5); }
@@ -386,3 +387,28 @@ a.months__year { text-decoration: none; padding: 4px 6px; border-radius: 6px; }
 .agenda-day__when { font-family: var(--font-hand); font-style: normal; font-size: 1.3rem; color: var(--thread-later); }
 .agenda-day .day-pages { margin-top: var(--s-1); }
 .agenda-list__hint { margin-top: var(--s-5); }
+
+/* ---------- Lo que se lee en cada día del mes (D23) ----------
+   Hilitos: una línea con el hilo del color de su marcador a la izquierda. En el celular solo quedan las marcas. */
+.day-cell__lines { display: grid; gap: 2px; width: 100%; margin-top: 2px; text-align: start; }
+.cell-line {
+  --line: var(--blush);
+  display: block; min-width: 0; padding: 1px 4px 1px 6px;
+  border-left: 3px solid var(--line);
+  background: color-mix(in srgb, var(--line) 22%, transparent);
+  border-radius: 0 3px 3px 0;
+  font-family: var(--font-ui); font-size: 0.68rem; line-height: 1.35; color: var(--ink);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.cell-line[data-kind='own'] { --line: var(--rose); }
+.cell-line[data-kind='routine'] { --line: var(--thread-done); }
+.cell-line[data-kind='page'] { --line: var(--thread-later); }
+.cell-line--more { border-left-color: transparent; background: none; color: var(--ink-soft); }
+.day-cell.is-out .day-cell__lines { opacity: 0.8; }
+.legend-line .cell-line { width: 18px; height: 12px; padding: 0; }
+@media (max-width: 699px) {
+  .day-cell__lines, .mood-legend .legend-line { display: none; }
+}
+/* Tocar un día: la celda se hunde apenas, como apretar el papel. */
+.day-cell { transition: transform var(--dur-press) var(--ease-out), background-color var(--dur-ui) var(--ease-out), border-color var(--dur-ui) var(--ease-out); }
+.day-cell:active { transform: scale(calc(1 - 0.03 * var(--move))); }

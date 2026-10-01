@@ -167,6 +167,7 @@ Las páginas ganan `date` (su día en el calendario). `MIGRATIONS[2]` lo complet
   planned,   // solo las ocurrencias de rutina sin marcar (virtuales)
   routines,  // ítems de rutina del día (marcados o no)
   byRoutine, // { routineId: estado } — 'pending' si todavía no se marcó (para “los días de una rutina”)
+  items,     // [{ title, kind: 'routine' | 'own', status }] — lo que se lee en la celda del mes
   total,     // guardadas + virtuales
   pages: [{ id, title }]  // páginas cuyo createdAt cae en esa fecha local
 }

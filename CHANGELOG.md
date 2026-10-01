@@ -2,6 +2,19 @@
 
 Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantiene. El porqué de cada decisión está en `DECISIONS.md` (Dn); lo que falta, en `ROADMAP.md`. Cada entrega que toca archivos de la app sube `CACHE_VERSION` en `sw.js` para que las PWA instaladas se actualicen.
 
+## 2026-10-01 · El mes muestra todo, todo se anima (cache `v8`)
+
+**Para quien lo usa**
+- En el mes (pantallas anchas) cada día muestra **qué hay**, en hilitos del color de su marcador: lo de la Agenda en rosa, las rutinas en salvia, las páginas en lavanda. De hoy en adelante lo que falta; para atrás, lo que hiciste.
+- **Animaciones**: cambiar de mes desliza la hoja hacia ese lado; pasar de mes a semana la acomoda; pasar de un marcador a otro sube la hoja; tocar un día la hunde apenas.
+- Todas las personas empiezan con animaciones **Completas** (si antes nunca habías elegido, ahora también). Se puede bajar en Ajustes → Cómo se mueve; si ya habías elegido “Ninguna”, queda así.
+
+**Para quien lo mantiene** (decisión **D23**)
+- `summarize` suma `items` por día; `calendar.js` dibuja `.day-cell__lines`.
+- `app.js`: `renderBase` arma el calendario nuevo aparte y lo muestra con `animateBase`; `shownBase` = lo que está en pantalla.
+- Settings: `motion: 'completas'` + `motionChosen`.
+- Tests: 47 unit y 20 E2E (el de motion ahora verifica “Completas” para todas las personas y que bajarlo en Ajustes queda guardado).
+
 ## 2026-10-01 · Vuelven los marcadores; la Agenda (cache `v7`)
 
 **Para quien lo usa**

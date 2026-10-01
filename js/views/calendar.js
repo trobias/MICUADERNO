@@ -94,7 +94,14 @@
           if (planned) parts.push(planned === 1 ? 'una cosa planeada' : planned + ' cosas planeadas');
           if (info && info.wrote) parts.push('escribiste');
           if (info && info.memory) parts.push('guardaste un recuerdo');
-          if (pages.length) parts.push(pages.length === 1 ? 'empezaste una página' : 'empezaste ' + pages.length + ' páginas');
+          if (pages.length) parts.push((pages.length === 1 ? 'una página: ' : pages.length + ' páginas: ') + pages.map(function (pg) { return '«' + M.pageTitle(pg) + '»'; }).join(', '));
+          // Lo que se lee en la celda: hilitos del color de su marcador (Agenda rubor, Rutinas salvia, Páginas lavanda).
+          // De hoy en adelante, lo que falta; para atrás, solo lo hecho (D18).
+          var shown = info ? info.items.filter(function (it) { return ahead ? it.status === 'pending' : M.countsAsDone(it.status); }) : [];
+          shown.sort(function (a, b) { return (a.kind === 'own' ? 0 : 1) - (b.kind === 'own' ? 0 : 1); });
+          if (shown.length) parts.push((ahead ? 'para hacer: ' : 'hiciste: ') + shown.slice(0, 4).map(function (it) { return it.title; }).join(', ') + (shown.length > 4 ? ' y más' : ''));
+          var lineItems = shown.map(function (it) { return { kind: it.kind, title: it.title }; })
+            .concat(pages.map(function (pg) { return { kind: 'page', title: M.pageTitle(pg) }; }));
           // Con una rutina elegida: lo que ya se hizo, y de hoy en adelante los días que toca (nunca lo que no se hizo, D18).
           var rStatus = routine && info ? info.byRoutine[routine.id] : null;
           var rMark = !rStatus ? null : M.countsAsDone(rStatus) ? 'done' : ahead ? 'due' : null;
@@ -108,6 +115,9 @@
           },
             h('span.day-cell__num', String(D.parse(key).d)),
             info && info.mood ? h('span.day-cell__patch', { html: MC.stickers.miniPatchMarkup(info.mood) }) : null,
+            lineItems.length ? h('span.day-cell__lines', { 'aria-hidden': 'true' },
+              lineItems.slice(0, 3).map(function (l) { return h('span.cell-line', { dataset: { kind: l.kind } }, l.title); }),
+              lineItems.length > 3 ? h('span.cell-line.cell-line--more', '+' + (lineItems.length - 3) + ' más') : null) : null,
             h('span.day-cell__marks',
               info && info.wrote ? h('span.mark-ink', { title: 'escribiste' }) : null,
               info && info.memory ? h('span.mark-star', { html: '<svg viewBox="0 0 24 24"><use href="#i-star"/></svg>' }) : null,
@@ -159,7 +169,10 @@
       h('li', h('span.mark-star', { html: '<svg viewBox="0 0 24 24"><use href="#i-star"/></svg>' }), 'recuerdo'),
       h('li', h('span.mark-x', '×'), 'hecho'),
       h('li', h('span.mark-plan', MC.icon('box')), 'planeado (con rutinas)'),
-      h('li', h('span.mark-page', MC.icon('paginas')), 'página empezada'),
+      h('li', h('span.mark-page', MC.icon('paginas')), 'página'),
+      h('li.legend-line', h('span.cell-line', { dataset: { kind: 'own' } }), 'agenda'),
+      h('li.legend-line', h('span.cell-line', { dataset: { kind: 'routine' } }), 'rutina'),
+      h('li.legend-line', h('span.cell-line', { dataset: { kind: 'page' } }), 'página'),
       routine ? h('li', h('span.mark-routine', MC.icon('rutinas')), '«' + routine.title + '»') : null);
   }
 

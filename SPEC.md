@@ -144,9 +144,11 @@ El calendario es donde aparece **todo lo que tiene fecha**: ánimo, escritura, r
   - punto de tinta si escribió; estrellita si guardó un recuerdo;
   - **×n** cosas hechas (o a medias);
   - **hoy y días que vienen:** cajita vacía **□n** con lo que queda planeado, *contando las rutinas que tocan ese día* aunque todavía no se hayan marcado;
-  - **hoja chiquita** si ese día se empezó una página libre.
+  - **hoja chiquita** si ese día tiene una página libre;
+  - en pantallas anchas, además, **lo que hay ese día escrito en hilitos** del color de su marcador: *Agenda* (rosa), *Rutinas* (salvia), *Páginas* (lavanda); hasta 3 y “+N más”. De hoy en adelante, lo que falta; para atrás, solo lo hecho (D18, D23). En el celular quedan las marcas compactas.
   
   Los días pasados **no** muestran lo que quedó sin marcar (sin cuentas de “pendientes” para atrás: amable, ver D18). Cada marca tiene su texto en el `aria-label` del día (“una cosa planeada”, “empezaste una página”) y su lugar en la leyenda. Hoy con borde a lápiz; el último día abierto lleva una cinta-marcador. Tocar un día → su página en el cuadro desplegable.
+- **Animaciones** (con motion “Completas”/“Suaves”): cambiar de mes desliza la hoja hacia ese lado; pasar de mes a semana (o al revés) la acomoda con una escala apenas; el día nuevo se arma aparte y entra cuando está listo (sin parpadeo).
 - **Semana**: agenda de 7 días (desktop: lun-mié izquierda / jue-dom derecha). Cada día: ánimo, actividades (incluye rutinas futuras virtuales), primera línea escrita y enlaces a las páginas empezadas ese día. Tocar → abre el día.
 - **Mi año** sigue mostrando solo lo registrado: una rutina sin marcar no borda medio punto.
 - **Los días de una rutina** (desde Rutinas o *Lo que fui notando*): el mes marca con tinte de salvia + el ícono de rutinas los días que la tocan de hoy en adelante y los días pasados en que se hizo (también “un poquito”). Los días pasados en que no se hizo no se marcan. Arriba, un aviso con “Ver la rutina” y “Dejar de mostrar”.
@@ -183,7 +185,7 @@ El calendario es donde aparece **todo lo que tiene fecha**: ánimo, escritura, r
 
 ### 7.7 Ajustes
 - **Vos**: nombre, tapa, nombres de los 5 ánimos (editables), qué registrar.
-- **Cómo se mueve**: animaciones *Completas / Suaves / Reducidas / Ninguna* (default: *Suaves*, o *Reducidas* si el sistema pide reduced-motion); escenas ocasionales on/off; mostrar la tapa al abrir.
+- **Cómo se mueve**: animaciones *Completas / Suaves / Reducidas / Ninguna* (default para todas las personas: *Completas*, D23; si el sistema pide menos movimiento, Ajustes lo sugiere bajar; “Ninguna” elegida antes se respeta); escenas ocasionales on/off; mostrar la tapa al abrir.
 - **Recordatorios**: ver §14.
 - **Mis datos**: texto de privacidad; guardar copia; abrir/restaurar; exportar; imprimir; recordatorio de copia (cada 7/14/30 días/nunca); borrar todo (doble confirmación, escribiendo “borrar”).
 - **Instalar**: si el navegador lo permite, botón “Instalar en este dispositivo”.
@@ -338,4 +340,4 @@ skills/               colección de skills (no es parte de la app)
 3. Registrar ánimo + marcar una actividad al abrir: ≤ 3 interacciones.
 4. Export JSON → borrar todo → import → estado idéntico (test automatizado).
 5. Sin errores de consola en los recorridos E2E; contraste AA en texto; operable solo con teclado.
-6. Con `prefers-reduced-motion` o “Ninguna”: sin escenas ni desplazamientos.
+6. Con “Reducidas” o “Ninguna”: sin escenas ni desplazamientos (el default es “Completas”, D23).

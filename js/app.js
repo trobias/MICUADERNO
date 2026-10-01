@@ -76,19 +76,65 @@
     return 'cal:' + params.mode + ':' + (params.mode === 'semana' ? params.date : params.month + ':' + (params.routine || ''));
   }
 
-  /** Dibuja el calendario de fondo si cambió de mes/semana. Devuelve true si dibujó uno nuevo. */
+  var shownBase = null;     // el calendario que está en pantalla (puede ir un paso atrás de `base` mientras se dibuja el nuevo)
+
+  /** Pone en pantalla un calendario ya dibujado aparte. */
+  function showBase(entry, holder) {
+    var focused = main.contains(document.activeElement);
+    if (shownBase && shownBase !== entry) destroy(shownBase);
+    MC.clear(main);
+    while (holder.firstChild) main.appendChild(holder.firstChild);
+    shownBase = entry;
+    if (focused) focusMarkedDay();
+  }
+
+  /**
+   * Dibuja el calendario de fondo si cambió de mes/semana. Devuelve true si dibujó uno nuevo.
+   * El nuevo se arma aparte y entra con su animación cuando está listo (sin parpadeo, D23).
+   */
   function renderBase(params) {
     var key = baseKey(params);
     if (base && base.key === key) return false;
-    destroy(base);
-    MC.clear(main);
+    var prev = shownBase && shownBase.params ? shownBase : null;
     tabsEl.hidden = false;
     refreshSoon.cancel();
     baseDirty = false;
-    base = { key: key, params: params, day: D.today(), instance: MC.views.calendar.render(main, params) };
     if (params.mode === 'mes') MC.ui.set('calMonth', params.month);
     followYear(params);
+    if (!prev) {
+      // Primera vez (o se viene de la bienvenida): directo, sin animación.
+      if (shownBase) destroy(shownBase);
+      MC.clear(main);
+      base = shownBase = { key: key, params: params, day: D.today(), instance: MC.views.calendar.render(main, params) };
+      return true;
+    }
+    var holder = document.createElement('div');
+    var entry = { key: key, params: params, day: D.today(), instance: null };
+    entry.instance = MC.views.calendar.render(holder, params);
+    base = entry;
+    Promise.resolve(entry.instance && entry.instance.ready).then(function () {
+      if (base !== entry) { destroy(entry); return; } // mientras tanto se fue a otro lado
+      showBase(entry, holder);
+      if (!panelEl.open) animateBase(prev.params, params);
+    }).catch(function (err) { console.error(err); });
     return true;
+  }
+
+  /** Cambiar de mes desliza la hoja hacia ese lado; pasar de mes a semana (o al revés) la acomoda con una escala. */
+  function animateBase(from, to) {
+    var el = main.firstElementChild;
+    if (!el || !el.animate || !MC.motion.allows('fade')) return;
+    var move = MC.motion.allows('move');
+    var start;
+    if (from.mode !== to.mode) start = move ? 'scale(0.97)' : 'none';
+    else {
+      var a = from.mode === 'mes' ? from.month : from.date;
+      var b = to.mode === 'mes' ? to.month : to.date;
+      var dir = b > a ? 1 : b < a ? -1 : 0;
+      start = move && dir ? 'translateX(' + (28 * dir) + 'px)' : 'none';
+    }
+    el.animate([{ opacity: 0, transform: start }, { opacity: 1, transform: 'none' }],
+      { duration: Math.min(300, MC.motion.duration('page') || 300), easing: 'cubic-bezier(0.23, 1, 0.32, 1)' });
   }
 
   /* ---------- Calendario en vivo (DECISIONS D21) ----------
@@ -120,6 +166,7 @@
       while (holder.firstChild) main.appendChild(holder.firstChild);
       entry.instance = inst;
       entry.day = D.today();
+      shownBase = entry;
       if (!focused) return;
       // Si la persona estaba recorriendo el mes con el teclado, sigue en el mismo día.
       var again = focusDate && main.querySelector('.day-cell[data-date="' + focusDate + '"]');
@@ -153,9 +200,10 @@
   function renderOnboarding() {
     closePanel();
     destroy(base);
+    if (shownBase && shownBase !== base) destroy(shownBase);
     MC.clear(main);
     tabsEl.hidden = true;
-    base = { key: 'onboarding', params: null, instance: MC.views.onboarding.render(main, {}) };
+    base = shownBase = { key: 'onboarding', params: null, instance: MC.views.onboarding.render(main, {}) };
   }
 
   /* ---------- Cuadro desplegable ---------- */
