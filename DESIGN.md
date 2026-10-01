@@ -167,12 +167,12 @@ Un solo sistema, `js/ui/icons.js` (sprite SVG): 24×24, trazo 1.75px, `stroke-li
 
 ## 10. Layout y responsive
 
-- **Pantalla principal (todas las medidas):** nombre del cuaderno + cinco botoncitos arriba; debajo, la hoja ancha del calendario (máx. 1040px) con la tira de meses.
+- **Pantalla principal (todas las medidas):** la hoja ancha del calendario (máx. 1040px) con la tira de meses y, a su derecha, los marcadores de tela (D22). Sin encabezado aparte.
 - **Cuadros, ≥ 1100px — doble página:** dos hojas de ~560px con lomo central (sombra interior + costura).
 - **Cuadros, 700–1099px — una hoja:** máx. 780px.
-- **< 700px:** los cinco botoncitos en una fila (ícono + etiqueta chica, 54px de alto); la tira de meses en dos filas de seis; el calendario entra entero en la pantalla. Los cuadros ocupan toda la pantalla.
+- **< 700px:** los marcadores bajan a una barra fija inferior (5 con ícono + etiqueta chica, 58px de alto, y el carretel de Ajustes solo con ícono); la tira de meses en dos filas de seis; el calendario entra entero; en las celdas no hay hilitos, solo marcas. Los cuadros ocupan toda la pantalla y llevan la misma barra abajo.
 - Qué va en cada hoja del cuadro (desktop): Hoy → izq. encabezado + ánimo inicial + intención + lista; der. notas + energía/sueño + cierre. Semana → lun–mié / jue–dom. Año → bastidor / notas.
-- Teclado móvil: el campo activo se desplaza a la vista (`scrollIntoView({block:'center'})`); nada fijo tapa inputs (la barra de pestañas se oculta con el teclado abierto vía `visualViewport`).
+- Teclado móvil: el campo activo se desplaza a la vista (`scrollIntoView({block:'center'})`); la barra de marcadores de abajo **todavía no** se oculta con el teclado abierto (estaba en el diseño viejo; hoy pendiente: BACKLOG T6).
 
 ## 11. Accesibilidad
 
@@ -184,7 +184,7 @@ Un solo sistema, `js/ui/icons.js` (sprite SVG): 24×24, trazo 1.75px, `stroke-li
 - Decoración (`.deco`, stickers de la tapa, escenas) con `aria-hidden="true"`.
 - `aria-live="polite"` para “guardado” y avisos.
 - Idioma `es-AR`.
-- Al cerrar un cuadro el foco vuelve a donde estaba: al botoncito que lo abrió o, si se abrió desde un día, al último día abierto (aunque el calendario se haya redibujado mientras tanto).
+- Al cerrar un cuadro el foco vuelve a donde estaba: al marcador que lo abrió o, si se abrió desde un día, al último día abierto (aunque el calendario se haya redibujado mientras tanto).
 
 ## 12. Motion
 
@@ -197,7 +197,7 @@ Tokens: `--ease-out: cubic-bezier(0.23, 1, 0.32, 1)` · `--ease-in-out: cubic-be
 | Marcar casilla | decenas/día | bordado de la ✕ en 2×140ms; nada más se mueve |
 | Tocar parche | 2/día | parche se “cose”: escala 0.94→1 + rotación a su ángulo, 200ms |
 | Cambiar de día (flechas) | varias/día | hoja se desliza 12px + fade, 260ms (View Transitions si hay, fallback WAAPI) |
-| Cambiar de pestaña | varias/día | crossfade 200ms; la pestaña avanza 6px |
+| Abrir un marcador | varias/día | el marcador sale de atrás de la hoja (−8px → +4px) y el cuadro se despliega desde ese lado (18px; abajo en el celular) |
 | Soltar sticker | ocasional | asentamiento: escala 1.06→1 y rotación ±2°, 260ms |
 | Seleccionar día (calendario) | ocasional | la cinta baja 16px → 0, 260ms |
 | Cambiar de mes | varias/sesión | la hoja nueva entra 28px desde ese lado + fundido, ≤300ms (armada aparte, sin parpadeo) |

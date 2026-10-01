@@ -1,6 +1,6 @@
 # AGENTS.md — MI CUADERNO
 
-Leé esto primero. Después `SPEC.md` (qué hace), `DESIGN.md` (cómo se ve y se mueve) y `DATA_MODEL.md` (qué se guarda). Hacia dónde va: `VISION.md` (la experiencia que se busca, **referencia, no implementación literal**). Lo que falta: `ROADMAP.md` (fases) y `BACKLOG.md` (cada idea con su estado). Recién ahí abrí el código relevante.
+Leé esto primero. Si venís sin contexto de conversaciones anteriores, seguí con **`HANDOFF.md`** (cómo trabaja la dueña, historia de pedidos, estado, preguntas abiertas, cómo retomar). Después `SPEC.md` (qué hace), `DESIGN.md` (cómo se ve y se mueve) y `DATA_MODEL.md` (qué se guarda). Hacia dónde va: `VISION.md` (la experiencia que se busca, **referencia, no implementación literal**). Lo que falta: `ROADMAP.md` (fases) y `BACKLOG.md` (cada idea con su estado). Recién ahí abrí el código relevante.
 
 ## Qué es
 
@@ -77,6 +77,7 @@ tests/unit/             node:test sobre js/core
 tests/e2e/              Playwright
 tools/                  serve.mjs, make-icons.mjs, build-fonts.mjs, dist.mjs, check.mjs, shot.mjs (captura para QA)
 CHANGELOG.md            qué cambió en cada entrega (actualizarlo al commitear algo visible)
+HANDOFF.md              traspaso: cómo trabaja la dueña, historia, estado, preguntas abiertas
 VISION.md               visión de memoria/scrapbook/privacidad (referencia, con numeración del pedido)
 ROADMAP.md              fases y verificación pendiente
 BACKLOG.md              cada idea pendiente con estado NOW/NEXT/LATER/NEEDS DESIGN/…

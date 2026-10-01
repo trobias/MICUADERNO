@@ -2,7 +2,7 @@
 
 *un lugarcito para mí ♡*
 
-Un diario personal con forma de cuaderno de tela bordado: cómo arrancó y cómo terminó cada día, lo que querías hacer (con estados amables: *lo hice · hice un poquito · lo dejo para otro día · hoy no salió*), rutinas que aparecen solas, páginas libres con stickers, calendario, un año bordado en punto cruz y recuerdos.
+Un diario personal con forma de cuaderno de tela bordado: cómo arrancó y cómo terminó cada día, lo que querías hacer (con estados amables: *lo hice · hice un poquito · lo dejo para otro día · hoy no salió*), rutinas que aparecen solas, una agenda para poner cosas en cualquier día, páginas libres, stickers propios y dibujos, adjuntos, un calendario donde se ve todo, un año bordado en punto cruz y recuerdos.
 
 **Todo queda en este dispositivo.** No hay cuenta, ni servidor, ni nube, ni estadísticas de uso.
 
@@ -22,12 +22,12 @@ Un diario personal con forma de cuaderno de tela bordado: cómo arrancó y cómo
 
 ## Para quien desarrolla
 
-Leé primero [`AGENTS.md`](AGENTS.md), después [`SPEC.md`](SPEC.md), [`DESIGN.md`](DESIGN.md) y [`DATA_MODEL.md`](DATA_MODEL.md). Decisiones en [`DECISIONS.md`](DECISIONS.md). Hacia dónde va, en [`VISION.md`](VISION.md); lo que falta, en [`ROADMAP.md`](ROADMAP.md) (fases) y [`BACKLOG.md`](BACKLOG.md) (cada idea con su estado).
+Leé primero [`AGENTS.md`](AGENTS.md) y [`HANDOFF.md`](HANDOFF.md) (traspaso para retomar sin contexto), después [`SPEC.md`](SPEC.md), [`DESIGN.md`](DESIGN.md) y [`DATA_MODEL.md`](DATA_MODEL.md). Decisiones en [`DECISIONS.md`](DECISIONS.md). Hacia dónde va, en [`VISION.md`](VISION.md); lo que falta, en [`ROADMAP.md`](ROADMAP.md) (fases) y [`BACKLOG.md`](BACKLOG.md) (cada idea con su estado).
 
 ```
 npm test          # pruebas unitarias (sin dependencias)
 npm install       # solo para e2e e íconos (playwright-core)
-npm run e2e       # 13 recorridos reales en Chromium (file:// y http://)
+npm run e2e       # 21 recorridos reales en Chromium (file:// y http://)
 npm run check     # sintaxis + unit + e2e
 npm run serve     # http://localhost:4173 para probar la PWA
 npm run dist      # arma dist/MI-CUADERNO/ + .zip para regalar

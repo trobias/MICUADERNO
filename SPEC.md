@@ -49,7 +49,7 @@ Pedido de la dueña del proyecto (DECISIONS D17): **sin secciones separadas**. T
 
 - **Centro: el calendario del mes**, con la **tira de los 12 meses** (y flechas de año) para saltar de mes con un toque. Interruptor chico *Mes / Semana*.
 - **Marcadores de tela al costado del cuaderno** (como las pestañas de antes; en el celular, abajo): *Hoy · Agenda · Rutinas · Páginas · Mi año* y, separado, *Ajustes* (en el celular, solo el carretel). Cada uno abre un **cuadro desplegable** encima del calendario (un `<dialog>`), sin salir de la pantalla. Con un cuadro abierto los marcadores se mudan a su costado: se pasa de uno a otro sin cerrar (DECISIONS D22). Todos giran en torno a **poner cosas en el calendario**.
-- **Tocar un día** del calendario abre la página de ese día en el cuadro. Al cerrarlo (botón “Volver al calendario”, `Esc`, tocar afuera o *atrás* del navegador) se vuelve al calendario. El calendario de atrás **se actualiza solo** mientras el cuadro está abierto y cuando otra pestaña cambia algo, sin parpadeo y sin tocar lo que se está escribiendo (DECISIONS D21). Al volver, la cinta y el foco quedan en el último día abierto; si el cuadro se abrió con un botoncito, el foco vuelve a ese botoncito.
+- **Tocar un día** del calendario abre la página de ese día en el cuadro. Al cerrarlo (botón “Volver al calendario”, `Esc`, tocar afuera o *atrás* del navegador) se vuelve al calendario. El calendario de atrás **se actualiza solo** mientras el cuadro está abierto y cuando otra pestaña cambia algo, sin parpadeo y sin tocar lo que se está escribiendo (DECISIONS D21). Al volver, la cinta y el foco quedan en el último día abierto; si el cuadro se abrió con un marcador, el foco vuelve a ese marcador.
 
 | Ruta | Qué muestra |
 |---|---|
@@ -70,7 +70,7 @@ Todo lo que tiene fecha lleva a su día, y cada día lleva a sus cosas (DECISION
 | Desde | Lleva a |
 |---|---|
 | Calendario: un día | la página de ese día |
-| Calendario: el año de la tira (“2026”) | *Mi año* de ese año; además el botoncito *Mi año* abre el año que se está mirando |
+| Calendario: el año de la tira (“2026”) | *Mi año* de ese año; además el marcador *Mi año* abre el año que se está mirando |
 | Página del día: “Ver la rutina” (menú de una actividad de rutina) | el cuadro de rutinas con esa rutina resaltada y con el foco |
 | Página del día: “viene del 30 sep” | el día de donde se pasó esa actividad |
 | Página del día: *Páginas de este día* | cada página empezada ese día |
@@ -95,7 +95,7 @@ Todo lo que tiene fecha lleva a su día, y cada día lleva a sus cosas (DECISION
 4. “Abrir mi cuaderno” → **Hoy**, con foco visual en “¿Cómo arrancaste hoy?”.
 
 ### 6.2 Uso diario
-Abrir → (tapa breve o directo, según ajuste) → calendario → botoncito **Hoy** (o tocar el día) → sello de ánimo → ver actividades del día (propias + rutinas) → marcar estados → escribir → más tarde “¿Cómo terminó tu día?” + reflexiones.
+Abrir → (tapa breve o directo, según ajuste) → calendario → marcador **Hoy** (o tocar el día) → sello de ánimo → ver actividades del día (propias + rutinas) → marcar estados → escribir → más tarde “¿Cómo terminó tu día?” + reflexiones.
 
 ### 6.3 Revisión
 Calendario → tocar un mes en la tira → tocar un día → se abre su página en el cuadro (editable, pasada o futura) → cerrar y seguir mirando.

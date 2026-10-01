@@ -31,7 +31,8 @@
   cover: 'salvia',                // 'salvia' | 'rosa' | 'lavanda' | 'manteca'
   moodLabels: ['pesado','bajito','normal','bien','muy bien'],
   track: { morning: true, evening: true, activities: true, reflection: true, energy: false, sleep: false },
-  motion: 'suaves',               // 'completas' | 'suaves' | 'reducidas' | 'ninguna'
+  motion: 'completas',            // 'completas' | 'suaves' | 'reducidas' | 'ninguna' (default Completas para todas las personas, D23)
+  motionChosen: false,            // true si la persona eligió el nivel en Ajustes (si no, se usa el default; “ninguna” siempre se respeta)
   scenes: true,                   // escenas ocasionales
   showCover: true,                // mostrar la tapa al abrir
   onboarded: false,

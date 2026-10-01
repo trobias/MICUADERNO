@@ -2,6 +2,13 @@
 
 Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantiene. El porqué de cada decisión está en `DECISIONS.md` (Dn); lo que falta, en `ROADMAP.md`. Cada entrega que toca archivos de la app sube `CACHE_VERSION` en `sw.js` para que las PWA instaladas se actualicen.
 
+## 2026-10-01 · Traspaso para retomar sin contexto (sin cambios en la app)
+
+**Para quien mantiene el cuaderno**
+- `HANDOFF.md` nuevo: cómo trabaja la dueña (idioma, git, a `main` solo con su ok, nombre de ejemplo Nicole), la historia de pedidos y decisiones en orden, el estado, las preguntas abiertas que esperan su respuesta, cómo retomar paso a paso y trucos de QA.
+- Docs al día con los marcadores (D22): DESIGN §10 y §11, SPEC (journeys), README (21 recorridos y qué hace la app), DATA_MODEL (`motion: 'completas'` + `motionChosen`), DESIGN §12 (motion del marcador).
+- BACKLOG T6 (NOW): la barra de marcadores del celular no se oculta con el teclado abierto (se había perdido con D22).
+
 ## 2026-10-01 · La visión, documentada (sin cambios en la app)
 
 **Para quien mantiene el cuaderno**
