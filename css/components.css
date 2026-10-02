@@ -79,15 +79,49 @@
 }
 
 /* ---------- Guardado ---------- */
+/* “guardando… → guardado ✓” (DA3): solo opacidad; el texto cambia sin fundido entre estados visibles. */
 .saved-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   font-family: var(--font-hand);
   font-size: 1.45rem;
-  color: var(--thread-done-text);
+  line-height: 1.1;
+  color: var(--ink-soft);
   opacity: 0;
-  transition: opacity var(--dur-panel) var(--ease-out);
+  transition: opacity var(--dur-ui) var(--ease-out);
   white-space: nowrap;
 }
-.saved-note.is-visible { opacity: 1; }
+.saved-note[data-state='saving'], .saved-note[data-state='saved'], .saved-note[data-state='failed'] { opacity: 1; }
+.saved-note[data-state='saved'] { color: var(--thread-done-text); }
+.saved-note__face { display: inline-flex; align-items: center; gap: 4px; }
+.saved-note__glyph:empty { display: none; }
+.saved-note__glyph svg { width: 16px; height: 16px; stroke-width: 2.25; }
+/* El aviso de fallo es más largo: baja a su propio renglón para no apretar el saludo ni el título. */
+.saved-note[data-state='failed'] {
+  flex: 1 1 100%;
+  order: 1;
+  justify-content: flex-start;
+  font-family: var(--font-ui);
+  font-size: var(--fs-xs);
+  line-height: 1.4;
+  white-space: normal;
+  text-align: start;
+}
+:is(.day-head__top, .free-head, .saved-row, .sticker-tools):has(> .saved-note[data-state='failed']) { flex-wrap: wrap; }
+/* En una página el indicador vive junto al menú: con el aviso, la cabecera entera le deja un renglón. */
+.free-head:has(> .free-head__right > .saved-note[data-state='failed']) { flex-wrap: wrap; }
+.free-head__right:has(> .saved-note[data-state='failed']) { display: contents; }
+.saved-note[data-state='failed'] .saved-note__face { flex-basis: 100%; align-items: flex-start; }
+.saved-note[data-state='failed'] .saved-note__text { max-width: 52ch; }
+.saved-note[data-state='failed'] .saved-note__glyph svg { width: 14px; height: 14px; stroke-width: 1.75; margin-top: 2px; }
+.saved-note__action { padding: 2px 4px; font-size: var(--fs-xs); }
+.saved-note__action svg { width: 14px; height: 14px; }
+.saved-note--twin { margin-inline-start: auto; }
+[data-motion='reducidas'] .saved-note { transition: none; }
+.saved-row { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-3); }
 
 /* ---------- Parches de ánimo ---------- */
 .moods { display: flex; flex-wrap: wrap; gap: 6px 4px; }

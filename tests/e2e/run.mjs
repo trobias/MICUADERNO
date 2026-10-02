@@ -227,6 +227,79 @@ await test('páginas: plantilla, escribir, sticker, persistir', async () => {
   await context.close();
 });
 
+await test('guardado visible (DA3): “guardando…” → “guardado” en el día y en una página, persiste al recargar, fallo amable', async () => {
+  const { page, errors, context } = await newPage(browser);
+  await page.goto(FILE_URL);
+  await onboard(page);
+  // Anota cada estado del indicador para ver el orden real (y qué se anuncia a lectores de pantalla).
+  const watch = (sel) => page.evaluate((s) => {
+    const note = document.querySelector(s);
+    window.__states = [note.dataset.state];
+    window.__said = [];
+    const live = note.querySelector('[aria-live]');
+    new MutationObserver(() => window.__states.push(note.dataset.state + ':' + note.querySelector('.saved-note__text').textContent)).observe(note, { attributes: true, attributeFilter: ['data-state'] });
+    new MutationObserver(() => window.__said.push(live.textContent)).observe(live, { childList: true, characterData: true, subtree: true });
+  }, sel);
+  const states = () => page.evaluate(() => window.__states);
+
+  // Día
+  await watch('.day-head .saved-note');
+  assert.equal(await page.getAttribute('.day-head .saved-note', 'data-state'), 'idle');
+  await page.fill('#notes', 'Hoy Nicole escribió algo lindo.');
+  assert.equal(await page.getAttribute('.day-head .saved-note', 'data-state'), 'saving', 'apenas se escribe: guardando…');
+  assert.equal((await page.textContent('.day-head .saved-note__text')).trim(), 'guardando…');
+  await page.waitForFunction(() => document.querySelector('.day-head .saved-note').dataset.state === 'saved', null, { timeout: 3000 });
+  assert.match(await page.textContent('.day-head .saved-note__text'), /^guardado$/);
+  assert.equal(await page.locator('.day-head .saved-note .saved-note__glyph .icon-check').count(), 1, 'guardado lleva su tilde');
+  const stored = await page.evaluate((d) => MC.model.getDay(d).then((x) => x.notes), TODAY);
+  assert.equal(stored, 'Hoy Nicole escribió algo lindo.', '“guardado” recién cuando IndexedDB tiene el texto');
+  await page.waitForFunction(() => document.querySelector('.day-head .saved-note').dataset.state === 'idle', null, { timeout: 3000 });
+  const daySeq = (await states()).map((s) => s.split(':')[0]);
+  assert.deepEqual(daySeq.slice(0, 4), ['idle', 'saving', 'saved', 'idle'], JSON.stringify(daySeq));
+  const said = await page.evaluate(() => window.__said);
+  assert.ok(said.length >= 1 && said.every((t) => !/guardando/i.test(t)), 'solo se anuncia “guardado”, nunca “guardando…”: ' + JSON.stringify(said));
+
+  // Si la escritura falla: aviso amable con glifo, el borrador queda, y vuelve a “guardado” cuando se puede.
+  await page.evaluate(() => { window.__put = MC.store.put; MC.store.put = () => Promise.reject(new Error('cuota llena')); });
+  await page.fill('#notes', 'Hoy Nicole escribió algo lindo. Y algo más.');
+  await page.waitForFunction(() => document.querySelector('.day-head .saved-note').dataset.state === 'failed', null, { timeout: 3000 });
+  assert.match(await page.textContent('.day-head .saved-note__text'), /todavía no se pudo guardar en el cuaderno; queda como borrador/i);
+  assert.equal(await page.locator('.day-head .saved-note .saved-note__glyph svg').count(), 1, 'el fallo lleva glifo, no solo color');
+  assert.equal(await page.locator('.day-head .saved-note__action').isVisible(), true, 'ofrece descargar una copia');
+  assert.ok(await page.evaluate((d) => !!(JSON.parse(localStorage.getItem('mc.ui.draft.' + d)) || {}).day, TODAY), 'el borrador local sigue ahí');
+  await page.evaluate(() => { MC.store.put = window.__put; });
+  await page.type('#notes', '!');
+  await page.waitForFunction(() => document.querySelector('.day-head .saved-note').dataset.state === 'saved', null, { timeout: 3000 });
+  assert.equal(await page.locator('.day-head .saved-note__action').isVisible(), false);
+
+  // Página
+  await goto(page, '#/paginas');
+  await page.click('button:has-text("Nueva página")');
+  await page.click('.template:has-text("Vaciar la cabeza")');
+  await page.waitForSelector('#page-body');
+  await watch('.free-head .saved-note');
+  await page.fill('#page-body', 'Ideas sueltas de Nicole.');
+  assert.equal(await page.getAttribute('.free-head .saved-note', 'data-state'), 'saving');
+  assert.equal((await page.textContent('.free-head .saved-note__text')).trim(), 'guardando…');
+  await page.waitForFunction(() => document.querySelector('.free-head .saved-note').dataset.state === 'saved', null, { timeout: 3000 });
+  assert.match(await page.textContent('.free-head .saved-note__text'), /^guardado$/);
+  const pageSeq = (await states()).map((s) => s.split(':')[0]);
+  assert.deepEqual(pageSeq.slice(0, 3), ['idle', 'saving', 'saved'], JSON.stringify(pageSeq));
+
+  // Recargar: los dos textos siguen ahí.
+  const pageUrl = page.url();
+  await page.reload();
+  await openCover(page);
+  await page.waitForSelector('#page-body');
+  assert.equal(page.url(), pageUrl);
+  assert.equal(await page.inputValue('#page-body'), 'Ideas sueltas de Nicole.');
+  await goto(page, '#/hoy');
+  await page.waitForSelector('#notes');
+  assert.equal(await page.inputValue('#notes'), 'Hoy Nicole escribió algo lindo. Y algo más.!');
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
 await test('calendario, semana y año muestran lo registrado; teclado en el mes', async () => {
   const { page, errors, context } = await newPage(browser);
   await page.goto(FILE_URL);

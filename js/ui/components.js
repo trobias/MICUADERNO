@@ -243,15 +243,99 @@
     function hide() { toastEl.hidden = true; }
   };
 
-  /* ---------- “guardado ♡” ---------- */
-  c.savedNote = function () {
-    var el = h('span.saved-note', { 'aria-live': 'polite' });
-    var t = null;
-    el.flash = function () {
-      el.textContent = 'guardado';
-      el.classList.add('is-visible');
-      clearTimeout(t);
-      t = setTimeout(function () { el.classList.remove('is-visible'); }, 1600);
+  /* ---------- “guardando… → guardado ✓” (DA3, SPEC §7.13) ----------
+   * Misma pieza en el día, las páginas, el scrapbook y Ajustes:
+   *   note.saving()        hay un cambio en camino (silencioso para lectores de pantalla)
+   *   note.saved()         IndexedDB confirmó: “guardado ✓” ~1,5 s y vuelve a reposo
+   *   note.failed()        no se pudo (o la app está en modo memoria): aviso amable que se queda
+   *   note.track(p, isCurrent?)  saving() y, cuando la promesa se resuelve, saved() o failed()
+   *   note.flash()         = saved() (uso de antes)
+   *   note.twin()          copia visual (aria-hidden) para mostrar el estado en otra barra; twin.release() la suelta
+   * Solo se anuncian “guardado” (como mucho cada 15 s) y el fallo; “guardando…” nunca. */
+  var SAVED_MS = 1500, ANNOUNCE_GAP = 15000;
+  var FAIL_TEXT = 'Todavía no se pudo guardar en el cuaderno; queda como borrador en este dispositivo.';
+  /** ¿Lo guardado sobrevive a una recarga? No en modo memoria (IndexedDB no disponible). */
+  c.durable = function () { return !MC.store || MC.store.kind() !== 'memory'; };
+  c.savedNote = function (opts) {
+    opts = opts || {};
+    var failText = opts.failText || FAIL_TEXT;
+    function face() {
+      var text = h('span.saved-note__text');
+      var glyph = h('span.saved-note__glyph');
+      var f = h('span.saved-note__face', { 'aria-hidden': 'true' }, glyph, text);
+      f.paint = function (state) {
+        MC.clear(glyph);
+        var icon = state === 'saved' ? 'check' : state === 'failed' ? 'edit' : null;
+        if (icon) glyph.appendChild(MC.icon(icon));
+        text.textContent = state === 'saving' ? 'guardando…' : state === 'saved' ? 'guardado' : state === 'failed' ? failText : text.textContent;
+      };
+      return f;
+    }
+    var el = h('span.saved-note', { dataset: { state: 'idle' } });
+    var main = face();
+    var announcer = h('span.sr-only', { 'aria-live': 'polite' });
+    var action = null;
+    if (MC.backup && MC.backup.download) {
+      action = h('button.text-btn.saved-note__action', { type: 'button', hidden: true }, MC.icon('download'), 'Descargar una copia');
+      action.addEventListener('click', function () { MC.backup.download(); });
+    }
+    el.appendChild(main);
+    if (action) el.appendChild(action);
+    el.appendChild(announcer);
+
+    var twins = [];
+    var state = 'idle', timer = null, pending = 0, lastSavedSay = 0;
+
+    function set(next) {
+      if (next === state) return;
+      state = next;
+      [el].concat(twins).forEach(function (node) { node.dataset.state = next; });
+      if (next !== 'idle') [main].concat(twins.map(function (t) { return t.face; })).forEach(function (f) { f.paint(next); });
+      if (action) action.hidden = next !== 'failed';
+    }
+    function say(text) {
+      // Repetir el mismo texto no se vuelve a leer: se alterna un espacio duro al final.
+      announcer.textContent = announcer.textContent === text ? text + ' ' : text;
+    }
+
+    el.saving = function () {
+      clearTimeout(timer);
+      if (state !== 'failed') set('saving'); // con un aviso de fallo a la vista no se alterna (sin parpadeo)
+    };
+    el.saved = function () {
+      if (!c.durable()) { el.failed(); return; }
+      clearTimeout(timer);
+      var now = Date.now();
+      if (state === 'failed' || now - lastSavedSay > ANNOUNCE_GAP) { say('Guardado.'); lastSavedSay = now; }
+      set('saved');
+      timer = setTimeout(function () { if (state === 'saved') set('idle'); }, SAVED_MS);
+    };
+    el.failed = function () {
+      clearTimeout(timer);
+      if (state !== 'failed') say(failText);
+      set('failed');
+    };
+    el.flash = el.saved;
+    el.track = function (p, isCurrent) {
+      pending++;
+      el.saving();
+      p.then(function () {
+        pending--;
+        if (!pending && (!isCurrent || isCurrent())) el.saved();
+      }, function () {
+        pending--;
+        el.failed();
+      });
+      return p;
+    };
+    el.twin = function () {
+      var f = face();
+      var t = h('span.saved-note.saved-note--twin', { 'aria-hidden': 'true', dataset: { state: state } }, f);
+      t.face = f;
+      t.release = function () { twins = twins.filter(function (x) { return x !== t; }); };
+      if (state !== 'idle') f.paint(state);
+      twins.push(t);
+      return t;
     };
     return el;
   };

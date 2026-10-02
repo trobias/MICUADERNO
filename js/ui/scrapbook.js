@@ -63,7 +63,8 @@
   }
 
   /**
-   * attach(pageEl, { stickers, onChange(list), label })
+   * attach(pageEl, { stickers, onChange(list), label, note })
+   * `note` (opcional): el c.savedNote de la hoja; mientras se decora, su estado se ve también en la barra (DA3).
    * Devuelve { toolbar, destroy }.
    */
   function attach(pageEl, opts) {
@@ -74,6 +75,7 @@
     pageEl.appendChild(layer);
     var toolbar = h('div.sticker-tools.is-idle', { role: 'toolbar', 'aria-label': 'Decorar ' + (opts.label || 'la página') });
     var status = h('span.sr-only', { 'aria-live': 'polite' });
+    var noteTwin = opts.note && opts.note.twin ? opts.note.twin() : null;
 
     function save() { opts.onChange(list.map(function (s) { return Object.assign({}, s); })); }
 
@@ -272,6 +274,7 @@
       toolbar.appendChild(btn('grow', 'Más grande', function () { transform(function (s) { s.scale = MC.clamp(+(s.scale + 0.15).toFixed(2), 0.4, 3); }); }, none));
       toolbar.appendChild(btn('trash', 'Despegar', function () { if (selected) remove(selected); }, none));
       toolbar.appendChild(h('button.label-btn', { type: 'button', on: { click: function () { setDecorating(false); } } }, 'Listo'));
+      if (noteTwin) toolbar.appendChild(noteTwin);
       toolbar.appendChild(status);
     }
 
@@ -292,7 +295,7 @@
       draw: drawNew,
       /** Pegar una imagen propia (p. ej. un adjunto usado como sticker). */
       addImage: function (img) { if (!decorating) setDecorating(true); add('img:' + img.id); },
-      destroy: function () { saveSoon.flush(); layer.remove(); toolbar.remove(); pageEl.classList.remove('is-decorating'); }
+      destroy: function () { saveSoon.flush(); if (noteTwin) noteTwin.release(); layer.remove(); toolbar.remove(); pageEl.classList.remove('is-decorating'); }
     };
   }
 
