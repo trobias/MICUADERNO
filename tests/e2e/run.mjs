@@ -9,7 +9,7 @@ import { start as startServer } from '../../tools/serve.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const FILE_URL = pathToFileURL(path.join(root, 'index.html')).href;
-const PORT = 4199;
+const PORT = +(process.env.E2E_PORT || 4199); // otro puerto para correr en paralelo (p. ej. varios worktrees)
 const HTTP_URL = `http://127.0.0.1:${PORT}/index.html`;
 const executablePath = process.env.CHROMIUM || '/opt/pw-browsers/chromium';
 const TODAY = (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; })();

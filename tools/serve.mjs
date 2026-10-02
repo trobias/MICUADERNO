@@ -22,7 +22,7 @@ export function start(p = port) {
       res.end(data);
     });
   });
-  return new Promise((resolve) => server.listen(p, '127.0.0.1', () => resolve(server)));
+  return new Promise((resolve, reject) => { server.once('error', reject); server.listen(p, '127.0.0.1', () => resolve(server)); });
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
