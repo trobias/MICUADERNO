@@ -98,6 +98,159 @@
     });
   }
 
+  /* ---------- Medición de almacenamiento (DA4) ---------- */
+  var LARGE_THRESHOLD = 5 * 1024 * 1024; // 5 MB
+
+  function utf8Bytes(str) {
+    if (!str) return 0;
+    if (typeof TextEncoder !== 'undefined') return new TextEncoder().encode(str).length;
+    var b = 0;
+    for (var i = 0; i < str.length; i++) {
+      var ch = str.charCodeAt(i);
+      if (ch < 0x80) b += 1;
+      else if (ch < 0x800) b += 2;
+      else if (ch >= 0xd800 && ch <= 0xdbff) { b += 4; i++; }
+      else b += 3;
+    }
+    return b;
+  }
+
+  function itemBytes(item) {
+    if (item == null) return 0;
+    try {
+      return utf8Bytes(typeof item === 'string' ? item : JSON.stringify(item));
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  function formatSize(bytes) {
+    if (bytes == null || isNaN(bytes) || bytes <= 0) return '0 B';
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) {
+      var kb = bytes / 1024;
+      var strKb = (kb < 10 ? kb.toFixed(1) : Math.round(kb).toString()).replace('.0', '').replace('.', ',');
+      return strKb + ' KB';
+    }
+    var mb = bytes / (1024 * 1024);
+    var strMb = (mb < 100 ? mb.toFixed(1) : Math.round(mb).toString()).replace('.0', '').replace('.', ',');
+    return strMb + ' MB';
+  }
+
+  function measureStorage(all, estimate, options) {
+    options = options || {};
+    var largeThreshold = options.largeThreshold || LARGE_THRESHOLD;
+    all = all || {};
+
+    var days = all.days || [];
+    var activities = all.activities || [];
+    var routines = all.routines || [];
+    var pages = all.pages || [];
+    var images = all.images || [];
+    var files = all.files || [];
+
+    // Texto: meta, días, actividades, rutinas, páginas
+    var textoBytes = (all.meta && typeof all.meta === 'object' && Object.keys(all.meta).length) ? itemBytes(all.meta) : 0;
+    for (var i = 0; i < days.length; i++) textoBytes += itemBytes(days[i]);
+    for (var j = 0; j < activities.length; j++) textoBytes += itemBytes(activities[j]);
+    for (var k = 0; k < routines.length; k++) textoBytes += itemBytes(routines[k]);
+    for (var l = 0; l < pages.length; l++) textoBytes += itemBytes(pages[l]);
+
+    // Fotos vs Dibujos
+    var fotosBytes = 0;
+    var fotosCount = 0;
+    var dibujosBytes = 0;
+    var dibujosCount = 0;
+    for (var m = 0; m < images.length; m++) {
+      var img = images[m];
+      var sz = itemBytes(img);
+      if (img && img.kind === 'drawing') {
+        dibujosBytes += sz;
+        dibujosCount++;
+      } else {
+        fotosBytes += sz;
+        fotosCount++;
+      }
+    }
+
+    // Audio vs Otros (archivos adjuntos)
+    var audioBytes = 0;
+    var audioCount = 0;
+    var otrosBytes = 0;
+    var otrosCount = 0;
+    for (var n = 0; n < files.length; n++) {
+      var f = files[n];
+      var fSz = itemBytes(f);
+      var isAudio = f && ((typeof f.type === 'string' && f.type.toLowerCase().indexOf('audio/') === 0) || (typeof f.name === 'string' && /\.(mp3|m4a|wav|ogg|aac|flac)$/i.test(f.name)));
+      if (isAudio) {
+        audioBytes += fSz;
+        audioCount++;
+      } else {
+        otrosBytes += fSz;
+        otrosCount++;
+      }
+    }
+
+    var totalNotebookBytes = textoBytes + fotosBytes + audioBytes + dibujosBytes + otrosBytes;
+    var originUsage = (estimate && estimate.usage != null) ? estimate.usage : null;
+    var originQuota = (estimate && estimate.quota != null) ? estimate.quota : null;
+
+    var mediaBytes = fotosBytes + audioBytes + dibujosBytes + otrosBytes;
+    var isLarge = totalNotebookBytes >= largeThreshold || mediaBytes >= 4 * 1024 * 1024;
+
+    return {
+      total: totalNotebookBytes,
+      formattedTotal: formatSize(totalNotebookBytes),
+      breakdown: {
+        texto: {
+          bytes: textoBytes,
+          formatted: formatSize(textoBytes),
+          count: days.length + activities.length + routines.length + pages.length,
+          label: 'Texto'
+        },
+        fotos: {
+          bytes: fotosBytes,
+          formatted: formatSize(fotosBytes),
+          count: fotosCount,
+          label: 'Fotos'
+        },
+        audio: {
+          bytes: audioBytes,
+          formatted: formatSize(audioBytes),
+          count: audioCount,
+          label: 'Audio'
+        },
+        dibujos: {
+          bytes: dibujosBytes,
+          formatted: formatSize(dibujosBytes),
+          count: dibujosCount,
+          label: 'Dibujos'
+        },
+        otros: {
+          bytes: otrosBytes,
+          formatted: formatSize(otrosBytes),
+          count: otrosCount,
+          label: 'Otros'
+        }
+      },
+      counts: {
+        dias: days.length,
+        actividades: activities.length,
+        rutinas: routines.length,
+        paginas: pages.length,
+        fotos: fotosCount,
+        audio: audioCount,
+        dibujos: dibujosCount,
+        otros: otrosCount
+      },
+      isLarge: isLarge,
+      largeThreshold: largeThreshold,
+      originUsage: originUsage,
+      originQuota: originQuota,
+      formattedOriginUsage: originUsage != null ? formatSize(originUsage) : null
+    };
+  }
+
   function render(main) {
     var s = MC.clone(M.settings());
     var left = h('section.page.page--margin.settings-page');
@@ -175,6 +328,106 @@
     var lastBackup = h('p.t-meta');
     M.getMeta('lastBackupAt', null).then(function (v) { lastBackup.textContent = D.fromISO(v) ? 'Última copia: ' + D.longLabel(D.fromISO(v)) : 'Todavía no guardaste ninguna copia.'; });
 
+    // Bloque de cuánto ocupa mi cuaderno (DA4)
+    var storageBox = h('div.storage-info', { 'aria-live': 'polite' });
+    storageBox.appendChild(h('p.t-meta', 'Calculando cuánto ocupa tu cuaderno…'));
+
+    function renderStorageBreakdown(data) {
+      storageBox.innerHTML = '';
+
+      var totalText = h('p.t-text', { style: { margin: '0 0 var(--s-3)' } },
+        'Tu cuaderno ocupa aprox. ',
+        h('strong.num', data.formattedTotal),
+        ' en datos guardados.'
+      );
+
+      function detailText(cat) {
+        if (cat === 'texto') {
+          var parts = [];
+          if (data.counts.dias) parts.push(data.counts.dias + ' ' + (data.counts.dias === 1 ? 'día' : 'días'));
+          if (data.counts.paginas) parts.push(data.counts.paginas + ' ' + (data.counts.paginas === 1 ? 'página' : 'páginas'));
+          if (!parts.length) return 'días, páginas, rutinas';
+          return parts.join(', ');
+        }
+        if (cat === 'fotos') {
+          return data.counts.fotos === 0 ? 'ninguna' : (data.counts.fotos + ' ' + (data.counts.fotos === 1 ? 'foto' : 'fotos'));
+        }
+        if (cat === 'audio') {
+          return data.counts.audio === 0 ? 'ninguno' : (data.counts.audio + ' ' + (data.counts.audio === 1 ? 'audio' : 'audios'));
+        }
+        if (cat === 'dibujos') {
+          return data.counts.dibujos === 0 ? 'ninguno' : (data.counts.dibujos + ' ' + (data.counts.dibujos === 1 ? 'dibujo' : 'dibujos'));
+        }
+        if (cat === 'otros') {
+          return data.counts.otros === 0 ? 'ninguno' : (data.counts.otros + ' ' + (data.counts.otros === 1 ? 'adjunto' : 'adjuntos'));
+        }
+        return '';
+      }
+
+      function row(icon, label, catKey) {
+        var cat = data.breakdown[catKey];
+        var dt = detailText(catKey);
+        return h('li.storage-row', {
+          style: {
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '6px 0',
+            borderBottom: '1px dashed var(--rule)',
+            fontSize: 'var(--fs-sm, 0.9375rem)'
+          }
+        },
+          h('div', { style: { display: 'flex', alignItems: 'center', gap: '8px' } },
+            MC.icon(icon),
+            h('span', { style: { fontWeight: '500' } }, label),
+            dt ? h('span.t-meta', '(' + dt + ')') : null
+          ),
+          h('span.num', { style: { fontWeight: '600' } }, cat.formatted)
+        );
+      }
+
+      var list = h('ul.storage-list', { style: { listStyle: 'none', margin: '0 0 var(--s-3)', padding: 0 } },
+        row('text', 'Texto', 'texto'),
+        row('sticker', 'Fotos', 'fotos'),
+        row('play', 'Audio', 'audio'),
+        row('edit', 'Dibujos', 'dibujos'),
+        row('box', 'Otros', 'otros')
+      );
+
+      storageBox.appendChild(totalText);
+      storageBox.appendChild(list);
+
+      // Aviso sobre estimación del navegador vs datos del cuaderno
+      if (data.originUsage != null) {
+        var originNote = h('p.t-meta', { style: { margin: 'var(--s-2) 0' } },
+          'El navegador estima aprox. ' + data.formattedOriginUsage + ' para este sitio (incluyendo la aplicación y la memoria en caché).'
+        );
+        storageBox.appendChild(originNote);
+      }
+
+      // Aviso de copia grande si supera el umbral
+      if (data.isLarge) {
+        var largeSlip = h('div.slip.slip--butter', { style: { margin: 'var(--s-3) 0' } },
+          h('p', 'Tu cuaderno es grande y tiene páginas, imágenes o archivos: la copia de seguridad (.json) puede ser pesada y tardar un momento en descargarse ♡')
+        );
+        storageBox.appendChild(largeSlip);
+      }
+    }
+
+    var estimateP = (navigator.storage && navigator.storage.estimate)
+      ? navigator.storage.estimate().catch(function () { return null; })
+      : Promise.resolve(null);
+
+    Promise.all([M.everything(), estimateP]).then(function (res) {
+      var all = res[0];
+      var est = res[1];
+      var data = measureStorage(all, est);
+      renderStorageBreakdown(data);
+    }).catch(function (err) {
+      console.warn('[MI CUADERNO] No se pudo calcular el espacio:', err);
+      storageBox.textContent = 'Espacio: guardado localmente en este dispositivo.';
+    });
+
     function action(icon, label, fn, cls) {
       var b = h('button.' + (cls || 'label-btn.label-btn--soft'), { type: 'button' }, MC.icon(icon), label);
       b.addEventListener('click', fn);
@@ -183,6 +436,9 @@
 
     right.appendChild(c.section('Mis datos', [
       h('p.privacy.t-text', MC.icon('lock'), 'Tus páginas viven en este dispositivo. No se mandan a ningún lado. Por eso conviene hacer una copia de vez en cuando ♡'),
+      h('h3.subhead', 'Cuánto ocupa mi cuaderno'),
+      storageBox,
+      h('h3.subhead', 'Copia de seguridad'),
       h('div.data-actions',
         action('download', 'Guardar una copia (.json)', function () { MC.backup.download().then(function () { c.toast('Copia guardada en tus descargas.'); M.getMeta('lastBackupAt').then(function (v) { lastBackup.textContent = 'Última copia: ' + D.longLabel(D.fromDate(new Date(v))); }); }); }, 'label-btn'),
         h('label.label-btn.label-btn--soft', { for: 'st-restore', tabindex: '0', role: 'button', on: { keydown: function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); } } } }, MC.icon('upload'), 'Abrir una copia…'),
@@ -203,16 +459,19 @@
 
     var about = h('p.t-meta.about');
     about.textContent = 'MI CUADERNO ' + VERSION + ' · guardado en ' + (MC.store.kind() === 'indexeddb' ? 'este navegador' : 'memoria (temporal)');
-    if (navigator.storage && navigator.storage.estimate) {
-      navigator.storage.estimate().then(function (e) {
-        if (e && e.usage != null) about.textContent += ' · ocupa ' + (e.usage / 1024 / 1024).toFixed(1).replace('.', ',') + ' MB';
-      }).catch(function () {});
-    }
     right.appendChild(about);
 
     return { destroy: function () {} };
   }
 
   MC.views = MC.views || {};
-  MC.views.settings = { render: render, VERSION: VERSION, exportFile: exportFile };
-})(window);
+  MC.views.settings = {
+    render: render,
+    VERSION: VERSION,
+    exportFile: exportFile,
+    measureStorage: measureStorage,
+    formatSize: formatSize,
+    LARGE_THRESHOLD: LARGE_THRESHOLD
+  };
+  MC.measureStorage = measureStorage;
+})(typeof window !== 'undefined' ? window : globalThis);
