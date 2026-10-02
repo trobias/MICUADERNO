@@ -251,13 +251,13 @@ Un único contrato formal en `js/core/history.js` gestiona el historial de accio
 - **Accesibilidad:** el estado no depende solo del color: botones con glifos comprensibles de flecha curva, atributos `disabled` y `aria-disabled="true"`, opacidad diferenciada (50 % al estar inactivo) y etiquetas accesibles contextuales (`aria-label="Deshacer {label}"`).
 
 ### 7.13 Guardado visible y estados de persistencia (DA3)
-La tranquilidad de que nada se pierde se transmite con un componente unificado `c.savedNote(container)` (`js/ui/components.js`):
+La tranquilidad de que nada se pierde se transmite con un componente unificado `c.savedNote()` (`js/ui/components.js`):
 
 - **Ciclo de estados:**
   - `guardando…`: texto tenue en Castoro/Atkinson, tinta suave (`--ink-faint` / `--ink-soft`), anuncia que hay cambios en camino a IndexedDB.
   - `guardado ✓`: confirmación en acento salvia (`--thread-done-text`) con tilde de bordado o corazón ♡. Se mantiene visible por ~1.5 segundos.
   - `reposo`: transición suave de desvanecimiento hacia un estado invisible sin ocupar espacio visual innecesario.
-  - `fallo`: si IndexedDB rechaza la escritura o la cuota se agota, el indicador se transforma en un aviso amable: *“No pude guardar en este dispositivo; sigue como borrador en esta pestaña. Podés descargar una copia para resguardar tus datos ♡”*, acompañado de un botón directo de descarga.
+  - `fallo`: si IndexedDB rechaza la escritura o la cuota se agota, el indicador se transforma en un aviso amable: *“Todavía no se pudo guardar en el cuaderno; queda como borrador en este dispositivo.”*, acompañado de un botón directo para descargar una copia. En Ajustes, donde el cambio solo vive en la ventana si falla, el texto aclara esa condición.
 - **Misma pieza en todas las superficies:** se reutiliza idéntica lógica y diseño en la página del día (`today.js`), en páginas libres (`pages.js`), en el scrapbook (`scrapbook.js`) y en Ajustes (`settings.js`).
 - **Sin toasts repetitivos:** las microescrituras y ediciones continuas no generan carteles flotantes ni interrupciones visuales.
 - **Respeto de motion:** transiciones de opacidad gobernadas por `--dur-ui` y `--ease-out`; en modos `reducidas` o `ninguna`, el cambio de estado es instantáneo sin animación.

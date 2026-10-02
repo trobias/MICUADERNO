@@ -4,6 +4,10 @@ Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantien
 
 ## 2026-10-02 · “guardando… → guardado ✓” en todas las hojas (cache `v13`)
 
+### Revisión DA3 (cache `v14`)
+- El aviso de fallo queda por encima de los stickers en páginas angostas. El error de almacenamiento ya no duplica el aviso con un toast cuando hay un indicador visible; fuera de esas hojas conserva el aviso general.
+- Borrar una imagen desde “Mis stickers” muestra el mismo estado de guardado dentro del sobre. `SPEC.md` usa el texto y la firma de `c.savedNote()` reales.
+
 **Para quien lo usa**
 - Al escribir en un día o en una página, arriba aparece un “guardando…” tenue; cuando el cuaderno lo guardó de verdad, cambia a “guardado ✓” y al ratito se desvanece. Lo mismo al decorar con stickers (se ve en la barra de decorar) y al cambiar algo en Ajustes, que ya no muestra carteles flotantes por cada cambio.
 - Si no se pudo guardar (o el navegador no deja usar su almacenamiento), en vez de “guardado” dice con calma “Todavía no se pudo guardar en el cuaderno; queda como borrador en este dispositivo.”, con un lápiz y “Descargar una copia” a mano. Cuando vuelve a poder, dice “guardado ✓” otra vez.

@@ -361,6 +361,10 @@
     MC.on('store:fallback', function () { fellBack = true; });
     MC.on('store:error', function (err) {
       console.error(err);
+      // La hoja abierta ya muestra el fallo y ofrece la copia; fuera de ella, el toast sigue siendo necesario.
+      var layer = MC.c.layer();
+      var note = layer === panelEl ? panelBody.querySelector('.saved-note:not(.saved-note--twin)') : layer.querySelector('.saved-note:not(.saved-note--twin)');
+      if (note && (note.dataset.state === 'saving' || note.dataset.state === 'failed') && note.getClientRects().length) return;
       MC.c.toast('No se pudo guardar el último cambio. Probá de nuevo o descargá una copia.', { action: 'Copia', onAction: function () { MC.backup.download(); } });
     });
 

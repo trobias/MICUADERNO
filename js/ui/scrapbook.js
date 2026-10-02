@@ -13,6 +13,7 @@
   /** “Mis stickers”: imágenes subidas y dibujos, con su alta (subir, dibujar) y baja. */
   function ownGroup(dlg, onPick) {
     var grid = h('div.sticker-tray.sticker-tray--own');
+    var saved = MC.c.savedNote();
     function paint() {
       MC.clear(grid);
       M.images().forEach(function (img) {
@@ -22,7 +23,7 @@
         var del = h('button.sticker-pick__del', { type: 'button', 'aria-label': 'Sacar «' + img.name + '» de mis stickers', title: 'Sacar de mis stickers' }, MC.icon('close'));
         del.addEventListener('click', function () {
           MC.c.confirm({ title: '¿Sacar «' + img.name + '» de tus stickers?', text: 'También se despega de las hojas donde esté pegado.', confirm: 'Sacar', danger: true })
-            .then(function (ok) { if (ok) M.deleteImage(img.id).then(paint); });
+            .then(function (ok) { if (ok) saved.track(M.deleteImage(img.id)).then(paint, function () { /* El indicador conserva el aviso. */ }); });
         });
         grid.appendChild(h('div.sticker-own', pick, del));
       });
@@ -39,7 +40,7 @@
       MC.draw.open().then(function (img) { if (img) onPick('img:' + img.id); });
     });
     return h('div.sticker-tray__group',
-      h('h3', 'Mis stickers'),
+      h('div.saved-row', h('h3', 'Mis stickers'), saved),
       M.images().length ? grid : h('p.section__hint', 'Subí una foto o una imagen (PNG, JPG, lo que tengas) o dibujá uno: quedan acá para pegarlos en cualquier hoja.'),
       h('div.sticker-tray__own-actions', upload, draw));
   }

@@ -101,6 +101,9 @@
 .saved-note__glyph svg { width: 16px; height: 16px; stroke-width: 2.25; }
 /* El aviso de fallo es más largo: baja a su propio renglón para no apretar el saludo ni el título. */
 .saved-note[data-state='failed'] {
+  position: relative;
+  z-index: 6; /* Sobre .sticker-layer (5): el aviso no queda debajo de una imagen. */
+  background: var(--paper);
   flex: 1 1 100%;
   order: 1;
   justify-content: flex-start;

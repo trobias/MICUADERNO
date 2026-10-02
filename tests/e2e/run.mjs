@@ -300,6 +300,48 @@ await test('guardado visible (DA3): “guardando…” → “guardado” en el 
   await context.close();
 });
 
+await test('DA3: fallo legible con sticker a 375px, sin toast duplicado, y baja de Mis stickers con indicador', async () => {
+  const { page, context } = await newPage(browser, { viewport: { width: 375, height: 750 } });
+  await page.goto(FILE_URL);
+  await onboard(page);
+  await goto(page, '#/paginas');
+  await page.click('button:has-text("Nueva página")');
+  await page.click('.template:has-text("Vaciar la cabeza")');
+  await page.waitForSelector('#page-body');
+  await page.evaluate(() => MC.emit('store:error', new Error('cuota llena')));
+  assert.equal(await page.locator('.toast:visible').count(), 1, 'el indicador en reposo no tapa errores de otras operaciones');
+  await page.evaluate(() => { document.querySelector('.toast').hidden = true; });
+  await page.evaluate(() => { window.__put = MC.store.put; MC.store.put = () => Promise.reject(new Error('cuota llena')); });
+  await page.fill('#page-body', 'Nicole dejó una idea.');
+  await page.waitForFunction(() => document.querySelector('.free-head .saved-note').dataset.state === 'failed');
+  assert.equal(await page.locator('.free-head .saved-note__action').isVisible(), true);
+  const layers = await page.evaluate(() => ({
+    note: getComputedStyle(document.querySelector('.free-head .saved-note')).zIndex,
+    sticker: getComputedStyle(document.querySelector('.sticker-layer')).zIndex,
+    width: document.documentElement.scrollWidth - innerWidth
+  }));
+  assert.ok(+layers.note > +layers.sticker, 'el aviso queda sobre el sticker de la plantilla');
+  assert.ok(layers.width <= 0, 'el aviso no desborda a 375px');
+  await page.evaluate(() => MC.emit('store:error', new Error('cuota llena')));
+  assert.equal(await page.locator('.toast:visible').count(), 0, 'la hoja ya avisa el fallo');
+  await page.evaluate(() => { MC.store.put = window.__put; });
+  await goto(page, '#/calendario');
+  await page.evaluate(() => MC.emit('store:error', new Error('cuota llena')));
+  assert.equal(await page.locator('.toast:visible').count(), 1, 'fuera de una hoja se conserva el aviso general');
+
+  await page.evaluate(() => MC.model.saveImage({ name: 'Nicole', src: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/l1cAAAAASUVORK5CYII=', w: 1, h: 1 }));
+  await goto(page, '#/paginas');
+  await page.click('.toc__link >> nth=0');
+  await page.waitForSelector('#page-body');
+  await page.click('button:has-text("Decorar")');
+  await page.click('.sticker-tools button:has-text("Sticker")');
+  await page.click('button[aria-label="Sacar «Nicole» de mis stickers"]');
+  await page.click('dialog.sheet button:has-text("Sacar")');
+  await page.waitForFunction(() => document.querySelector('dialog.sheet .saved-note').dataset.state === 'saved');
+  assert.equal(await page.evaluate(() => MC.model.images().length), 0, 'la baja llegó a IndexedDB');
+  await context.close();
+});
+
 await test('calendario, semana y año muestran lo registrado; teclado en el mes', async () => {
   const { page, errors, context } = await newPage(browser);
   await page.goto(FILE_URL);
