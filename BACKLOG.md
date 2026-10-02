@@ -22,7 +22,6 @@ Al empezar un ítem: pasarlo a NOW, leer `VISION.md` §0 y la decisión que lo c
 
 | # | Qué | Estado | Depende de | Notas / hoy |
 |---|---|---|---|---|
-| DA1 | **Papelera**: borrar páginas, rutinas, imágenes, dibujos, adjuntos, cartas y entradas los manda a la papelera (`deletedAt`); retención configurable (30 días por defecto) o vaciar a mano. [12] | NOW | — | D25: borrado suave en el mismo store, no un store aparte. Hoy borrar es definitivo con confirmación (actividades tienen “Deshacer” en el aviso). |
 | DA2 | **Deshacer / rehacer** común (`Ctrl+Z` / `Ctrl+Shift+Z`, y botones en táctil) para scrapbook, dibujo, mover/borrar elementos y edición visual. [13] | NOW | — | D25: una pila de comandos por superficie (`MC.history`); la escritura usa el deshacer nativo del navegador. Hoy: deshacer en el dibujo y al sacar una actividad. |
 | DA3 | **Indicador “guardando… → guardado ✓”** igual en todas las superficies (día, página, scrapbook, ajustes). [69] | NOW | — | `c.savedNote` ya existe en día y página; sumar “guardando…” y usarlo en todos lados. |
 | DA5 | **Formato `.micuaderno`**: ZIP con `manifest.json`, `data.json` y `media/` (imágenes, audio) en vez de data URLs en el JSON; abrir copias `.json` viejas igual. [73] | NEXT | MD1 | `zip.js` ya escribe ZIP “store”; falta leerlo (sin dependencias). |

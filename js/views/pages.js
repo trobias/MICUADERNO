@@ -308,15 +308,14 @@
     }
 
     function remove() {
-      c.confirm({ title: '¿Borrar esta página?', text: 'No se puede deshacer. Si querés, primero guardá una copia del cuaderno.', confirm: 'Borrar la página', danger: true })
+      c.confirm({ title: '¿Mandar esta página a la papelera?', text: 'Podés recuperarla desde Ajustes mientras esté en la papelera.', confirm: 'Mandar a la papelera' })
         .then(function (ok) {
           if (!ok) return;
           persist.cancel();
-          var owner = 'page:' + page.id;
-          M.deletePage(page.id).then(function () {
-            // Sus adjuntos se van con ella.
-            M.filesFor(owner).then(function (fs) { fs.forEach(function (f) { M.deleteFile(f.id); }); });
-            page = null; c.toast('Página borrada.'); location.hash = R.pages();
+          var id = page.id;
+          M.deletePage(id).then(function () {
+            page = null; location.hash = R.pages();
+            c.toast('Se fue a la papelera.', { action: 'Deshacer', onAction: function () { M.restoreTrash('pages', id).then(function () { location.hash = R.page(id); }); } });
           });
         });
     }

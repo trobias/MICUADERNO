@@ -12,7 +12,7 @@
     var right = h('section.page.page--margin.year-notes');
     main.appendChild(h('div.spread', left, h('div.spine', { 'aria-hidden': 'true' }), right));
 
-    M.everything().then(function (all) {
+    M.activeEverything().then(function (all) {
       if (destroyed) return;
       // Misma cuenta que el calendario, sobre lo ya cargado. Sin rutinas: el año solo borda lo registrado.
       var sum = M.summarize(all.days, all.activities, { from: year + '-01-01', to: year + '-12-31' });

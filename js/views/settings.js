@@ -24,7 +24,7 @@
 
   /* ---------- Exportaciones ---------- */
   function exportFile(kind) {
-    return M.everything().then(function (all) {
+    return M.activeEverything().then(function (all) {
       var E = MC.exporters;
       var name = MC.backup.filename;
       if (kind === 'txt') MC.download(name('mi-cuaderno', 'txt'), E.toTXT(all), 'text/plain;charset=utf-8');
@@ -404,6 +404,59 @@
       return b;
     }
 
+    // Papelera (DA1): se abre solo cuando la persona quiere verla.
+    var trashList = h('ul.trash-list');
+    var trashEmpty = h('p.slip', 'La papelera está limpia ♡');
+    var emptyButton = action('trash', 'Vaciar papelera', function () {
+      c.confirm({ title: '¿Vaciar la papelera?', text: 'Se borrará lo que hay en ella y esta acción no se puede deshacer.', confirm: 'Vaciar papelera' }).then(function (ok) {
+        if (ok) M.emptyTrash().then(function () { paintTrash(); trashToggle.focus(); c.toast('La papelera quedó limpia.'); });
+      });
+    });
+    var trashPanel = h('div.trash-panel', { id: 'st-trash-panel' },
+      h('p.t-text', 'Lo que mandás acá se puede recuperar durante el tiempo que elijas.'),
+      h('div.field', h('label', { for: 'st-retention' }, 'Conservar en la papelera'),
+        (function () {
+          var select = h('select.select', { id: 'st-retention' }, [[7, '7 días'], [15, '15 días'], [30, '30 días'], [60, '60 días'], [0, 'Siempre']].map(function (o) {
+            return h('option', { value: o[0], selected: s.trashRetentionDays === o[0] }, o[1]);
+          }));
+          select.addEventListener('change', function () { save({ trashRetentionDays: +select.value }, 'Guardado.'); });
+          return select;
+        })()), trashEmpty, trashList, emptyButton);
+    var trashToggle = action('trash', 'Ver papelera', function () {
+      trashPanel.hidden = !trashPanel.hidden;
+      trashToggle.setAttribute('aria-expanded', String(!trashPanel.hidden));
+      if (!trashPanel.hidden) paintTrash();
+    });
+    trashToggle.setAttribute('aria-expanded', 'false');
+    trashToggle.setAttribute('aria-controls', 'st-trash-panel');
+    trashPanel.hidden = true;
+    function paintTrash() {
+      var labels = { days: 'Día', activities: 'Actividad', routines: 'Rutina', pages: 'Página', images: 'Imagen o dibujo', files: 'Adjunto' };
+      M.trashItems().then(function (items) {
+        if (!storageAlive) return;
+        MC.clear(trashList);
+        trashEmpty.hidden = items.length > 0;
+        emptyButton.hidden = items.length === 0;
+        items.forEach(function (item) {
+          var row = item.row;
+          var title = item.store === 'days' ? D.longLabel(row.date) : (row.title || row.name || 'Sin título');
+          var when = D.fromISO(row.deletedAt);
+          var restore = action('arrow-left', 'Restaurar', function () {
+            M.restoreTrash(item.store, item.id).then(function () { paintTrash(); trashToggle.focus(); c.toast('Volvió a tu cuaderno.'); });
+          });
+          var remove = action('trash', 'Borrar definitivamente', function () {
+            c.confirm({ title: '¿Borrar definitivamente «' + title + '»?', text: 'Después no se puede recuperar desde este cuaderno.', confirm: 'Borrar definitivamente' }).then(function (ok) {
+              if (ok) M.deleteForever(item.store, item.id).then(function () { paintTrash(); trashToggle.focus(); c.toast('Listo, salió de la papelera.'); });
+            });
+          });
+          trashList.appendChild(h('li.trash-item',
+            h('div', h('strong', labels[item.store] + ': ' + title),
+              h('p.t-meta', when ? 'En la papelera desde el ' + D.longLabel(when) : 'En la papelera')),
+            h('div.data-actions', restore, remove)));
+        });
+      });
+    }
+
     right.appendChild(c.section('Mis datos', [
       h('p.privacy.t-text', MC.icon('lock'), 'Tus páginas viven en este dispositivo. No se mandan a ningún lado. Por eso conviene hacer una copia de vez en cuando ♡'),
       h('h3.subhead', 'Cuánto ocupa mi cuaderno'),
@@ -422,6 +475,7 @@
         action('download', 'Planilla (.xlsx)', function () { exportFile('xlsx'); }),
         action('download', 'Días (.csv)', function () { exportFile('csv-dias'); }),
         action('download', 'Actividades (.csv)', function () { exportFile('csv-act'); })),
+      h('h3.subhead', 'Papelera'), trashToggle, trashPanel,
       h('div.danger-zone', action('trash', 'Borrar todo el cuaderno', wipeFlow, 'text-btn'))
     ], { id: 'st-data' }));
 

@@ -160,7 +160,7 @@
     var go = h('button.label-btn', { type: 'button' }, MC.icon('print'), 'Preparar e imprimir');
     go.addEventListener('click', function () {
       if (!D.isValid(state.from) || !D.isValid(state.to) || state.from > state.to) { c.toast('Revisá las fechas: el inicio tiene que ser antes del final.'); return; }
-      M.everything().then(function (all) {
+      M.activeEverything().then(function (all) {
         if (state.range === 'all') {
           var ds = all.days.map(function (d) { return d.date; }).concat(all.activities.map(function (a) { return a.date; })).sort();
           state.from = ds[0] || today; state.to = ds[ds.length - 1] || today;

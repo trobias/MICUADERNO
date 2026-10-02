@@ -192,7 +192,7 @@
   }
 
   function getDay(date) {
-    return S().get('days', date).then(function (raw) { return normalizeDay(raw, date); });
+    return S().get('days', date).then(function (raw) { return normalizeDay(isDeleted(raw) ? null : raw, date); });
   }
 
   function saveDay(day) {
@@ -206,7 +206,7 @@
 
   function daysInRange(from, to) {
     return S().getRange('days', null, from, to).then(function (rows) {
-      return rows.map(function (r) { return normalizeDay(r, r.date); });
+      return rows.filter(function (r) { return !isDeleted(r); }).map(function (r) { return normalizeDay(r, r.date); });
     });
   }
 
@@ -235,7 +235,7 @@
   function itemsForDay(date, routines) {
     var routinesP = routines ? Promise.resolve(routines) : getRoutines();
     return Promise.all([S().getAllByIndex('activities', 'date', date), routinesP]).then(function (res) {
-      var stored = res[0].map(normalizeActivity);
+      var stored = res[0].filter(function (a) { return !isDeleted(a); }).map(normalizeActivity);
       var rs = res[1];
       var byRoutine = {};
       stored.forEach(function (a) { if (a.routineId) byRoutine[a.routineId] = a; });
@@ -327,7 +327,7 @@
   }
 
   function activitiesInRange(from, to) {
-    return S().getRange('activities', 'date', from, to).then(function (rows) { return rows.map(normalizeActivity); });
+    return S().getRange('activities', 'date', from, to).then(function (rows) { return rows.filter(function (a) { return !isDeleted(a); }).map(normalizeActivity); });
   }
 
   /* ---------- rutinas ---------- */
@@ -350,7 +350,7 @@
 
   function getRoutines() {
     return S().getAll('routines').then(function (rows) {
-      return rows.map(normalizeRoutine)
+      return rows.filter(function (r) { return !isDeleted(r); }).map(normalizeRoutine)
         .filter(Boolean)
         .sort(function (a, b) { return momentRank(a.moment) - momentRank(b.moment) || a.title.localeCompare(b.title, 'es'); });
     });
@@ -366,7 +366,7 @@
 
   function deleteRoutine(id) {
     // El historial ya marcado queda como actividades sueltas (routineId se conserva; se muestra aunque la rutina no exista).
-    return S().del('routines', id);
+    return sendToTrash('routines', id);
   }
 
   /* ---------- páginas ---------- */
@@ -396,18 +396,18 @@
 
   function getPages() {
     return S().getAll('pages').then(function (rows) {
-      return rows.map(normalizePage).sort(function (a, b) {
+      return rows.filter(function (p) { return !isDeleted(p); }).map(normalizePage).sort(function (a, b) {
         return (b.pinned - a.pinned) || (a.createdAt < b.createdAt ? -1 : 1);
       });
     });
   }
-  function getPage(id) { return S().get('pages', id).then(function (p) { return p ? normalizePage(p) : null; }); }
+  function getPage(id) { return S().get('pages', id).then(function (p) { return p && !isDeleted(p) ? normalizePage(p) : null; }); }
   function savePage(p) {
     var n = normalizePage(p);
     n.updatedAt = MC.nowISO();
     return S().put('pages', n);
   }
-  function deletePage(id) { return S().del('pages', id); }
+  function deletePage(id) { return sendToTrash('pages', id); }
 
   /* ---------- imágenes propias: subidas o dibujadas (se usan como stickers, D24) ---------- */
   var IMAGE_SRC = /^data:image\/(png|webp|jpeg);base64,[A-Za-z0-9+/=]+$/;
@@ -461,7 +461,7 @@
   function loadImages() {
     return S().getAll('images').then(function (rows) {
       imageCache = {};
-      rows.map(normalizeImage).filter(Boolean).forEach(function (r) { imageCache[r.id] = r; });
+      rows.filter(function (r) { return !isDeleted(r); }).map(normalizeImage).filter(Boolean).forEach(function (r) { imageCache[r.id] = r; });
       return getImagesSync();
     });
   }
@@ -476,7 +476,10 @@
     return S().put('images', n).then(function (v) { imageCache[v.id] = v; MC.emit('images', v); return v; });
   }
   function deleteImage(id) {
-    return S().del('images', id).then(function () { delete imageCache[id]; MC.emit('images', null); });
+    return sendToTrash('images', id).then(function (v) {
+      if (v) { delete imageCache[id]; MC.emit('images', null); MC.emit('images:trashed', id); }
+      return v;
+    });
   }
 
   /* ---------- adjuntos: cualquier archivo, guardado en un día o una página ---------- */
@@ -497,7 +500,7 @@
   }
   function filesFor(owner) {
     return S().getAllByIndex('files', 'owner', owner).then(function (rows) {
-      return rows.map(normalizeFile).filter(Boolean).sort(function (a, b) { return a.createdAt < b.createdAt ? -1 : 1; });
+      return rows.filter(function (f) { return !isDeleted(f); }).map(normalizeFile).filter(Boolean).sort(function (a, b) { return a.createdAt < b.createdAt ? -1 : 1; });
     });
   }
   function addFile(f) {
@@ -505,7 +508,7 @@
     if (!n) return Promise.reject(new Error('Ese archivo no se pudo guardar.'));
     return S().put('files', n);
   }
-  function deleteFile(id) { return S().del('files', id); }
+  function deleteFile(id) { return sendToTrash('files', id); }
 
   /* ---------- lectura compartida (calendario, año, impresión, insights) ---------- */
   /** ¿Escribió algo ese día? (notas, intención o alguna reflexión) */
@@ -544,7 +547,7 @@
     var map = {};
     function at(date) { return map[date] || (map[date] = blankSummary(date)); }
     days.forEach(function (d) {
-      if (!inRange(d.date)) return;
+      if (isDeleted(d) || !inRange(d.date)) return;
       var s = at(d.date);
       s.morning = d.morning.mood;
       s.evening = d.evening.mood;
@@ -554,7 +557,7 @@
     });
     var marked = {};
     activities.forEach(function (a) {
-      if (!inRange(a.date)) return;
+      if (isDeleted(a) || !inRange(a.date)) return;
       var s = at(a.date);
       s.total++;
       if (countsAsDone(a.status)) s.done++;
@@ -565,7 +568,7 @@
     if (extra.routines && extra.routines.length && from && to) {
       D.range(from, to).forEach(function (k) {
         extra.routines.forEach(function (r) {
-          if (marked[r.id + '|' + k] || !R.occursOn(r, k)) return;
+          if (isDeleted(r) || marked[r.id + '|' + k] || !R.occursOn(r, k)) return;
           var s = at(k);
           s.total++; s.pending++; s.planned++; s.routines++;
           s.byRoutine[r.id] = 'pending';
@@ -574,6 +577,7 @@
       });
     }
     (extra.pages || []).forEach(function (p) {
+      if (isDeleted(p)) return;
       var k = pageDate(p);
       if (!k || !inRange(k)) return;
       at(k).pages.push({ id: p.id, title: p.title });
@@ -610,6 +614,77 @@
   }
   function byDate(a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; }
 
+  var TRASH_STORES = ['days', 'activities', 'routines', 'pages', 'images', 'files'];
+  var TRASH_KEYS = { days: 'date', activities: 'id', routines: 'id', pages: 'id', images: 'id', files: 'id' };
+  function trashStore(store) { if (!TRASH_KEYS[store]) throw new Error('Colección de papelera desconocida.'); }
+  function sendToTrash(store, id, now) {
+    trashStore(store);
+    return S().get(store, id).then(function (row) {
+      if (!row || isDeleted(row)) return null;
+      row.deletedAt = now || MC.nowISO();
+      if (store !== 'files') row.updatedAt = row.deletedAt;
+      return S().put(store, row);
+    });
+  }
+  function restoreTrash(store, id) {
+    trashStore(store);
+    return S().get(store, id).then(function (row) {
+      if (!row || !isDeleted(row)) return null;
+      row.deletedAt = null;
+      if (store !== 'files') row.updatedAt = MC.nowISO();
+      return S().put(store, row).then(function (saved) {
+        if (store === 'images') return loadImages().then(function () { MC.emit('images', saved); return saved; });
+        return saved;
+      });
+    });
+  }
+  function trashItems() {
+    return Promise.all(TRASH_STORES.map(function (store) {
+      return S().getAll(store).then(function (rows) {
+        return rows.filter(isDeleted).map(function (row) { return { store: store, id: row[TRASH_KEYS[store]], row: row }; });
+      });
+    })).then(function (groups) {
+      return [].concat.apply([], groups).sort(function (a, b) { return Date.parse(b.row.deletedAt) - Date.parse(a.row.deletedAt); });
+    });
+  }
+  function purgeTrash(now, retentionDays) {
+    var time = now == null ? Date.now() : (typeof now === 'number' ? now : Date.parse(now));
+    var days = retentionDays == null ? settings().trashRetentionDays : retentionDays;
+    if (!Number.isFinite(time) || TRASH_RETENTION.indexOf(days) === -1) return Promise.reject(new Error('Plazo de papelera inválido.'));
+    if (days === 0) return Promise.resolve(0);
+    return trashItems().then(function (items) {
+      var due = items.filter(function (item) { return time - Date.parse(item.row.deletedAt) > days * 86400000; });
+      return Promise.all(due.map(function (item) { return S().del(item.store, item.id); })).then(function () {
+        if (due.some(function (item) { return item.store === 'images'; })) return loadImages().then(function () { return due.length; });
+        return due.length;
+      });
+    });
+  }
+  function deleteForever(store, id) {
+    trashStore(store);
+    return S().get(store, id).then(function (row) {
+      if (!row || !isDeleted(row)) return false;
+      return S().del(store, id).then(function () {
+        if (store === 'images') { delete imageCache[id]; MC.emit('images', null); }
+        return true;
+      });
+    });
+  }
+  function emptyTrash() {
+    return trashItems().then(function (items) {
+      return Promise.all(items.map(function (item) { return S().del(item.store, item.id); })).then(function () {
+        if (items.some(function (item) { return item.store === 'images'; })) return loadImages().then(function () { return items.length; });
+        return items.length;
+      });
+    });
+  }
+  function activeOnly(all) {
+    var out = Object.assign({}, all);
+    TRASH_STORES.forEach(function (store) { out[store] = (all[store] || []).filter(function (row) { return !isDeleted(row); }); });
+    return out;
+  }
+  function activeEverything() { return everything().then(activeOnly); }
+
   /** Primer arranque: registra createdAt y cuenta días distintos de apertura. */
   function touchOpen() {
     var today = D.today();
@@ -642,6 +717,8 @@
     normalizePage: normalizePage, getPages: getPages, getPage: getPage, savePage: savePage, deletePage: deletePage,
     sanitizeStickers: sanitizeStickers, summarize: summarize, summaryRange: summaryRange, pagesOn: pagesOn, everything: everything,
     hasWriting: hasWriting, countsAsDone: countsAsDone, moodLabel: moodLabel, pageTitle: pageTitle, pageDate: pageDate,
+    TRASH_STORES: TRASH_STORES, sendToTrash: sendToTrash, restoreTrash: restoreTrash, trashItems: trashItems,
+    purgeTrash: purgeTrash, deleteForever: deleteForever, emptyTrash: emptyTrash, activeOnly: activeOnly, activeEverything: activeEverything,
     touchOpen: touchOpen
   };
 })(typeof window !== 'undefined' ? window : globalThis);

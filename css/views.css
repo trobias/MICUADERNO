@@ -323,6 +323,10 @@ a.months__year { text-decoration: none; padding: 4px 6px; border-radius: 6px; }
 .privacy svg, .onboard__privacy svg { width: 20px; height: 20px; flex: none; margin-top: 3px; color: var(--thread-done); }
 .onboard__privacy { display: flex; gap: 10px; font-size: var(--fs-sm); color: var(--ink-soft); }
 .data-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.trash-panel { margin-top: 12px; }
+.trash-list { list-style: none; margin: 12px 0; padding: 0; }
+.trash-item { padding: 12px 0; border-bottom: 1px dashed var(--rule); }
+.trash-item .t-meta { margin: 4px 0 8px; }
 .danger-zone { margin-top: var(--s-5); padding-top: var(--s-3); border-top: 1.5px dashed var(--rule-strong); }
 .about { margin-top: var(--s-7); }
 /* Cuánto ocupa mi cuaderno (DA4) */

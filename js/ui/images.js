@@ -131,9 +131,9 @@
       }
       var del = h('button.icon-btn.icon-btn--sm', { type: 'button', 'aria-label': 'Sacar el adjunto ' + f.name }, MC.icon('trash'));
       del.addEventListener('click', function () {
-        c.confirm({ title: '¿Sacar «' + f.name + '»?', text: 'Se borra de esta hoja (si lo necesitás, descargalo antes).', confirm: 'Sacar', danger: true }).then(function (ok) {
+        c.confirm({ title: '¿Sacar «' + f.name + '»?', text: 'Se va a la papelera. Podés recuperarlo desde Ajustes.', confirm: 'Sacar' }).then(function (ok) {
           if (!ok) return;
-          M.deleteFile(f.id).then(function () { c.toast('Adjunto sacado.'); load(); });
+          M.deleteFile(f.id).then(function () { load(); c.toast('Se fue a la papelera.', { action: 'Deshacer', onAction: function () { M.restoreTrash('files', f.id).then(load); } }); });
         });
       });
       return h('li.attachment', open, more, del);
@@ -157,4 +157,14 @@
   }
 
   MC.images = { pickFiles: pickFiles, importImage: importImage, uploadStickers: uploadStickers, attachments: attachments, dataToBlob: dataToBlob };
+  MC.on('images:trashed', function (id) {
+    c.toast('Se fue a la papelera.', { action: 'Deshacer', onAction: function () { M.restoreTrash('images', id); } });
+    // Al cerrar el sobre, volver a dibujar la hoja: un img:<id> en papelera ya no tiene imagen.
+    var stop = MC.on('dialog:closed', function () {
+      if (document.querySelector('dialog[open]')) return;
+      stop();
+      if (MC.app && MC.app.refresh) MC.app.refresh();
+    });
+    if (!document.querySelector('dialog[open]')) { stop(); if (MC.app && MC.app.refresh) MC.app.refresh(); }
+  });
 })(window);

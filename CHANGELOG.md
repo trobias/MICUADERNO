@@ -2,6 +2,16 @@
 
 Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantiene. El porqué de cada decisión está en `DECISIONS.md` (Dn); lo que falta, en `ROADMAP.md`. Cada entrega que toca archivos de la app sube `CACHE_VERSION` en `sw.js` para que las PWA instaladas se actualicen.
 
+## 2026-10-02 · Papelera (cache `v14`)
+
+**Para quien lo usa**
+- Páginas, rutinas, stickers propios, dibujos y adjuntos van a la papelera al sacarlos. El aviso ofrece **Deshacer**; en Ajustes → Mis datos se pueden restaurar, borrar uno por uno o vaciar la papelera.
+- La retención se puede elegir entre 7, 15, 30 o 60 días, o conservar siempre. Lo que está en la papelera deja de aparecer en el cuaderno, el calendario, las observaciones, las exportaciones legibles y la impresión; sigue en la copia JSON.
+
+**Para quien lo mantiene** (DA1, D26)
+- Borrado suave en el mismo store, operaciones de restauración, vaciado y purga por fecha; la purga corre al arrancar después de cargar ajustes. `everything()` conserva todo para backup y `activeEverything()` alimenta vistas y exportaciones.
+- Tests unitarios de restauración, retención, borrado, resumen y copia. La actividad individual conserva por ahora su Deshacer existente.
+
 ## 2026-10-02 · Privacidad de un día o una página y esquema v4 (cache `v13`)
 
 **Para quien lo usa**

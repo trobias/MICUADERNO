@@ -28,6 +28,7 @@
   ];
 
   function toTXT(all) {
+    all = MC.model.activeOnly(all);
     var s = all.meta.settings;
     var byDay = {}; all.days.forEach(function (d) { byDay[d.date] = d; });
     var acts = groupBy(all.activities, 'date');
@@ -97,6 +98,7 @@
   }
 
   function daysTable(all) {
+    all = MC.model.activeOnly(all);
     var s = all.meta.settings;
     var byDay = {}; all.days.forEach(function (d) { byDay[d.date] = d; });
     var acts = groupBy(all.activities, 'date');
@@ -114,6 +116,7 @@
   }
 
   function activitiesTable(all) {
+    all = MC.model.activeOnly(all);
     var routineName = {}; all.routines.forEach(function (r) { routineName[r.id] = r.title; });
     var rows = [['fecha', 'actividad', 'estado', 'rutina']];
     all.activities.forEach(function (a) {
@@ -123,6 +126,7 @@
   }
 
   function moodsTable(all) {
+    all = MC.model.activeOnly(all);
     var s = all.meta.settings;
     var rows = [['fecha', 'momento', 'animo', 'valor']];
     all.days.forEach(function (d) {
@@ -133,6 +137,7 @@
   }
 
   function routinesTable(all) {
+    all = MC.model.activeOnly(all);
     var rows = [['rutina', 'frecuencia', 'momento', 'desde', 'hasta', 'estado', 'veces_hecha']];
     var done = {};
     all.activities.forEach(function (a) { if (a.routineId && a.status === 'done') done[a.routineId] = (done[a.routineId] || 0) + 1; });
@@ -144,6 +149,7 @@
   }
 
   function reflectionsTable(all) {
+    all = MC.model.activeOnly(all);
     var rows = [['fecha', 'pregunta', 'respuesta']];
     all.days.forEach(function (d) {
       if (d.intention.trim()) rows.push([d.date, 'Algo que quiero cuidar hoy', d.intention.trim()]);
@@ -155,6 +161,7 @@
   }
 
   function summaryTable(all) {
+    all = MC.model.activeOnly(all);
     var s = all.meta.settings;
     var dates = allDates(all);
     var counts = [0, 0, 0, 0, 0];
