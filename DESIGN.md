@@ -172,7 +172,7 @@ Un solo sistema, `js/ui/icons.js` (sprite SVG): 24×24, trazo 1.75px, `stroke-li
 - **Cuadros, 700–1099px — una hoja:** máx. 780px.
 - **< 700px:** los marcadores bajan a una barra fija inferior (5 con ícono + etiqueta chica, 58px de alto, y el carretel de Ajustes solo con ícono); la tira de meses en dos filas de seis; el calendario entra entero; en las celdas no hay hilitos, solo marcas. Los cuadros ocupan toda la pantalla y llevan la misma barra abajo.
 - Qué va en cada hoja del cuadro (desktop): Hoy → izq. encabezado + ánimo inicial + intención + lista; der. notas + energía/sueño + cierre. Semana → lun–mié / jue–dom. Año → bastidor / notas.
-- Teclado móvil: el campo activo se desplaza a la vista (`scrollIntoView({block:'center'})`); la barra de marcadores de abajo **todavía no** se oculta con el teclado abierto (estaba en el diseño viejo; hoy pendiente: BACKLOG T6).
+- Teclado móvil: el campo activo se desplaza a la vista (`scrollIntoView({block:'center'})`); con un campo editable enfocado, la barra de marcadores inferior se oculta automáticamente mientras el teclado está abierto (`visualViewport`, con fallback de redimensión y foco) para no tapar el texto, y reaparece al cerrar o desenfocar el campo (T6).
 
 ## 11. Accesibilidad
 

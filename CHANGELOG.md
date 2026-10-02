@@ -2,6 +2,17 @@
 
 Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantiene. El porqué de cada decisión está en `DECISIONS.md` (Dn); lo que falta, en `ROADMAP.md`. Cada entrega que toca archivos de la app sube `CACHE_VERSION` en `sw.js` para que las PWA instaladas se actualicen.
 
+## 2026-10-01 · Barra de marcadores en móvil con teclado abierto (cache `v10`)
+
+**Para quien lo usa**
+- En el celular, cuando tocás un campo de texto para escribir y se abre el teclado virtual, la barra de marcadores inferior se oculta automáticamente para no tapar lo que escribís, y el campo activo se acomoda a la vista. Al cerrar el teclado o salir del campo, los marcadores reaparecen de inmediato.
+
+**Para quien lo mantiene** (deuda técnica **T6**)
+- `js/app.js`: `setupKeyboard()` detecta la apertura del teclado virtual mediante `window.visualViewport` (reducción de altura > 150px) exigiendo foco en un campo editable (`isEditable`), con restablecimiento de altura base al rotar el dispositivo o redimensionar ventana; evita memorizar la altura reducida del teclado al perder foco; fallback para navegadores sin `visualViewport` con redimensión de ventana y eventos `focusin`/`focusout`.
+- `css/notebook.css`: regla `@media (max-width: 699px)` con `body.keyboard-open .tabs { display: none; }`.
+- `sw.js`: `CACHE_VERSION` sube a `mi-cuaderno-v10`.
+- Tests: E2E en `tests/e2e/run.mjs` cubre foco real en campo de texto, apertura, cambio de foco entre campos editables sin parpadeos, cierre/blur y comprobación de que reducciones de viewport sin foco no oculten la barra.
+
 ## 2026-10-01 · Traspaso para retomar sin contexto (sin cambios en la app)
 
 **Para quien mantiene el cuaderno**

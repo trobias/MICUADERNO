@@ -412,6 +412,135 @@
     // Guardar lo pendiente antes de cerrar/ocultar.
     document.addEventListener('visibilitychange', function () { if (document.hidden) flush(); });
     window.addEventListener('pagehide', flush);
+    setupKeyboard();
+  }
+
+  /* ---------- Teclado virtual en móvil (T6) ----------
+     Oculta la barra de marcadores inferior mientras el teclado está abierto
+     con un campo editable enfocado para no tapar lo que se escribe, y la
+     reaparece al cerrar o perder el foco. */
+  function setupKeyboard() {
+    function isNarrow() {
+      return window.matchMedia ? window.matchMedia('(max-width: 699px)').matches : window.innerWidth <= 699;
+    }
+    function isEditable(el) {
+      if (!el) return false;
+      var tag = el.tagName;
+      if (tag === 'TEXTAREA') return true;
+      if (tag === 'INPUT') {
+        var t = (el.type || 'text').toLowerCase();
+        return !/^(button|submit|reset|checkbox|radio|file|range|color|image)$/.test(t);
+      }
+      return !!el.isContentEditable;
+    }
+    function scrollFieldIntoView(el) {
+      if (!el || typeof el.scrollIntoView !== 'function') return;
+      try {
+        var smooth = MC.motion && MC.motion.allows('move');
+        el.scrollIntoView({ block: 'center', behavior: smooth ? 'smooth' : 'auto' });
+      } catch (e) {
+        el.scrollIntoView(false);
+      }
+    }
+
+    if (window.visualViewport) {
+      var vv = window.visualViewport;
+      var baseH = vv.height;
+      var lastW = vv.width;
+
+      var onVisualResize = function () {
+        if (!isNarrow()) {
+          document.body.classList.remove('keyboard-open');
+          baseH = vv.height;
+          lastW = vv.width;
+          return;
+        }
+        if (Math.abs(vv.width - lastW) > 10) {
+          lastW = vv.width;
+          baseH = vv.height;
+        } else if (!isEditable(document.activeElement)) {
+          baseH = Math.max(baseH, vv.height);
+        }
+        var open = (baseH - vv.height > 150) && isEditable(document.activeElement);
+        document.body.classList.toggle('keyboard-open', open);
+        if (open) {
+          scrollFieldIntoView(document.activeElement);
+        }
+      };
+
+      vv.addEventListener('resize', onVisualResize);
+      window.addEventListener('resize', onVisualResize);
+
+      document.addEventListener('focusin', function (e) {
+        if (isNarrow() && isEditable(e.target)) {
+          if (baseH - vv.height > 150) {
+            document.body.classList.add('keyboard-open');
+            scrollFieldIntoView(e.target);
+          }
+        }
+      });
+
+      document.addEventListener('focusout', function () {
+        setTimeout(function () {
+          var active = document.activeElement;
+          if (!isEditable(active)) {
+            document.body.classList.remove('keyboard-open');
+          }
+        }, 50);
+        setTimeout(function () {
+          var active = document.activeElement;
+          if (!isEditable(active)) {
+            baseH = Math.max(baseH, vv.height);
+          }
+        }, 350);
+      });
+    } else {
+      // Fallback sin visualViewport
+      var baseWinH = window.innerHeight;
+      var lastWinW = window.innerWidth;
+
+      var onWinResize = function () {
+        if (!isNarrow()) {
+          document.body.classList.remove('keyboard-open');
+          baseWinH = window.innerHeight;
+          lastWinW = window.innerWidth;
+          return;
+        }
+        if (Math.abs(window.innerWidth - lastWinW) > 10) {
+          lastWinW = window.innerWidth;
+          baseWinH = window.innerHeight;
+        } else if (!isEditable(document.activeElement)) {
+          baseWinH = Math.max(baseWinH, window.innerHeight);
+        }
+        var open = (baseWinH - window.innerHeight > 150) && isEditable(document.activeElement);
+        document.body.classList.toggle('keyboard-open', open);
+        if (open) {
+          scrollFieldIntoView(document.activeElement);
+        }
+      };
+
+      window.addEventListener('resize', onWinResize);
+
+      document.addEventListener('focusin', function (e) {
+        if (isNarrow() && isEditable(e.target)) {
+          document.body.classList.add('keyboard-open');
+          scrollFieldIntoView(e.target);
+        }
+      });
+
+      document.addEventListener('focusout', function () {
+        setTimeout(function () {
+          if (!isEditable(document.activeElement)) {
+            document.body.classList.remove('keyboard-open');
+          }
+        }, 50);
+        setTimeout(function () {
+          if (!isEditable(document.activeElement)) {
+            baseWinH = Math.max(baseWinH, window.innerHeight);
+          }
+        }, 350);
+      });
+    }
   }
 
   MC.app = {

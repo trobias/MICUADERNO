@@ -3,11 +3,11 @@ import { chromium } from 'playwright-core';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import assert from 'node:assert/strict';
 import { start as startServer } from '../../tools/serve.mjs';
 
-const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..', '..');
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const FILE_URL = pathToFileURL(path.join(root, 'index.html')).href;
 const PORT = 4199;
 const HTTP_URL = `http://127.0.0.1:${PORT}/index.html`;
@@ -544,6 +544,52 @@ await test('mobile 375px: una pantalla, 5 botoncitos, sin scroll horizontal', as
   await goto(page, '#/anio');
   const cell = await page.locator('.stitch-cell[data-date]').first().boundingBox();
   assert.ok(cell.width >= 22 && cell.height >= 22, `celda del año ${cell.width}x${cell.height} (mín. 22)`);
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+await test('mobile 375px: con teclado virtual abierto la barra de marcadores no tapa el campo y reaparece al cerrar (T6)', async () => {
+  const { page, errors, context } = await newPage(browser, { viewport: { width: 375, height: 760 } });
+  await page.goto(FILE_URL);
+  await onboard(page);
+  await goto(page, '#/hoy');
+  await page.waitForSelector('#notes');
+  const tabs = page.locator('#tabs');
+  assert.equal(await tabs.isVisible(), true, 'los marcadores se ven al inicio');
+
+  // 1. No ocultar sin foco: reducir altura sin campo editable enfocado NO oculta marcadores
+  await page.setViewportSize({ width: 375, height: 420 });
+  await page.waitForTimeout(100);
+  assert.equal(await page.evaluate(() => document.body.classList.contains('keyboard-open')), false, 'sin campo enfocado no se activa modo teclado');
+  assert.equal(await tabs.isVisible(), true, 'los marcadores siguen visibles sin foco');
+  await page.setViewportSize({ width: 375, height: 760 });
+
+  // 2. Foco real y apertura: al enfocar un campo editable y abrir teclado, se ocultan los marcadores
+  await page.locator('#intention').focus();
+  assert.equal(await page.evaluate(() => document.activeElement.id), 'intention');
+  await page.setViewportSize({ width: 375, height: 420 });
+  await page.waitForFunction(() => document.body.classList.contains('keyboard-open'));
+  assert.equal(await tabs.isVisible(), false, 'los marcadores se ocultan al abrir teclado con foco real');
+
+  // 3. Cambio de foco: pasar a otro editable mantiene los marcadores ocultos sin parpadeo
+  await page.locator('#notes').focus();
+  assert.equal(await page.evaluate(() => document.activeElement.id), 'notes');
+  await page.waitForTimeout(100);
+  assert.equal(await page.evaluate(() => document.body.classList.contains('keyboard-open')), true);
+  assert.equal(await tabs.isVisible(), false, 'los marcadores siguen ocultos al cambiar de foco entre editables');
+
+  // 4. Cierre y desenfoque: al cerrar teclado y desenfocar, los marcadores reaparecen
+  await page.evaluate(() => { if (document.activeElement) document.activeElement.blur(); });
+  await page.setViewportSize({ width: 375, height: 760 });
+  await page.waitForFunction(() => !document.body.classList.contains('keyboard-open'));
+  assert.equal(await tabs.isVisible(), true, 'los marcadores reaparecen al cerrar el teclado');
+
+  // 5. En escritorio (> 699px), los marcadores se mantienen siempre visibles
+  await page.setViewportSize({ width: 1024, height: 420 });
+  await page.locator('#notes').focus();
+  await page.waitForTimeout(100);
+  assert.equal(await tabs.isVisible(), true, 'en escritorio los marcadores se mantienen visibles');
+
   assert.deepEqual(errors, []);
   await context.close();
 });

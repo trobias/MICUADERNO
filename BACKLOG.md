@@ -159,7 +159,6 @@ Al empezar un ítem: pasarlo a NOW, leer `VISION.md` §0 y la decisión que lo c
 | T3 | Subir `CACHE_VERSION` automáticamente en `npm run dist`. | NEXT | Hoy `v9`. |
 | T4 | Sacar los `woff2` duplicados del dist (las fuentes ya van embebidas). | LATER | |
 | T5 | Un ícono por atajo de la PWA. | LATER | |
-| T6 | En el celular, ocultar la barra de marcadores de abajo mientras el teclado está abierto (`visualViewport`), para que no tape lo que se escribe. | NOW | Estaba en el diseño viejo (antes de D17) y se perdió con D22; DESIGN §10 lo promete. |
 
 ## BLOCKED / descartado
 
