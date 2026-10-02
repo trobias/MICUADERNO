@@ -22,7 +22,6 @@ Al empezar un ítem: pasarlo a NOW, leer `VISION.md` §0 y la decisión que lo c
 
 | # | Qué | Estado | Depende de | Notas / hoy |
 |---|---|---|---|---|
-| DA2 | **Deshacer / rehacer** común (`Ctrl+Z` / `Ctrl+Shift+Z`, y botones en táctil) para scrapbook, dibujo, mover/borrar elementos y edición visual. [13] | NOW | — | D25: una pila de comandos por superficie (`MC.history`); la escritura usa el deshacer nativo del navegador. Hoy: deshacer en el dibujo y al sacar una actividad. |
 | DA5 | **Formato `.micuaderno`**: ZIP con `manifest.json`, `data.json` y `media/` (imágenes, audio) en vez de data URLs en el JSON; abrir copias `.json` viejas igual. [73] | NEXT | MD1 | `zip.js` ya escribe ZIP “store”; falta leerlo (sin dependencias). |
 | DA6 | **Copia completa** de todo lo nuevo a medida que aparece (etiquetas, colecciones, elementos, referencias, cartas, canciones, audio, portada, separadores). [72] | NOW (regla) | — | Regla permanente: cada feature nueva entra en `backup.js` con migración y test (AGENTS.md). |
 | DA7 | Casos de error con degradación elegante: archivo grande, imagen corrupta, audio sin permiso, IndexedDB lleno, portapapeles denegado, sin `MediaRecorder`, copia vieja, carta con fecha pasada, URL inválida. [76] | NOW (regla) | — | Ya hay: modo memoria, mensajes de imagen ilegible y archivo > 10 MB. |

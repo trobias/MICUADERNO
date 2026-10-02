@@ -72,13 +72,57 @@
     var list = (opts.stickers || []).map(function (s) { return Object.assign({}, s); });
     var decorating = false;
     var selected = null;
+    var history = MC.history.create();
     var layer = h('div.sticker-layer');
+    history.setSurface(layer);
     pageEl.appendChild(layer);
     var toolbar = h('div.sticker-tools.is-idle', { role: 'toolbar', 'aria-label': 'Decorar ' + (opts.label || 'la página') });
     var status = h('span.sr-only', { 'aria-live': 'polite' });
     var noteTwin = opts.note && opts.note.twin ? opts.note.twin() : null;
 
-    function save() { opts.onChange(list.map(function (s) { return Object.assign({}, s); })); }
+    var saveTimer = null, pendingStep = null, stepTimer = null;
+    function save() { return opts.onChange(list.map(function (s) { return Object.assign({}, s); })); }
+    function flushSave() { if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; return save(); } }
+    function saveSoon() { clearTimeout(saveTimer); saveTimer = setTimeout(flushSave, 400); }
+    function snapshot() { return MC.clone(list); }
+    function restore(items) {
+      var id = selected && selected.id;
+      var focusId = layer.contains(document.activeElement) && document.activeElement.dataset.id;
+      list = MC.clone(items);
+      selected = id ? list.filter(function (s) { return s.id === id; })[0] || null : null;
+      renderAll(); paintTools();
+      // Ctrl+Z con el foco en un sticker: el foco sigue en ese sticker (si quedó en la hoja).
+      var again = focusId && layer.querySelector('[data-id="' + focusId + '"]');
+      if (again) again.focus({ preventScroll: true });
+      return save();
+    }
+    function remember(label, before) {
+      var after = snapshot();
+      if (JSON.stringify(before) === JSON.stringify(after)) return;
+      history.push({ label: label, undo: function () { return restore(before); }, redo: function () { return restore(after); } });
+    }
+    function finishStep() {
+      clearTimeout(stepTimer);
+      if (!pendingStep) return;
+      var step = pendingStep;
+      pendingStep = null;
+      remember(step.label, step.before);
+    }
+    function groupStep(s, label, before) {
+      if (pendingStep && pendingStep.id !== s.id) finishStep();
+      if (!pendingStep) pendingStep = { id: s.id, label: label, before: before };
+      clearTimeout(stepTimer);
+      stepTimer = setTimeout(finishStep, 400);
+    }
+    function flushPending() { finishStep(); flushSave(); }
+    function onVisibility() { if (document.hidden) flushPending(); }
+    function onShortcut(e) {
+      if ((e.ctrlKey || e.metaKey) && !e.altKey && (e.key.toLowerCase() === 'z' || e.key.toLowerCase() === 'y')) flushPending();
+    }
+    root.addEventListener('blur', flushPending);
+    document.addEventListener('visibilitychange', onVisibility);
+    document.addEventListener('keydown', onShortcut, true);
+    function activate() { MC.history.activate(history); }
 
     function place(el, s) {
       el.style.left = (s.x * 100) + '%';
@@ -107,7 +151,7 @@
       syncA11y(el, s);
       el.addEventListener('pointerdown', function (e) { if (decorating) startDrag(e, el, s); });
       el.addEventListener('keydown', function (e) { if (decorating) onKey(e, el, s); });
-      el.addEventListener('focus', function () { if (decorating) select(s); });
+      el.addEventListener('focus', function () { if (decorating) { activate(); select(s); } });
       return el;
     }
 
@@ -142,11 +186,13 @@
     }
 
     function startDrag(e, el, s) {
+      finishStep();
       e.preventDefault();
+      activate();
       select(s);
       el.setPointerCapture(e.pointerId);
       var rect = layer.getBoundingClientRect();
-      var startX = e.clientX, startY = e.clientY, ox = s.x, oy = s.y;
+      var startX = e.clientX, startY = e.clientY, ox = s.x, oy = s.y, before = snapshot();
       var moved = false;
       function move(ev) {
         // Umbral de 4px: un toque selecciona, no mueve.
@@ -162,7 +208,8 @@
         el.removeEventListener('pointercancel', up);
         if (!moved) return;
         settle(el);
-        save();
+        remember('Mover sticker', before);
+        saveSoon();
       }
       el.addEventListener('pointermove', move);
       el.addEventListener('pointerup', up);
@@ -170,6 +217,8 @@
     }
 
     function onKey(e, el, s) {
+      activate();
+      var before = snapshot();
       var step = e.shiftKey ? 0.05 : 0.01;
       var handled = true;
       switch (e.key) {
@@ -185,12 +234,13 @@
         case 'Escape': select(null); el.blur(); return;
         default: handled = false;
       }
-      if (handled) { e.preventDefault(); place(el, s); saveSoon(); }
+      if (handled) { e.preventDefault(); place(el, s); groupStep(s, 'Cambiar sticker', before); saveSoon(); }
     }
-    var saveSoon = MC.debounce(save, 350);
-
     /** at (opcional): { x, y, rot, scale } — p. ej. un dibujo grande en el medio de la hoja. */
     function add(name, at) {
+      finishStep();
+      activate();
+      var before = snapshot();
       var n = list.length;
       var s = Object.assign({
         id: MC.uid('stk'), sticker: name,
@@ -208,28 +258,39 @@
       select(s);
       el.focus({ preventScroll: true });
       status.textContent = describe(s) + ' pegado.';
+      remember('Pegar sticker', before);
       save();
     }
 
     function remove(s) {
+      finishStep();
+      activate();
+      var before = snapshot();
       var el = elFor(s);
       list = list.filter(function (x) { return x !== s; });
       if (el) el.remove();
       select(null);
       status.textContent = describe(s) + ' despegado.';
+      remember('Despegar sticker', before);
       save();
     }
 
     function transform(fn) {
       if (!selected) return;
+      activate();
+      var before = snapshot();
       fn(selected);
       var el = elFor(selected);
       if (el) place(el, selected);
+      groupStep(selected, 'Cambiar sticker', before);
       saveSoon();
     }
 
     function setDecorating(on) {
+      if (!on) flushPending();
       decorating = on;
+      if (on) activate();
+      else if (MC.history.active() === history) MC.history.activate(null);
       pageEl.classList.toggle('is-decorating', on);
       MC.$$('.sticker', layer).forEach(function (el) {
         var s = list.filter(function (x) { return x.id === el.dataset.id; })[0];
@@ -242,13 +303,35 @@
 
     function btn(icon, label, fn, disabled) {
       var b = h('button.icon-btn.icon-btn--sm', { type: 'button', 'aria-label': label, title: label }, MC.icon(icon));
-      if (disabled) b.disabled = true;
+      setDisabled(b, disabled);
       b.addEventListener('click', fn);
       return b;
+    }
+    function setDisabled(b, disabled) {
+      b.disabled = !!disabled;
+      b.setAttribute('aria-disabled', String(!!disabled));
+      b.classList.toggle('is-history-disabled', !!disabled);
+    }
+
+    // Deshacer/Rehacer se actualizan en el lugar: rearmar la barra le sacaría el foco al botón que se usó.
+    var undoBtn = null, redoBtn = null;
+    function syncHistory() {
+      if (undoBtn) { setDisabled(undoBtn, !history.canUndo()); undoBtn.setAttribute('aria-label', 'Deshacer' + (history.undoLabel() ? ' ' + history.undoLabel() : '')); }
+      if (redoBtn) { setDisabled(redoBtn, !history.canRedo()); redoBtn.setAttribute('aria-label', 'Rehacer' + (history.redoLabel() ? ' ' + history.redoLabel() : '')); }
+    }
+    function step(dir) {
+      finishStep();
+      flushSave();
+      history[dir]().then(function () {
+        var b = dir === 'undo' ? undoBtn : redoBtn, other = dir === 'undo' ? redoBtn : undoBtn;
+        var target = b && !b.disabled ? b : other && !other.disabled ? other : null;
+        if (target && decorating) target.focus();
+      });
     }
 
     function paintTools() {
       MC.clear(toolbar);
+      undoBtn = redoBtn = null;
       toolbar.classList.toggle('is-idle', !decorating);
       if (!decorating) {
         var start = h('button.text-btn', { type: 'button' }, MC.icon('sticker'), list.length ? 'Decorar' : 'Pegar un sticker');
@@ -274,6 +357,9 @@
       toolbar.appendChild(btn('shrink', 'Más chico', function () { transform(function (s) { s.scale = MC.clamp(+(s.scale - 0.15).toFixed(2), 0.4, 3); }); }, none));
       toolbar.appendChild(btn('grow', 'Más grande', function () { transform(function (s) { s.scale = MC.clamp(+(s.scale + 0.15).toFixed(2), 0.4, 3); }); }, none));
       toolbar.appendChild(btn('trash', 'Despegar', function () { if (selected) remove(selected); }, none));
+      undoBtn = toolbar.appendChild(btn('undo', 'Deshacer', function () { step('undo'); }, !history.canUndo()));
+      redoBtn = toolbar.appendChild(btn('redo', 'Rehacer', function () { step('redo'); }, !history.canRedo()));
+      syncHistory();
       toolbar.appendChild(h('button.label-btn', { type: 'button', on: { click: function () { setDecorating(false); } } }, 'Listo'));
       if (noteTwin) toolbar.appendChild(noteTwin);
       toolbar.appendChild(status);
@@ -288,6 +374,7 @@
     // Tocar el fondo de la capa deselecciona
     layer.addEventListener('pointerdown', function (e) { if (decorating && e.target === layer) select(null); });
 
+    var offHistory = history.onChange(syncHistory);
     renderAll();
     paintTools();
 
@@ -296,7 +383,7 @@
       draw: drawNew,
       /** Pegar una imagen propia (p. ej. un adjunto usado como sticker). */
       addImage: function (img) { if (!decorating) setDecorating(true); add('img:' + img.id); },
-      destroy: function () { saveSoon.flush(); if (noteTwin) noteTwin.release(); layer.remove(); toolbar.remove(); pageEl.classList.remove('is-decorating'); }
+      destroy: function () { flushPending(); if (noteTwin) noteTwin.release(); root.removeEventListener('blur', flushPending); document.removeEventListener('visibilitychange', onVisibility); document.removeEventListener('keydown', onShortcut, true); offHistory(); if (MC.history.active() === history) MC.history.activate(null); layer.remove(); toolbar.remove(); pageEl.classList.remove('is-decorating'); }
     };
   }
 

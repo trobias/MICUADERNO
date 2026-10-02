@@ -2,6 +2,13 @@
 
 Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantiene. El porqué de cada decisión está en `DECISIONS.md` (Dn); lo que falta, en `ROADMAP.md`. Cada entrega que toca archivos de la app sube `CACHE_VERSION` en `sw.js` para que las PWA instaladas se actualicen.
 
+## 2026-10-02 · Deshacer y rehacer (cache `v13`)
+
+**Corrección posterior (cache `v14`).** El historial de actividades se vacía al salir de la vista; los atajos solo actúan sobre la hoja visible y ceden el paso a un diálogo abierto. Estado, nombre y traslados de actividades también se pueden deshacer y rehacer. En scrapbook, varios movimientos o giros consecutivos del mismo sticker forman un paso; el guardado espera una pausa breve y se vacía al salir, ocultar la pestaña o cerrar la hoja. Los botones de historial anuncian la acción disponible y muestran el estado deshabilitado con estilos del cuaderno.
+
+- Stickers y dibujos tienen Deshacer y Rehacer en sus barras; también funcionan Ctrl+Z, Ctrl+Shift+Z y Ctrl+Y fuera de los campos de texto. Sacar una actividad usa el mismo historial desde el aviso.
+- `MC.history` mantiene una pila transitoria por superficie, con límite de 50 acciones; los cambios de stickers siguen el guardado habitual. Pruebas unitarias y recorrido E2E cubren el historial y el texto editable.
+
 ## 2026-10-02 · Papelera: arreglos de la revisión (cache `v15`)
 
 **Para quien lo usa**

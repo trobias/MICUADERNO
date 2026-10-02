@@ -110,7 +110,8 @@
     opts = opts || {};
     var existing = opts.image && opts.image.kind === 'drawing' ? opts.image : null;
     var drawing = existing && existing.drawing ? MC.clone(existing.drawing) : { strokes: [], texts: [] };
-    var history = [];
+    var history = MC.history.create();
+    var previousHistory = MC.history.activate(history);
     var tool = 'pen';
     var palette = COLORS.map(function (col) { return [toHex(cssVar(col[0])), col[1]]; });
     var color = palette[0][0];
@@ -121,14 +122,24 @@
     return new Promise(function (resolve) {
       var result = null;
       var canvas = h('canvas.draw__canvas', { width: SIZE, height: SIZE, 'aria-label': 'Hoja para dibujar. Con el texto podés escribir sin dibujar.', role: 'img' });
+      history.setSurface(canvas);
       var ctx = canvas.getContext('2d');
       function redraw() {
         ctx.clearRect(0, 0, SIZE, SIZE);
         paint(ctx, drawing, 1);
-        undoBtn.disabled = !history.length;
+        undoBtn.disabled = !history.canUndo();
+        undoBtn.setAttribute('aria-disabled', String(undoBtn.disabled));
+        undoBtn.setAttribute('aria-label', 'Deshacer' + (history.undoLabel() ? ' ' + history.undoLabel() : ''));
+        redoBtn.disabled = !history.canRedo();
+        redoBtn.setAttribute('aria-disabled', String(redoBtn.disabled));
+        redoBtn.setAttribute('aria-label', 'Rehacer' + (history.redoLabel() ? ' ' + history.redoLabel() : ''));
         clearBtn.disabled = !drawing.strokes.length && !drawing.texts.length;
       }
-      function remember() { history.push(MC.clone(drawing)); if (history.length > 60) history.shift(); }
+      function remember(before, label) {
+        var after = MC.clone(drawing);
+        history.push({ label: label, undo: function () { drawing = MC.clone(before); redraw(); }, redo: function () { drawing = MC.clone(after); redraw(); } });
+        redraw();
+      }
 
       /* ---------- herramientas ---------- */
       function radios(label, items, current, onPick, cls) {
@@ -169,19 +180,22 @@
       function placeText(x, y) {
         var t = textInput.value.trim();
         if (!t) { textInput.focus(); return; }
-        remember();
+        var before = MC.clone(drawing);
         drawing.texts.push({ text: t, x: x, y: y, size: textSize, font: font, color: color });
         textInput.value = '';
-        redraw();
+        remember(before, 'Poner texto');
       }
 
-      var undoBtn = h('button.label-btn.label-btn--soft', { type: 'button' }, MC.icon('rotate-left'), 'Deshacer');
-      undoBtn.addEventListener('click', function () { if (history.length) { drawing = history.pop(); redraw(); } });
+      var undoBtn = h('button.label-btn.label-btn--soft.is-history-disabled', { type: 'button', 'aria-label': 'Deshacer' }, MC.icon('undo'), 'Deshacer');
+      undoBtn.addEventListener('click', function () { history.undo(); });
+      var redoBtn = h('button.label-btn.label-btn--soft.is-history-disabled', { type: 'button', 'aria-label': 'Rehacer' }, MC.icon('redo'), 'Rehacer');
+      redoBtn.addEventListener('click', function () { history.redo(); });
       var clearBtn = h('button.text-btn', { type: 'button' }, 'Borrar todo');
-      clearBtn.addEventListener('click', function () { remember(); drawing = { strokes: [], texts: [] }; redraw(); });
+      clearBtn.addEventListener('click', function () { var before = MC.clone(drawing); drawing = { strokes: [], texts: [] }; remember(before, 'Borrar dibujo'); });
 
       /* ---------- dibujar con el puntero ---------- */
       var current = null;
+      var strokeBefore = null;
       function pt(e) {
         var r = canvas.getBoundingClientRect();
         return [MC.clamp((e.clientX - r.left) / r.width * SIZE, 0, SIZE), MC.clamp((e.clientY - r.top) / r.height * SIZE, 0, SIZE)];
@@ -191,7 +205,7 @@
         var p = pt(e);
         if (tool === 'text') { placeText(p[0], p[1]); return; }
         canvas.setPointerCapture(e.pointerId);
-        remember();
+        strokeBefore = MC.clone(drawing);
         current = { color: tool === 'erase' ? null : color, erase: tool === 'erase', width: tool === 'erase' ? width * 2 : width, points: [p] };
         drawing.strokes.push(current);
         redraw();
@@ -204,7 +218,7 @@
         current.points.push([Math.round(p[0] * 10) / 10, Math.round(p[1] * 10) / 10]);
         redraw();
       });
-      function end() { current = null; }
+      function end() { if (current && strokeBefore) remember(strokeBefore, 'Dibujar trazo'); current = null; strokeBefore = null; }
       canvas.addEventListener('pointerup', end);
       canvas.addEventListener('pointercancel', end);
 
@@ -217,7 +231,7 @@
         content: [
           h('div.draw', h('div.draw__bar', tools, colors, widths), textRow,
             h('div.draw__paper', canvas),
-            h('div.draw__bar.draw__bar--end', undoBtn, clearBtn,
+            h('div.draw__bar.draw__bar--end', undoBtn, redoBtn, clearBtn,
               h('label.draw__name', { for: 'draw-name' }, 'Nombre', nameInput))),
           err
         ],
@@ -232,8 +246,9 @@
             }).then(function (img) { result = img; }, function () { err.textContent = 'No se pudo guardar el dibujo (¿es muy grande?).'; return false; });
           } }
         ],
-        onClose: function () { resolve(result); }
+        onClose: function () { offHistory(); if (MC.history.active() === history) MC.history.activate(previousHistory); resolve(result); }
       });
+      var offHistory = history.onChange(redraw);
       redraw();
     });
   }

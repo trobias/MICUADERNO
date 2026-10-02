@@ -33,6 +33,7 @@
 .label-btn--soft::before { border-color: color-mix(in srgb, var(--ink) 25%, transparent); }
 .label-btn--rose { background: #9C5468; }
 .label-btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+.is-history-disabled[disabled] { opacity: 0.5; cursor: not-allowed; }
 
 .text-btn {
   display: inline-flex;
