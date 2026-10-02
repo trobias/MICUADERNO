@@ -3,8 +3,9 @@
 import { chromium } from 'playwright-core';
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const src = (f) => fs.readFileSync(path.join(root, 'assets/icons/src', f), 'utf8');
 const out = (f) => path.join(root, 'assets/icons', f);
 

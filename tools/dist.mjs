@@ -1,9 +1,10 @@
 // Arma dist/MI-CUADERNO/ con solo los archivos de la app (sin skills/, tests ni herramientas) y un .zip.
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 
-const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const out = path.join(root, 'dist', 'MI-CUADERNO');
 const include = ['index.html', 'manifest.webmanifest', 'sw.js', 'css', 'js', 'assets', 'README.md', 'SPEC.md', 'DESIGN.md', 'AGENTS.md', 'DATA_MODEL.md', 'DECISIONS.md', 'ROADMAP.md', 'BACKLOG.md', 'VISION.md', 'HANDOFF.md', 'CHANGELOG.md'];
 

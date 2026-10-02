@@ -3,8 +3,9 @@
 // Uso: node tools/build-fonts.mjs  (volver a correr si cambian los .woff2 de assets/fonts)
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const faces = [
   ['Young Serif', 'young-serif.woff2', '400', 'normal'],
   ['Castoro', 'castoro.woff2', '400', 'normal'],
