@@ -191,17 +191,28 @@
     return !Object.keys(d.reflection).some(function (k) { return d.reflection[k].trim(); });
   }
 
-  function getDay(date) {
-    return S().get('days', date).then(function (raw) { return normalizeDay(isDeleted(raw) ? null : raw, date); });
+  function getDay(date, opts) {
+    // Abrir una fecha permite revisar su hoja en papelera; las lecturas de listas siguen filtrándola.
+    return S().get('days', date).then(function (raw) {
+      return normalizeDay(isDeleted(raw) && !(opts && opts.includeDeleted) ? null : raw, date);
+    });
   }
 
   function saveDay(day) {
     var d = normalizeDay(day, day.date);
-    if (isEmptyDay(d)) return S().del('days', d.date).then(function () { return d; });
-    var now = MC.nowISO();
-    d.createdAt = d.createdAt || now;
-    d.updatedAt = now;
-    return S().put('days', d);
+    return S().get('days', d.date).then(function (stored) {
+      // Un borrador vacío no elimina una hoja que todavía se puede recuperar.
+      if (isDeleted(stored)) {
+        if (isEmptyDay(d)) return d;
+        if (d.deletedAt !== stored.deletedAt) throw new Error('Este día está en la papelera. Volvé a abrirlo antes de editarlo.');
+        d.deletedAt = null;
+      }
+      if (isEmptyDay(d)) return S().del('days', d.date).then(function () { return d; });
+      var now = MC.nowISO();
+      d.createdAt = d.createdAt || now;
+      d.updatedAt = now;
+      return S().put('days', d);
+    });
   }
 
   function daysInRange(from, to) {

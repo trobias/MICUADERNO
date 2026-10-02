@@ -78,6 +78,46 @@ test('papelera: summarize y exportaciones legibles ignoran borrados; JSON los co
   assert.equal(MC.backup.validate(backup).payload.days[0].deletedAt, all.days[0].deletedAt);
 });
 
+test('papelera: editar un día conserva su texto y privacidad en guardados sucesivos', async () => {
+  await fresh();
+  const date = '2026-10-02';
+  const original = M.emptyDay(date);
+  original.notes = 'Lo que ya había escrito';
+  original.reflection.keep = 'Una memoria';
+  original.privacy = { noMemory: true, noInsights: true, noReviews: true };
+  await M.saveDay(original);
+  await M.sendToTrash('days', date);
+  await M.saveDay(M.emptyDay(date));
+  assert.ok((await MC.store.get('days', date)).deletedAt);
+  assert.equal((await M.getDay(date)).notes, '', 'las lecturas normales excluyen la papelera');
+  const opened = await M.getDay(date, { includeDeleted: true });
+  assert.equal(opened.notes, original.notes);
+  assert.ok(opened.deletedAt);
+  opened.intention = 'Una intención nueva';
+  const restored = await M.saveDay(opened);
+  assert.equal(restored.deletedAt, null);
+  restored.intention = 'Otra intención';
+  await M.saveDay(restored);
+  const saved = await M.getDay(date);
+  assert.equal(saved.notes, original.notes);
+  assert.equal(saved.reflection.keep, original.reflection.keep);
+  assert.deepEqual(saved.privacy, original.privacy);
+  assert.equal(saved.intention, 'Otra intención');
+});
+
+test('papelera: un borrador anterior al borrado no sobrescribe el día recuperable', async () => {
+  await fresh();
+  const date = '2026-10-02';
+  const draft = M.emptyDay(date); draft.notes = 'Contenido anterior';
+  await M.saveDay(draft);
+  await M.sendToTrash('days', date);
+  draft.notes = 'Borrador desactualizado';
+  await assert.rejects(M.saveDay(draft), /papelera/);
+  const kept = await MC.store.get('days', date);
+  assert.equal(kept.notes, 'Contenido anterior');
+  assert.ok(kept.deletedAt);
+});
+
 test('papelera: los adjuntos de una página vuelven con ella y se van solo cuando la página se borra del todo', async () => {
   await fresh();
   const data = 'data:text/plain;base64,aG9sYQ==';

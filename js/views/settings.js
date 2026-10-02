@@ -159,11 +159,13 @@
   function storageTally() {
     var cats = { texto: [0, 0], fotos: [0, 0], audio: [0, 0], dibujos: [0, 0], otros: [0, 0] };
     var counts = { dias: 0, actividades: 0, rutinas: 0, paginas: 0 };
+    var trashCount = 0;
     var COUNT = { days: 'dias', activities: 'actividades', routines: 'rutinas', pages: 'paginas' };
     function put(cat, bytes) { cats[cat][0] += bytes; cats[cat][1]++; }
     return {
       add: function (store, r) {
         if (r == null) return;
+        if (store !== 'meta' && M.isDeleted(r)) trashCount++;
         var bytes = itemBytes(r);
         if (store === 'images') put(r.kind === 'drawing' ? 'dibujos' : 'fotos', bytes);
         else if (store === 'files') put(isAudio(r) ? 'audio' : 'otros', bytes);
@@ -185,6 +187,7 @@
         var originQuota = (estimate && estimate.quota != null) ? estimate.quota : null;
         return {
           total: total,
+          trashCount: trashCount,
           formattedTotal: formatSize(total),
           breakdown: breakdown,
           counts: {
@@ -214,7 +217,7 @@
 
   /*
    * En la app se mide de a un store por vez (sin juntar todo el cuaderno con sus data URL en memoria),
-   * las imágenes salen de la caché que ya tiene el modelo, y el resultado se guarda hasta el próximo
+   * las imágenes también se leen del store para contar las que están en papelera, y el resultado se guarda hasta el próximo
    * cambio: volver a Ajustes sin haber tocado nada no vuelve a leer nada.
    */
   var storageCache = null;
@@ -229,13 +232,18 @@
       ? navigator.storage.estimate().catch(function () { return null; })
       : Promise.resolve(null);
     var chain = S.getAll('meta').then(function (rows) { rows.forEach(function (r) { t.add('meta', r); }); });
-    ['days', 'activities', 'routines', 'pages', 'files'].forEach(function (s) {
+    ['days', 'activities', 'routines', 'pages', 'files', 'images'].forEach(function (s) {
       chain = chain.then(function () { return S.getAll(s); }).then(function (rows) { rows.forEach(function (r) { t.add(s, r); }); });
     });
-    chain = chain.then(function () { M.images().forEach(function (r) { t.add('images', r); }); });
     var p = storageCache = Promise.all([chain, estimateP]).then(function (res) { return t.result(res[1]); });
     p.catch(function () { if (storageCache === p) storageCache = null; });
     return p;
+  }
+
+  function countDueTrash(items, days, now) {
+    if (days === 0) return 0;
+    var time = now == null ? Date.now() : (typeof now === 'number' ? now : Date.parse(now));
+    return items.filter(function (item) { return time - Date.parse(item.row.deletedAt) > days * 86400000; }).length;
   }
 
   function render(main) {
@@ -328,6 +336,7 @@
       storageTotal.className = 't-text storage-total';
       storageTotal.textContent = '';
       storageTotal.append('Tu cuaderno ocupa aprox. ', h('strong.num', data.formattedTotal), ' en datos guardados.');
+      if (data.trashCount) storageTotal.append(' Incluye ' + data.trashCount + ' ' + (data.trashCount === 1 ? 'elemento' : 'elementos') + ' en la papelera.');
 
       function detailText(cat) {
         if (cat === 'texto') {
@@ -413,6 +422,7 @@
     // Papelera (DA1): se abre solo cuando la persona quiere verla.
     var trashList = h('ul.trash-list');
     var trashEmpty = h('p.slip', 'La papelera está limpia ♡');
+    var retentionNote = h('p.t-meta', { id: 'st-retention-note', role: 'status' });
     var emptyButton = action('trash', 'Vaciar papelera', function () {
       c.confirm({ title: '¿Vaciar la papelera?', text: 'Se borrará lo que hay en ella y esta acción no se puede deshacer.', confirm: 'Vaciar papelera' }).then(function (ok) {
         if (ok) M.emptyTrash().then(function () { paintTrash(); trashToggle.focus(); c.toast('La papelera quedó limpia.'); });
@@ -425,9 +435,23 @@
           var select = h('select.select', { id: 'st-retention' }, [[7, '7 días'], [15, '15 días'], [30, '30 días'], [60, '60 días'], [0, 'Siempre']].map(function (o) {
             return h('option', { value: o[0], selected: s.trashRetentionDays === o[0] }, o[1]);
           }));
-          select.addEventListener('change', function () { save({ trashRetentionDays: +select.value }, 'Guardado.'); });
+          select.setAttribute('aria-describedby', 'st-retention-note');
+          select.addEventListener('change', function () {
+            var before = M.settings().trashRetentionDays;
+            var chosen = +select.value;
+            save({ trashRetentionDays: chosen });
+            retentionNote.textContent = '';
+            if (chosen === 0 || (before !== 0 && chosen >= before)) return;
+            M.trashItems().then(function (items) {
+              if (+select.value !== chosen) return;
+              var count = countDueTrash(items, chosen);
+              if (count) retentionNote.textContent = count + ' ' + (count === 1 ? 'cosa se borraría' : 'cosas se borrarían') + ' definitivamente la próxima vez que abras el cuaderno. Podés restaurarlas antes desde esta papelera.';
+            }).catch(function () {
+              if (+select.value === chosen) retentionNote.textContent = 'No se pudo revisar qué vencería. Podés conservar siempre lo que hay en la papelera.';
+            });
+          });
           return select;
-        })()), trashEmpty, trashList, emptyButton);
+        })(), retentionNote), trashEmpty, trashList, emptyButton);
     var trashToggle = action('trash', 'Ver papelera', function () {
       trashPanel.hidden = !trashPanel.hidden;
       trashToggle.setAttribute('aria-expanded', String(!trashPanel.hidden));
@@ -500,6 +524,8 @@
     VERSION: VERSION,
     exportFile: exportFile,
     measureStorage: measureStorage,
+    collectStorage: collectStorage,
+    countDueTrash: countDueTrash,
     formatSize: formatSize,
     LARGE_THRESHOLD: LARGE_THRESHOLD,
     MEDIA_LARGE_THRESHOLD: MEDIA_LARGE_THRESHOLD

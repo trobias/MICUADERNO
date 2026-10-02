@@ -32,6 +32,7 @@
     var saved = c.savedNote();
     var destroyed = false;
     var scrap = null;
+    var trashNotice = null;
 
     // Borrador local: cada cambio se anota al instante en localStorage para que nada se pierda
     // si la pestaña se cierra antes de que IndexedDB termine de guardar. Se limpia al guardar.
@@ -42,6 +43,8 @@
       var r = rev;
       saved.track(M.saveDay(day).then(function (d) {
         day.createdAt = d.createdAt; day.updatedAt = d.updatedAt;
+        day.deletedAt = d.deletedAt;
+        if (trashNotice) trashNotice.hidden = !M.isDeleted(d);
         if (r === rev && c.durable()) MC.ui.set(draftKey, null);
       }), function () { return r === rev; });
     }, 400);
@@ -57,7 +60,7 @@
     main.appendChild(spread);
 
     var pagesToday = [];
-    Promise.all([M.getDay(date), M.itemsForDay(date), M.pagesOn(date)]).then(function (res) {
+    Promise.all([M.getDay(date, { includeDeleted: true }), M.itemsForDay(date), M.pagesOn(date)]).then(function (res) {
       if (destroyed) return;
       day = recoverDraft(res[0]);
       items = res[1];
@@ -71,7 +74,11 @@
       var storedAt = stored.updatedAt ? Date.parse(stored.updatedAt) : 0;
       if (draft.at <= storedAt) { MC.ui.set(draftKey, null); return stored; }
       var recovered = M.normalizeDay(draft.day, date);
-      setTimeout(function () { M.saveDay(recovered).then(function () { if (c.durable()) MC.ui.set(draftKey, null); }); }, 0);
+      setTimeout(function () { saved.track(M.saveDay(recovered).then(function (d) {
+        recovered.deletedAt = d.deletedAt;
+        if (trashNotice) trashNotice.hidden = !M.isDeleted(d);
+        if (c.durable()) MC.ui.set(draftKey, null);
+      })); }, 0);
       return recovered;
     }
 
@@ -97,7 +104,8 @@
           next),
         h('div.day-head__tools',
           !isToday ? h('a.text-btn', { href: R.today() }, MC.icon('hoy'), 'Ir a hoy') : null,
-          privacyEl = MC.views.pages.privacyButton(day.privacy, openPrivacy))
+          privacyEl = MC.views.pages.privacyButton(day.privacy, openPrivacy)),
+        trashNotice = h('p.slip', { hidden: !M.isDeleted(day) }, 'Este día está en la papelera. Si lo editás, vuelve a tu cuaderno con lo que ya habías guardado.')
       );
     }
 
@@ -372,7 +380,7 @@
       flush: function () { persist.flush(); },
       refresh: function () {
         if (destroyed) return;
-        Promise.all([M.getDay(date), M.itemsForDay(date)]).then(function (res) {
+        Promise.all([M.getDay(date, { includeDeleted: true }), M.itemsForDay(date)]).then(function (res) {
           day = recoverDraft(res[0]); items = res[1];
           if (scrap) scrap.destroy();
           build();

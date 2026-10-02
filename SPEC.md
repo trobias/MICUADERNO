@@ -130,7 +130,7 @@ Secciones, en orden de lectura (mobile) o repartidas en doble página (desktop: 
 1. **Encabezado**: saludo según hora (“Buenos días / Buenas tardes / Buenas noches, {nombre} ♡”), día de semana + fecha. Flechas día anterior/siguiente y “Ir a hoy” si no es hoy (para saltar lejos se usa el calendario, que queda debajo). Indicador unificado de **guardado visible** `c.savedNote` (DA3) y acceso discreto a **Privacidad de este día** (PV1: no mostrar en recuerdos, no incluir en insights, no incluir en revisiones).
 2. **¿Cómo arrancaste hoy?** — 5 sellos de ánimo (ver §9). Tocar el mismo sello lo quita.
 3. **Algo que quiero cuidar hoy…** — nota adhesiva, una línea o dos.
-4. **Lo de hoy** — lista de actividades: propias del día + ocurrencias de rutinas. Cada una con 5 estados (§10). Agregar inline. Editar texto, mover a mañana (“lo dejo para otro día” ofrece “pasar a mañana”), o sacar (borrado suave a la papelera, DA1, con deshacer inmediato, DA2). Pila de deshacer (`Ctrl+Z` / `Ctrl+Shift+Z`) para cambios de estado y acciones fuera de inputs.
+4. **Lo de hoy** — lista de actividades: propias del día + ocurrencias de rutinas. Cada una con 5 estados (§10). Agregar inline. Editar texto, mover a mañana (“lo dejo para otro día” ofrece “pasar a mañana”), o sacar (borrado definitivo con deshacer inmediato, DA2). Pila de deshacer (`Ctrl+Z` / `Ctrl+Shift+Z`) para cambios de estado y acciones fuera de inputs.
 5. **Durante el día** — texto libre sobre renglones (deshacer nativo del navegador mientras se escribe).
 6. **Energía / sueño** (si están activados) — energía 1-3 (“poquita / media / mucha”), horas de sueño (0–14, pasos de 0,5).
 7. **¿Cómo terminó tu día?** — sellos de ánimo + reflexiones: *qué me hizo bien*, *algo difícil*, *algo lindo*, *qué quiero guardar* (⇒ recuerdo), *texto libre*. Se muestra plegado como “cerrar el día” antes de las 17 h si está vacío; siempre se puede desplegar.
@@ -195,7 +195,7 @@ El calendario es donde aparece **todo lo que tiene fecha**: ánimo, escritura, r
 ### 7.8 Agenda (poner cosas en el calendario)
 - **Anotar**: qué + qué día (atajos *Hoy · Mañana · En una semana*; por defecto el día marcado en el calendario si es de hoy en adelante) → “Poner en el calendario”. Aparece en ese día, en su página y en el mes.
 - **También podés poner**: algo que se repite (abre el editor de rutinas) o una página para ese día (elige plantilla con el día ya puesto).
-- **Lo que viene**: lo anotado de hoy en adelante, agrupado por día (el día es un enlace, con “en 2 días”, “en 3 semanas”…), más las páginas de esos días. Cada cosa tiene su menú completo: estados, pasar a mañana, **pasar a otro día**, cambiar el nombre, sacar (borrado suave a papelera con opción de deshacer). Las rutinas no se listan: aparecen solas en sus días.
+- **Lo que viene**: lo anotado de hoy en adelante, agrupado por día (el día es un enlace, con “en 2 días”, “en 3 semanas”…), más las páginas de esos días. Cada cosa tiene su menú completo: estados, pasar a mañana, **pasar a otro día**, cambiar el nombre, sacar (borrado definitivo con opción de deshacer). Las rutinas no se listan: aparecen solas en sus días.
 - La fila de cada actividad es la misma que en la página del día (`js/ui/activity.js`), con historial de acciones (`MC.history`, DA2) para deshacer cambios involuntarios.
 
 ### 7.7 Ajustes
@@ -215,9 +215,10 @@ Para evitar pérdidas accidentales y dar tranquilidad (filosofía amable), el bo
 
 - **Entidades cubiertas:** páginas libres (`pages`), rutinas recurrentes (`routines`), imágenes y fotos de *Mis stickers* (`images`), dibujos (`images`), archivos adjuntos (`files`), actividades individuales (`activities`) y días completos (`days`).
 - **Mecanismo:** el registro recibe una marca temporal `deletedAt: ISO` (UTC). Ausente o `null` indica que el registro está activo.
-- **Aislamiento:** todas las lecturas de la interfaz, el resumen del calendario (`MC.model.summarize`), la agenda y las observaciones de `insights.js` filtran de forma estricta los elementos con `deletedAt != null`. Lo borrado deja de verse de inmediato.
+- **Aislamiento:** las listas activas, el resumen del calendario (`MC.model.summarize`), la agenda y las observaciones de `insights.js` filtran los registros con `deletedAt != null`. La única excepción es abrir explícitamente una fecha para revisar su hoja en papelera, con aviso y restauración al editar. Sacar una actividad desde Hoy o Agenda usa borrado definitivo con Deshacer; el esquema admite su marca de papelera, pero esa acción no la utiliza.
 - **Retención configurable:** `settings.trashRetentionDays` (default 30 días). En cada inicio del cuaderno, los elementos cuyo `deletedAt` supere el período de retención se eliminan de manera definitiva (`delete` físico en IndexedDB).
-- **Restauración:** cualquier elemento en papelera puede devolverse a la vida (`deletedAt = null`). Una página regresa al índice y al calendario; una rutina retoma sus apariciones; una foto o dibujo reaparece en *Mis stickers*; un adjunto vuelve a su día o página.
+- **Restauración:** cualquier elemento en papelera puede devolverse a la vida (`deletedAt = null`). Una página regresa al índice y al calendario; una rutina retoma sus apariciones; una foto o dibujo reaparece en *Mis stickers*; un adjunto vuelve a su día o página. Abrir la fecha de un día en papelera permite revisar su contenido con un aviso; editarlo lo restaura. Un guardado vacío no lo elimina y un borrador anterior al borrado no lo sobrescribe.
+- **Retención y espacio:** al acortar el plazo, Ajustes anuncia cuántos registros vencerían en el próximo arranque; no los borra en ese momento. La medición incluye todos los registros conservados, también las imágenes en papelera, y señala la cantidad de elementos borrados.
 - **Vaciado manual:** opción en Ajustes → Mis datos → Papelera para vaciar todo el contenido borrado de una sola vez, previa confirmación amable.
 - **Preservación en copias:** la papelera se incluye en el archivo de backup `.json` (con sus fechas `deletedAt`). Si la persona exporta e importa su cuaderno en otro dispositivo, sus elementos en papelera y sus plazos de retención siguen existiendo.
 

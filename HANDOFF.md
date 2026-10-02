@@ -1,6 +1,6 @@
 # MI CUADERNO — Traspaso para el próximo agente
 
-Para retomar el desarrollo **sin haber estado en las conversaciones anteriores**. Leelo después de `AGENTS.md` y antes de tocar código. Estado al 01/10/2026.
+Para retomar el desarrollo **sin haber estado en las conversaciones anteriores**. Leelo después de `AGENTS.md` y antes de tocar código. Estado al 02/10/2026.
 
 ## 1. Cómo trabaja la dueña del proyecto
 
@@ -30,10 +30,10 @@ Para retomar el desarrollo **sin haber estado en las conversaciones anteriores**
 
 ## 3. Estado actual
 
-- Todo lo de la tabla está en `main` (y en la rama de la sesión). `schemaVersion` 4, `CACHE_VERSION` `mi-cuaderno-v17`. Fase 1 (DA1–DA4, PV1, T6) integrada el 2026-10-02.
-- `npm run check` = sintaxis + **50 unit** + **21 E2E** en verde (Chromium headless).
+- Todo lo de la tabla está en `main` (y en la rama de la sesión). `schemaVersion` 4, `CACHE_VERSION` `mi-cuaderno-v18`. Fase 1 (DA1–DA4, PV1, T6) integrada el 2026-10-02.
+- `npm run check` verifica sintaxis, **91 unit** y **33 E2E** sobre `file://` y HTTP. Para E2E necesita la dependencia local `playwright-core` y un navegador Chromium indicado con `CHROMIUM`.
 - **Nunca se probó en dispositivos reales** ni se publicó: ver `ROADMAP.md` → Verificación pendiente (V1–V7).
-- Próximo paso sugerido: `ROADMAP.md` → Fase 1 (papelera, deshacer/rehacer, “guardando… → guardado ✓”, cuánto ocupa, privacidad por página) + el bug T6 (barra de marcadores sobre el teclado del celular).
+- Fase 1 y T6 ya están integrados: no rehacerlos. El seguimiento de DA1 está completado. Antes de avanzar a Fase 2, revisar la verificación pendiente V1–V7 en `ROADMAP.md`.
 
 ## 4. Preguntas abiertas (esperan a la dueña; no decidir solo)
 

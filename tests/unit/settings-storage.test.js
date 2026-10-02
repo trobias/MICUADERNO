@@ -14,6 +14,26 @@ vm.runInThisContext(fs.readFileSync(settingsFile, 'utf8'), { filename: settingsF
 
 const { measureStorage, formatSize, LARGE_THRESHOLD } = MC.views.settings;
 
+test('Cuánto ocupa incluye imágenes en papelera y señala cuántos registros conserva', async () => {
+  await MC.store.init({ memory: true });
+  await MC.model.loadSettings();
+  const image = await MC.model.saveImage({ name: 'Flor', src: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==' });
+  await MC.model.deleteImage(image.id);
+  const measured = await MC.views.settings.collectStorage();
+  assert.equal(measured.counts.fotos, 1);
+  assert.equal(measured.trashCount, 1);
+});
+
+test('retención: cuenta solo lo que vencería con un plazo más corto', () => {
+  const at = '2026-10-02T00:00:00.000Z';
+  const items = [
+    { row: { deletedAt: '2026-09-01T00:00:00.000Z' } },
+    { row: { deletedAt: '2026-09-30T00:00:00.000Z' } }
+  ];
+  assert.equal(MC.views.settings.countDueTrash(items, 7, at), 1);
+  assert.equal(MC.views.settings.countDueTrash(items, 0, at), 0);
+});
+
 test('formatSize: formatea bytes, KB y MB con coma decimal en español', () => {
   assert.equal(formatSize(0), '0 B');
   assert.equal(formatSize(null), '0 B');

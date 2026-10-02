@@ -1119,6 +1119,45 @@ await test('atajo ?go=nota lleva a escribir', async () => {
   await context.close();
 });
 
+await test('DA1: editar un día en papelera conserva lo anterior; espacio y retención incluyen lo borrado', async () => {
+  for (const width of [1280, 375]) {
+    const { page, context, errors } = await newPage(browser, { viewport: { width, height: 860 } });
+    await page.goto(FILE_URL);
+    await onboard(page);
+    await page.evaluate(async () => {
+      const day = MC.model.emptyDay(MC.dates.today());
+      day.notes = 'Lo que ya había escrito';
+      day.privacy = { noMemory: true, noInsights: true, noReviews: true };
+      await MC.model.saveDay(day);
+      await MC.model.sendToTrash('days', day.date);
+      const image = await MC.model.saveImage({ name: 'Flor', src: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==' });
+      await MC.model.deleteImage(image.id);
+      const old = await MC.model.savePage({ title: 'Para recuperar' });
+      await MC.model.sendToTrash('pages', old.id, new Date(Date.now() - 20 * 86400000).toISOString());
+    });
+    await goto(page, await page.evaluate(() => MC.routes.settings()));
+    await page.locator('.storage-total').scrollIntoViewIfNeeded();
+    await page.waitForFunction(() => document.querySelector('.storage-total').textContent.includes('3 elementos en la papelera'));
+    await page.getByRole('button', { name: 'Ver papelera', exact: true }).click();
+    await page.selectOption('#st-retention', '7');
+    await page.waitForFunction(() => document.querySelector('#st-retention-note').textContent.includes('1 cosa se borraría'));
+    await goto(page, await page.evaluate(() => MC.routes.today()));
+    await page.waitForFunction(() => document.querySelector('#notes').value === 'Lo que ya había escrito');
+    assert.equal(await page.getByText('Este día está en la papelera.', { exact: false }).isVisible(), true);
+    await page.fill('#notes', 'Lo que ya había escrito y algo nuevo');
+    await page.waitForFunction(() => document.querySelector('.day-head .saved-note').dataset.state === 'saved');
+    assert.equal(await page.evaluate(async () => (await MC.store.get('days', MC.dates.today())).deletedAt), null);
+    await page.fill('#notes', 'Lo que ya había escrito y otra cosa');
+    await page.waitForFunction(() => document.querySelector('.day-head .saved-note').dataset.state === 'saved');
+    assert.equal(await page.evaluate(async () => (await MC.store.get('days', MC.dates.today())).notes), 'Lo que ya había escrito y otra cosa');
+    assert.equal(await page.evaluate(async () => (await MC.model.getDay(MC.dates.today())).privacy.noInsights), true);
+    assert.equal(await page.getByText('Este día está en la papelera.', { exact: false }).isVisible(), false);
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+    assert.deepEqual(errors, []);
+    await context.close();
+  }
+});
+
 await browser.close();
 server.close();
 const failed = results.filter((r) => !r[0]);

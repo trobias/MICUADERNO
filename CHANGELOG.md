@@ -2,6 +2,13 @@
 
 Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantiene. El porqué de cada decisión está en `DECISIONS.md` (Dn); lo que falta, en `ROADMAP.md`. Cada entrega que toca archivos de la app sube `CACHE_VERSION` en `sw.js` para que las PWA instaladas se actualicen.
 
+## 2026-10-02 · Seguimiento de papelera y cierre del traspaso (cache `v18`)
+
+- Traspaso y roadmap reflejan la Fase 1 y T6 ya integrados, el esquema v4, la caché v18 y la suite actual (91 unit y 33 E2E).
+- Abrir un día en papelera muestra lo que ya estaba escrito y explica que editarlo lo restaura. Un guardado vacío o un borrador desactualizado no sobrescribe lo recuperable; los guardados sucesivos conservan texto y privacidad.
+- La medición de espacio incluye también imágenes en papelera y señala cuántos registros conserva. Al acortar la retención, Ajustes avisa cuántos elementos vencerían en el próximo arranque.
+- Las verificaciones en dispositivos reales siguen pendientes; no se presentan como trabajo ya probado.
+
 ## 2026-10-02 · Deshacer y rehacer (cache `v13`)
 
 **Corrección posterior (cache `v14`).** El historial de actividades se vacía al salir de la vista; los atajos solo actúan sobre la hoja visible y ceden el paso a un diálogo abierto. Estado, nombre y traslados de actividades también se pueden deshacer y rehacer. En scrapbook, varios movimientos o giros consecutivos del mismo sticker forman un paso; el guardado espera una pausa breve y se vacía al salir, ocultar la pestaña o cerrar la hoja. Los botones de historial anuncian la acción disponible y muestran el estado deshabilitado con estilos del cuaderno.

@@ -246,6 +246,8 @@ Reglas del director de escenas:
 - **Error de almacenamiento:** papelito rosa arriba (`.slip.slip--blush`): “No pude guardar en este dispositivo; sigue como borrador en esta pestaña. Podés descargar una copia para resguardar tus datos ♡” + botón de descarga.
 - **Deshabilitado:** 50 % opacidad + `cursor: not-allowed`, nunca gris frío.
 
+Los días abiertos desde la papelera muestran un papelito junto al encabezado: editar restaura lo ya guardado. El selector de retención tiene una descripción accesible que anuncia cuántas cosas vencerían al acortar el plazo. “Cuánto ocupa” aclara que su total incluye la papelera.
+
 ## 15. Impresión
 
 Documento dedicado (`js/views/print.js` + `css/print.css`): `@page { size: A4 | A5 | letter }` con márgenes 15/14 mm (11/10 mm en A5). Portada (título, frase, nombre, rango, mariposa), una hoja por mes con calendario de glifos y cantidad de cosas hechas, **los días en secuencia** (sin cortar un día entre dos hojas, `break-inside: avoid`, para no gastar una hoja por día), páginas libres (una hoja cada una) y rutinas. Sin fondos de tela; todo en tinta: imprime bien en blanco y negro gracias a los glifos de ánimo y las marcas de punto cruz.

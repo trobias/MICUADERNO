@@ -1,12 +1,12 @@
 # MI CUADERNO — Roadmap
 
-Estado al 01/10/2026. Lo hecho está en `SPEC.md` y `CHANGELOG.md`. Acá va **el orden** de lo que falta, agrupado por la infraestructura que comparte; cada ítem (con su estado NOW/NEXT/LATER…) está en [`BACKLOG.md`](BACKLOG.md) y la experiencia que se busca, en [`VISION.md`](VISION.md). Las decisiones de arquitectura de la visión: `DECISIONS.md` D25.
+Estado al 02/10/2026. Lo hecho está en `SPEC.md` y `CHANGELOG.md`. Acá va **el orden** de lo que falta, agrupado por la infraestructura que comparte; cada ítem (con su estado NOW/NEXT/LATER…) está en [`BACKLOG.md`](BACKLOG.md) y la experiencia que se busca, en [`VISION.md`](VISION.md). Las decisiones de arquitectura de la visión: `DECISIONS.md` D25.
 
 Regla de este roadmap: **la app no tiene que sentirse grande**. Cada fase es una capacidad bien diseñada que después usan varias ideas; no una lista de features sueltas.
 
 ## Hecho
 
-MVP completo del brief §64 y, después: una sola pantalla con el calendario al centro (D17); todo lo que tiene fecha en el calendario (D18); rutas, cuentas y dibujos en un solo lugar (D19); secciones conectadas por las fechas (D20); calendario en vivo (D21); marcadores que abren cuadros y Agenda con alta/edición/baja (D22); el mes muestra todo y todo se anima, “Completas” por defecto (D23); dibujar, imágenes propias como stickers y adjuntos (D24). `schemaVersion` 3. 50 unit + 21 E2E en verde.
+MVP completo del brief §64 y, después: una sola pantalla con el calendario al centro (D17); todo lo que tiene fecha en el calendario (D18); rutas, cuentas y dibujos en un solo lugar (D19); secciones conectadas por las fechas (D20); calendario en vivo (D21); marcadores que abren cuadros y Agenda con alta/edición/baja (D22); el mes muestra todo y todo se anima, “Completas” por defecto (D23); dibujar, imágenes propias como stickers y adjuntos (D24). Fase 1 integrada: papelera, deshacer/rehacer, guardado visible, medición de espacio, privacidad y corrección del teclado móvil (D26). `schemaVersion` 4, caché `mi-cuaderno-v18`; puerta de calidad con 91 unit y 33 E2E.
 
 ---
 
@@ -35,7 +35,7 @@ Antes de sumar mucho contenido nuevo, que nada se pierda y que todo se pueda des
 - **“guardando… → guardado ✓”** en todas las superficies (DA3).
 - **Cuánto ocupa mi cuaderno**, con desglose y aviso de copia grande (DA4, con E2E).
 - **Privacidad de esta página** (no recuerdo / no insights / no revisiones) que respeten insights y *Mi año* (PV1).
-- Seguimiento de la revisión de DA1 (no bloquea): escribir en un día que está en la papelera, avisar al bajar la retención, contar la papelera en “Cuánto ocupa”, alinear D26/SPEC/DESIGN con lo implementado; sacar actividades sigue siendo definitivo con “Deshacer”.
+- Seguimiento de DA1 completado: editar un día en papelera conserva su contenido, bajar la retención avisa qué vencería y “Cuánto ocupa” incluye imágenes borradas. Sacar actividades sigue siendo definitivo con “Deshacer”; no las manda a papelera.
 - Reglas permanentes desde ya: todo lo nuevo entra en la copia con migración y test (DA6) y degrada con elegancia (DA7).
 
 ### Fase 2 · Motor de elementos de página — NEXT
