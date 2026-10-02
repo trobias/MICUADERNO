@@ -28,13 +28,14 @@ Lo construido no se probó todavía fuera de Chromium headless.
 
 Cada fase dice qué capacidad construye, qué ítems del backlog resuelve y de qué depende. Se puede cambiar el orden si la verificación (V1–V7) muestra otra urgencia.
 
-### Fase 1 · Cimientos que protegen lo guardado — **NOW**
+### Fase 1 · Cimientos que protegen lo guardado — **hecha** (2026-10-02)
 Antes de sumar mucho contenido nuevo, que nada se pierda y que todo se pueda deshacer.
 - **Papelera** con borrado suave y retención (DA1).
 - **Deshacer / rehacer** común con `Ctrl+Z` / `Ctrl+Shift+Z` (DA2).
 - **“guardando… → guardado ✓”** en todas las superficies (DA3).
-- **Cuánto ocupa mi cuaderno**, con desglose y aviso de copia grande (DA4, implementado; falta QA E2E de esta entrega).
+- **Cuánto ocupa mi cuaderno**, con desglose y aviso de copia grande (DA4, con E2E).
 - **Privacidad de esta página** (no recuerdo / no insights / no revisiones) que respeten insights y *Mi año* (PV1).
+- Seguimiento de la revisión de DA1 (no bloquea): escribir en un día que está en la papelera, avisar al bajar la retención, contar la papelera en “Cuánto ocupa”, alinear D26/SPEC/DESIGN con lo implementado; sacar actividades sigue siendo definitivo con “Deshacer”.
 - Reglas permanentes desde ya: todo lo nuevo entra en la copia con migración y test (DA6) y degrada con elegancia (DA7).
 
 ### Fase 2 · Motor de elementos de página — NEXT

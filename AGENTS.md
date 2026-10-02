@@ -115,7 +115,7 @@ skills/                 colección de skills del proyecto (no es parte de la app
 ```
 npm test          # unit (node:test), sin instalar nada
 npm install       # solo para e2e/íconos: instala playwright-core (no descarga navegadores)
-npm run e2e       # 22 recorridos en file:// y http:// (Chromium en /opt/pw-browsers/chromium o CHROMIUM=/ruta; puerto 4199 o E2E_PORT=…)
+npm run e2e       # 32 recorridos en file:// y http:// (Chromium en /opt/pw-browsers/chromium o CHROMIUM=/ruta; puerto 4199 o E2E_PORT=…)
 npm run check     # sintaxis + unit + e2e
 npm run serve     # http://localhost:4173 (probar PWA/SW)
 ```

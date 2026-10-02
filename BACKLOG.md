@@ -151,7 +151,7 @@ Al empezar un ítem: pasarlo a NOW, leer `VISION.md` §0 y la decisión que lo c
 |---|---|---|---|
 | T1 | Partir `js/views/today.js` (≈370 líneas) en encabezado, cierre y cuerpo. | NEXT | Conviene antes de ES4. |
 | T2 | E2E de “pasar a mañana”, deshacer al sacar, stickers con teclado, restaurar scroll. | NEXT | |
-| T3 | Subir `CACHE_VERSION` automáticamente en `npm run dist`. | NEXT | Hoy `v9`. |
+| T3 | Subir `CACHE_VERSION` automáticamente en `npm run dist`. | NEXT | Hoy `v17`. |
 | T4 | Sacar los `woff2` duplicados del dist (las fuentes ya van embebidas). | LATER | |
 | T5 | Un ícono por atajo de la PWA. | LATER | |
 

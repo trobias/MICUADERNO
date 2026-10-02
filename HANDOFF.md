@@ -30,7 +30,7 @@ Para retomar el desarrollo **sin haber estado en las conversaciones anteriores**
 
 ## 3. Estado actual
 
-- Todo lo de la tabla está en `main` (y en la rama de la sesión). `schemaVersion` 3, `CACHE_VERSION` `mi-cuaderno-v9`.
+- Todo lo de la tabla está en `main` (y en la rama de la sesión). `schemaVersion` 4, `CACHE_VERSION` `mi-cuaderno-v17`. Fase 1 (DA1–DA4, PV1, T6) integrada el 2026-10-02.
 - `npm run check` = sintaxis + **50 unit** + **21 E2E** en verde (Chromium headless).
 - **Nunca se probó en dispositivos reales** ni se publicó: ver `ROADMAP.md` → Verificación pendiente (V1–V7).
 - Próximo paso sugerido: `ROADMAP.md` → Fase 1 (papelera, deshacer/rehacer, “guardando… → guardado ✓”, cuánto ocupa, privacidad por página) + el bug T6 (barra de marcadores sobre el teclado del celular).
