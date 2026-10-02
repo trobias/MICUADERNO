@@ -2,6 +2,19 @@
 
 Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantiene. El porqué de cada decisión está en `DECISIONS.md` (Dn); lo que falta, en `ROADMAP.md`. Cada entrega que toca archivos de la app sube `CACHE_VERSION` en `sw.js` para que las PWA instaladas se actualicen.
 
+## 2026-10-02 · Privacidad de un día o una página y esquema v4 (cache `v13`)
+
+**Para quien lo usa**
+- En la página de un día, debajo de la fecha, está **Privacidad**; en una página libre, en su menú (⋯) → **Privacidad de esta página…**. Son tres casillas: no traerlo como recuerdo, no usarlo en “Lo que fui notando”, no incluirlo en los repasos. Nada es obligatorio y se guarda solo.
+- Lo que tiene privacidad sigue en el cuaderno, en el calendario y en las copias. Se nota con un candado y las palabras “Con privacidad” (en la página libre, el candado junto al menú).
+- *Mi año*: “Lo que fui notando” no cuenta los días marcados (ni sus actividades) y “Lo que guardé” no muestra los recuerdos de días que pediste dejar afuera.
+
+**Para quien lo mantiene** (PV1 + esquema v4, D26)
+- `schemaVersion` 4 con `MIGRATIONS[4]` aditiva: no reescribe registros; solo suma `trashRetentionDays: 30` a los ajustes de la copia si falta. Las copias v1–v3 siguen abriendo; una v5 se rechaza con el aviso de siempre. IndexedDB sigue en la versión 2.
+- `js/core/model.js`: `privacy` (días y páginas) y `deletedAt` (todas las entidades) opcionales en los normalizadores, con `sanitizePrivacy`, `isPrivate`, `sanitizeDeletedAt`, `isDeleted`; ajuste `trashRetentionDays` (0/7/15/30/60). `deletedAt` se acepta y se conserva en copias, pero **la papelera (DA1) todavía no existe**: nada lo escribe ni lo filtra fuera de `insights.js` y “Lo que guardé”.
+- `js/core/insights.js` mira solo lo visible (sin `noInsights`, sin lo borrado); `js/views/year.js` filtra “Lo que guardé”. UI en `js/views/pages.js` (`privacyDialog`, `privacyButton`, compartidos con `today.js`).
+- Tests: `tests/unit/privacy-v4.test.js` (copia v3 real → v4, sanitize, ida y vuelta, rechazo de v5, insights). `tests/e2e/run.mjs` espera `schemaVersion` 4. `sw.js` sube a `mi-cuaderno-v13`.
+
 ## 2026-10-02 · Espacio del cuaderno (cache `v11`)
 
 **Para quien lo usa**

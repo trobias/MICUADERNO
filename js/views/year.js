@@ -95,7 +95,11 @@
       right.appendChild(h('ul.noticed', insights.map(insightItem)));
       right.appendChild(h('p.noticed__foot.t-meta', 'Son solo cuentas de lo que registraste, no conclusiones.'));
 
-      var memories = all.days.filter(function (dd) { return dd.date.slice(0, 4) === year && dd.reflection.keep.trim(); }).reverse();
+      // Lo que guardé es un repaso y un recuerdo: no muestra días marcados para quedar afuera (PV1) ni lo borrado.
+      var memories = all.days.filter(function (dd) {
+        return dd.date.slice(0, 4) === year && dd.reflection.keep.trim() &&
+          !M.isPrivate(dd, 'noReviews') && !M.isPrivate(dd, 'noMemory') && !M.isDeleted(dd);
+      }).reverse();
       right.appendChild(h('h2.t-display.notes-title', 'Lo que guardé'));
       if (!memories.length) {
         right.appendChild(h('p.section__hint', 'Todavía no guardaste ningún recuerdo este año. Aparecen acá cuando completás “Qué quiero guardar” al cerrar un día.'));

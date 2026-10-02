@@ -16,6 +16,10 @@
   var COVERS = ['salvia', 'rosa', 'lavanda', 'manteca'];
   var MOTION = ['completas', 'suaves', 'reducidas', 'ninguna'];
   var MAX_TEXT = 20000;
+  var TRASH_RETENTION = [0, 7, 15, 30, 60];
+  // Privacidad de un día o una página (PV1): banderas opcionales, todas en false si faltan.
+  var PRIVACY_FLAGS = ['noMemory', 'noInsights', 'noReviews'];
+  var ISO_INSTANT = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d{1,3})?)?(Z|[+-]\d{2}:\d{2})$/;
 
   function defaultSettings() {
     return {
@@ -30,6 +34,7 @@
       showCover: true,
       onboarded: false,
       backupEveryDays: 14,
+      trashRetentionDays: 30,     // v4 (DA1): días en la papelera antes de vaciarse solos; 0 = conservar siempre
       notify: {
         enabled: false,
         morning: { on: true, time: '08:30' },
@@ -65,6 +70,7 @@
       if (typeof saved[k] === 'boolean') out[k] = saved[k];
     });
     if ([0, 7, 14, 30].indexOf(saved.backupEveryDays) !== -1) out.backupEveryDays = saved.backupEveryDays;
+    if (TRASH_RETENTION.indexOf(saved.trashRetentionDays) !== -1) out.trashRetentionDays = saved.trashRetentionDays;
     if (saved.notify && typeof saved.notify === 'object') {
       var n = saved.notify;
       if (typeof n.enabled === 'boolean') out.notify.enabled = n.enabled;
@@ -114,10 +120,30 @@
       evening: { mood: null, at: null },
       reflection: { good: '', hard: '', lovely: '', keep: '', free: '' },
       stickers: [],
+      privacy: null,
+      deletedAt: null,
       createdAt: null,
       updatedAt: null
     };
   }
+
+  /**
+   * `privacy` de un día o una página (PV1): { noMemory, noInsights, noReviews } con booleanos, o null.
+   * Solo cuenta `true`; cualquier otra cosa es false. Si ninguna está prendida queda null (= como siempre).
+   */
+  function sanitizePrivacy(p) {
+    if (!p || typeof p !== 'object' || Array.isArray(p)) return null;
+    var out = {}, any = false;
+    PRIVACY_FLAGS.forEach(function (k) { out[k] = p[k] === true; if (out[k]) any = true; });
+    return any ? out : null;
+  }
+
+  /** ¿Este día o página tiene prendida esa bandera de privacidad? (`noMemory` | `noInsights` | `noReviews`) */
+  function isPrivate(r, flag) { return !!(r && r.privacy && r.privacy[flag] === true); }
+
+  /** `deletedAt` (papelera, DA1): un instante ISO válido, o null (= activo). */
+  function sanitizeDeletedAt(v) { return typeof v === 'string' && ISO_INSTANT.test(v) && !isNaN(Date.parse(v)) ? v : null; }
+  function isDeleted(r) { return !!(r && r.deletedAt); }
 
   function normalizeDay(raw, date) {
     var d = emptyDay(date || (raw && raw.date));
@@ -134,6 +160,8 @@
     var r = raw.reflection || {};
     Object.keys(d.reflection).forEach(function (k) { d.reflection[k] = str(r[k]); });
     d.stickers = sanitizeStickers(raw.stickers);
+    d.privacy = sanitizePrivacy(raw.privacy);
+    d.deletedAt = sanitizeDeletedAt(raw.deletedAt);
     d.createdAt = typeof raw.createdAt === 'string' ? raw.createdAt : null;
     d.updatedAt = typeof raw.updatedAt === 'string' ? raw.updatedAt : null;
     return d;
@@ -192,6 +220,7 @@
       routineId: typeof a.routineId === 'string' ? a.routineId : null,
       order: Number.isFinite(a.order) ? a.order : Date.now(),
       movedFrom: D.isValid(a.movedFrom) ? a.movedFrom : null,
+      deletedAt: sanitizeDeletedAt(a.deletedAt),
       createdAt: a.createdAt || MC.nowISO(),
       updatedAt: a.updatedAt || MC.nowISO()
     };
@@ -313,6 +342,7 @@
       endDate: D.isValid(r.endDate) ? r.endDate : null,
       moment: MOMENTS.indexOf(r.moment) !== -1 ? r.moment : null,
       archived: !!r.archived,
+      deletedAt: sanitizeDeletedAt(r.deletedAt),
       createdAt: r.createdAt || MC.nowISO(),
       updatedAt: r.updatedAt || MC.nowISO()
     };
@@ -357,6 +387,8 @@
       // Día en el calendario (elegible). Si no hay, el día en que se empezó.
       date: D.isValid(p.date) ? p.date : (D.fromISO(p.createdAt) || D.today()),
       stickers: sanitizeStickers(p.stickers),
+      privacy: sanitizePrivacy(p.privacy),
+      deletedAt: sanitizeDeletedAt(p.deletedAt),
       createdAt: p.createdAt || MC.nowISO(),
       updatedAt: p.updatedAt || MC.nowISO()
     };
@@ -419,6 +451,7 @@
       src: r.src,
       w: Math.round(num(r.w, 1, 4000, 400)), h: Math.round(num(r.h, 1, 4000, 400)),
       drawing: kind === 'drawing' ? sanitizeDrawing(r.drawing) : null,
+      deletedAt: sanitizeDeletedAt(r.deletedAt),
       createdAt: r.createdAt || MC.nowISO(),
       updatedAt: r.updatedAt || MC.nowISO()
     };
@@ -458,6 +491,7 @@
       type: typeof f.type === 'string' ? f.type.slice(0, 100) : '',
       size: Math.round(num(f.size, 0, 1e9, 0)),
       data: f.data,
+      deletedAt: sanitizeDeletedAt(f.deletedAt),
       createdAt: f.createdAt || MC.nowISO()
     };
   }
@@ -592,7 +626,8 @@
 
   MC.model = {
     STATUSES: STATUSES, STATUS_LABEL: STATUS_LABEL, MOMENTS: MOMENTS, MOMENT_LABEL: MOMENT_LABEL,
-    COVERS: COVERS, MOTION: MOTION, PAPERS: PAPERS,
+    COVERS: COVERS, MOTION: MOTION, PAPERS: PAPERS, PRIVACY_FLAGS: PRIVACY_FLAGS, TRASH_RETENTION: TRASH_RETENTION,
+    sanitizePrivacy: sanitizePrivacy, isPrivate: isPrivate, sanitizeDeletedAt: sanitizeDeletedAt, isDeleted: isDeleted,
     defaultSettings: defaultSettings, mergeSettings: mergeSettings,
     getMeta: getMeta, setMeta: setMeta, loadSettings: loadSettings, settings: settings, saveSettings: saveSettings,
     emptyDay: emptyDay, normalizeDay: normalizeDay, isEmptyDay: isEmptyDay, getDay: getDay, saveDay: saveDay, daysInRange: daysInRange,

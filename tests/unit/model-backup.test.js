@@ -277,7 +277,7 @@ test('backup v3: imágenes y adjuntos van y vuelven; una copia v2 se migra', asy
   await M.saveImage({ kind: 'upload', name: 'flor', src: PNG, w: 1, h: 1 });
   await M.addFile({ owner: 'day:2026-10-01', name: 'a.txt', type: 'text/plain', size: 4, data: 'data:text/plain;base64,aG9sYQ==' });
   const json = MC.backup.build(await M.everything());
-  assert.equal(json.schemaVersion, 3);
+  assert.equal(json.schemaVersion, 4);
   assert.equal(json.data.images.length, 1);
   await MC.backup.wipe();
   assert.equal((await M.loadImages()).length, 0);

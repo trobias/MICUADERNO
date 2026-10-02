@@ -14,6 +14,23 @@
   function norm(t) { return String(t || '').trim().toLowerCase().replace(/\s+/g, ' '); }
 
   /**
+   * Lo que las observaciones pueden mirar (SPEC §12, PV1, DA1): sin días marcados “no incluir en observaciones”
+   * —ni sus actividades— y sin nada que esté en la papelera.
+   */
+  function visible(all) {
+    var hidden = {};
+    var days = all.days.filter(function (d) {
+      if (M.isPrivate(d, 'noInsights')) { hidden[d.date] = true; return false; }
+      return !M.isDeleted(d);
+    });
+    return Object.assign({}, all, {
+      days: days,
+      activities: all.activities.filter(function (a) { return !hidden[a.date] && !M.isDeleted(a); }),
+      routines: all.routines.filter(function (r) { return !M.isDeleted(r); })
+    });
+  }
+
+  /**
    * all: resultado de MC.model.everything(); today: 'AAAA-MM-DD'.
    * Devuelve [{ id, text, day?, days?, routineId?, month? }] (máx. 6). Los campos opcionales dicen de qué días
    * habla cada observación, para poder ir a verlos: `day` (uno), `days` (varios, en orden), o
@@ -21,6 +38,7 @@
    */
   function compute(all, today) {
     today = today || D.today();
+    all = visible(all);
     var s = all.meta.settings;
     var good = s.moodLabels[3] + ' o ' + s.moodLabels[4];
     var out = [];

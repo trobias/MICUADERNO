@@ -67,7 +67,6 @@ Al empezar un ítem: pasarlo a NOW, leer `VISION.md` §0 y la decisión que lo c
 
 | # | Qué | Estado | Depende de | Notas / hoy |
 |---|---|---|---|---|
-| PV1 | **Privacidad de esta página**: no mostrar como recuerdo · no incluir en insights · no incluir en revisiones. [5] | NOW | — | Campo `privacy` en el día/página; `insights.js`, *Mi año* y todo lo de ME/RV lo respetan. Requisito antes de ME y RV. |
 | PV2 | **Ocultar mi cuaderno** al instante (difumina y tapa), con atajo sin conflictos (propuesto `Ctrl+Shift+L`; verificar). [33] | NEXT | — | Barato y útil ya. |
 | PV3 | **Bloqueo local opcional** (PIN/contraseña), manual, por inactividad, al minimizar, al cerrar; guarda antes de bloquear. [32, 34] | NEEDS RESEARCH | PV2 | D25: decidir si es solo una “pantalla” (privacidad visual) o cifrado real con WebCrypto (clave derivada del PIN); ser honestos en la UI sobre cuál es. |
 

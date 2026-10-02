@@ -138,7 +138,7 @@ await test('backup: exportar → borrar todo → restaurar deja el cuaderno igua
   await download.saveAs(file);
   const json = JSON.parse(fs.readFileSync(file, 'utf8'));
   assert.equal(json.app, 'mi-cuaderno');
-  assert.equal(json.schemaVersion, 3);
+  assert.equal(json.schemaVersion, 4);
   assert.equal(json.data.days[0].notes, 'esto tiene que volver');
 
   await page.click('button:has-text("Borrar todo el cuaderno")');

@@ -5,7 +5,7 @@
   var D = MC.dates;
   var M = function () { return MC.model; };
 
-  var SCHEMA_VERSION = 3;
+  var SCHEMA_VERSION = 4;
   var APP_ID = 'mi-cuaderno';
 
   /** Migraciones: MIGRATIONS[v] transforma `data` de la versión v-1 a v. */
@@ -22,6 +22,13 @@
     3: function (data) {
       if (data.images == null) data.images = [];
       if (data.files == null) data.files = [];
+      return data;
+    },
+    // v4: campos opcionales `privacy` (días y páginas, PV1) y `deletedAt` (papelera, DA1). Puramente aditiva:
+    // los registros no se reescriben (los normalizadores completan null); solo los ajustes ganan la retención.
+    4: function (data) {
+      var settings = data.meta && data.meta.settings;
+      if (settings && typeof settings === 'object' && settings.trashRetentionDays == null) settings.trashRetentionDays = 30;
       return data;
     }
   };
