@@ -461,9 +461,10 @@
         } else if (!isEditable(document.activeElement)) {
           baseH = Math.max(baseH, vv.height);
         }
+        var wasOpen = document.body.classList.contains('keyboard-open');
         var open = (baseH - vv.height > 150) && isEditable(document.activeElement);
         document.body.classList.toggle('keyboard-open', open);
-        if (open) {
+        if (open && !wasOpen) {
           scrollFieldIntoView(document.activeElement);
         }
       };
@@ -512,9 +513,10 @@
         } else if (!isEditable(document.activeElement)) {
           baseWinH = Math.max(baseWinH, window.innerHeight);
         }
+        var wasOpen = document.body.classList.contains('keyboard-open');
         var open = (baseWinH - window.innerHeight > 150) && isEditable(document.activeElement);
         document.body.classList.toggle('keyboard-open', open);
-        if (open) {
+        if (open && !wasOpen) {
           scrollFieldIntoView(document.activeElement);
         }
       };
@@ -522,7 +524,7 @@
       window.addEventListener('resize', onWinResize);
 
       document.addEventListener('focusin', function (e) {
-        if (isNarrow() && isEditable(e.target)) {
+        if (isNarrow() && isEditable(e.target) && baseWinH - window.innerHeight > 150) {
           document.body.classList.add('keyboard-open');
           scrollFieldIntoView(e.target);
         }

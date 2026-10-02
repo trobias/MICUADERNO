@@ -164,6 +164,43 @@ await test('backup: exportar → borrar todo → restaurar deja el cuaderno igua
   await context.close();
 });
 
+await test('Ajustes: Mis datos muestra desglose y avisa cuando la copia es grande (DA4, file://)', async () => {
+  const { page, errors, context } = await newPage(browser);
+  await page.goto(FILE_URL);
+  await onboard(page);
+  await goto(page, '#/ajustes');
+  await page.locator('.storage-info').scrollIntoViewIfNeeded();
+  await page.waitForFunction(() => document.querySelector('.storage-row[data-cat="texto"]'));
+  assert.match(await page.textContent('.storage-total'), /Tu cuaderno ocupa aprox\./);
+  assert.equal(await page.locator('.storage-row').count(), 5);
+  assert.equal(await page.locator('.storage-large').count(), 0);
+
+  // Datos sintéticos locales: el adjunto supera el umbral de 4 MB de media.
+  await page.evaluate(async (date) => {
+    const day = await MC.model.getDay(date);
+    day.notes = 'Una nota de Nicole';
+    await MC.model.saveDay(day);
+    const image = document.createElement('canvas').toDataURL('image/png');
+    await MC.model.saveImage({ kind: 'upload', name: 'foto de Nicole', src: image });
+    await MC.model.saveImage({ kind: 'drawing', name: 'dibujo de Nicole', src: image, drawing: { strokes: [] } });
+    await MC.model.addFile({ owner: 'day:' + date, name: 'voz.m4a', type: 'audio/mp4', data: 'data:audio/mp4;base64,' + 'A'.repeat(4 * 1024 * 1024) });
+    await MC.model.addFile({ owner: 'day:' + date, name: 'nota.pdf', type: 'application/pdf', data: 'data:application/pdf;base64,AAAA' });
+  }, TODAY);
+  await goto(page, '#/hoy');
+  await goto(page, '#/ajustes');
+  await page.locator('.storage-info').scrollIntoViewIfNeeded();
+  await page.waitForSelector('.storage-large');
+  for (const [cat, count] of [['texto', 'día'], ['fotos', 'foto'], ['audio', 'audio'], ['dibujos', 'dibujo'], ['otros', 'adjunto']]) {
+    const row = page.locator(`.storage-row[data-cat="${cat}"]`);
+    assert.match(await row.textContent(), new RegExp(count));
+    assert.doesNotMatch(await row.locator('.storage-row__size').textContent(), /^0 B$/);
+  }
+  assert.match(await page.textContent('.storage-total'), /4(?:,\d)? MB/);
+  assert.match(await page.textContent('.storage-large'), /copia de seguridad/);
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
 await test('backup inválido: aviso claro y nada cambia', async () => {
   const { page, context } = await newPage(browser);
   await page.goto(FILE_URL);
@@ -567,9 +604,22 @@ await test('mobile 375px: con teclado virtual abierto la barra de marcadores no 
   // 2. Foco real y apertura: al enfocar un campo editable y abrir teclado, se ocultan los marcadores
   await page.locator('#intention').focus();
   assert.equal(await page.evaluate(() => document.activeElement.id), 'intention');
+  await page.evaluate(() => {
+    window.__keyboardScrolls = 0;
+    const original = Element.prototype.scrollIntoView;
+    Element.prototype.scrollIntoView = function (...args) {
+      if (this.id === 'intention') window.__keyboardScrolls++;
+      return original.apply(this, args);
+    };
+  });
   await page.setViewportSize({ width: 375, height: 420 });
   await page.waitForFunction(() => document.body.classList.contains('keyboard-open'));
   assert.equal(await tabs.isVisible(), false, 'los marcadores se ocultan al abrir teclado con foco real');
+  const scrollsOnOpen = await page.evaluate(() => window.__keyboardScrolls);
+  assert.ok(scrollsOnOpen >= 1, 'el campo se desplaza al abrir el teclado');
+  await page.setViewportSize({ width: 375, height: 410 });
+  await page.waitForTimeout(100);
+  assert.equal(await page.evaluate(() => window.__keyboardScrolls), scrollsOnOpen, 'otro resize no vuelve a desplazar el mismo campo');
 
   // 3. Cambio de foco: pasar a otro editable mantiene los marcadores ocultos sin parpadeo
   await page.locator('#notes').focus();
@@ -590,6 +640,26 @@ await test('mobile 375px: con teclado virtual abierto la barra de marcadores no 
   await page.waitForTimeout(100);
   assert.equal(await tabs.isVisible(), true, 'en escritorio los marcadores se mantienen visibles');
 
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+await test('mobile sin visualViewport: el foco solo no oculta marcadores (T6)', async () => {
+  const { page, errors, context } = await newPage(browser, { viewport: { width: 375, height: 760 } });
+  await context.addInitScript(() => { Object.defineProperty(window, 'visualViewport', { value: undefined }); });
+  await page.goto(FILE_URL);
+  await onboard(page);
+  await goto(page, '#/hoy');
+  await page.locator('#intention').focus();
+  assert.equal(await page.locator('#tabs').isVisible(), true, 'el foco sin reducción de altura deja visibles los marcadores');
+  await page.setViewportSize({ width: 375, height: 420 });
+  await page.waitForFunction(() => document.body.classList.contains('keyboard-open'));
+  assert.equal(await page.locator('#tabs').isVisible(), false, 'la altura reducida con foco oculta los marcadores');
+  await page.locator('#notes').focus();
+  assert.equal(await page.evaluate(() => document.body.classList.contains('keyboard-open')), true, 'el cambio de foco conserva el estado');
+  await page.locator('#notes').evaluate((el) => el.blur());
+  await page.waitForFunction(() => !document.body.classList.contains('keyboard-open'));
+  assert.equal(await page.locator('#tabs').isVisible(), true, 'los marcadores vuelven al perder foco');
   assert.deepEqual(errors, []);
   await context.close();
 });

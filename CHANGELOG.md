@@ -2,6 +2,8 @@
 
 Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantiene. El porqué de cada decisión está en `DECISIONS.md` (Dn); lo que falta, en `ROADMAP.md`. Cada entrega que toca archivos de la app sube `CACHE_VERSION` en `sw.js` para que las PWA instaladas se actualicen.
 
+- 2026-10-02: DA4 suma un recorrido E2E del desglose y aviso de copia grande; T6 desplaza el campo solo al abrir el teclado o cambiar el foco y exige una reducción de altura medida en el fallback. Caché `v13`.
+
 ## 2026-10-02 · Espacio del cuaderno (cache `v11`)
 
 **Para quien lo usa**
