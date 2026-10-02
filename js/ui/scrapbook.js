@@ -80,9 +80,13 @@
     function snapshot() { return MC.clone(list); }
     function restore(items) {
       var id = selected && selected.id;
+      var focusId = layer.contains(document.activeElement) && document.activeElement.dataset.id;
       list = MC.clone(items);
       selected = id ? list.filter(function (s) { return s.id === id; })[0] || null : null;
       renderAll(); paintTools();
+      // Ctrl+Z con el foco en un sticker: el foco sigue en ese sticker (si quedó en la hoja).
+      var again = focusId && layer.querySelector('[data-id="' + focusId + '"]');
+      if (again) again.focus({ preventScroll: true });
       return save();
     }
     function remember(label, before) {
@@ -266,14 +270,34 @@
     }
 
     function btn(icon, label, fn, disabled) {
-      var b = h('button.icon-btn.icon-btn--sm', { type: 'button', 'aria-label': label, title: label, 'aria-disabled': String(!!disabled) }, MC.icon(icon));
-      if (disabled) { b.disabled = true; b.style.opacity = '0.5'; }
+      var b = h('button.icon-btn.icon-btn--sm', { type: 'button', 'aria-label': label, title: label }, MC.icon(icon));
+      setDisabled(b, disabled);
       b.addEventListener('click', fn);
       return b;
+    }
+    function setDisabled(b, disabled) {
+      b.disabled = !!disabled;
+      b.setAttribute('aria-disabled', String(!!disabled));
+      b.style.opacity = disabled ? '0.5' : '';
+    }
+
+    // Deshacer/Rehacer se actualizan en el lugar: rearmar la barra le sacaría el foco al botón que se usó.
+    var undoBtn = null, redoBtn = null;
+    function syncHistory() {
+      if (undoBtn) setDisabled(undoBtn, !history.canUndo());
+      if (redoBtn) setDisabled(redoBtn, !history.canRedo());
+    }
+    function step(dir) {
+      history[dir]().then(function () {
+        var b = dir === 'undo' ? undoBtn : redoBtn, other = dir === 'undo' ? redoBtn : undoBtn;
+        var target = b && !b.disabled ? b : other && !other.disabled ? other : null;
+        if (target && decorating) target.focus();
+      });
     }
 
     function paintTools() {
       MC.clear(toolbar);
+      undoBtn = redoBtn = null;
       toolbar.classList.toggle('is-idle', !decorating);
       if (!decorating) {
         var start = h('button.text-btn', { type: 'button' }, MC.icon('sticker'), list.length ? 'Decorar' : 'Pegar un sticker');
@@ -299,8 +323,8 @@
       toolbar.appendChild(btn('shrink', 'Más chico', function () { transform(function (s) { s.scale = MC.clamp(+(s.scale - 0.15).toFixed(2), 0.4, 3); }); }, none));
       toolbar.appendChild(btn('grow', 'Más grande', function () { transform(function (s) { s.scale = MC.clamp(+(s.scale + 0.15).toFixed(2), 0.4, 3); }); }, none));
       toolbar.appendChild(btn('trash', 'Despegar', function () { if (selected) remove(selected); }, none));
-      toolbar.appendChild(btn('undo', 'Deshacer', function () { history.undo(); }, !history.canUndo()));
-      toolbar.appendChild(btn('redo', 'Rehacer', function () { history.redo(); }, !history.canRedo()));
+      undoBtn = toolbar.appendChild(btn('undo', 'Deshacer', function () { step('undo'); }, !history.canUndo()));
+      redoBtn = toolbar.appendChild(btn('redo', 'Rehacer', function () { step('redo'); }, !history.canRedo()));
       toolbar.appendChild(h('button.label-btn', { type: 'button', on: { click: function () { setDecorating(false); } } }, 'Listo'));
       toolbar.appendChild(status);
     }
@@ -314,7 +338,7 @@
     // Tocar el fondo de la capa deselecciona
     layer.addEventListener('pointerdown', function (e) { if (decorating && e.target === layer) select(null); });
 
-    var offHistory = history.onChange(function () { if (decorating) paintTools(); });
+    var offHistory = history.onChange(syncHistory);
     renderAll();
     paintTools();
 

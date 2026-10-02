@@ -149,7 +149,11 @@
             if (opts.onRemoved) opts.onRemoved(it);
             history.push({ label: 'Sacar actividad',
               undo: function () { return M.saveItem(snapshot, { deletedAt: null }).then(function () { if (opts.onRestored) opts.onRestored(); }); },
-              redo: function () { return M.deleteActivity(snapshot).then(function () { if (opts.onRemoved) opts.onRemoved(snapshot); }); }
+              redo: function () { return M.deleteActivity(snapshot).then(function () {
+                // Al deshacer se dibujó una fila nueva: se saca esa, no la original.
+                MC.$$('li.activity[data-id="' + snapshot.id + '"]').forEach(function (el) { el.remove(); });
+                if (opts.onRemoved) opts.onRemoved(snapshot);
+              }); }
             });
             MC.history.activate(history);
             c.toast('Lo saqué de la lista.', { action: 'Deshacer', onAction: function () { history.undo(); } });

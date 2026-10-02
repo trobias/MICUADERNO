@@ -548,6 +548,45 @@ await test('historial de stickers: mover, deshacer, rehacer y texto con deshacer
   await context.close();
 });
 
+await test('historial con teclado: el foco no se pierde y rehacer “sacar” saca la fila', async () => {
+  const { page, errors, context } = await newPage(browser);
+  await page.goto(FILE_URL);
+  await onboard(page);
+  const focused = () => page.evaluate(() => document.activeElement.getAttribute('aria-label') || document.activeElement.className);
+  await page.click('#panel .sticker-tools button:has-text("Pegar un sticker")');
+  await page.click('dialog.sheet .sticker-pick >> nth=0');
+  await page.locator('#panel .sticker').first().waitFor();
+  await page.focus('#panel .sticker-tools button[aria-label="Girar a la derecha"]');
+  await page.keyboard.press('Enter');
+  assert.equal(await focused(), 'Girar a la derecha', 'girar deja el foco en el botón');
+  await page.focus('#panel .sticker-tools button[aria-label="Deshacer"]');
+  await page.keyboard.press('Enter');
+  await page.waitForFunction(() => !document.querySelector('#panel .sticker-tools button[aria-label="Rehacer"]').disabled);
+  assert.equal(await focused(), 'Deshacer', 'deshacer deja el foco en el botón');
+  await page.focus('#panel .sticker');
+  await page.keyboard.press('ArrowRight');
+  await page.keyboard.press('Control+z');
+  await page.waitForFunction(() => document.activeElement.classList.contains('sticker'));
+  await page.click('#panel .sticker-tools button:has-text("Listo")');
+
+  await page.fill('.add-activity input', 'Regar las plantas');
+  await page.keyboard.press('Enter');
+  const row = page.locator('#panel li.activity:has-text("Regar las plantas")');
+  await row.waitFor();
+  await row.locator('button[aria-haspopup="menu"]').click();
+  await page.click('[role="menuitem"]:has-text("Sacar de la lista")');
+  await row.waitFor({ state: 'detached' });
+  await page.click('.toast button:has-text("Deshacer")');
+  await row.waitFor();
+  await page.evaluate(() => document.activeElement.blur());
+  await page.keyboard.press('Control+Shift+z');
+  await row.waitFor({ state: 'detached' });
+  const stored = await page.evaluate((d) => MC.model.itemsForDay(d).then((l) => l.filter((a) => a.title === 'Regar las plantas').length), TODAY);
+  assert.equal(stored, 0, 'rehacer la sacó también de lo guardado');
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
 await test('mobile 375px: una pantalla, 5 botoncitos, sin scroll horizontal', async () => {
   const { page, errors, context } = await newPage(browser, { viewport: { width: 375, height: 760 } });
   await page.goto(FILE_URL);
