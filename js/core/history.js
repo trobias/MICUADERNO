@@ -7,10 +7,11 @@
   function create(opts) {
     opts = opts || {};
     var limit = Number.isFinite(opts.limit) ? Math.max(1, Math.floor(opts.limit)) : 50;
-    var entries = [], cursor = 0, busy = false, listeners = [];
+    var entries = [], cursor = 0, busy = false, clearPending = false, listeners = [], surface = null;
     function changed() { listeners.slice().forEach(function (fn) { fn(); }); }
     function canUndo() { return !busy && cursor > 0; }
     function canRedo() { return !busy && cursor < entries.length; }
+    function clearEntries() { entries = []; cursor = 0; clearPending = false; changed(); }
     function push(command) {
       if (!command || typeof command.undo !== 'function' || typeof command.redo !== 'function') throw new TypeError('El comando necesita undo y redo');
       if (busy) return false;
@@ -27,16 +28,20 @@
       busy = true; changed();
       return Promise.resolve().then(function () { return command[direction](); }).then(function () {
         cursor += direction === 'undo' ? -1 : 1;
-        busy = false; changed();
+        busy = false; if (clearPending) clearEntries(); else changed();
         return true;
-      }, function (error) { busy = false; changed(); throw error; });
+      }, function (error) { busy = false; if (clearPending) clearEntries(); else changed(); throw error; });
     }
     var stack = {
       push: push,
       undo: function () { return run('undo'); },
       redo: function () { return run('redo'); },
       canUndo: canUndo, canRedo: canRedo,
-      clear: function () { if (busy) return; entries = []; cursor = 0; changed(); },
+      undoLabel: function () { return cursor > 0 ? entries[cursor - 1].label || '' : ''; },
+      redoLabel: function () { return cursor < entries.length ? entries[cursor].label || '' : ''; },
+      setSurface: function (el) { surface = el; },
+      surface: function () { return surface; },
+      clear: function () { if (busy) { clearPending = true; return; } clearEntries(); },
       onChange: function (fn) { listeners.push(fn); fn(); return function () { listeners = listeners.filter(function (x) { return x !== fn; }); }; }
     };
     return stack;
@@ -45,12 +50,19 @@
   function editable(el) {
     return el && el.closest && el.closest('input, textarea, [contenteditable]:not([contenteditable="false"]), [role="textbox"]');
   }
+  function visibleSurface(stack) {
+    var el = stack.surface();
+    if (!el || !el.isConnected || el.getClientRects().length === 0) return false;
+    var dialogs = root.document.querySelectorAll('dialog[open]');
+    var top = dialogs[dialogs.length - 1];
+    return !top || top.contains(el);
+  }
   if (root.document) root.document.addEventListener('keydown', function (e) {
     if ((!e.ctrlKey && !e.metaKey) || e.altKey || editable(e.target)) return;
     var key = e.key.toLowerCase();
     var redo = (key === 'z' && e.shiftKey) || (key === 'y' && !e.shiftKey);
     var undo = key === 'z' && !e.shiftKey;
-    if (!active || !(redo || undo) || !(redo ? active.canRedo() : active.canUndo())) return;
+    if (!active || !(redo || undo) || !visibleSurface(active) || !(redo ? active.canRedo() : active.canUndo())) return;
     e.preventDefault();
     (redo ? active.redo() : active.undo()).catch(function (error) { console.error(error); });
   });

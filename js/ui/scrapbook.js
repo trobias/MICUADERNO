@@ -72,11 +72,15 @@
     var selected = null;
     var history = MC.history.create();
     var layer = h('div.sticker-layer');
+    history.setSurface(layer);
     pageEl.appendChild(layer);
     var toolbar = h('div.sticker-tools.is-idle', { role: 'toolbar', 'aria-label': 'Decorar ' + (opts.label || 'la página') });
     var status = h('span.sr-only', { 'aria-live': 'polite' });
 
+    var saveTimer = null, pendingStep = null, stepTimer = null;
     function save() { return opts.onChange(list.map(function (s) { return Object.assign({}, s); })); }
+    function flushSave() { if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; return save(); } }
+    function saveSoon() { clearTimeout(saveTimer); saveTimer = setTimeout(flushSave, 400); }
     function snapshot() { return MC.clone(list); }
     function restore(items) {
       var id = selected && selected.id;
@@ -94,6 +98,27 @@
       if (JSON.stringify(before) === JSON.stringify(after)) return;
       history.push({ label: label, undo: function () { return restore(before); }, redo: function () { return restore(after); } });
     }
+    function finishStep() {
+      clearTimeout(stepTimer);
+      if (!pendingStep) return;
+      var step = pendingStep;
+      pendingStep = null;
+      remember(step.label, step.before);
+    }
+    function groupStep(s, label, before) {
+      if (pendingStep && pendingStep.id !== s.id) finishStep();
+      if (!pendingStep) pendingStep = { id: s.id, label: label, before: before };
+      clearTimeout(stepTimer);
+      stepTimer = setTimeout(finishStep, 400);
+    }
+    function flushPending() { finishStep(); flushSave(); }
+    function onVisibility() { if (document.hidden) flushPending(); }
+    function onShortcut(e) {
+      if ((e.ctrlKey || e.metaKey) && !e.altKey && (e.key.toLowerCase() === 'z' || e.key.toLowerCase() === 'y')) flushPending();
+    }
+    root.addEventListener('blur', flushPending);
+    document.addEventListener('visibilitychange', onVisibility);
+    document.addEventListener('keydown', onShortcut, true);
     function activate() { MC.history.activate(history); }
 
     function place(el, s) {
@@ -158,6 +183,7 @@
     }
 
     function startDrag(e, el, s) {
+      finishStep();
       e.preventDefault();
       activate();
       select(s);
@@ -180,7 +206,7 @@
         if (!moved) return;
         settle(el);
         remember('Mover sticker', before);
-        save();
+        saveSoon();
       }
       el.addEventListener('pointermove', move);
       el.addEventListener('pointerup', up);
@@ -205,10 +231,11 @@
         case 'Escape': select(null); el.blur(); return;
         default: handled = false;
       }
-      if (handled) { e.preventDefault(); place(el, s); remember('Cambiar sticker', before); save(); }
+      if (handled) { e.preventDefault(); place(el, s); groupStep(s, 'Cambiar sticker', before); saveSoon(); }
     }
     /** at (opcional): { x, y, rot, scale } — p. ej. un dibujo grande en el medio de la hoja. */
     function add(name, at) {
+      finishStep();
       activate();
       var before = snapshot();
       var n = list.length;
@@ -233,6 +260,7 @@
     }
 
     function remove(s) {
+      finishStep();
       activate();
       var before = snapshot();
       var el = elFor(s);
@@ -251,11 +279,12 @@
       fn(selected);
       var el = elFor(selected);
       if (el) place(el, selected);
-      remember('Cambiar sticker', before);
-      save();
+      groupStep(selected, 'Cambiar sticker', before);
+      saveSoon();
     }
 
     function setDecorating(on) {
+      if (!on) flushPending();
       decorating = on;
       if (on) activate();
       else if (MC.history.active() === history) MC.history.activate(null);
@@ -278,16 +307,18 @@
     function setDisabled(b, disabled) {
       b.disabled = !!disabled;
       b.setAttribute('aria-disabled', String(!!disabled));
-      b.style.opacity = disabled ? '0.5' : '';
+      b.classList.toggle('is-history-disabled', !!disabled);
     }
 
     // Deshacer/Rehacer se actualizan en el lugar: rearmar la barra le sacaría el foco al botón que se usó.
     var undoBtn = null, redoBtn = null;
     function syncHistory() {
-      if (undoBtn) setDisabled(undoBtn, !history.canUndo());
-      if (redoBtn) setDisabled(redoBtn, !history.canRedo());
+      if (undoBtn) { setDisabled(undoBtn, !history.canUndo()); undoBtn.setAttribute('aria-label', 'Deshacer' + (history.undoLabel() ? ' ' + history.undoLabel() : '')); }
+      if (redoBtn) { setDisabled(redoBtn, !history.canRedo()); redoBtn.setAttribute('aria-label', 'Rehacer' + (history.redoLabel() ? ' ' + history.redoLabel() : '')); }
     }
     function step(dir) {
+      finishStep();
+      flushSave();
       history[dir]().then(function () {
         var b = dir === 'undo' ? undoBtn : redoBtn, other = dir === 'undo' ? redoBtn : undoBtn;
         var target = b && !b.disabled ? b : other && !other.disabled ? other : null;
@@ -325,6 +356,7 @@
       toolbar.appendChild(btn('trash', 'Despegar', function () { if (selected) remove(selected); }, none));
       undoBtn = toolbar.appendChild(btn('undo', 'Deshacer', function () { step('undo'); }, !history.canUndo()));
       redoBtn = toolbar.appendChild(btn('redo', 'Rehacer', function () { step('redo'); }, !history.canRedo()));
+      syncHistory();
       toolbar.appendChild(h('button.label-btn', { type: 'button', on: { click: function () { setDecorating(false); } } }, 'Listo'));
       toolbar.appendChild(status);
     }
@@ -347,7 +379,7 @@
       draw: drawNew,
       /** Pegar una imagen propia (p. ej. un adjunto usado como sticker). */
       addImage: function (img) { if (!decorating) setDecorating(true); add('img:' + img.id); },
-      destroy: function () { offHistory(); if (MC.history.active() === history) MC.history.activate(null); layer.remove(); toolbar.remove(); pageEl.classList.remove('is-decorating'); }
+      destroy: function () { flushPending(); root.removeEventListener('blur', flushPending); document.removeEventListener('visibilitychange', onVisibility); document.removeEventListener('keydown', onShortcut, true); offHistory(); if (MC.history.active() === history) MC.history.activate(null); layer.remove(); toolbar.remove(); pageEl.classList.remove('is-decorating'); }
     };
   }
 

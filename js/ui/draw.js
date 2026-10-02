@@ -122,14 +122,17 @@
     return new Promise(function (resolve) {
       var result = null;
       var canvas = h('canvas.draw__canvas', { width: SIZE, height: SIZE, 'aria-label': 'Hoja para dibujar. Con el texto podés escribir sin dibujar.', role: 'img' });
+      history.setSurface(canvas);
       var ctx = canvas.getContext('2d');
       function redraw() {
         ctx.clearRect(0, 0, SIZE, SIZE);
         paint(ctx, drawing, 1);
         undoBtn.disabled = !history.canUndo();
         undoBtn.setAttribute('aria-disabled', String(undoBtn.disabled));
+        undoBtn.setAttribute('aria-label', 'Deshacer' + (history.undoLabel() ? ' ' + history.undoLabel() : ''));
         redoBtn.disabled = !history.canRedo();
         redoBtn.setAttribute('aria-disabled', String(redoBtn.disabled));
+        redoBtn.setAttribute('aria-label', 'Rehacer' + (history.redoLabel() ? ' ' + history.redoLabel() : ''));
         clearBtn.disabled = !drawing.strokes.length && !drawing.texts.length;
       }
       function remember(before, label) {
@@ -183,9 +186,9 @@
         remember(before, 'Poner texto');
       }
 
-      var undoBtn = h('button.label-btn.label-btn--soft', { type: 'button', 'aria-label': 'Deshacer' }, MC.icon('undo'), 'Deshacer');
+      var undoBtn = h('button.label-btn.label-btn--soft.is-history-disabled', { type: 'button', 'aria-label': 'Deshacer' }, MC.icon('undo'), 'Deshacer');
       undoBtn.addEventListener('click', function () { history.undo(); });
-      var redoBtn = h('button.label-btn.label-btn--soft', { type: 'button', 'aria-label': 'Rehacer' }, MC.icon('redo'), 'Rehacer');
+      var redoBtn = h('button.label-btn.label-btn--soft.is-history-disabled', { type: 'button', 'aria-label': 'Rehacer' }, MC.icon('redo'), 'Rehacer');
       redoBtn.addEventListener('click', function () { history.redo(); });
       var clearBtn = h('button.text-btn', { type: 'button' }, 'Borrar todo');
       clearBtn.addEventListener('click', function () { var before = MC.clone(drawing); drawing = { strokes: [], texts: [] }; remember(before, 'Borrar dibujo'); });
