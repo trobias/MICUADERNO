@@ -77,3 +77,31 @@ test('papelera: summarize y exportaciones legibles ignoran borrados; JSON los co
   assert.equal(backup.data.days[0].deletedAt, all.days[0].deletedAt);
   assert.equal(MC.backup.validate(backup).payload.days[0].deletedAt, all.days[0].deletedAt);
 });
+
+test('papelera: los adjuntos de una página vuelven con ella y se van solo cuando la página se borra del todo', async () => {
+  await fresh();
+  const data = 'data:text/plain;base64,aG9sYQ==';
+  const make = async (title) => {
+    const p = await M.savePage({ title });
+    const f = await M.addFile({ owner: 'page:' + p.id, name: 'entrada.txt', data });
+    return { p, f };
+  };
+  const kept = await make('Vuelve');
+  await M.deletePage(kept.p.id);
+  await M.restoreTrash('pages', kept.p.id);
+  assert.equal((await M.filesFor('page:' + kept.p.id))[0].id, kept.f.id);
+
+  const one = await make('Una');
+  const due = await make('Vencida');
+  const all = await make('Todas');
+  await M.deletePage(one.p.id);
+  await M.sendToTrash('pages', due.p.id, '2026-08-01T00:00:00.000Z');
+  assert.equal(await M.deleteForever('pages', one.p.id), true);
+  assert.equal(await MC.store.get('files', one.f.id), undefined);
+  assert.equal(await M.purgeTrash('2026-10-02T00:00:00.000Z', 30), 1);
+  assert.equal(await MC.store.get('files', due.f.id), undefined);
+  await M.deletePage(all.p.id);
+  await M.emptyTrash();
+  assert.equal(await MC.store.get('files', all.f.id), undefined);
+  assert.ok(await MC.store.get('files', kept.f.id));
+});

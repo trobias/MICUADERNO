@@ -638,6 +638,15 @@
       });
     });
   }
+  /** Borra del todo un registro de la papelera. Una página se lleva sus adjuntos: sin ella no hay dónde verlos. */
+  function dropForever(store, id) {
+    return S().del(store, id).then(function () {
+      if (store !== 'pages') return;
+      return S().getAllByIndex('files', 'owner', 'page:' + id).then(function (fs) {
+        return Promise.all(fs.map(function (f) { return S().del('files', f.id); }));
+      });
+    });
+  }
   function trashItems() {
     return Promise.all(TRASH_STORES.map(function (store) {
       return S().getAll(store).then(function (rows) {
@@ -654,7 +663,7 @@
     if (days === 0) return Promise.resolve(0);
     return trashItems().then(function (items) {
       var due = items.filter(function (item) { return time - Date.parse(item.row.deletedAt) > days * 86400000; });
-      return Promise.all(due.map(function (item) { return S().del(item.store, item.id); })).then(function () {
+      return Promise.all(due.map(function (item) { return dropForever(item.store, item.id); })).then(function () {
         if (due.some(function (item) { return item.store === 'images'; })) return loadImages().then(function () { return due.length; });
         return due.length;
       });
@@ -664,7 +673,7 @@
     trashStore(store);
     return S().get(store, id).then(function (row) {
       if (!row || !isDeleted(row)) return false;
-      return S().del(store, id).then(function () {
+      return dropForever(store, id).then(function () {
         if (store === 'images') { delete imageCache[id]; MC.emit('images', null); }
         return true;
       });
@@ -672,7 +681,7 @@
   }
   function emptyTrash() {
     return trashItems().then(function (items) {
-      return Promise.all(items.map(function (item) { return S().del(item.store, item.id); })).then(function () {
+      return Promise.all(items.map(function (item) { return dropForever(item.store, item.id); })).then(function () {
         if (items.some(function (item) { return item.store === 'images'; })) return loadImages().then(function () { return items.length; });
         return items.length;
       });
