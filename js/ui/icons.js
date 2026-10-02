@@ -43,6 +43,8 @@
     sticker: '<path d="M5 4.5h10l4.5 4.5v9.5c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1z"/><path d="M15 4.5V8a1 1 0 0 0 1 1h3.5"/><path d="M9 14.5c1.6 1.4 4.4 1.4 6 0"/><path d="M9.5 11h.01M14.5 11h.01"/>',
     rotate: '<path d="M18.5 12a6.5 6.5 0 1 1-2-4.7"/><path d="M17.3 3.5v4.2h-4.2"/>',
     'rotate-left': '<path d="M5.5 12a6.5 6.5 0 1 0 2-4.7"/><path d="M6.7 3.5v4.2h4.2"/>',
+    undo: '<path d="M9 8H4.5L8 4.5M4.5 8h10a5.5 5.5 0 0 1 0 11H12"/>',
+    redo: '<path d="M15 8h4.5L16 4.5M19.5 8h-10a5.5 5.5 0 0 0 0 11H12"/>',
     grow: '<path d="M12 5v14M5 12h14"/><circle cx="12" cy="12" r="9"/>',
     shrink: '<path d="M5 12h14"/><circle cx="12" cy="12" r="9"/>',
     text: '<path d="M5 6.5h14M12 6.5V19M9 19h6"/>',

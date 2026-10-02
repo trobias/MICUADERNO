@@ -4,6 +4,7 @@
   'use strict';
   var MC = root.MC;
   var h = MC.h, D = MC.dates, M = MC.model, R = MC.routes, c = MC.c;
+  var history = MC.history.create();
 
   var STATUS_ICON = { pending: 'box', done: 'stitch', partial: 'half', postponed: 'later', skipped: 'knot' };
 
@@ -146,9 +147,12 @@
           M.deleteActivity(it).then(function () {
             li.remove();
             if (opts.onRemoved) opts.onRemoved(it);
-            c.toast('Lo saqué de la lista.', { action: 'Deshacer', onAction: function () {
-              MC.store.put('activities', M.normalizeActivity(snapshot)).then(function () { if (opts.onRestored) opts.onRestored(); });
-            } });
+            history.push({ label: 'Sacar actividad',
+              undo: function () { return M.saveItem(snapshot, { deletedAt: null }).then(function () { if (opts.onRestored) opts.onRestored(); }); },
+              redo: function () { return M.deleteActivity(snapshot).then(function () { if (opts.onRemoved) opts.onRemoved(snapshot); }); }
+            });
+            MC.history.activate(history);
+            c.toast('Lo saqué de la lista.', { action: 'Deshacer', onAction: function () { history.undo(); } });
           });
         } });
       }

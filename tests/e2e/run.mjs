@@ -524,6 +524,30 @@ await test('dibujar, subir imágenes como stickers y adjuntar archivos', async (
   await context.close();
 });
 
+await test('historial de stickers: mover, deshacer, rehacer y texto con deshacer nativo', async () => {
+  const { page, errors, context } = await newPage(browser);
+  await page.goto(FILE_URL);
+  await onboard(page);
+  await page.click('#panel .sticker-tools button:has-text("Pegar un sticker")');
+  await page.click('dialog.sheet .sticker-pick >> nth=0');
+  const sticker = page.locator('#panel .sticker').first();
+  await sticker.waitFor();
+  const x0 = await sticker.evaluate((el) => parseFloat(el.style.left));
+  await sticker.focus();
+  await page.keyboard.press('ArrowRight');
+  const x1 = await sticker.evaluate((el) => parseFloat(el.style.left));
+  assert.ok(x1 > x0, 'se movió el sticker');
+  await page.keyboard.press('Control+z');
+  await page.waitForFunction((x) => Math.abs(parseFloat(document.querySelector('#panel .sticker').style.left) - x) < 0.001, x0);
+  await page.keyboard.press('Control+Shift+z');
+  await page.waitForFunction((x) => Math.abs(parseFloat(document.querySelector('#panel .sticker').style.left) - x) < 0.001, x1);
+  await page.fill('#notes', 'Nicole escribió acá');
+  await page.keyboard.press('Control+z');
+  assert.equal(await sticker.evaluate((el) => parseFloat(el.style.left)), x1, 'el textarea no tocó el historial de stickers');
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
 await test('mobile 375px: una pantalla, 5 botoncitos, sin scroll horizontal', async () => {
   const { page, errors, context } = await newPage(browser, { viewport: { width: 375, height: 760 } });
   await page.goto(FILE_URL);

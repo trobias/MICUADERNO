@@ -2,6 +2,11 @@
 
 Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantiene. El porqué de cada decisión está en `DECISIONS.md` (Dn); lo que falta, en `ROADMAP.md`. Cada entrega que toca archivos de la app sube `CACHE_VERSION` en `sw.js` para que las PWA instaladas se actualicen.
 
+## 2026-10-02 · Deshacer y rehacer (cache `v13`)
+
+- Stickers y dibujos tienen Deshacer y Rehacer en sus barras; también funcionan Ctrl+Z, Ctrl+Shift+Z y Ctrl+Y fuera de los campos de texto. Sacar una actividad usa el mismo historial desde el aviso.
+- `MC.history` mantiene una pila transitoria por superficie, con límite de 50 acciones; los cambios de stickers siguen el guardado habitual. Pruebas unitarias y recorrido E2E cubren el historial y el texto editable.
+
 ## 2026-10-02 · Espacio del cuaderno (cache `v11`)
 
 **Para quien lo usa**
