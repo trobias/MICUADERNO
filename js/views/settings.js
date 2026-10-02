@@ -12,8 +12,11 @@
     ninguna: ['Ninguna', 'Todo cambia al instante.']
   };
 
-  function save(patch, msg) {
-    return M.saveSettings(patch).then(function () { if (msg) c.toast(msg); });
+  // Cada cambio se confirma con el indicador “guardando… → guardado ✓” de la hoja (DA3), sin avisos flotantes.
+  var note = null;
+  function save(patch) {
+    var p = M.saveSettings(patch);
+    return note ? note.track(p) : p;
   }
 
   function checkRow(id, label, checked, onChange, hint) {
@@ -241,17 +244,20 @@
     var right = h('section.page.page--margin.settings-page');
     main.appendChild(h('div.spread', left, h('div.spine', { 'aria-hidden': 'true' }), right));
 
-    left.appendChild(h('h1.t-display.settings-title', 'Ajustes'));
+    note = c.savedNote({ failText: 'Todavía no se pudo guardar en el cuaderno; el cambio sigue en esta ventana.' });
+    // Lo que se guarda desde otras piezas de Ajustes (recordatorios) también se confirma acá.
+    var offSettings = MC.on('settings', function () { if (note) note.saved(); });
+    left.appendChild(h('div.saved-row', h('h1.t-display.settings-title', 'Ajustes'), note));
 
     // Vos
     var name = h('input.input', { id: 'st-name', type: 'text', value: s.name, maxlength: 40, autocomplete: 'given-name' });
-    name.addEventListener('change', function () { save({ name: name.value.trim() }, 'Guardado.'); });
+    name.addEventListener('change', function () { save({ name: name.value.trim() }); });
     var moodInputs = h('ul.mood-names');
     s.moodLabels.forEach(function (l, i) {
       var inp = h('input.input', { type: 'text', value: l, maxlength: 24, 'aria-label': 'Nombre del ánimo ' + (i + 1) });
       inp.addEventListener('change', function () {
         var labels = MC.$$('input', moodInputs).map(function (x) { return x.value; });
-        save({ moodLabels: labels }, 'Nombres guardados.');
+        save({ moodLabels: labels });
       });
       moodInputs.appendChild(h('li', c.moodMark(i + 1), inp));
     });
@@ -308,7 +314,7 @@
     var every = h('select.select', { id: 'st-every' }, [[7, 'Cada semana'], [14, 'Cada dos semanas'], [30, 'Cada mes'], [0, 'No me recuerdes']].map(function (o) {
       return h('option', { value: o[0], selected: s.backupEveryDays === o[0] }, o[1]);
     }));
-    every.addEventListener('change', function () { save({ backupEveryDays: +every.value }, 'Guardado.'); });
+    every.addEventListener('change', function () { save({ backupEveryDays: +every.value }); });
     var lastBackup = h('p.t-meta');
     M.getMeta('lastBackupAt', null).then(function (v) { lastBackup.textContent = D.fromISO(v) ? 'Última copia: ' + D.longLabel(D.fromISO(v)) : 'Todavía no guardaste ninguna copia.'; });
 
@@ -431,7 +437,7 @@
     about.textContent = 'MI CUADERNO ' + VERSION + ' · guardado en ' + (MC.store.kind() === 'indexeddb' ? 'este navegador' : 'memoria (temporal)');
     right.appendChild(about);
 
-    return { destroy: function () { stopStorage(); } };
+    return { destroy: function () { stopStorage(); offSettings(); note = null; } };
   }
 
   MC.views = MC.views || {};

@@ -102,9 +102,10 @@
     var save = MC.debounce(function () {
       if (!page) return;
       var r = rev;
-      M.savePage(page).then(function (p) { page.updatedAt = p.updatedAt; if (r === rev) MC.ui.set(draftKey, null); saved.flash(); });
+      saved.track(M.savePage(page).then(function (p) { page.updatedAt = p.updatedAt; if (r === rev && c.durable()) MC.ui.set(draftKey, null); }),
+        function () { return r === rev; });
     }, 450);
-    function persist() { rev++; if (page) MC.ui.set(draftKey, { at: Date.now(), page: page }); save(); }
+    function persist() { rev++; if (page) { MC.ui.set(draftKey, { at: Date.now(), page: page }); saved.saving(); } save(); }
     persist.flush = function () { save.flush(); };
     persist.cancel = function () { save.cancel(); MC.ui.set(draftKey, null); };
 
@@ -113,7 +114,7 @@
       var draft = MC.ui.get(draftKey, null);
       if (p && draft && draft.page && draft.at > Date.parse(p.updatedAt || 0)) {
         p = M.normalizePage(Object.assign({}, draft.page, { id: p.id, createdAt: p.createdAt }));
-        M.savePage(p).then(function () { MC.ui.set(draftKey, null); });
+        M.savePage(p).then(function () { if (c.durable()) MC.ui.set(draftKey, null); });
       } else if (draft) MC.ui.set(draftKey, null);
       if (!p) {
         sheet.appendChild(c.empty('No encontré esta página. Quizás la borraste.', 'nube'));
@@ -153,7 +154,7 @@
       metaEl = null;
       sheet.appendChild(dayMeta());
       sheet.appendChild(MC.images.attachments('page:' + page.id, { onSticker: function (img) { if (scrap) scrap.addImage(img); } }));
-      scrap = MC.scrapbook.attach(sheet, { stickers: page.stickers, label: 'esta página', onChange: function (list) { page.stickers = list; persist(); } });
+      scrap = MC.scrapbook.attach(sheet, { stickers: page.stickers, label: 'esta página', note: saved, onChange: function (list) { page.stickers = list; persist(); } });
       sheet.appendChild(scrap.toolbar);
       if (MC.ui.get('drawOnOpen', null) === page.id) {
         MC.ui.set('drawOnOpen', null);

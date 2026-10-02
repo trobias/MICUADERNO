@@ -2,7 +2,27 @@
 
 Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantiene. El porqué de cada decisión está en `DECISIONS.md` (Dn); lo que falta, en `ROADMAP.md`. Cada entrega que toca archivos de la app sube `CACHE_VERSION` en `sw.js` para que las PWA instaladas se actualicen.
 
-- 2026-10-02: DA4 suma un recorrido E2E del desglose y aviso de copia grande; T6 desplaza el campo solo al abrir el teclado o cambiar el foco y exige una reducción de altura medida en el fallback. Caché `v13`.
+## 2026-10-02 · “guardando… → guardado ✓” en todas las hojas (cache `v13`)
+
+### Revisión DA3 (cache `v14`)
+- El aviso de fallo queda por encima de los stickers en páginas angostas. El error de almacenamiento ya no duplica el aviso con un toast cuando hay un indicador visible; fuera de esas hojas conserva el aviso general.
+- Borrar una imagen desde “Mis stickers” muestra el mismo estado de guardado dentro del sobre. `SPEC.md` usa el texto y la firma de `c.savedNote()` reales.
+
+**Para quien lo usa**
+- Al escribir en un día o en una página, arriba aparece un “guardando…” tenue; cuando el cuaderno lo guardó de verdad, cambia a “guardado ✓” y al ratito se desvanece. Lo mismo al decorar con stickers (se ve en la barra de decorar) y al cambiar algo en Ajustes, que ya no muestra carteles flotantes por cada cambio.
+- Si no se pudo guardar (o el navegador no deja usar su almacenamiento), en vez de “guardado” dice con calma “Todavía no se pudo guardar en el cuaderno; queda como borrador en este dispositivo.”, con un lápiz y “Descargar una copia” a mano. Cuando vuelve a poder, dice “guardado ✓” otra vez.
+
+**Para quien lo mantiene** (DA3)
+- `c.savedNote(opts)` (`js/ui/components.js`) suma `saving()`, `saved()`, `failed()`, `track(promesa, esLaUltima?)` y `twin()`; `flash()` sigue funcionando (= `saved()`). “guardado” solo cuando resuelve la promesa de `MC.model`/`MC.store`; en modo memoria (`c.durable()` falso) muestra el aviso de fallo. Lector de pantalla: región `aria-live="polite"` aparte que anuncia “Guardado.” (como mucho cada 15 s) y el fallo; “guardando…” nunca.
+- Hoy y Páginas: `persist()` marca “guardando…” y el guardado con debounce pasa por `track`. En modo memoria el borrador local (D13) ya no se borra: es lo único que sobrevive a una recarga.
+- Scrapbook: `attach(…, { note })` muestra una copia visual del indicador en la barra mientras se decora. Ajustes: el indicador va junto al título; `save()` ya no lanza toasts.
+- Estilos en `css/components.css`: solo opacidad (`--dur-ui`, `--ease-out`), sin transición en *Reducidas*/*Ninguna*; el aviso de fallo baja a su propio renglón. E2E nuevo: día y página pasan por “guardando…” → “guardado”, fallo simulado y recarga. `sw.js` sube a `mi-cuaderno-v13`.
+
+## 2026-10-02 · QA de DA4 y ajuste del teclado móvil (cache `v13`)
+
+**Para quien lo mantiene**
+- DA4 suma un recorrido E2E del desglose y del aviso de copia grande. T6 desplaza el campo solo al abrir el teclado o cambiar el foco, y el fallback exige una reducción de altura medida antes de ocultar los marcadores.
+- Herramientas en Windows: `tools/serve.mjs`, `build-fonts`, `dist` y `make-icons` resuelven la raíz con `fileURLToPath`; `npm run e2e` acepta `E2E_PORT` y avisa si el puerto está ocupado.
 
 ## 2026-10-02 · Espacio del cuaderno (cache `v11`)
 

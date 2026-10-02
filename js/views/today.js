@@ -35,17 +35,17 @@
 
     // Borrador local: cada cambio se anota al instante en localStorage para que nada se pierda
     // si la pestaña se cierra antes de que IndexedDB termine de guardar. Se limpia al guardar.
+    // En modo memoria (sin IndexedDB) el borrador se queda: es lo único que sobrevive a una recarga.
     var draftKey = 'draft.' + date;
     var rev = 0;
     var save = MC.debounce(function () {
       var r = rev;
-      M.saveDay(day).then(function (d) {
+      saved.track(M.saveDay(day).then(function (d) {
         day.createdAt = d.createdAt; day.updatedAt = d.updatedAt;
-        if (r === rev) MC.ui.set(draftKey, null);
-        saved.flash();
-      });
+        if (r === rev && c.durable()) MC.ui.set(draftKey, null);
+      }), function () { return r === rev; });
     }, 400);
-    function persist() { rev++; MC.ui.set(draftKey, { at: Date.now(), day: day }); save(); }
+    function persist() { rev++; MC.ui.set(draftKey, { at: Date.now(), day: day }); saved.saving(); save(); }
     persist.flush = function () { save.flush(); };
 
     var spread = h('div.spread');
@@ -71,7 +71,7 @@
       var storedAt = stored.updatedAt ? Date.parse(stored.updatedAt) : 0;
       if (draft.at <= storedAt) { MC.ui.set(draftKey, null); return stored; }
       var recovered = M.normalizeDay(draft.day, date);
-      setTimeout(function () { M.saveDay(recovered).then(function () { MC.ui.set(draftKey, null); }); }, 0);
+      setTimeout(function () { M.saveDay(recovered).then(function () { if (c.durable()) MC.ui.set(draftKey, null); }); }, 0);
       return recovered;
     }
 
@@ -152,13 +152,12 @@
         var t = input.value.trim();
         if (!t) return;
         input.value = '';
-        M.addActivity(date, t).then(function (a) {
+        saved.track(M.addActivity(date, t).then(function (a) {
           if (!a) return;
           items.push(a);
           listEl.appendChild(row(a));
           updateEmpty();
-          saved.flash();
-        });
+        }));
       });
       input.addEventListener('input', function () { MC.emit('typing'); });
       var add = h('label.add-activity', MC.icon('plus'), input);
@@ -207,6 +206,7 @@
       scrap = MC.scrapbook.attach(right, {
         stickers: day.stickers,
         label: 'esta página',
+        note: saved,
         onChange: function (list) { day.stickers = list; persist(); }
       });
       right.appendChild(scrap.toolbar);
