@@ -110,8 +110,10 @@
     var actions = [];
     if (existing) {
       actions.push({ label: 'Borrar', kind: 'text', icon: 'trash', onClick: function () {
-        return c.confirm({ title: '¿Borrar «' + existing.title + '»?', text: 'Lo que ya marcaste queda en tus días. Solo deja de aparecer de acá en adelante.', confirm: 'Borrar la rutina', danger: true })
-          .then(function (ok) { if (!ok) return false; return M.deleteRoutine(existing.id).then(function () { onSaved(); c.toast('Rutina borrada.'); }); });
+        return c.confirm({ title: '¿Mandar «' + existing.title + '» a la papelera?', text: 'Lo que ya marcaste queda en tus días. Podés recuperar la rutina desde Ajustes.', confirm: 'Mandar a la papelera' })
+          .then(function (ok) { if (!ok) return false; return M.deleteRoutine(existing.id).then(function () {
+            onSaved(); setTimeout(function () { c.toast('Se fue a la papelera.', { action: 'Deshacer', onAction: function () { M.restoreTrash('routines', existing.id).then(onSaved); } }); }, 0);
+          }); });
       } });
       actions.push({ spacer: true });
     }

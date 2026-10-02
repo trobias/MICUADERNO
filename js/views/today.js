@@ -95,8 +95,23 @@
             h('h1.t-display.day-head__weekday', D.capitalize(D.DAYS[D.weekday(date)])),
             h('p.day-head__long', p.d + ' de ' + D.MONTHS[p.m - 1] + (p.y !== +today.slice(0, 4) ? ' de ' + p.y : ''))),
           next),
-        !isToday ? h('div.day-head__tools', h('a.text-btn', { href: R.today() }, MC.icon('hoy'), 'Ir a hoy')) : null
+        h('div.day-head__tools',
+          !isToday ? h('a.text-btn', { href: R.today() }, MC.icon('hoy'), 'Ir a hoy') : null,
+          privacyEl = MC.views.pages.privacyButton(day.privacy, openPrivacy))
       );
+    }
+
+    /* Privacidad de este día (PV1): un acceso discreto en el encabezado; el estado se dice en palabras. */
+    var privacyEl = null;
+    function openPrivacy() {
+      MC.views.pages.privacyDialog({
+        kind: 'day', privacy: day.privacy, empty: M.isEmptyDay(day),
+        onChange: function (p) {
+          day.privacy = p;
+          persist(); persist.flush();
+          privacyEl.paint(p);
+        }
+      });
     }
 
     /* ---------- Hoja izquierda ---------- */

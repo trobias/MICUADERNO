@@ -209,7 +209,8 @@ En coherencia con DECISIONS D25, la papelera **no crea almacenes separados**. Ca
   - `days` (entradas diarias)
 - **Filtro universal en lecturas:** todas las consultas del dominio (`days`, `pages`, `routines`, `activities`, `images`, `files`), las vistas de la interfaz (`today`, `calendar`, `agenda`, `routines`, `pages`, `year`), `MC.model.summarize` y los cálculos de `insights.js` filtran y descartan registros con `deletedAt != null`. Para la experiencia diaria, lo borrado no existe.
 - **Retención configurable:** `settings.trashRetentionDays` (default 30 días; opciones 7, 15, 30, 60 días, o 0 para conservar siempre sin purga automática).
-- **Purga automática:** en cada arranque de la aplicación (`MC.store.init`), se ejecuta una limpieza silenciosa que elimina definitivamente (`delete`) los registros cuyo `deletedAt` tenga una antigüedad mayor al plazo configurado (`now - deletedAt > retentionMs`).
+- **Purga automática:** en cada arranque de la aplicación, después de `MC.store.init` y de cargar los ajustes, se ejecuta una limpieza silenciosa que elimina definitivamente (`delete`) los registros cuyo `deletedAt` tenga una antigüedad mayor al plazo configurado (`now - deletedAt > retentionMs`). Si la limpieza falla, el cuaderno abre igual y lo vencido espera al próximo arranque.
+- **Adjuntos de una página:** mandar una página a la papelera no toca sus adjuntos (siguen con `owner: 'page:<id>'` y vuelven con ella al restaurarla). Cuando la página se borra del todo (purga, *Borrar definitivamente* o *Vaciar*), sus adjuntos se borran con ella: sin la página no hay dónde verlos.
 - **Vaciar a mano:** acción explícita en Ajustes → Mis datos → Papelera con confirmación previa (“¿Querés vaciar la papelera? Esta acción no se puede deshacer”), que purga inmediatamente los registros marcados.
 - **Restaurar:** devuelve el elemento a su colección activa fijando `deletedAt = null` y actualizando `updatedAt`. Una página vuelve al índice, una rutina vuelve a materializarse en el calendario, un sticker vuelve a estar disponible.
 - **Entra en la copia de seguridad:** los elementos en papelera se incluyen en la exportación `.json` con su `deletedAt` intacto. Quien restaura una copia conserva su papelera con los tiempos de retención correspondientes.
@@ -224,6 +225,8 @@ En coherencia con DECISIONS D25, la privacidad emocional vive en la fuente de lo
   - `noInsights: true` → **No incluir en observaciones**: `insights.js` descarta completamente el registro de sus análisis de frecuencia, co-ocurrencias de ánimo y hábitos.
   - `noReviews: true` → **No incluir en revisiones**: este día o página no aporta frases, reflexiones ni ítems a las revisiones semanales/mensuales ni a “Lo que guardé” de *Mi año*.
 - **Opcionalidad radical:** ausencia de campo o valores `undefined`/`false` significan inclusión habitual. Un día o página sin privacidad es 100 % válido y no genera deuda técnica ni avisos.
+- **Normalización** (`MC.model.sanitizePrivacy`): solo `true` cuenta como prendido; cualquier otro valor es `false` y los campos desconocidos se descartan. Si no queda ninguna bandera prendida, se guarda `privacy: null`. La privacidad sola no hace que un día vacío exista (`isEmptyDay` no la mira): se guarda junto con lo primero que se anote ese día.
+- **Quién la respeta hoy:** `insights.js` (días con `noInsights` y sus actividades) y *Mi año* → “Lo que guardé” (`noReviews` o `noMemory`). Recuerdos, revisiones y buscador la van a consultar con `MC.model.isPrivate(registro, bandera)` cuando existan.
 
 ## Migraciones
 
@@ -238,7 +241,7 @@ Suma `images` y `files` (vacíos en una copia v2). IndexedDB pasa a la versión 
 ### Migración v3 → v4 (2026-10-02 · Fase 1)
 - **Contenido:** incorpora campos opcionales `deletedAt: null` y `privacy: null` en las entidades del modelo, y agrega `trashRetentionDays: 30` en `settings` si no existía.
 - **Estrategia en IndexedDB:** puramente aditiva; no requiere reescritura masiva de registros en IndexedDB porque las funciones de normalización del dominio (`normalizeDay`, `normalizePage`, etc.) admiten la ausencia de `deletedAt` y `privacy` asignando `null` o `false` en memoria.
-- **En la importación de copias:** `MIGRATIONS[4]` asegura que `data.settings.trashRetentionDays` tenga valor por defecto (30) si falta, y los sanitizadores permiten los nuevos campos si vienen presentes en el JSON. Copias v1, v2 y v3 abren de forma transparente y sin pérdidas.
+- **En la importación de copias:** `MIGRATIONS[4]` asegura que `data.meta.settings.trashRetentionDays` tenga valor por defecto (30) si falta, y los sanitizadores permiten los nuevos campos si vienen presentes en el JSON. Copias v1, v2 y v3 abren de forma transparente y sin pérdidas.
 - **Cobertura de tests (`tests/unit/backup-v4.test.js` o `backup.test.js`):**
   1. Importar backup v3 en v4 produce un estado válido con settings v4 y datos intactos.
   2. Exportar entidades con `deletedAt` y `privacy` genera un JSON v4 fiel; al reimportar, los valores se preservan.

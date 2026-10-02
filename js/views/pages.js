@@ -57,6 +57,55 @@
       h('p.section__hint', 'Empezá en blanco o con una idea. Todo se puede cambiar, también el día.'), grid] });
   }
 
+  /* ---------- Privacidad de un día o de una página (PV1) ---------- */
+  /**
+   * Tres casillas que se guardan al tocarlas. La usan la página libre (su menú) y la página del día (su encabezado).
+   * opts: { kind: 'day' | 'page', privacy, empty, onChange(privacy | null) }
+   */
+  function privacyDialog(opts) {
+    var day = opts.kind === 'day';
+    var it = day ? 'lo' : 'la';
+    var current = M.sanitizePrivacy(opts.privacy) || { noMemory: false, noInsights: false, noReviews: false };
+    var OPTIONS = [
+      { key: 'noMemory', label: 'No traer' + it + ' como recuerdo', hint: (day ? 'No aparece en “Lo que guardé” ni en' : 'No aparece en') + ' los recuerdos que el cuaderno te acerque.' },
+      { key: 'noInsights', label: 'No usar' + it + ' en “Lo que fui notando”', hint: day ? 'Sus ánimos y lo que hiciste no entran en esas cuentas.' : 'Lo que escribiste acá no entra en esas cuentas.' },
+      { key: 'noReviews', label: 'No incluir' + it + ' en los repasos', hint: 'Queda afuera de ' + (day ? '“Lo que guardé” y de ' : '') + 'los repasos de la semana o del mes.' }
+    ];
+    var list = h('ul.check-list');
+    OPTIONS.forEach(function (o) {
+      var id = MC.uid('pv');
+      var cb = h('input', { type: 'checkbox', id: id, checked: current[o.key] });
+      cb.addEventListener('change', function () { current[o.key] = cb.checked; opts.onChange(M.sanitizePrivacy(current)); });
+      list.appendChild(h('li', h('label.check', { for: id }, cb, h('span', o.label, h('span.check__hint', o.hint)))));
+    });
+    c.dialog({
+      title: day ? 'Privacidad de este día' : 'Privacidad de esta página',
+      content: [
+        h('p.t-text', (day ? 'Este día sigue' : 'Esta página sigue') + ' en tu cuaderno, en el calendario y en tus copias. Esto solo decide qué te vuelve a mostrar el cuaderno.'),
+        list,
+        opts.empty ? h('p.section__hint', 'Se guarda junto con lo primero que anotes este día.') : null
+      ],
+      actions: [{ label: 'Listo', kind: 'primary' }],
+      onClose: opts.onClose
+    });
+  }
+
+  /**
+   * Acceso a la privacidad con su estado en palabras (nunca solo por color): “Privacidad” o “Con privacidad”.
+   * `compact`: solo el candado a la vista (las palabras quedan para el lector de pantalla y el tooltip).
+   */
+  function privacyButton(privacy, onClick, compact) {
+    var text = h(compact ? 'span.sr-only' : 'span');
+    var b = h('button.text-btn.privacy-btn', { type: 'button', 'aria-haspopup': 'dialog' }, MC.icon('lock'), text);
+    b.paint = function (p) {
+      text.textContent = M.sanitizePrivacy(p) ? 'Con privacidad' : 'Privacidad';
+      if (compact) b.title = text.textContent;
+    };
+    b.paint(privacy);
+    b.addEventListener('click', onClick);
+    return b;
+  }
+
   /* ---------- Índice ---------- */
   function renderIndex(main) {
     var destroyed = false;
@@ -139,12 +188,16 @@
         items.push({ label: page.kind === 'list' ? 'Pasar a texto' : 'Pasar a lista', icon: page.kind === 'list' ? 'text' : 'list', onSelect: switchKind });
         items.push({ label: 'Cambiar el día…', icon: 'calendario', onSelect: changeDay });
         items.push({ label: page.pinned ? 'Desfijar del índice' : 'Fijar arriba en el índice', icon: 'pin', onSelect: function () { page.pinned = !page.pinned; persist(); persist.flush(); } });
+        items.push({ label: 'Privacidad de esta página…', icon: 'lock', onSelect: openPrivacy });
         items.push({ label: 'Borrar la página', icon: 'trash', onSelect: remove });
         c.menu(more, items, 'Opciones de la página');
       });
+      moreBtn = more;
+      privacyEl = privacyButton(page.privacy, openPrivacy, true);
+      privacyEl.hidden = !M.sanitizePrivacy(page.privacy);
       sheet.appendChild(h('header.free-head',
         h('a.text-btn', { href: R.pages() }, MC.icon('arrow-left'), 'Índice'),
-        h('span.free-head__right', saved, more)));
+        h('span.free-head__right', privacyEl, saved, more)));
       sheet.appendChild(h('h1.sr-only', page.title || 'Página sin título'));
       sheet.appendChild(title);
       sheet.appendChild(page.kind === 'list' ? listEditor() : c.writeArea({
@@ -160,6 +213,23 @@
         MC.ui.set('drawOnOpen', null);
         setTimeout(function () { if (!destroyed && scrap) scrap.draw(true); }, 280);
       }
+    }
+
+    /* Privacidad (PV1): se elige desde el menú; si hay algo prendido, el candado queda a la vista y también la abre. */
+    var privacyEl = null, moreBtn = null;
+    function openPrivacy() {
+      privacyDialog({
+        kind: 'page', privacy: page.privacy,
+        onChange: function (p) { if (!page) return; page.privacy = p; persist(); persist.flush(); },
+        onClose: function () {
+          if (!page || !privacyEl) return;
+          var hadFocus = document.activeElement === privacyEl;
+          privacyEl.paint(page.privacy);
+          privacyEl.hidden = !M.sanitizePrivacy(page.privacy);
+          // Si se apagó todo, el candado se va: el foco vuelve al menú de la página.
+          if (hadFocus && privacyEl.hidden) moreBtn.focus();
+        }
+      });
     }
 
     /** “En el calendario: jueves 8 de octubre · Cambiar el día”. La fecha lleva a ese día. */
@@ -239,15 +309,14 @@
     }
 
     function remove() {
-      c.confirm({ title: '¿Borrar esta página?', text: 'No se puede deshacer. Si querés, primero guardá una copia del cuaderno.', confirm: 'Borrar la página', danger: true })
+      c.confirm({ title: '¿Mandar esta página a la papelera?', text: 'Podés recuperarla desde Ajustes mientras esté en la papelera.', confirm: 'Mandar a la papelera' })
         .then(function (ok) {
           if (!ok) return;
           persist.cancel();
-          var owner = 'page:' + page.id;
-          M.deletePage(page.id).then(function () {
-            // Sus adjuntos se van con ella.
-            M.filesFor(owner).then(function (fs) { fs.forEach(function (f) { M.deleteFile(f.id); }); });
-            page = null; c.toast('Página borrada.'); location.hash = R.pages();
+          var id = page.id;
+          M.deletePage(id).then(function () {
+            page = null; location.hash = R.pages();
+            c.toast('Se fue a la papelera.', { action: 'Deshacer', onAction: function () { M.restoreTrash('pages', id).then(function () { location.hash = R.page(id); }); } });
           });
         });
     }
@@ -259,6 +328,9 @@
   }
 
   MC.views = MC.views || {};
-  MC.views.pages = { render: function (main) { return renderIndex(main); }, TEMPLATES: TEMPLATES, templateFor: templateFor, newPage: templatePicker };
+  MC.views.pages = {
+    render: function (main) { return renderIndex(main); }, TEMPLATES: TEMPLATES, templateFor: templateFor, newPage: templatePicker,
+    privacyDialog: privacyDialog, privacyButton: privacyButton
+  };
   MC.views.page = { render: function (main, params) { return renderPage(main, params.id); } };
 })(window);

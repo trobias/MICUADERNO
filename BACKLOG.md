@@ -22,7 +22,6 @@ Al empezar un ítem: pasarlo a NOW, leer `VISION.md` §0 y la decisión que lo c
 
 | # | Qué | Estado | Depende de | Notas / hoy |
 |---|---|---|---|---|
-| DA1 | **Papelera**: borrar páginas, rutinas, imágenes, dibujos, adjuntos, cartas y entradas los manda a la papelera (`deletedAt`); retención configurable (30 días por defecto) o vaciar a mano. [12] | NOW | — | D25: borrado suave en el mismo store, no un store aparte. Hoy borrar es definitivo con confirmación (actividades tienen “Deshacer” en el aviso). |
 | DA2 | **Deshacer / rehacer** común (`Ctrl+Z` / `Ctrl+Shift+Z`, y botones en táctil) para scrapbook, dibujo, mover/borrar elementos y edición visual. [13] | NOW | — | D25: una pila de comandos por superficie (`MC.history`); la escritura usa el deshacer nativo del navegador. Hoy: deshacer en el dibujo y al sacar una actividad. |
 | DA5 | **Formato `.micuaderno`**: ZIP con `manifest.json`, `data.json` y `media/` (imágenes, audio) en vez de data URLs en el JSON; abrir copias `.json` viejas igual. [73] | NEXT | MD1 | `zip.js` ya escribe ZIP “store”; falta leerlo (sin dependencias). |
 | DA6 | **Copia completa** de todo lo nuevo a medida que aparece (etiquetas, colecciones, elementos, referencias, cartas, canciones, audio, portada, separadores). [72] | NOW (regla) | — | Regla permanente: cada feature nueva entra en `backup.js` con migración y test (AGENTS.md). |
@@ -66,7 +65,6 @@ Al empezar un ítem: pasarlo a NOW, leer `VISION.md` §0 y la decisión que lo c
 
 | # | Qué | Estado | Depende de | Notas / hoy |
 |---|---|---|---|---|
-| PV1 | **Privacidad de esta página**: no mostrar como recuerdo · no incluir en insights · no incluir en revisiones. [5] | NOW | — | Campo `privacy` en el día/página; `insights.js`, *Mi año* y todo lo de ME/RV lo respetan. Requisito antes de ME y RV. |
 | PV2 | **Ocultar mi cuaderno** al instante (difumina y tapa), con atajo sin conflictos (propuesto `Ctrl+Shift+L`; verificar). [33] | NEXT | — | Barato y útil ya. |
 | PV3 | **Bloqueo local opcional** (PIN/contraseña), manual, por inactividad, al minimizar, al cerrar; guarda antes de bloquear. [32, 34] | NEEDS RESEARCH | PV2 | D25: decidir si es solo una “pantalla” (privacidad visual) o cifrado real con WebCrypto (clave derivada del PIN); ser honestos en la UI sobre cuál es. |
 

@@ -138,7 +138,7 @@ await test('backup: exportar → borrar todo → restaurar deja el cuaderno igua
   await download.saveAs(file);
   const json = JSON.parse(fs.readFileSync(file, 'utf8'));
   assert.equal(json.app, 'mi-cuaderno');
-  assert.equal(json.schemaVersion, 3);
+  assert.equal(json.schemaVersion, 4);
   assert.equal(json.data.days[0].notes, 'esto tiene que volver');
 
   await page.click('button:has-text("Borrar todo el cuaderno")');
@@ -438,6 +438,71 @@ await test('el calendario reúne todo: rutinas planeadas, páginas del día y el
     assert.equal(await page.locator(`.stitch-cell[data-date="${TOMORROW}"].is-half`).count(), 0, 'una rutina sin marcar no borda medio punto');
   }
   assert.deepEqual(errors, []);
+  await context.close();
+});
+
+await test('papelera: borrar una página la saca del mes; restaurarla desde Ajustes la devuelve', async () => {
+  const { page, errors, context } = await newPage(browser);
+  await page.goto(FILE_URL);
+  await onboard(page);
+  await goto(page, '#/paginas');
+  await page.click('button:has-text("Nueva página")');
+  await page.click('.template:has-text("Lugares que amo")');
+  await page.waitForSelector('.free-list input');
+  await page.waitForTimeout(500);
+  const pageHash = await page.evaluate(() => location.hash);
+  const cell = page.locator(`.day-cell[data-date="${TODAY}"]`);
+  const pageMarks = () => page.locator(`.day-cell[data-date="${TODAY}"] .mark-page`).count();
+  await goto(page, '#/calendario/mes/' + TODAY.slice(0, 7));
+  assert.equal(await pageMarks(), 1, 'la página está en el mes');
+  await goto(page, pageHash);
+  await page.waitForSelector('#panel[open] .free-list input');
+  await page.click('button[aria-label="Opciones de la página"]');
+  await page.click('.menu [role="menuitem"]:has-text("Borrar la página")');
+  await page.click('dialog[open] button:has-text("Mandar a la papelera")');
+  await page.waitForSelector('.toast:has-text("Se fue a la papelera")');
+  await goto(page, '#/calendario/mes/' + TODAY.slice(0, 7));
+  await page.waitForFunction((d) => !document.querySelector(`.day-cell[data-date="${d}"] .mark-page`), TODAY, { timeout: 4000 });
+  assert.doesNotMatch(await cell.getAttribute('aria-label'), /Lugares que amo/, 'lo que está en la papelera no aparece en el mes');
+  await goto(page, '#/paginas');
+  assert.doesNotMatch(await page.textContent('#panel'), /Lugares que amo/, 'ni en el índice');
+  await goto(page, '#/ajustes');
+  const toggle = page.locator('#panel button:has-text("Ver papelera")');
+  await toggle.scrollIntoViewIfNeeded();
+  assert.equal(await toggle.getAttribute('aria-expanded'), 'false');
+  await toggle.click();
+  assert.equal(await toggle.getAttribute('aria-expanded'), 'true');
+  const item = page.locator('#st-trash-panel .trash-item');
+  await item.first().waitFor();
+  assert.equal(await item.count(), 1);
+  assert.match(await item.textContent(), /Página: Lugares que amo/);
+  await item.locator('button:has-text("Restaurar")').click();
+  await page.waitForFunction(() => document.querySelectorAll('#st-trash-panel .trash-item').length === 0);
+  assert.equal(await page.locator('#st-trash-panel .slip:has-text("La papelera está limpia")').isVisible(), true);
+  assert.equal(await page.evaluate(() => document.activeElement && document.activeElement.textContent.trim()), 'Ver papelera', 'el foco vuelve al botón de la papelera');
+  await goto(page, '#/calendario/mes/' + TODAY.slice(0, 7));
+  await page.waitForFunction((d) => !!document.querySelector(`.day-cell[data-date="${d}"] .mark-page`), TODAY, { timeout: 4000 });
+  assert.match(await cell.getAttribute('aria-label'), /una página: «Lugares que amo»/, 'restaurada, vuelve al mes');
+  await goto(page, '#/paginas');
+  assert.match(await page.textContent('.toc'), /Lugares que amo/, 'y al índice');
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+await test('papelera: si la limpieza de lo vencido falla al arrancar, el cuaderno abre igual', async () => {
+  const { page, context } = await newPage(browser);
+  await page.goto(FILE_URL);
+  await onboard(page);
+  await page.evaluate(async () => {
+    const p = await MC.model.savePage({ title: 'Vieja' });
+    await MC.model.sendToTrash('pages', p.id, '2020-01-01T00:00:00.000Z');
+  });
+  // IndexedDB no deja borrar en el próximo arranque (disco lleno, transacción rota…).
+  await context.addInitScript(() => { IDBObjectStore.prototype.delete = function () { throw new DOMException('simulado', 'UnknownError'); }; });
+  await page.reload();
+  await openCover(page);
+  await page.waitForSelector('.day-head');
+  assert.equal(await page.evaluate(async () => (await MC.model.trashItems()).length), 1, 'lo vencido sigue ahí para el próximo intento');
   await context.close();
 });
 

@@ -2,6 +2,38 @@
 
 Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantiene. El porqué de cada decisión está en `DECISIONS.md` (Dn); lo que falta, en `ROADMAP.md`. Cada entrega que toca archivos de la app sube `CACHE_VERSION` en `sw.js` para que las PWA instaladas se actualicen.
 
+## 2026-10-02 · Papelera: arreglos de la revisión (cache `v15`)
+
+**Para quien lo usa**
+- Si la limpieza automática de la papelera falla al abrir, el cuaderno abre igual (antes mostraba “Algo no salió bien al abrir el cuaderno”).
+- Borrar del todo una página de la papelera también borra sus adjuntos; antes quedaban ocupando lugar y en la copia, sin forma de verlos.
+
+**Para quien lo mantiene** (DA1)
+- `dropForever` en `model.js` (purga, borrar definitivamente y vaciar); la purga del arranque en `app.js` es best-effort. Test unitario de adjuntos de página y E2E de papelera (borrar página → sale del mes → Ajustes → Restaurar → vuelve) y de arranque con purga fallida.
+
+## 2026-10-02 · Papelera (cache `v14`)
+
+**Para quien lo usa**
+- Páginas, rutinas, stickers propios, dibujos y adjuntos van a la papelera al sacarlos. El aviso ofrece **Deshacer**; en Ajustes → Mis datos se pueden restaurar, borrar uno por uno o vaciar la papelera.
+- La retención se puede elegir entre 7, 15, 30 o 60 días, o conservar siempre. Lo que está en la papelera deja de aparecer en el cuaderno, el calendario, las observaciones, las exportaciones legibles y la impresión; sigue en la copia JSON.
+
+**Para quien lo mantiene** (DA1, D26)
+- Borrado suave en el mismo store, operaciones de restauración, vaciado y purga por fecha; la purga corre al arrancar después de cargar ajustes. `everything()` conserva todo para backup y `activeEverything()` alimenta vistas y exportaciones.
+- Tests unitarios de restauración, retención, borrado, resumen y copia. La actividad individual conserva por ahora su Deshacer existente.
+
+## 2026-10-02 · Privacidad de un día o una página y esquema v4 (cache `v13`)
+
+**Para quien lo usa**
+- En la página de un día, debajo de la fecha, está **Privacidad**; en una página libre, en su menú (⋯) → **Privacidad de esta página…**. Son tres casillas: no traerlo como recuerdo, no usarlo en “Lo que fui notando”, no incluirlo en los repasos. Nada es obligatorio y se guarda solo.
+- Lo que tiene privacidad sigue en el cuaderno, en el calendario y en las copias. Se nota con un candado y las palabras “Con privacidad” (en la página libre, el candado junto al menú).
+- *Mi año*: “Lo que fui notando” no cuenta los días marcados (ni sus actividades) y “Lo que guardé” no muestra los recuerdos de días que pediste dejar afuera.
+
+**Para quien lo mantiene** (PV1 + esquema v4, D26)
+- `schemaVersion` 4 con `MIGRATIONS[4]` aditiva: no reescribe registros; solo suma `trashRetentionDays: 30` a los ajustes de la copia si falta. Las copias v1–v3 siguen abriendo; una v5 se rechaza con el aviso de siempre. IndexedDB sigue en la versión 2.
+- `js/core/model.js`: `privacy` (días y páginas) y `deletedAt` (todas las entidades) opcionales en los normalizadores, con `sanitizePrivacy`, `isPrivate`, `sanitizeDeletedAt`, `isDeleted`; ajuste `trashRetentionDays` (0/7/15/30/60). `deletedAt` se acepta y se conserva en copias, pero **la papelera (DA1) todavía no existe**: nada lo escribe ni lo filtra fuera de `insights.js` y “Lo que guardé”.
+- `js/core/insights.js` mira solo lo visible (sin `noInsights`, sin lo borrado); `js/views/year.js` filtra “Lo que guardé”. UI en `js/views/pages.js` (`privacyDialog`, `privacyButton`, compartidos con `today.js`).
+- Tests: `tests/unit/privacy-v4.test.js` (copia v3 real → v4, sanitize, ida y vuelta, rechazo de v5, insights). `tests/e2e/run.mjs` espera `schemaVersion` 4. `sw.js` sube a `mi-cuaderno-v13`.
+
 ## 2026-10-02 · “guardando… → guardado ✓” en todas las hojas (cache `v13`)
 
 ### Revisión DA3 (cache `v14`)
