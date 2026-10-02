@@ -148,6 +148,10 @@ Escala (rem, base 16px):
 - **Días de una rutina** (`.day-cell.is-routine` + `.mark-routine`): tinte `--sage` al 50 % sobre papel, borde de hilo `--thread-done` suave y el ícono de rutinas de 12px en las marcas (estado nunca solo por color). Aviso arriba (`.routine-filter`): papelito salvia con borde punteado, texto + “Ver la rutina” + “Dejar de mostrar”.
 - **Rutina resaltada** (`.routine.is-focus`): tinte salvia + hilo de 3px a la izquierda, sin animación; recibe el foco.
 - **Enlaces dentro del texto** (fechas, “viene del…”, “próxima: …”, iniciales del bastidor): mismo texto que antes, con subrayado fino o punteado; nunca botones nuevos.
+- **Desglose de almacenamiento en Ajustes** (`.storage-info`, DA4): tipografía Atkinson, total en negrita (`.num`), lista de filas (`.storage-row`) con separadores `1px dashed var(--rule)`, iconos SVG de 18 px en tinta suave y contador en `.t-meta`. Si la copia supera 5 MB, se presenta un papelito manteca (`.slip.slip--butter`) avisando con cariño que la descarga puede tardar un momento.
+- **Panel de papelera** (`.trash-panel`, DA1): papel crema con listado de elementos en baja temporal; cada ítem muestra su tipo con glifo suave, nombre o título, fecha de borrado en `.t-meta` (`--ink-soft`), y botones-etiqueta suaves (`.label-btn.label-btn--soft`) para *Restaurar* y *Eliminar definitivamente*. Botón *Vaciar papelera* en el encabezado con confirmación en diálogo modal. Estado vacío con `.slip`: “La papelera está limpia ♡”.
+- **Privacidad de la hoja** (`.privacy-popover`, PV1): botón discreto en el encabezado de la hoja (Día y Página) con ícono de candado (`lock`) en `--ink-soft`. Al abrirse, despliega un recuadro de papel crema con tres opciones amables acompañadas de casillas de punto cruz o selectores suaves. Si hay opciones activadas, el candado permanece sutilmente visible junto a la fecha o título.
+- **Deshacer y rehacer** (`.history-ctrls`, DA2): controles integrados en las barras existentes (dibujo, scrapbook, barra de hoja). Botones-etiqueta o circulares con glifos claros de flecha curva. Estado deshabilitado al 50 % de opacidad y `cursor: not-allowed` (el estado nunca se comunica solo con color).
 
 ## 8. Stickers
 
@@ -182,9 +186,10 @@ Un solo sistema, `js/ui/icons.js` (sprite SVG): 24×24, trazo 1.75px, `stroke-li
 - `touch-action: manipulation` en controles; los stickers necesitan moverse 4 px antes de arrastrarse (un toque solo selecciona).
 - Estado nunca solo por color: glifo + texto accesible.
 - Decoración (`.deco`, stickers de la tapa, escenas) con `aria-hidden="true"`.
-- `aria-live="polite"` para “guardado” y avisos.
+- `aria-live="polite"` para confirmación de “guardado” y avisos relevantes (silenciado durante el estado transitorio `guardando…` para no saturar al lector de pantalla).
 - Idioma `es-AR`.
 - Al cerrar un cuadro el foco vuelve a donde estaba: al marcador que lo abrió o, si se abrió desde un día, al último día abierto (aunque el calendario se haya redibujado mientras tanto).
+- Deshacer y rehacer (DA2): controles con `aria-label` descriptivo, `disabled` y `aria-disabled="true"` cuando no hay acciones en la pila; foco visible propio en tinta. Atajos de teclado `Ctrl+Z` / `Ctrl+Shift+Z` / `Ctrl+Y` inhibidos cuando el foco está en un campo de texto editable para preservar el historial nativo del navegador.
 
 ## 12. Motion
 
@@ -237,8 +242,8 @@ Reglas del director de escenas:
 ## 14. Estados
 
 - **Vacíos** con voz propia (SPEC §8) y, como mucho, un sticker gris-tinta chiquito.
-- **Guardando/guardado:** anotación manuscrita “guardado ♡” junto al encabezado, 1.5s, `aria-live`.
-- **Error de almacenamiento:** papelito rosa arriba: “No pude guardar en este dispositivo. Descargá una copia para no perder nada.” + botón.
+- **Guardando/guardado (DA3):** componente unificado `.saved-note` junto al encabezado o barra superior de la hoja (día, página, scrapbook, ajustes). Fase `guardando…` en tinta tenue (`--ink-faint` / `--ink-soft`); fase `guardado ✓` en hilo salvia (`--thread-done-text`) durante ~1.5 s; fase `reposo` con transición suave de desvanecimiento (`--dur-ui`, `--ease-out`) hasta ocultarse. Sin toasts flotantes por cada cambio o pulsación.
+- **Error de almacenamiento:** papelito rosa arriba (`.slip.slip--blush`): “No pude guardar en este dispositivo; sigue como borrador en esta pestaña. Podés descargar una copia para resguardar tus datos ♡” + botón de descarga.
 - **Deshabilitado:** 50 % opacidad + `cursor: not-allowed`, nunca gris frío.
 
 ## 15. Impresión
@@ -261,3 +266,6 @@ Elegido entre tres exploraciones (mariposa sobre hoja, cuaderno cerrado con etiq
 | Tela de color pleno como fondo | Gradientes, glass, glows, neumorphism |
 | Young Serif para fechas | Mayúsculas espaciadas como eyebrow sobre títulos |
 | Insights con conteos (“8 de 11”) | Porcentajes de “mejora”, gráficos de SaaS |
+| Deshacer con botones accesibles y atajos fuera de inputs | Confiar solo en atajos o solo en color para deshabilitar |
+| Guardado visible con estado reposo sin toasts repetitivos | Llenar la pantalla de carteles y toasts con cada letra tipeada |
+| Papelera con retención amable y restauración simple | Borrado destructivo inmediato e irreversible |

@@ -50,6 +50,7 @@ Pedido de la dueña del proyecto (DECISIONS D17): **sin secciones separadas**. T
 - **Centro: el calendario del mes**, con la **tira de los 12 meses** (y flechas de año) para saltar de mes con un toque. Interruptor chico *Mes / Semana*.
 - **Marcadores de tela al costado del cuaderno** (como las pestañas de antes; en el celular, abajo): *Hoy · Agenda · Rutinas · Páginas · Mi año* y, separado, *Ajustes* (en el celular, solo el carretel). Cada uno abre un **cuadro desplegable** encima del calendario (un `<dialog>`), sin salir de la pantalla. Con un cuadro abierto los marcadores se mudan a su costado: se pasa de uno a otro sin cerrar (DECISIONS D22). Todos giran en torno a **poner cosas en el calendario**.
 - **Tocar un día** del calendario abre la página de ese día en el cuadro. Al cerrarlo (botón “Volver al calendario”, `Esc`, tocar afuera o *atrás* del navegador) se vuelve al calendario. El calendario de atrás **se actualiza solo** mientras el cuadro está abierto y cuando otra pestaña cambia algo, sin parpadeo y sin tocar lo que se está escribiendo (DECISIONS D21). Al volver, la cinta y el foco quedan en el último día abierto; si el cuadro se abrió con un marcador, el foco vuelve a ese marcador.
+- **Teclado en el celular (T6):** en pantallas chicas (< 700px), cuando se hace foco en un campo editable para escribir, la barra inferior de marcadores se oculta de forma automática (detectada vía `visualViewport` con fallback de redimensión y foco) para no tapar el texto ni estorbar, y reaparece suavemente al cerrar el teclado o perder el foco.
 
 | Ruta | Qué muestra |
 |---|---|
@@ -126,18 +127,18 @@ Nunca se piden permisos al abrir. Después de ≥ 3 días distintos con registro
 ### 7.2 Hoy (página del día)
 Secciones, en orden de lectura (mobile) o repartidas en doble página (desktop: izquierda = mañana y lista; derecha = durante y cierre):
 
-1. **Encabezado**: saludo según hora (“Buenos días / Buenas tardes / Buenas noches, {nombre} ♡”), día de semana + fecha. Flechas día anterior/siguiente y “Ir a hoy” si no es hoy (para saltar lejos se usa el calendario, que queda debajo).
+1. **Encabezado**: saludo según hora (“Buenos días / Buenas tardes / Buenas noches, {nombre} ♡”), día de semana + fecha. Flechas día anterior/siguiente y “Ir a hoy” si no es hoy (para saltar lejos se usa el calendario, que queda debajo). Indicador unificado de **guardado visible** `c.savedNote` (DA3) y acceso discreto a **Privacidad de este día** (PV1: no mostrar en recuerdos, no incluir en insights, no incluir en revisiones).
 2. **¿Cómo arrancaste hoy?** — 5 sellos de ánimo (ver §9). Tocar el mismo sello lo quita.
 3. **Algo que quiero cuidar hoy…** — nota adhesiva, una línea o dos.
-4. **Lo de hoy** — lista de actividades: propias del día + ocurrencias de rutinas. Cada una con 5 estados (§10). Agregar inline. Editar texto, borrar, mover a mañana (“lo dejo para otro día” ofrece “pasar a mañana”).
-5. **Durante el día** — texto libre sobre renglones.
+4. **Lo de hoy** — lista de actividades: propias del día + ocurrencias de rutinas. Cada una con 5 estados (§10). Agregar inline. Editar texto, mover a mañana (“lo dejo para otro día” ofrece “pasar a mañana”), o sacar (borrado suave a la papelera, DA1, con deshacer inmediato, DA2). Pila de deshacer (`Ctrl+Z` / `Ctrl+Shift+Z`) para cambios de estado y acciones fuera de inputs.
+5. **Durante el día** — texto libre sobre renglones (deshacer nativo del navegador mientras se escribe).
 6. **Energía / sueño** (si están activados) — energía 1-3 (“poquita / media / mucha”), horas de sueño (0–14, pasos de 0,5).
 7. **¿Cómo terminó tu día?** — sellos de ánimo + reflexiones: *qué me hizo bien*, *algo difícil*, *algo lindo*, *qué quiero guardar* (⇒ recuerdo), *texto libre*. Se muestra plegado como “cerrar el día” antes de las 17 h si está vacío; siempre se puede desplegar.
 8. **Páginas de este día** — si ese día se empezó alguna página libre, un enlace a cada una (así el calendario también encuentra las páginas).
-9. **Adjuntos** del día: cualquier archivo (una foto, una entrada, un PDF, un audio) para abrirlo desde ahí; una imagen adjunta se puede pegar como sticker.
-10. **Capa de stickers** del día (scrapbook) — botón “stickers”: arte del cuaderno, **Mis stickers** (imágenes subidas y dibujos) y **Dibujar**.
+9. **Adjuntos** del día: cualquier archivo (una foto, una entrada, un PDF, un audio) para abrirlo desde ahí; una imagen adjunta se puede pegar como sticker. Sacar un adjunto lo envía a la papelera (DA1).
+10. **Capa de stickers** del día (scrapbook) — botón “stickers”: arte del cuaderno, **Mis stickers** (imágenes subidas y dibujos) y **Dibujar**. Pila de deshacer/rehacer dedicada (DA2) para mover, escalar, rotar, pegar y despegar.
 
-Guardado automático: cada cambio se anota al instante como borrador local y se escribe en IndexedDB a los 400 ms; si la pestaña se cierra antes, el borrador se recupera al volver. Un “guardado” manuscrito discreto confirma. Días futuros: editables (planear). Días pasados: editables.
+Guardado automático y visible (DA3): cada cambio se anota al instante como borrador local y se escribe en IndexedDB a los 400 ms; si la pestaña se cierra antes, el borrador se recupera al volver. El componente `c.savedNote` transiciona sutilmente por `guardando…` → `guardado ✓` → reposo (se oculta tras ~1.5 s). Si IndexedDB falla o la memoria está llena, no pierde datos en silencio: avisa amablemente que el contenido se mantiene como borrador local e invita a descargar una copia. Días futuros: editables (planear). Días pasados: editables.
 
 ### 7.3 Calendario
 El calendario es donde aparece **todo lo que tiene fecha**: ánimo, escritura, recuerdos, actividades, rutinas y páginas.
@@ -151,54 +152,116 @@ El calendario es donde aparece **todo lo que tiene fecha**: ánimo, escritura, r
   - **hoja chiquita** si ese día tiene una página libre;
   - en pantallas anchas, además, **lo que hay ese día escrito en hilitos** del color de su marcador: *Agenda* (rosa), *Rutinas* (salvia), *Páginas* (lavanda); hasta 3 y “+N más”. De hoy en adelante, lo que falta; para atrás, solo lo hecho (D18, D23). En el celular quedan las marcas compactas.
   
-  Los días pasados **no** muestran lo que quedó sin marcar (sin cuentas de “pendientes” para atrás: amable, ver D18). Cada marca tiene su texto en el `aria-label` del día (“una cosa planeada”, “empezaste una página”) y su lugar en la leyenda. Hoy con borde a lápiz; el último día abierto lleva una cinta-marcador. Tocar un día → su página en el cuadro desplegable.
+  Los días pasados **no** muestran lo que quedó sin marcar (sin cuentas de “pendientes” para atrás: amable, ver D18). Cada marca tiene su texto en el `aria-label` del día (“una cosa planeada”, “empezaste una página”) y su lugar en la leyenda. Todo lo que esté en la papelera (`deletedAt != null`) se ignora por completo (DA1). Hoy con borde a lápiz; el último día abierto lleva una cinta-marcador. Tocar un día → su página en el cuadro desplegable.
 - **Animaciones** (con motion “Completas”/“Suaves”): cambiar de mes desliza la hoja hacia ese lado; pasar de mes a semana (o al revés) la acomoda con una escala apenas; el día nuevo se arma aparte y entra cuando está listo (sin parpadeo).
 - **Semana**: agenda de 7 días (desktop: lun-mié izquierda / jue-dom derecha). Cada día: ánimo, actividades (incluye rutinas futuras virtuales), primera línea escrita y enlaces a las páginas empezadas ese día. Tocar → abre el día.
-- **Mi año** sigue mostrando solo lo registrado: una rutina sin marcar no borda medio punto.
+- **Mi año** sigue mostrando solo lo registrado: una rutina sin marcar no borda medio punto. Días con `privacy.noReviews` no aportan recuerdos a “Lo que guardé” (PV1), y elementos borrados no se computan (DA1).
 - **Los días de una rutina** (desde Rutinas o *Lo que fui notando*): el mes marca con tinte de salvia + el ícono de rutinas los días que la tocan de hoy en adelante y los días pasados en que se hizo (también “un poquito”). Los días pasados en que no se hizo no se marcan. Arriba, un aviso con “Ver la rutina” y “Dejar de mostrar”.
 - Navegación anterior/siguiente, “hoy”.
 
 ### 7.4 Rutinas
 - Lista agrupada por momento del día (mañana / tarde / noche / cuando sea).
 - Frecuencias soportadas (§11). Descripción humana de la regla (“Lun · Mié · Vie”, “Cada 3 días”, “Primer sábado del mes”).
-- Pausar/reanudar (archivar), editar, borrar (con confirmación; el historial ya marcado se conserva como actividades sueltas).
+- Pausar/reanudar (archivar), editar, borrar (borrado suave a la papelera, DA1; el historial ya marcado se conserva como actividades sueltas).
 - Cada rutina: la próxima vez es un enlace a ese día; el ícono de calendario muestra sus días en el mes. Si se llega desde “Ver la rutina”, aparece resaltada y con el foco.
 
 ### 7.5 Páginas
 - Cada página tiene **su día en el calendario**: se elige al crearla (“Para el día”, por defecto hoy o el día desde donde se empezó) y se cambia con “Cambiar el día” (debajo de la hoja o en su menú). Desde la página de un día: “Empezar una página para este día”.
-- **Índice** con título, fecha y número de página con puntos guía (como un índice real). Fijar páginas arriba.
+- **Índice** con título, fecha y número de página con puntos guía (como un índice real). Fijar páginas arriba. Las páginas en papelera no se muestran en el índice (DA1).
 - **Nueva página**: en blanco o plantillas: *Cosas que me hacen bien, Lugares que amo, Personas importantes, Canciones de este momento, Mis pequeñas victorias, Cosas que quiero probar, Carta para mi yo futuro, Brain dump, Gratitud, Sueños, Lista de deseos, Reflexión del mes*.
 - Tipos: `text` (renglones) o `list` (ítems con viñeta dibujada).
 - Papel: rayado, cuadriculado, punteado, liso.
-- Stickers (scrapbook), con dibujos e imágenes propias; plantilla **Para dibujar** (hoja lisa que abre con el lápiz listo; el dibujo queda grande en el medio).
-- **Adjuntos** de la página (se borran con ella).
-- Borrar con confirmación.
+- Stickers (scrapbook), con dibujos e imágenes propias; plantilla **Para dibujar** (hoja lisa que abre con el lápiz listo; el dibujo queda grande en el medio). Pila de deshacer/rehacer independiente para elementos colocados (DA2).
+- **Privacidad de esta página** (PV1): menú accesible en la cabecera para activar/desactivar `noMemory`, `noInsights` y `noReviews`.
+- **Guardado visible** (DA3): indicador `c.savedNote` en el encabezado.
+- **Adjuntos** de la página (se envían a la papelera si se eliminan o si la página se borra).
+- **Borrar página**: borrado suave a la papelera (`deletedAt`, DA1) con aviso amable; se puede restaurar en cualquier momento desde Ajustes.
 - “Empezada el …” es un enlace al día en que se empezó (ese día la página también aparece en el calendario).
 
 ### 7.6 Mi año
 - **Bordado**: 12 columnas (meses) × 31 filas (días). Día sin registro = punto de cruz a lápiz sin llenar (bonito vacío). Día con ánimo = parche del color del hilo de ese ánimo + glifo accesible en tooltip/label.
 - Leyenda de ánimos siempre visible (glifo + nombre + color).
 - Tocar un día → abre su página. La inicial de cada mes lleva a ese mes en el calendario.
-- **Lo que fui notando**: 3-6 observaciones descriptivas (§12), cada una con el camino a sus días.
-- **Lo que guardé**: lista de recuerdos (“qué quiero guardar”) del año, como papelitos.
+- **Lo que fui notando**: 3-6 observaciones descriptivas (§12), cada una con el camino a sus días. Respeta estrictamente `privacy.noInsights` y omite registros borrados (PV1, DA1).
+- **Lo que guardé**: lista de recuerdos (“qué quiero guardar”) del año, como papelitos. Respeta `privacy.noReviews` y `privacy.noMemory` (PV1), además de ignorar lo que esté en papelera (DA1).
 
 ### 7.9 Dibujar, Mis stickers y adjuntos (D24)
-- **Dibujar** (desde el sobre de stickers, la barra de decorar o la plantilla *Para dibujar*): hoja cuadrada con **lápiz**, **goma**, **texto** (letra a mano / de libro / de título / simple; chica, mediana, grande), los 12 colores de los hilos y la papelería, 3 grosores, **deshacer** y *borrar todo*. Al guardar se recorta y se pega como sticker; queda en *Mis stickers* y se puede **editar después** (“Editar el dibujo”: cambia en todas las hojas donde esté). Sin capas, sin vectores para exportar: no es un programa de diseño.
-- **Subir una imagen** (PNG, JPG, WebP, GIF, SVG, AVIF… lo que el navegador sepa leer; HEIC solo donde el navegador lo abra): se achica a 900 px y se guarda como WebP/PNG (un SVG se convierte en imagen; nunca se guarda como código). Va a *Mis stickers* y se pega en cualquier hoja. Se puede sacar de la colección (se despega de las hojas).
-- **Adjuntos**: cualquier archivo de hasta 10 MB en un día o una página; se descarga/abre con un toque y se saca con confirmación. Sirven para guardar con el día lo que no es texto: la entrada del recital, el PDF de un turno, una foto, un audio. Van en la copia de seguridad (que puede crecer: se avisa al adjuntar archivos grandes).
+- **Dibujar** (desde el sobre de stickers, la barra de decorar o la plantilla *Para dibujar*): hoja cuadrada con **lápiz**, **goma**, **texto** (letra a mano / de libro / de título / simple; chica, mediana, grande), los 12 colores de los hilos y la papelería, 3 grosores, **deshacer y rehacer** (DA2) y *borrar todo*. Al guardar se recorta y se pega como sticker; queda en *Mis stickers* y se puede **editar después** (“Editar el dibujo”: cambia en todas las hojas donde esté). Sin capas, sin vectores para exportar: no es un programa de diseño.
+- **Pila de deshacer/rehacer en dibujo (DA2):** pila propia de `MC.history` con 50 pasos que registra trazos de lápiz, goma y agregado/modificación de textos. Botones táctiles visibles en la barra superior del dibujo y atajos `Ctrl+Z` / `Ctrl+Shift+Z` / `Ctrl+Y` mientras no se esté editando un campo de texto nativo.
+- **Subir una imagen** (PNG, JPG, WebP, GIF, SVG, AVIF… lo que el navegador sepa leer; HEIC solo donde el navegador lo abra): se achica a 900 px y se guarda como WebP/PNG (un SVG se convierte en imagen; nunca se guarda como código). Va a *Mis stickers* y se pega en cualquier hoja. Sacar una imagen de la colección la envía a la papelera (DA1) y la despega de las hojas sin romper nada.
+- **Adjuntos**: cualquier archivo de hasta 10 MB en un día o una página; se descarga/abre con un toque y se saca con confirmación (borrado suave a la papelera, DA1). Sirven para guardar con el día lo que no es texto: la entrada del recital, el PDF de un turno, una foto, un audio. Van en la copia de seguridad.
+- **Guardado visible (DA3):** cada cambio en dibujos, stickers y adjuntos se acompaña del indicador `c.savedNote`.
 
 ### 7.8 Agenda (poner cosas en el calendario)
 - **Anotar**: qué + qué día (atajos *Hoy · Mañana · En una semana*; por defecto el día marcado en el calendario si es de hoy en adelante) → “Poner en el calendario”. Aparece en ese día, en su página y en el mes.
 - **También podés poner**: algo que se repite (abre el editor de rutinas) o una página para ese día (elige plantilla con el día ya puesto).
-- **Lo que viene**: lo anotado de hoy en adelante, agrupado por día (el día es un enlace, con “en 2 días”, “en 3 semanas”…), más las páginas de esos días. Cada cosa tiene su menú completo: estados, pasar a mañana, **pasar a otro día**, cambiar el nombre, sacar (con deshacer). Las rutinas no se listan: aparecen solas en sus días.
-- La fila de cada actividad es la misma que en la página del día (`js/ui/activity.js`).
+- **Lo que viene**: lo anotado de hoy en adelante, agrupado por día (el día es un enlace, con “en 2 días”, “en 3 semanas”…), más las páginas de esos días. Cada cosa tiene su menú completo: estados, pasar a mañana, **pasar a otro día**, cambiar el nombre, sacar (borrado suave a papelera con opción de deshacer). Las rutinas no se listan: aparecen solas en sus días.
+- La fila de cada actividad es la misma que en la página del día (`js/ui/activity.js`), con historial de acciones (`MC.history`, DA2) para deshacer cambios involuntarios.
 
 ### 7.7 Ajustes
 - **Vos**: nombre, tapa, nombres de los 5 ánimos (editables), qué registrar.
 - **Cómo se mueve**: animaciones *Completas / Suaves / Reducidas / Ninguna* (default para todas las personas: *Completas*, D23; si el sistema pide menos movimiento, Ajustes lo sugiere bajar; “Ninguna” elegida antes se respeta); escenas ocasionales on/off; mostrar la tapa al abrir.
 - **Recordatorios**: ver §14.
-- **Mis datos**: texto de privacidad; guardar copia; abrir/restaurar; exportar; imprimir; recordatorio de copia (cada 7/14/30 días/nunca); borrar todo (doble confirmación, escribiendo “borrar”).
+- **Mis datos**:
+  - Texto de privacidad.
+  - **Cuánto ocupa mi cuaderno (DA4):** bloque interactivo que calcula el espacio exacto de los datos del cuaderno con desglose por categoría (*Texto*, *Fotos*, *Audio*, *Dibujos*, *Otros*), comparación con la cuota total estimada por el navegador (`navigator.storage.estimate()`), y un aviso amable en papelito manteca si la copia supera los 5 MB (`LARGE_THRESHOLD`).
+  - **Papelera (DA1):** selector de tiempo de retención (`settings.trashRetentionDays`, default 30 días; opciones 7, 15, 30, 60 días o nunca), acceso al listado de elementos en papelera con opción de **Restaurar** o **Eliminar definitivamente**, y botón **Vaciar papelera** con confirmación clara.
+  - **Copia de seguridad y exportación:** guardar copia (`.json` v4); abrir/restaurar copia; exportar (TXT, CSV, XLSX); imprimir; recordatorio de copia (cada 7/14/30 días/nunca); borrar todo (doble confirmación, escribiendo “borrar”).
+- **Guardado visible (DA3):** cada cambio de configuración se confirma con `c.savedNote`.
 - **Instalar**: si el navegador lo permite, botón “Instalar en este dispositivo”.
+
+### 7.10 Papelera y borrado suave (DA1)
+Para evitar pérdidas accidentales y dar tranquilidad (filosofía amable), el borrado en MI CUADERNO es **suave por defecto** y vive en el mismo almacén de datos (D25):
+
+- **Entidades cubiertas:** páginas libres (`pages`), rutinas recurrentes (`routines`), imágenes y fotos de *Mis stickers* (`images`), dibujos (`images`), archivos adjuntos (`files`), actividades individuales (`activities`) y días completos (`days`).
+- **Mecanismo:** el registro recibe una marca temporal `deletedAt: ISO` (UTC). Ausente o `null` indica que el registro está activo.
+- **Aislamiento:** todas las lecturas de la interfaz, el resumen del calendario (`MC.model.summarize`), la agenda y las observaciones de `insights.js` filtran de forma estricta los elementos con `deletedAt != null`. Lo borrado deja de verse de inmediato.
+- **Retención configurable:** `settings.trashRetentionDays` (default 30 días). En cada inicio del cuaderno, los elementos cuyo `deletedAt` supere el período de retención se eliminan de manera definitiva (`delete` físico en IndexedDB).
+- **Restauración:** cualquier elemento en papelera puede devolverse a la vida (`deletedAt = null`). Una página regresa al índice y al calendario; una rutina retoma sus apariciones; una foto o dibujo reaparece en *Mis stickers*; un adjunto vuelve a su día o página.
+- **Vaciado manual:** opción en Ajustes → Mis datos → Papelera para vaciar todo el contenido borrado de una sola vez, previa confirmación amable.
+- **Preservación en copias:** la papelera se incluye en el archivo de backup `.json` (con sus fechas `deletedAt`). Si la persona exporta e importa su cuaderno en otro dispositivo, sus elementos en papelera y sus plazos de retención siguen existiendo.
+
+### 7.11 Privacidad de esta página y de este día (PV1)
+En MI CUADERNO la persona tiene derecho a escribir cosas difíciles o íntimas sin temor a que la app se las devuelva por sorpresa (D25):
+
+- **Banderas opcionales (`privacy` en `days` y `pages`):**
+  - `noMemory` (default `false`): **No mostrar como recuerdo**. Excluye el día o página de apariciones espontáneas (“Abrime algo lindo ♡”, “Un día como hoy”, recuerdos suaves al año o al mes).
+  - `noInsights` (default `false`): **No incluir en observaciones**. `insights.js` saltea por completo este registro; no se extraen hábitos, conteos de ánimo ni correlaciones de él.
+  - `noReviews` (default `false`): **No incluir en revisiones**. Omite el contenido en revisiones semanales o mensuales y en la sección “Lo que guardé” de *Mi año*.
+- **Opcionalidad y silencio:** ningún campo de privacidad es obligatorio. Si `privacy` no existe o sus banderas son `false`, el comportamiento es el habitual. Configurar la privacidad no deja marcas llamativas ni juicio moral: solo un candadito discreto en tinta suave en el encabezado.
+
+### 7.12 Motor de deshacer y rehacer (DA2)
+Un único contrato formal en `js/core/history.js` gestiona el historial de acciones reversibles:
+
+- **Contrato de API (`MC.history.create({ limit = 50 })`):**
+  - `push({ label, undo, redo })`: apila una acción con sus funciones de reversión y repetición, descarta la pila de rehacer y limita el tamaño a 50 comandos.
+  - `undo()`: ejecuta la función `undo` del tope, pasa la acción a la pila de rehacer y notifica oyentes.
+  - `redo()`: ejecuta la función `redo` del tope, devuelve la acción a la pila de deshacer y notifica oyentes.
+  - `canUndo()`: booleano que indica si hay acciones para deshacer.
+  - `canRedo()`: booleano que indica si hay acciones para rehacer.
+  - `clear()`: vacía ambas pilas (por ejemplo, al cambiar de página o cerrar un editor).
+  - `onChange(callback)`: suscribe una función receptora para refrescar el estado de los controles de la interfaz.
+- **Una pila por superficie:** pilas independientes y aisladas para:
+  1. *Scrapbook* (`scrapbook.js`): colocar, mover, rotar, escalar o despegar stickers y elementos.
+  2. *Dibujo* (`draw.js`): trazos de lápiz, borrado con goma, agregado y movimiento de textos sobre la hoja de dibujo.
+  3. *Acciones de actividad* (`activity.js`): marcar estado de punto cruz, mover a otro día, sacar actividad, renombrar.
+- **Atajos de teclado:** `Ctrl+Z` (Deshacer) y `Ctrl+Shift+Z` / `Ctrl+Y` (Rehacer) en Windows/Linux (`Cmd+Z`, `Cmd+Shift+Z`, `Cmd+Y` en macOS).
+  - **Regla estricta:** solo se interceptan los atajos cuando el foco del teclado **NO** está en un campo de texto editable (`input`, `textarea`, `[contenteditable]`). Dentro de campos de texto rige exclusivamente el deshacer nativo del navegador.
+- **Controles táctiles:** botones visuales integrados en las barras de herramientas existentes (barra de dibujo, barra de herramientas de stickers, menú de acciones).
+- **Accesibilidad:** el estado no depende solo del color: botones con glifos comprensibles de flecha curva, atributos `disabled` y `aria-disabled="true"`, opacidad diferenciada (50 % al estar inactivo) y etiquetas accesibles contextuales (`aria-label="Deshacer {label}"`).
+
+### 7.13 Guardado visible y estados de persistencia (DA3)
+La tranquilidad de que nada se pierde se transmite con un componente unificado `c.savedNote(container)` (`js/ui/components.js`):
+
+- **Ciclo de estados:**
+  - `guardando…`: texto tenue en Castoro/Atkinson, tinta suave (`--ink-faint` / `--ink-soft`), anuncia que hay cambios en camino a IndexedDB.
+  - `guardado ✓`: confirmación en acento salvia (`--thread-done-text`) con tilde de bordado o corazón ♡. Se mantiene visible por ~1.5 segundos.
+  - `reposo`: transición suave de desvanecimiento hacia un estado invisible sin ocupar espacio visual innecesario.
+  - `fallo`: si IndexedDB rechaza la escritura o la cuota se agota, el indicador se transforma en un aviso amable: *“No pude guardar en este dispositivo; sigue como borrador en esta pestaña. Podés descargar una copia para resguardar tus datos ♡”*, acompañado de un botón directo de descarga.
+- **Misma pieza en todas las superficies:** se reutiliza idéntica lógica y diseño en la página del día (`today.js`), en páginas libres (`pages.js`), en el scrapbook (`scrapbook.js`) y en Ajustes (`settings.js`).
+- **Sin toasts repetitivos:** las microescrituras y ediciones continuas no generan carteles flotantes ni interrupciones visuales.
+- **Respeto de motion:** transiciones de opacidad gobernadas por `--dur-ui` y `--ease-out`; en modos `reducidas` o `ninguna`, el cambio de estado es instantáneo sin animación.
+- **Accesibilidad para lectores de pantalla:** atributo `aria-live="polite"` activo **únicamente** cuando se alcanza el estado `guardado` o `fallo`. El estado transitorio `guardando…` se silencia para no aturdir a quien escribe con tecnologías asistivas.
 
 ## 8. Tono y copy
 
@@ -257,6 +320,7 @@ Reglas:
 - Solo descriptivo, con conteos (“8 de 11 veces”). Nunca porcentajes de “mejora”, nunca causalidad.
 - Umbral mínimo: al menos 5 observaciones para comparar; si no, no se muestra ese insight.
 - Nunca más de 6 a la vez. Si no hay suficientes datos: “Cuando llenes algunas páginas más, acá voy a ir anotando lo que noto.”
+- **Filtro estricto de privacidad y papelera:** cualquier día o entrada marcado con `privacy.noInsights === true` (PV1) o enviado a la papelera (`deletedAt != null`, DA1) queda completamente excluido de todos los cálculos de insights. Las observaciones nunca computan ni mencionan información protegida o descartada.
 
 Cada observación dice de qué días habla (`day`, `days` o `routineId` + `month`), así se puede ir a verlos: “Ir a ese día”, “Ver los días” (lista desplegable de fechas) o “Ver en el calendario” (los días de la rutina). “Hoy empezaste este cuaderno” no lleva a ningún lado.
 
@@ -266,14 +330,16 @@ Catálogo inicial: días desde que empezó el cuaderno; veces que escribió esta
 
 Ver `DATA_MODEL.md` para esquema. Resumen:
 
-- **IndexedDB** (`mi-cuaderno`): `meta`, `days`, `activities`, `routines`, `pages`.
-- **localStorage**: solo preferencias livianas de UI (última ruta, cantidad de aperturas de tapa). Nada importante vive solo ahí.
-- **Backup JSON**: `{ app: "mi-cuaderno", kind: "backup", schemaVersion, exportedAt, data: {...} }`. Import valida estructura, migra versiones anteriores, rechaza archivos de otra app o versiones futuras con mensaje claro.
+- **IndexedDB** (`mi-cuaderno`): `meta`, `days`, `activities`, `routines`, `pages`, `images`, `files`. Versión IDB 2.
+- **localStorage**: solo preferencias livianas de UI (última ruta, cantidad de aperturas de tapa, borrador transitorio). Nada importante vive solo ahí.
+- **Backup JSON**: `{ app: "mi-cuaderno", kind: "backup", schemaVersion: 4, exportedAt, data: {...} }`. Import valida estructura, aplica migraciones automáticas (`migrations[v]`), rechaza archivos de otra app o versiones futuras (≥ 5) con mensaje claro. Incluye elementos en papelera con `deletedAt` y marcas de `privacy`.
 - **Restaurar = reemplazar** (con advertencia y opción de descargar la copia actual antes). No hay “merge” en v1 para evitar duplicados ambiguos.
+- **Cuánto ocupa mi cuaderno (DA4):** cálculo en tiempo real (`measureStorage`) con desglose de texto, fotos, audio, dibujos y otros adjuntos, junto con aviso amable si la copia supera 5 MB.
+- **Papelera y retención (DA1):** borrado suave universal con purga automática según `settings.trashRetentionDays` (default 30 días) y vaciado manual.
 - **TXT**: diario legible, día por día.
 - **CSV**: `dias.csv` y `actividades.csv` (UTF-8 con BOM para Excel, separador `,`, comillas RFC 4180).
 - **XLSX**: generado localmente sin dependencias (ZIP + SpreadsheetML).
-- **Impresión**: documento dedicado con `@page` A4 / A5 / Letter: portada, calendario mensual resumido, los días en secuencia (sin partir un día entre hojas), páginas libres y rutinas.
+- **Impresión**: documento dedicado con `@page` A4 / A5 / Letter: portada, calendario mensual resumido, los días en secuencia (sin partir un día entre hojas), páginas libres y rutinas. Ignora elementos en papelera.
 - **Recordatorio de copia**: nota suave en Hoy si pasaron N días desde la última copia (default 14) y hay datos.
 
 ## 14. Recordatorios / notificaciones
@@ -291,10 +357,12 @@ Ajustes: inicio del día (on/off + hora, default 08:30), cierre del día (on/off
 ## 16. Accesibilidad
 
 WCAG 2.2 AA como piso: contraste de texto ≥ 4.5:1, foco visible propio, todo operable por teclado (incluye stickers: flechas mueven, `[` `]` rotan, `Supr` borra), labels en todos los inputs, `aria-live` para “guardado”, decoraciones con `aria-hidden`, targets ≥ 44 px en táctil, respeto de `prefers-reduced-motion` y del ajuste interno.
+- **Deshacer y rehacer (DA2):** botones con nombres accesibles (`aria-label="Deshacer {acción}"`), estados deshabilitados con `disabled` y `aria-disabled="true"`, y percepción no dependiente del color. Los atajos globales `Ctrl+Z` / `Ctrl+Shift+Z` ceden el paso en campos de texto para respetar el historial nativo del sistema.
+- **Guardado visible (DA3):** el atributo `aria-live="polite"` se activa únicamente en los anuncios de `guardado` y en fallos de almacenamiento; el estado transitorio `guardando…` se silencia para no interferir con la lectura del lector de pantalla.
 
 ## 17. Casos borde que deben funcionar
 
-Sin datos · un día · 30 días · un año (365 días + 1000 actividades) · muchas rutinas (30+) · rutina borrada con historial · fecha pasada y futura · cambio de mes/año · 29 de febrero · regla “día 31” en meses cortos · import del mismo backup dos veces (reemplaza, no duplica) · backup inválido / de otra app / versión futura · almacenamiento lleno o IndexedDB no disponible (aviso + modo de emergencia en memoria con exportación) · dos pestañas abiertas (BroadcastChannel: el calendario de la otra pestaña se redibuja solo; el cuadro abierto se refresca solo si no se está escribiendo).
+Sin datos · un día · 30 días · un año (365 días + 1000 actividades) · muchas rutinas (30+) · rutina borrada con historial · fecha pasada y futura · cambio de mes/año · 29 de febrero · regla “día 31” en meses cortos · import del mismo backup dos veces (reemplaza, no duplica) · backup inválido / de otra app / versión futura · almacenamiento lleno o IndexedDB no disponible (aviso + modo de emergencia en memoria con exportación) · dos pestañas abiertas (BroadcastChannel: el calendario de la otra pestaña se redibuja solo; el cuadro abierto se refresca solo si no se está escribiendo) · restauración de elementos desde la papelera · días y páginas con banderas de privacidad activadas.
 
 ## 18. MVP (criterio de “funciona”)
 
@@ -311,7 +379,7 @@ index.html            entrada única
 manifest.webmanifest  PWA
 sw.js                 service worker (solo http/https)
 css/                  tokens, base, cuaderno, componentes, vistas, impresión
-js/core/              lógica pura + almacenamiento (sin DOM salvo store); rutas en routes.js
+js/core/              lógica pura + almacenamiento (sin DOM salvo store); rutas en routes.js; historial en history.js
 js/ui/                íconos, stickers, componentes, motion, escenas
 js/views/             una vista por archivo
 js/app.js             router + arranque
@@ -333,7 +401,7 @@ skills/               colección de skills (no es parte de la app)
 
 ## 20. Estrategia de pruebas
 
-- **Unit (node:test):** fechas, recurrencias (incluye 29/02, día 31, n-ésimo día, intervalos, temporales), materialización de rutinas, validación y migración de backups, CSV (escapes), ZIP/XLSX (estructura válida), insights (umbrales, redacción no causal).
+- **Unit (node:test):** fechas, recurrencias (incluye 29/02, día 31, n-ésimo día, intervalos, temporales), materialización de rutinas, validación y migración de backups (v1→v2, v2→v3, v3→v4, rechazo de v5), historial de deshacer/rehacer (`MC.history`: límites, reversión, eventos), papelera (DA1: soft-delete, retención, purga, restauración), privacidad emocional (PV1: exclusión en insights y recuerdos), medición de almacenamiento (DA4: desglose y umbral grande), CSV (escapes), ZIP/XLSX (estructura válida), insights (umbrales, redacción no causal).
 - **E2E (Playwright/Chromium):** primera apertura → onboarding → registrar ánimo → actividades con estados → recargar y ver persistencia → rutina que aparece → calendario → exportar JSON → borrar → restaurar → datos de vuelta. En `file://` y en `http://` (SW registrado, offline con red cortada). Viewports 375×812, 820×1180, 1440×900.
 - **QA visual:** capturas desktop + mobile revisadas contra DESIGN.md; detector de `impeccable` una vez al final.
 
