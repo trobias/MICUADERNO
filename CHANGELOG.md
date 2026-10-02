@@ -2,6 +2,15 @@
 
 Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantiene. El porqué de cada decisión está en `DECISIONS.md` (Dn); lo que falta, en `ROADMAP.md`. Cada entrega que toca archivos de la app sube `CACHE_VERSION` en `sw.js` para que las PWA instaladas se actualicen.
 
+## 2026-10-02 · Papelera: arreglos de la revisión (cache `v15`)
+
+**Para quien lo usa**
+- Si la limpieza automática de la papelera falla al abrir, el cuaderno abre igual (antes mostraba “Algo no salió bien al abrir el cuaderno”).
+- Borrar del todo una página de la papelera también borra sus adjuntos; antes quedaban ocupando lugar y en la copia, sin forma de verlos.
+
+**Para quien lo mantiene** (DA1)
+- `dropForever` en `model.js` (purga, borrar definitivamente y vaciar); la purga del arranque en `app.js` es best-effort. Test unitario de adjuntos de página y E2E de papelera (borrar página → sale del mes → Ajustes → Restaurar → vuelve) y de arranque con purga fallida.
+
 ## 2026-10-02 · Papelera (cache `v14`)
 
 **Para quien lo usa**
