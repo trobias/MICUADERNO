@@ -325,6 +325,15 @@ a.months__year { text-decoration: none; padding: 4px 6px; border-radius: 6px; }
 .data-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .danger-zone { margin-top: var(--s-5); padding-top: var(--s-3); border-top: 1.5px dashed var(--rule-strong); }
 .about { margin-top: var(--s-7); }
+/* Cuánto ocupa mi cuaderno (DA4) */
+.storage-total { margin: 0 0 var(--s-3); }
+.storage-list { list-style: none; margin: 0 0 var(--s-3); padding: 0; }
+.storage-row { display: flex; align-items: center; justify-content: space-between; gap: var(--s-2); padding: var(--s-2) 0; border-bottom: 1px dashed var(--rule); font-size: var(--fs-sm); }
+.storage-row__name { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); min-width: 0; }
+.storage-row__label { font-weight: 500; }
+.storage-row__size { font-weight: 600; white-space: nowrap; }
+.storage-note { margin: var(--s-2) 0; }
+.storage-large { margin: var(--s-3) 0; }
 .time-row { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); flex-wrap: wrap; }
 .notify-settings { display: grid; gap: var(--s-3); }
 

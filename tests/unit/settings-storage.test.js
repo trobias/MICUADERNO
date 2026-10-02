@@ -193,3 +193,22 @@ test('measureStorage: aviso de copia grande cuando supera el umbral', () => {
   assert.equal(rBig.isLarge, true);
   assert.ok(rBig.total >= LARGE_THRESHOLD);
 });
+
+test('measureStorage: aviso por fotos y adjuntos (MEDIA_LARGE_THRESHOLD) aunque el total no llegue al umbral', () => {
+  const { MEDIA_LARGE_THRESHOLD } = MC.views.settings;
+  assert.equal(MEDIA_LARGE_THRESHOLD, 4 * 1024 * 1024);
+  assert.ok(MEDIA_LARGE_THRESHOLD < LARGE_THRESHOLD);
+  const file = (n) => ({ id: 'f', owner: 'day:2026-10-01', name: 'entrada.pdf', type: 'application/pdf', data: 'data:application/pdf;base64,' + 'A'.repeat(n) });
+  const under = measureStorage({ files: [file(MEDIA_LARGE_THRESHOLD - 1024)] }, null);
+  assert.equal(under.isLarge, false);
+  const over = measureStorage({ files: [file(MEDIA_LARGE_THRESHOLD)] }, null);
+  assert.ok(over.total < LARGE_THRESHOLD);
+  assert.equal(over.isLarge, true);
+  assert.equal(measureStorage({ files: [file(MEDIA_LARGE_THRESHOLD)] }, null, { mediaThreshold: 8 * 1024 * 1024 }).isLarge, false);
+});
+
+test('measureStorage: un data URL se mide por su largo y da lo mismo que el JSON del registro', () => {
+  const rec = { id: 'img_1', kind: 'upload', name: 'mi taza ☕', src: 'data:image/webp;base64,' + 'Q'.repeat(50000), w: 400, h: 300 };
+  const r = measureStorage({ images: [rec] }, null);
+  assert.equal(r.breakdown.fotos.bytes, Buffer.byteLength(JSON.stringify(rec), 'utf8'));
+});
