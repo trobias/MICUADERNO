@@ -2,6 +2,15 @@
 
 Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantiene. El porqué de cada decisión está en `DECISIONS.md` (Dn); lo que falta, en `ROADMAP.md`. Cada entrega que toca archivos de la app sube `CACHE_VERSION` en `sw.js` para que las PWA instaladas se actualicen.
 
+## 2026-10-02 · Espacio del cuaderno (cache `v11`)
+
+**Para quien lo usa**
+- En Ajustes → Mis datos se ve un tamaño aproximado del cuaderno, separado en texto, fotos, audio, dibujos y otros adjuntos. Si la copia puede ser grande, aparece un aviso antes de descargarla.
+
+**Para quien lo mantiene** (DA4)
+- `js/views/settings.js` mide los datos locales por categoría y muestra aparte la estimación del almacenamiento del sitio cuando el navegador la ofrece. Si no hay `navigator.storage.estimate()`, el desglose del cuaderno sigue disponible.
+- `tests/unit/settings-storage.test.js` cubre categorías, tamaño total, estimación opcional y umbral del aviso. `sw.js` sube a `mi-cuaderno-v11` por el cambio de `settings.js` en el shell.
+
 ## 2026-10-01 · Barra de marcadores en móvil con teclado abierto (cache `v10`)
 
 **Para quien lo usa**
