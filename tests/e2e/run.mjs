@@ -613,7 +613,8 @@ await test('pantalla única: tocar un día abre su cuadro, cerrar vuelve al cale
   await page.waitForFunction(() => !document.getElementById('panel').open);
   // Saltar de mes con la tira
   await page.click('.month-chip >> nth=0');
-  await page.waitForSelector('.month-chip[aria-current="date"]');
+  // El mes nuevo se arma aparte y reemplaza al viejo cuando está listo (D23): hasta entonces el chip del mes anterior sigue marcado.
+  await page.waitForSelector('.months__list li:first-child .month-chip[aria-current="date"]');
   assert.match(await page.textContent('.month-chip[aria-current="date"]'), /ene/);
   assert.match(page.url(), /#\/calendario\/mes\/\d{4}-01/);
   // Marcadores: cada uno abre su cuadro, y con el cuadro abierto se pasa de uno a otro sin cerrar.
