@@ -20,8 +20,8 @@
   function visible(all) {
     var hidden = {};
     var days = all.days.filter(function (d) {
-      if (M.isPrivate(d, 'noInsights')) { hidden[d.date] = true; return false; }
-      return !M.isDeleted(d);
+      if (M.isPrivate(d, 'noInsights') || M.isDeleted(d)) { hidden[d.date] = true; return false; }
+      return true;
     });
     return Object.assign({}, all, {
       days: days,

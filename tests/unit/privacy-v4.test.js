@@ -295,3 +295,11 @@ test('insights: no cambia el objeto que recibe', () => {
   assert.equal(s.days.length, 20);
   assert.equal(s.activities.length, 20);
 });
+
+test('insights: las actividades de un día en papelera tampoco cuentan', () => {
+  const s = sample();
+  s.days[15].deletedAt = '2026-09-21T10:00:00.000Z';
+  const list = MC.insights.compute(s, '2026-09-20');
+  assert.equal(mentioned(list).has('2026-09-16'), false);
+  assert.match(list.find((i) => i.id === 'routine-month').text, /19 días/);
+});
