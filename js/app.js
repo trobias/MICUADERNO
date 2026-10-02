@@ -367,7 +367,9 @@
     MC.store.init().then(function () {
       // Las imágenes propias se cargan antes: los stickers se dibujan sin esperar.
       return MC.model.loadSettings().then(function (s) {
-        return MC.model.purgeTrash().then(function () { return MC.model.loadImages(); }).then(function () { return s; });
+        // La purga de la papelera vencida es limpieza: si falla, el cuaderno abre igual y se reintenta al próximo arranque.
+        var purged = MC.model.purgeTrash().catch(function (err) { console.warn('[MI CUADERNO] No se pudo vaciar la papelera vencida:', err); });
+        return purged.then(function () { return MC.model.loadImages(); }).then(function () { return s; });
       });
     }).then(function (s) {
       applySettings(s);
