@@ -88,5 +88,5 @@ Referencias comunes en vez de copias (VISION §3).
 ## Próximo paso sugerido
 
 1. V7 publicar en GitHub Pages → V1–V3 y V6 en dispositivos reales.
-2. Fase 1 completa (es lo que protege todo lo demás).
-3. Fase 5 en paralelo (chica, alto impacto en el día a día) y después Fase 2.
+2. Fase 5 (chica, alto impacto en el día a día) y en paralelo Fase 2 (motor de elementos; ya tiene deshacer y papelera de la Fase 1).
+3. Fase 3 (memorias), que ya puede apoyarse en la privacidad PV1.
