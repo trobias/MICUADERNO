@@ -1,6 +1,6 @@
 # AGENTS.md — MI CUADERNO
 
-Leé esto primero. Si venís sin contexto de conversaciones anteriores, seguí con **`HANDOFF.md`** (cómo trabaja la dueña, historia de pedidos, estado, preguntas abiertas, cómo retomar). Después `SPEC.md` (qué hace), `DESIGN.md` (cómo se ve y se mueve) y `DATA_MODEL.md` (qué se guarda). Hacia dónde va: `VISION.md` (la experiencia que se busca, **referencia, no implementación literal**). Lo que falta: `ROADMAP.md` (fases) y `BACKLOG.md` (cada idea con su estado). Recién ahí abrí el código relevante.
+Leé esto primero. Si venís sin contexto de conversaciones anteriores, seguí con **`HANDOFF.md`** (arranca con el estado en una línea: qué se hizo y qué sigue; después cómo trabaja la dueña, historia de pedidos, preguntas abiertas y cómo retomar). Después `SPEC.md` (qué hace), `DESIGN.md` (cómo se ve y se mueve) y `DATA_MODEL.md` (qué se guarda). Hacia dónde va: `VISION.md` (la experiencia que se busca, **referencia, no implementación literal**). Lo que falta: `ROADMAP.md` (fases) y `BACKLOG.md` (cada idea con su estado). Recién ahí abrí el código relevante.
 
 ## Qué es
 
@@ -119,6 +119,8 @@ npm run e2e       # 34 recorridos en file:// y http:// (Chromium en /opt/pw-brow
 npm run check     # sintaxis + unit + e2e
 npm run serve     # http://localhost:4173 (probar PWA/SW)
 ```
+
+En Windows: `CHROMIUM` apunta a un `chrome.exe` (por ejemplo el de `%LOCALAPPDATA%\ms-playwright\chromium-<build>\chrome-win\`); varias suites en paralelo → un `E2E_PORT` distinto cada una.
 
 Probar a mano además: doble clic en `index.html`; mobile 375px; teclado solo; `prefers-reduced-motion`.
 

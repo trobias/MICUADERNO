@@ -14,6 +14,8 @@ Cada idea pendiente, con su estado. **Nada se pierde por estar fuera de la fase 
 | **EXPERIMENTAL** | probar en chico; si no suma, se descarta |
 | **BLOCKED** | espera otra cosa (dice cuál) |
 
+**Dónde estamos (03/10/2026):** no hay ítems de producto en NOW porque la Fase 1 se cerró el 02/10 (ver “Cerrados recientemente”, al final). Lo próximo según `ROADMAP.md`: verificación V7 → V1–V6, después la Fase 5 (ES1–ES3, PE5) y la Fase 2 (EL1 primero). Al tomar uno, pasalo a NOW.
+
 Al empezar un ítem: pasarlo a NOW, leer `VISION.md` §0 y la decisión que lo cubre (D25 para todo lo de la visión). Al terminarlo: sacarlo de acá y anotarlo en `CHANGELOG.md`.
 
 ---
@@ -151,9 +153,11 @@ Al empezar un ítem: pasarlo a NOW, leer `VISION.md` §0 y la decisión que lo c
 |---|---|---|---|
 | T1 | Partir `js/views/today.js` (≈370 líneas) en encabezado, cierre y cuerpo. | NEXT | Conviene antes de ES4. |
 | T2 | E2E de “pasar a mañana”, deshacer al sacar, stickers con teclado, restaurar scroll. | NEXT | |
-| T3 | Subir `CACHE_VERSION` automáticamente en `npm run dist`. | NEXT | Hoy `v17`. |
+| T3 | Subir `CACHE_VERSION` automáticamente en `npm run dist`. | NEXT | Hoy `v19`. |
 | T4 | Sacar los `woff2` duplicados del dist (las fuentes ya van embebidas). | LATER | |
 | T5 | Un ícono por atajo de la PWA. | LATER | |
+| T7 | Después de recargar la página, cerrar el cuadro no conoce los pasos anteriores a la recarga y vuelve al calendario sumando un paso nuevo (no rompe nada; “atrás” sigue andando). | LATER | `js/app.js` `track`/`requestClose`. Se podría guardar `trail` en `sessionStorage`. |
+| T8 | Los números de la suite (unit/E2E) y la caché se repiten a mano en `AGENTS.md`, `HANDOFF.md`, `ROADMAP.md` y `README.md`, y se desactualizan. | LATER | Junto con T3: que `npm run check`/`dist` los informe, o nombrarlos en un solo lugar. |
 
 ## BLOCKED / descartado
 
@@ -166,3 +170,17 @@ Al empezar un ítem: pasarlo a NOW, leer `VISION.md` §0 y la decisión que lo c
 | — | Reproducir música dentro de la app. | Descartado | VISION [53]: recordar qué sonaba, no ser un reproductor. |
 | — | Push remoto con servidor; sonido ambiente por defecto. | Descartado | D11; brief §44. |
 | — | Sugerencias del `--design-system` de `ui-ux-pro-max` (índigo, manuscrita principal, landing). | Descartado | D16. |
+
+## Cerrados recientemente (traza para quien llega sin contexto)
+
+Ya no están arriba porque están hechos. El detalle, en `CHANGELOG.md` (por fecha) y el contrato, en la decisión indicada.
+
+| # | Qué quedó | Cuándo | Dónde mirar |
+|---|---|---|---|
+| DA1 | Papelera: borrado suave (`deletedAt`) en páginas, rutinas, imágenes, dibujos y adjuntos; restaurar, vaciar, retención (30 días por defecto, 0 = nunca) con aviso al acortarla; un día en papelera se restaura al editarlo. Sacar actividades sigue siendo definitivo con “Deshacer”. | 02/10/2026 | D26, `SPEC.md`, `DATA_MODEL.md`, `js/core/model.js`, `js/views/settings.js` |
+| DA2 | Deshacer/rehacer por superficie (`MC.history`): stickers, dibujo y acciones de actividades; `Ctrl+Z`/`Ctrl+Shift+Z`/`Ctrl+Y` solo fuera de campos de texto; botones en las barras existentes. | 02/10/2026 | D26, `js/core/history.js` |
+| DA3 | “guardando… → guardado ✓” igual en día, página, scrapbook y Ajustes; aviso amable si no se pudo guardar. | 02/10/2026 | D26, `c.savedNote` en `js/ui/components.js` |
+| DA4 | Cuánto ocupa el cuaderno, con desglose y aviso de copia grande (incluye lo que está en papelera). | 02/10/2026 | `js/views/settings.js` |
+| PV1 | Privacidad por día o página (no recuerdo / no insights / no revisiones); esquema v4 con migración desde v3. | 02/10/2026 | D26, `DATA_MODEL.md`, `js/core/backup.js` |
+| T6 | En el celular, los marcadores se esconden mientras el teclado está abierto. | 02/10/2026 | DESIGN §10, `js/app.js` |
+| — | La ✕ del cuadro vuelve siempre al calendario (antes fallaba al ir y volver a la misma hoja). | 03/10/2026 | `CHANGELOG.md`, `js/app.js` |
