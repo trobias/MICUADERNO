@@ -1025,6 +1025,43 @@ await test('pantalla única: tocar un día abre su cuadro, cerrar vuelve al cale
   await context.close();
 });
 
+await test('cerrar el cuadro vuelve al calendario aunque se haya ido y vuelto a la misma hoja', async () => {
+  const { context, page, errors } = await newPage(browser);
+  await page.goto(FILE_URL);
+  await onboard(page);
+  const closeToCalendar = async (why) => {
+    await page.click('#panel-close');
+    await page.waitForTimeout(400);
+    assert.equal(await page.evaluate(() => document.getElementById('panel').open), false, why);
+    assert.match(page.url(), /#\/calendario/, why);
+  };
+  await closeToCalendar('desde Hoy recién abierto');
+  // Día → día siguiente → día anterior con las flechas (todo hacia adelante en el historial).
+  await goto(page, '#/dia/2026-10-10');
+  await page.click('.day-head button[aria-label*="siguiente"]');
+  await page.waitForTimeout(400);
+  await page.click('.day-head button[aria-label*="anterior"]');
+  await page.waitForTimeout(400);
+  assert.match(page.url(), /#\/dia\/2026-10-10/);
+  await closeToCalendar('después de ir y volver con las flechas');
+  // Páginas → Ajustes → Páginas con los marcadores.
+  await goto(page, '#/paginas');
+  await goto(page, '#/ajustes');
+  await goto(page, '#/paginas');
+  await closeToCalendar('después de ir y volver entre marcadores');
+  // Una ruta que no existe se reemplaza por el calendario y no deja pasos fantasma.
+  await goto(page, '#/no-existe');
+  await goto(page, '#/rutinas');
+  await closeToCalendar('después de una ruta inválida');
+  // “Atrás” del navegador sigue funcionando como siempre.
+  await goto(page, '#/hoy');
+  await page.goBack();
+  await page.waitForTimeout(400);
+  assert.equal(await page.evaluate(() => document.getElementById('panel').open), false, 'atrás cierra el cuadro');
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
 await test('320px y celular apaisado: sin scroll horizontal', async () => {
   for (const viewport of [{ width: 320, height: 640 }, { width: 844, height: 390 }]) {
     const { page, errors, context } = await newPage(browser, { viewport });

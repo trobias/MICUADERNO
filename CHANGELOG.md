@@ -2,6 +2,14 @@
 
 Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantiene. El porqué de cada decisión está en `DECISIONS.md` (Dn); lo que falta, en `ROADMAP.md`. Cada entrega que toca archivos de la app sube `CACHE_VERSION` en `sw.js` para que las PWA instaladas se actualicen.
 
+## 2026-10-03 · Cerrar el cuadro vuelve siempre al calendario (cache `v19`)
+
+**Para quien lo usa**
+- La ✕ (y Escape) vuelve al calendario aunque antes se haya ido y vuelto a la misma hoja, por ejemplo con las flechas de día anterior/siguiente o pasando por Páginas → Ajustes → Páginas. Antes caía en otro cuadro y había que cerrar de nuevo.
+
+**Para quien lo mantiene**
+- `js/app.js`: el router ya no adivina “atrás” comparando con la ruta anterior; cada entrada del historial guarda su posición en `history.state` (`mcAt`) y `requestClose` vuelve con `history.go` exactamente hasta la última entrada del calendario. Los `location.replace` del router pasan por `replaceHash` para no contar pasos fantasma. E2E nuevo con los recorridos que fallaban.
+
 ## 2026-10-02 · Seguimiento de papelera y cierre del traspaso (cache `v18`)
 
 - Traspaso y roadmap reflejan la Fase 1 y T6 ya integrados, el esquema v4, la caché v18 y la suite actual (91 unit y 33 E2E).

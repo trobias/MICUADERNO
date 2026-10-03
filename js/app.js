@@ -30,7 +30,11 @@
   var panel = null;         // { route, instance } — el cuadro abierto
   var lastHash = null;
   var lastBaseHash = R.calendar();
-  var trail = [];           // rutas visitadas en esta sesión (para cerrar con “atrás” de verdad)
+  // Rutas por posición en el historial (para cerrar con “atrás” de verdad). Cada entrada guarda su
+  // posición en history.state: así ir y volver a la misma hoja no se confunde con apretar “atrás”.
+  var trail = [];
+  var at = -1;              // posición de la entrada actual en `trail`
+  var replacing = false;    // el próximo hashchange reemplaza la entrada actual (location.replace)
   var booted = false;
 
   MC.views = MC.views || {};
@@ -253,14 +257,36 @@
 
   /** Cerrar a pedido de la persona: vuelve al calendario usando el historial si se puede. */
   function requestClose() {
-    for (var i = trail.length - 1; i >= 0; i--) {
-      if (parse(trail[i]).kind === 'base') {
-        var steps = trail.length - 1 - i;
-        if (steps > 0) { history.go(-steps); return; }
+    for (var i = at; i >= 0; i--) {
+      var r = trail[i] && parse(trail[i]);
+      if (r && r.kind === 'base') {
+        if (i < at) { history.go(i - at); return; }
         break;
       }
     }
     location.hash = lastBaseHash;
+  }
+
+  /** Reemplaza la ruta actual sin sumar un paso al historial. */
+  function replaceHash(hash) {
+    replacing = true;
+    location.replace(hash);
+  }
+
+  /** Ubica la entrada actual del historial: una ya visitada (atrás/adelante), un reemplazo o una nueva. */
+  function track(hash) {
+    var st = history.state;
+    if (st && typeof st.mcAt === 'number') {
+      // Entrada que ya tiene posición: se llegó con atrás/adelante (o se recargó la página).
+      at = st.mcAt;
+      trail[at] = hash;
+    } else {
+      if (!replacing || at < 0) at++;
+      trail.length = at;
+      trail[at] = hash;
+      try { history.replaceState({ mcAt: at }, ''); } catch (e) { /* sin historial manejable: cerrar usa lastBaseHash */ }
+    }
+    replacing = false;
   }
 
   /* ---------- Router ---------- */
@@ -269,11 +295,11 @@
     if (hash === lastHash) return;
     var prev = lastHash ? parse(lastHash) : null;
     lastHash = hash;
-    if (trail.length >= 2 && trail[trail.length - 2] === hash) trail.pop(); else trail.push(hash);
+    track(hash);
     var route = parse(hash);
-    if (!route) { location.replace(R.calendar()); return; }
+    if (!route) { replaceHash(R.calendar()); return; }
     var s = MC.model.settings();
-    if (!s.onboarded && route.kind !== 'onboarding') { location.replace(R.welcome()); return; }
+    if (!s.onboarded && route.kind !== 'onboarding') { replaceHash(R.welcome()); return; }
     MC.ui.set('lastRoute', hash);
 
     if (route.kind === 'onboarding') { renderOnboarding(); MC.emit('route', route); return; }

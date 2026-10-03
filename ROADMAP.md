@@ -6,7 +6,7 @@ Regla de este roadmap: **la app no tiene que sentirse grande**. Cada fase es una
 
 ## Hecho
 
-MVP completo del brief §64 y, después: una sola pantalla con el calendario al centro (D17); todo lo que tiene fecha en el calendario (D18); rutas, cuentas y dibujos en un solo lugar (D19); secciones conectadas por las fechas (D20); calendario en vivo (D21); marcadores que abren cuadros y Agenda con alta/edición/baja (D22); el mes muestra todo y todo se anima, “Completas” por defecto (D23); dibujar, imágenes propias como stickers y adjuntos (D24). Fase 1 integrada: papelera, deshacer/rehacer, guardado visible, medición de espacio, privacidad y corrección del teclado móvil (D26). `schemaVersion` 4, caché `mi-cuaderno-v18`; puerta de calidad con 91 unit y 33 E2E.
+MVP completo del brief §64 y, después: una sola pantalla con el calendario al centro (D17); todo lo que tiene fecha en el calendario (D18); rutas, cuentas y dibujos en un solo lugar (D19); secciones conectadas por las fechas (D20); calendario en vivo (D21); marcadores que abren cuadros y Agenda con alta/edición/baja (D22); el mes muestra todo y todo se anima, “Completas” por defecto (D23); dibujar, imágenes propias como stickers y adjuntos (D24). Fase 1 integrada: papelera, deshacer/rehacer, guardado visible, medición de espacio, privacidad y corrección del teclado móvil (D26). `schemaVersion` 4, caché `mi-cuaderno-v19`; puerta de calidad con 91 unit y 34 E2E.
 
 ---
 

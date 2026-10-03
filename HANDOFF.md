@@ -30,8 +30,8 @@ Para retomar el desarrollo **sin haber estado en las conversaciones anteriores**
 
 ## 3. Estado actual
 
-- Todo lo de la tabla está en `main` (y en la rama de la sesión). `schemaVersion` 4, `CACHE_VERSION` `mi-cuaderno-v18`. Fase 1 (DA1–DA4, PV1, T6) integrada el 2026-10-02.
-- `npm run check` verifica sintaxis, **91 unit** y **33 E2E** sobre `file://` y HTTP. Para E2E necesita la dependencia local `playwright-core` y un navegador Chromium indicado con `CHROMIUM`.
+- Todo lo de la tabla está en `main` (y en la rama de la sesión). `schemaVersion` 4, `CACHE_VERSION` `mi-cuaderno-v19`. Fase 1 (DA1–DA4, PV1, T6) integrada el 2026-10-02.
+- `npm run check` verifica sintaxis, **91 unit** y **34 E2E** sobre `file://` y HTTP. Para E2E necesita la dependencia local `playwright-core` y un navegador Chromium indicado con `CHROMIUM`.
 - **Nunca se probó en dispositivos reales** ni se publicó: ver `ROADMAP.md` → Verificación pendiente (V1–V7).
 - Fase 1 y T6 ya están integrados: no rehacerlos. El seguimiento de DA1 está completado. Antes de avanzar a Fase 2, revisar la verificación pendiente V1–V7 en `ROADMAP.md`.
 
