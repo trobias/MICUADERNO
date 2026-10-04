@@ -2,6 +2,12 @@
 
 Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantiene. El porqué de cada decisión está en `DECISIONS.md` (Dn); lo que falta, en `ROADMAP.md`. Cada entrega que toca archivos de la app sube `CACHE_VERSION` en `sw.js` para que las PWA instaladas se actualicen.
 
+## 2026-10-04 · Accesos de nube preparados, credenciales de Supabase pendientes
+
+- La CLI de Vercel quedó vinculada a `trobias-projects/micuaderno`. Se fijaron las variables públicas indicadas y se cargaron en Production y Preview los secretos generables, VAPID, su asunto y `NEXT_TELEMETRY_DISABLED`. Falta `SUPABASE_SECRET_KEY`.
+- `.mcp.json` ya está en la rama. La dueña habilitó los dos MCP en su entorno web de Claude Code; el estado de `claude mcp list` en una instalación local distinta no verifica ese entorno.
+- `docs/NUBE.md` registra la verificación de red, los entornos y lo que falta para aplicar la migración SQL existente. Ningún secreto se agregó a Git.
+
 ## 2026-10-04 · Base de la nube: cuentas con PIN, permisos por sección y avisos (cache `v26`, sin desplegar)
 
 **Para quien lo usa**
