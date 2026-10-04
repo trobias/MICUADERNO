@@ -28,7 +28,7 @@ navegador ──► Vercel (Next.js 16)
 | Supabase Auth | El PIN **nunca** es la contraseña de Supabase. La contraseña es `HMAC-SHA256(AUTH_SECRET, id)` y el correo es interno (`<id>@personas.mi-cuaderno.invalid`, se cambia con `AUTH_EMAIL_DOMAIN`). Nadie recibe correos. |
 | Fuerza bruta | 3 intentos libres; después la espera se duplica (30 s, 1, 2, 4 min… hasta 1 hora), por usuario y por IP (`login_throttle`). Si el usuario no existe, la respuesta y el tiempo son los mismos. |
 | CSRF | Las rutas que cambian algo exigen `Origin` del mismo sitio. Las cookies de sesión las maneja `@supabase/ssr` (`SameSite=Lax`, `Secure` en producción). |
-| RLS | En **todas** las tablas. Sin sesión no se lee nada. Funciones `can_read`, `can_write` e `is_admin` (security definer). “Solo para mí” (`private`) no lo ve nadie más, aunque tenga permiso. Una persona en pausa pierde los permisos. Lo prueba `tests/cloud/rls.test.mjs` contra un Postgres 16 real. |
+| RLS | En **todas** las tablas. Sin sesión no se lee nada. Funciones `private.can_read`, `private.can_write` y `private.is_admin` (security definer, en un esquema fuera de la API para que no se puedan llamar por RPC). “Solo para mí” (`private`) no lo ve nadie más, aunque tenga permiso. Una persona en pausa pierde los permisos. Lo prueba `tests/cloud/rls.test.mjs` contra un Postgres 16 real. |
 | Permisos | Los da **la dueña o el dueño de cada cuaderno**, por sección (`semana`, `actividades`, `emociones`, `escritura`, `hojas`, `repeticiones`, `fotos`, `anio`, `ajustes`) y nivel (`ver` / `editar`). Quien administra crea personas, cambia PIN olvidados y pone en pausa, pero **no** puede abrir ni compartir el cuaderno de otra persona. Ejemplo: Nicole crea a su psicóloga y le da “ver” en Emociones y Escritura. |
 | Cabeceras | El cuaderno se sirve con CSP estricta (`script-src 'self'`, sin scripts en línea). Además: HSTS, `nosniff`, `no-referrer` y `Permissions-Policy`. |
 | Registro | `audit_events` guarda altas, pausas, cambios de PIN y de permisos, e ingresos. **Nunca** contenido ni PIN. |
@@ -90,6 +90,8 @@ Con el cron diario solo sale el aviso de la mañana (ventana de 12 h). Para que 
 La entrega es idempotente: un aviso de cada tipo por persona y por día (`push_log`). En iPhone, los avisos funcionan solo con el cuaderno agregado a la pantalla de inicio (iOS 16.4 o más nuevo).
 
 ## 4. MCP y acceso de agentes (dos cuentas distintas)
+
+**Comprobado el 04/10/2026:** en claude.ai/code funcionan los **conectores** Supabase y Vercel de la cuenta (pasan por el proxy de MCP de Anthropic). Los servidores de `.mcp.json` no, porque el contenedor no llega a `mcp.supabase.com` ni a `mcp.vercel.com` (403 del proxy). El conector de Supabase ve el proyecto `MICUADERNO` (`lrwfkbuhmgtckjmswrzp`, sa-east-1, activo), sus claves y sus asesores de seguridad. El de Vercel lista el proyecto `micuaderno`, pero para verlo, desplegarlo o cargar variables pide **volver a autorizar el conector con acceso al equipo `trobias-projects`** (claude.ai → Configuración → Conectores → Vercel).
 
 `.mcp.json` (en la raíz) declara los dos servidores MCP para Claude Code. **Son cuentas distintas:** Supabase con la cuenta de Supabase y Vercel con la de Vercel. Cada uno pide su propio inicio de sesión (OAuth) la primera vez (`/mcp` en Claude Code).
 

@@ -122,7 +122,12 @@ create table if not exists public.keepalive (
 insert into public.keepalive (id) values (1) on conflict (id) do nothing;
 
 -- ---------- funciones de permiso (security definer: leen grants sin abrir la tabla) ----------
-create or replace function public.can_read(owner uuid, sec text) returns boolean
+-- En un esquema propio, fuera de la API: así no quedan expuestas como /rest/v1/rpc/… (asesor 0028/0029).
+create schema if not exists private;
+revoke all on schema private from public;
+grant usage on schema private to authenticated;
+
+create or replace function private.can_read(owner uuid, sec text) returns boolean
 language sql stable security definer set search_path = public as $$
   select auth.uid() = owner or exists (
     select 1 from public.notebook_grants g
@@ -131,7 +136,7 @@ language sql stable security definer set search_path = public as $$
   );
 $$;
 
-create or replace function public.can_write(owner uuid, sec text) returns boolean
+create or replace function private.can_write(owner uuid, sec text) returns boolean
 language sql stable security definer set search_path = public as $$
   select auth.uid() = owner or exists (
     select 1 from public.notebook_grants g
@@ -140,13 +145,13 @@ language sql stable security definer set search_path = public as $$
   );
 $$;
 
-create or replace function public.is_admin() returns boolean
+create or replace function private.is_admin() returns boolean
 language sql stable security definer set search_path = public as $$
   select exists (select 1 from public.profiles where id = auth.uid() and is_admin and disabled_at is null);
 $$;
 
-revoke all on function public.can_read(uuid, text), public.can_write(uuid, text), public.is_admin() from public;
-grant execute on function public.can_read(uuid, text), public.can_write(uuid, text), public.is_admin() to authenticated;
+revoke all on function private.can_read(uuid, text), private.can_write(uuid, text), private.is_admin() from public;
+grant execute on function private.can_read(uuid, text), private.can_write(uuid, text), private.is_admin() to authenticated;
 
 -- ---------- RLS ----------
 alter table public.sections enable row level security;
@@ -172,7 +177,7 @@ create policy sections_read on public.sections for select to authenticated using
 grant select (id, username, display_name, is_admin, created_at, disabled_at, timezone) on public.profiles to authenticated;
 drop policy if exists profiles_read on public.profiles;
 create policy profiles_read on public.profiles for select to authenticated using (
-  id = auth.uid() or public.is_admin()
+  id = auth.uid() or private.is_admin()
   or exists (select 1 from public.notebook_grants g where g.owner_id = profiles.id and g.grantee_id = auth.uid())
   or exists (select 1 from public.notebook_grants g where g.grantee_id = profiles.id and g.owner_id = auth.uid())
 );
@@ -195,14 +200,14 @@ create policy grants_delete on public.notebook_grants for delete to authenticate
 grant select, insert, update, delete on public.notebook_parts to authenticated;
 drop policy if exists parts_read on public.notebook_parts;
 create policy parts_read on public.notebook_parts for select to authenticated
-  using (owner_id = auth.uid() or (not private and public.can_read(owner_id, section)));
+  using (owner_id = auth.uid() or (not private and private.can_read(owner_id, section)));
 drop policy if exists parts_insert on public.notebook_parts;
 create policy parts_insert on public.notebook_parts for insert to authenticated
-  with check (owner_id = auth.uid() or (not private and public.can_write(owner_id, section)));
+  with check (owner_id = auth.uid() or (not private and private.can_write(owner_id, section)));
 drop policy if exists parts_update on public.notebook_parts;
 create policy parts_update on public.notebook_parts for update to authenticated
-  using (owner_id = auth.uid() or (not private and public.can_write(owner_id, section)))
-  with check (owner_id = auth.uid() or (not private and public.can_write(owner_id, section)));
+  using (owner_id = auth.uid() or (not private and private.can_write(owner_id, section)))
+  with check (owner_id = auth.uid() or (not private and private.can_write(owner_id, section)));
 drop policy if exists parts_delete on public.notebook_parts;
 create policy parts_delete on public.notebook_parts for delete to authenticated using (owner_id = auth.uid());
 
@@ -215,6 +220,6 @@ create policy push_own on public.push_subscriptions for all to authenticated
 -- Registro de seguridad: solo admin lo lee; lo escribe el servidor.
 grant select on public.audit_events to authenticated;
 drop policy if exists audit_admin on public.audit_events;
-create policy audit_admin on public.audit_events for select to authenticated using (public.is_admin());
+create policy audit_admin on public.audit_events for select to authenticated using (private.is_admin());
 
 -- login_throttle, push_log y keepalive: sin políticas para authenticated (solo el servidor con clave secreta).
