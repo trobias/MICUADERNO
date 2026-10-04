@@ -64,7 +64,7 @@ A12: matriz E2E de pasar entre todas las secciones y **volver al calendario** (�
 5. **B6 push/PWA:** Web Push activado por la persona, zona horaria, entrega idempotente y mensajes sin contenido escrito. Instalada/offline y login probados en dispositivos reales.
 6. **B7–B8 entrega:** proyecto Supabase separado de otros proyectos y entorno preview aislado; secretos solo en entorno seguro; preview protegida, pruebas RLS/pgTAP, E2E de dos dispositivos y revisión de seguridad antes de producción. Crear proyectos, servicios y desplegar son cambios externos: confirmar con la dueña antes de cada uno.
 
-Verificar versiones vigentes y documentación oficial de Next.js, Supabase y Vercel **al empezar B**; las versiones fijadas en el plan de 03/10/2026 pueden haber cambiado. No instalar paquetes globales ni `latest` mutable. El usuario autorizó la arquitectura y el trabajo de preparación; no hay proyecto Supabase ni despliegue activo en este repo al cierre de A4.
+Verificar versiones vigentes y documentación oficial de Next.js, Supabase y Vercel al continuar B; las versiones fijadas en el plan de 03/10/2026 pueden haber cambiado. No instalar paquetes globales ni `latest` mutable. La base B1–B4 y B6 está implementada en local (D37), con migración SQL versionada; `docs/NUBE.md` registra el acceso comprobado y lo que falta para autenticar Supabase, aplicar la migración y verificar un despliegue nuevo. B5 y la entrega B7–B8 siguen pendientes.
 
 ## Etapa C · React y escenas 2.0
 

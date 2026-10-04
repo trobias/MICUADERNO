@@ -1,6 +1,6 @@
 # MI CUADERNO en la nube: Vercel + Supabase (etapa B, base)
 
-Estado al 04/10/2026: **la base de la nube está hecha y probada en local, no está desplegada.** Hay cuentas con usuario y PIN, Nicole administra, permisos por sección con RLS, avisos push y el latido que evita que Supabase pause el proyecto. **Todavía no hay sincronización**: el cuaderno de cada persona vive en su dispositivo (IndexedDB) hasta el paso B5, que viene después de A7 porque la forma de las hojas cambia en A6–A7. Decisiones: `DECISIONS.md` D35 (etapas), D36 (personas, roles y permisos) y D37 (cómo quedó armada la base).
+Estado al 04/10/2026: **la base de la nube está hecha y probada en local; existe una Preview `Ready`, pero falta conectarla y verificarla con Supabase.** Hay cuentas con usuario y PIN, Nicole administra, permisos por sección con RLS, avisos push y el latido que evita que Supabase pause el proyecto. **Todavía no hay sincronización**: el cuaderno de cada persona vive en su dispositivo (IndexedDB) hasta el paso B5, que viene después de A7 porque la forma de las hojas cambia en A6–A7. Decisiones: `DECISIONS.md` D35 (etapas), D36 (personas, roles y permisos) y D37 (cómo quedó armada la base).
 
 ## 1. Cómo está armado
 
@@ -62,7 +62,7 @@ Proyecto `https://vercel.com/trobias-projects/micuaderno`, conectado a este repo
 | `CRON_SECRET` | `openssl rand -base64 32` | **sí**; Vercel lo manda solo a los cron |
 | `SETUP_TOKEN` | `openssl rand -base64 24` | **sí**; se puede borrar después de preparar |
 | `NEXT_PUBLIC_VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` | `npx web-push generate-vapid-keys` | la privada **sí** |
-| `VAPID_SUBJECT` | `mailto:<correo de la dueña>` | no |
+| `VAPID_SUBJECT` | `mailto:tomanotartobinotar@gmail.com` | no |
 | `NEXT_TELEMETRY_DISABLED` | `1` (sin telemetría de Next en el build) | no |
 | `AUTH_EMAIL_DOMAIN` | opcional (por defecto `personas.mi-cuaderno.invalid`) | no |
 
@@ -105,6 +105,17 @@ Si el OAuth del MCP no se puede completar en un contenedor, usá la CLI con toke
 - `VERCEL_TOKEN` (vercel.com/account/tokens) → `npx vercel link --yes --project micuaderno --token "$VERCEL_TOKEN"`, `npx vercel env ls --token "$VERCEL_TOKEN"`.
 
 Cadena de conexión directa (para psql o herramientas): `postgresql://postgres:<SUPABASE_DB_PASSWORD>@db.lrwfkbuhmgtckjmswrzp.supabase.co:5432/postgres`.
+
+### 4.1 Verificación de acceso de esta rama (04/10/2026)
+
+- **Red local:** `mcp.supabase.com/mcp` respondió 401, `api.supabase.com` 404, `lrwfkbuhmgtckjmswrzp.supabase.co` 404, `mcp.vercel.com` 401 y `api.vercel.com` 308. Ningún host devolvió 403. `HTTPS_PROXY` no estaba definido, así que no se pudo consultar `__agentproxy/status`. Los 401 de MCP no prueban un login; requieren OAuth. No se cambió proxy ni TLS.
+- **MCP:** la dueña confirmó que habilitó ambos en el **entorno web** de Claude Code, cada uno con su cuenta. No se verificó directamente desde aquí. El `claude mcp list` de esta máquina local mostró Supabase en `Pending approval` y Vercel en `Needs authentication`; ese resultado **no representa** el entorno web. Para verificar allí, pedirle al agente de esa sesión `/mcp` o una llamada de prueba a cada servicio.
+- **Vercel CLI:** sesión autenticada como `trobias`; `vercel link --yes --team trobias-projects --project micuaderno` vinculó el proyecto (la CLI ahora recomienda `--scope`). `vercel env ls --scope trobias-projects` confirmó en **Production y Preview**: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `PIN_PEPPER`, `AUTH_SECRET`, `CRON_SECRET`, `SETUP_TOKEN`, `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` y `NEXT_TELEMETRY_DISABLED`. Las dos públicas se fijaron con los valores de §3.2; las cuatro de autenticación se generaron con 32 bytes aleatorios cada una y VAPID con `web-push@3.6.7`. Faltó **`SUPABASE_SECRET_KEY`**, no disponible en el entorno. No se mostraron ni commitearon valores secretos. `.vercel/` y `.env*` se ignoran en Git.
+- **Supabase CLI y migración:** en esta máquina local no estaban disponibles `SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD` ni `SUPABASE_SECRET_KEY`, y la CLI no estaba instalada. La dueña está cargando las variables en **su entorno web**, que es donde deben usarse; las variables de Windows no llegan allí. Por eso aquí **no se ejecutaron** login, link, `supabase migration list` ni `supabase db push`. La migración `supabase/migrations/20261004120000_cuentas_permisos.sql` sí existe en la rama; su aplicación remota está **sin verificar**. En el entorno web: abrir el selector de entorno (ícono de nube sobre el cuadro de mensaje) → engranaje del entorno personal → Environment variables; cargar una línea `.env` por variable sin pegar valores en el chat. Una sesión nueva usa los cambios enseguida; una sesión existente puede esperar a que su VM se reinicie. [Guía oficial de entornos](https://code.claude.com/docs/en/cloud-environments#set-environment-variables). Con las credenciales allí, usar una versión fijada de la CLI, autenticar la cuenta correcta, consultar `migration list`, revisar el diff y recién entonces aplicar `db push`. No incluir contraseñas en logs; si la CLI permite ingreso interactivo, preferirlo a poner la contraseña en argumentos visibles del proceso.
+- **Deploy observado:** `vercel ls micuaderno --scope trobias-projects --limit 1` y `vercel inspect` mostraron una Preview **Ready** creada el 04/10/2026 a las 20:29 ART: `https://micuaderno-dsysjgjiu-trobias-projects.vercel.app`. El build incluye salidas de Next.js, pero `inspect` no indicó el SHA de Git; además faltan la clave secreta y la migración remota verificada, así que **Ready no acredita funcionamiento de cuentas ni push**. Repetir `vercel ls` después de configurar Supabase y probar la Preview.
+- **Pruebas locales del HEAD con base nueva:** `npm run check` pasó con sintaxis de 36 archivos, 99 unitarias y 45/45 E2E Chromium. `test:cloud`, `typecheck` y `build` no se repitieron en este worktree; el commit `c5c705f` documenta sus resultados propios. Ninguna de esas pruebas sustituye la verificación remota con Supabase.
+
+La CLI de Vercel y el MCP usan autenticaciones separadas. Aunque las variables estén configuradas, un deploy anterior no recibe automáticamente la nueva configuración: hay que desplegar y verificar el entorno objetivo.
 
 ## 5. Desarrollo y pruebas
 
