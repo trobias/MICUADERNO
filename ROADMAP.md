@@ -1,6 +1,6 @@
 # MI CUADERNO — Roadmap
 
-Estado al 04/10/2026: **etapa A del plan nuevo en curso**. A0–A4 están terminados; A5 es el siguiente paso. El orden vigente, los criterios de cada entrega y la futura nube están en [`MIGRATION_PLAN.md`](MIGRATION_PLAN.md). La tabla de fases históricas más abajo conserva la visión anterior como referencia de ideas: **no es el orden de implementación actual**. Lo visible hoy está en `SPEC.md` y lo entregado por commit, en `CHANGELOG.md`.
+Estado al 04/10/2026: **etapa A del plan nuevo en curso**. A0–A4 están terminados, el índice de Páginas quedó arreglado y la base de la nube (cuentas, permisos, push) se adelantó en local; A5 es el siguiente paso. El orden vigente, los criterios de cada entrega y la futura nube están en [`MIGRATION_PLAN.md`](MIGRATION_PLAN.md). La tabla de fases históricas más abajo conserva la visión anterior como referencia de ideas: **no es el orden de implementación actual**. Lo visible hoy está en `SPEC.md` y lo entregado por commit, en `CHANGELOG.md`.
 
 ## Ruta aprobada ahora
 
@@ -12,7 +12,8 @@ Estado al 04/10/2026: **etapa A del plan nuevo en curso**. A0–A4 están termin
 | A6–A7 · semana planner y hojas/plantillas | Pendiente | Semana inicial editable; Guardar y repetir hojas. |
 | A8–A11 · Año, temas, escenas, dibujo | Pendiente | Métricas amables, colores propios, más escenas, balde/trazos. |
 | A12–A13 · QA y contrato v6 | Pendiente | Navegación completa, accesibilidad, revisión de redundancia, migración segura. |
-| B · Next.js, Supabase y Vercel | Pendiente | Cuenta/PIN, Nicole admin, permisos por sección, sync offline, push/PWA. |
+| B-base · cuentas en la nube (adelantada) | Hecho en local, sin desplegar | Next.js + Supabase: PIN, Nicole admin, permisos con RLS, push, latido anti-pausa. `docs/NUBE.md`. |
+| B5–B8 · sincronización, Storage, deploy y dispositivos | Pendiente (después de A7) | Copia offline sincronizada por persona, solo lectura para quien recibe permiso. |
 | C · React y motion | Pendiente | Migrar vistas una a una; escenas especiales si aportan y rinden bien. |
 
 Cada paso exige `npm run check`, revisión visual y documentación del cambio. La verificación en Firefox/Safari/dispositivos reales sigue pendiente; no sustituye la suite Chromium. Publicar en GitHub Pages (V7) deja de ser un objetivo porque la migración de nube aprobada usa Vercel.

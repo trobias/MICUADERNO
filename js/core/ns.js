@@ -127,12 +127,13 @@
 
   /* ---------- preferencias livianas de UI (localStorage) ---------- */
   MC.ui = {
+    prefix: '', // con cuentas (js/cloud.js): '<id de la persona>.' para no mezclar preferencias en un dispositivo compartido
     get: function (key, fallback) {
-      try { var v = root.localStorage.getItem('mc.ui.' + key); return v == null ? fallback : JSON.parse(v); }
+      try { var v = root.localStorage.getItem('mc.ui.' + MC.ui.prefix + key); return v == null ? fallback : JSON.parse(v); }
       catch (e) { return fallback; }
     },
     set: function (key, value) {
-      try { root.localStorage.setItem('mc.ui.' + key, JSON.stringify(value)); } catch (e) { /* modo privado: no pasa nada */ }
+      try { root.localStorage.setItem('mc.ui.' + MC.ui.prefix + key, JSON.stringify(value)); } catch (e) { /* modo privado: no pasa nada */ }
     }
   };
 

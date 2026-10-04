@@ -453,6 +453,7 @@
   }
 
   function boot() {
+    if (MC.cloud && MC.cloud.leaving) return; // sin sesión: js/cloud.js ya lleva al ingreso
     MC.icons.injectSprite();
     buildTabs();
     if (/[?&]debug=hit(&|$)/.test(location.search)) setupHitDebug();

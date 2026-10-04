@@ -1,6 +1,6 @@
 # MI CUADERNO — Plan de ejecución vigente
 
-Estado: 2026-10-04. Este archivo permite continuar sin acceso a conversaciones ni al plan externo `fluffy-finding-grove.md`. Leé primero `AGENTS.md` y `HANDOFF.md`. `SPEC.md` describe lo que funciona **hoy**; `DECISIONS.md` D27–D36 fija el destino aprobado. No confundas contrato de datos v5 con funciones ya visibles.
+Estado: 2026-10-04. Este archivo permite continuar sin acceso a conversaciones ni al plan externo `fluffy-finding-grove.md`. Leé primero `AGENTS.md` y `HANDOFF.md`. `SPEC.md` describe lo que funciona **hoy**; `DECISIONS.md` D27–D37 fija el destino aprobado. No confundas contrato de datos v5 con funciones ya visibles.
 
 ## Pedido y dirección aprobada
 
@@ -17,6 +17,8 @@ La referencia visual de la segunda imagen era una paleta pastel (`#F2CFD7`, `#D6
 | A2 · Limpieza visual | Hecho | `4f124d7`: sin sombras en stickers/dibujos, fuera “Cuánto ocupa”, colores en tokens. |
 | A3 · Esquema v5 aditivo | Hecho | `a39dad2`: IndexedDB v3, stores `weeks/templates/marks`, campos `feelings`, `feel`, `moves`, bloques de hojas, tema, regla anual, IDs de ocurrencia. Lo nuevo en el esquema **no implica** UI terminada. |
 | A4 · Emociones escritas | Hecho | Día, Actividad, Calendario, Año, Ajustes, observaciones, exportación, impresión y recordatorios con lectura de copias viejas. `npm run check`: 94 unit y 43/43 E2E Chromium; ver `CHANGELOG.md`. |
+| Índice de Páginas | Hecho en Chromium | `58ed3c9`: `MC.motion.swap` anima la hoja nueva, no el contenedor; 1/6 → 0/9. Ver [`PAGES_INDEX_INVESTIGATION.md`](PAGES_INDEX_INVESTIGATION.md). |
+| B-base (adelantada) | Hecho en local, sin desplegar | Next.js + Supabase: cuentas con PIN, Nicole admin, permisos con RLS, push y latido. Ver [`docs/NUBE.md`](docs/NUBE.md) y D37. |
 | A5–A13 | Pendiente | Orden y criterios debajo. |
 
 ### A5 · Menos marcadores y Mis hojas inicial
@@ -52,6 +54,8 @@ Activar el balde y herramientas del contrato v5: técnico, plumilla con presión
 A12: matriz E2E de pasar entre todas las secciones y **volver al calendario** (✕, Esc, clic fuera, Atrás, ruta directa, recarga, 375 px). Auditar lógica duplicada, privacidad, exportación, impresión, PWA, accesibilidad y rendimiento. Revisar con capturas 1366×900 y 375×812 contra `DESIGN.md`. Probar WebKit/Firefox y dispositivos reales cuando haya navegadores/dispositivos disponibles; no etiquetar eso como probado si solo corrió Chromium. A13: recién al terminar A, migración v6 que retira formas viejas (`mood`, `kind/body/items`, `cover`, `moodLabels`) con copia previa, actualización atómica de IndexedDB, `MIGRATIONS[6]`, test de actualización v5→v6 y rollback seguro.
 
 ## Etapa B · Cuenta, nube y permisos
+
+**Estado (04/10/2026):** a pedido de la dueña se adelantó lo que no depende de la forma de los datos (B1, B3–B4, B6 sin dispositivos reales, la parte de B2 sin Storage y el latido anti-pausa): ver [`docs/NUBE.md`](docs/NUBE.md) y D37. Quedan B5 (sincronización, después de A7), Storage, preview protegida, el deploy y las pruebas en dispositivos (B7–B8).
 
 1. **B1 estructura:** Next.js/TypeScript en raíz; cuaderno probado a `public/` conservando sus rutas mientras se migra; ajustar herramientas, CSP, SW y tests. Nunca cachear API ni páginas de login como shell offline del cuaderno.
 2. **B2 datos:** Supabase Postgres con migraciones versionadas, RLS en todas las tablas, Storage privado. Separar los datos por sección **en servidor** para que lectura de `emociones` no entregue escritura. Mapa de campos por defecto denegado, prueba que falla al aparecer un campo nuevo sin clasificación. Privacidad “Solo para mí” también en adjuntos y referencias del día.

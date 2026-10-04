@@ -2,6 +2,20 @@
 
 Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantiene. El porqué de cada decisión está en `DECISIONS.md` (Dn); lo que falta, en `ROADMAP.md`. Cada entrega que toca archivos de la app sube `CACHE_VERSION` en `sw.js` para que las PWA instaladas se actualicen.
 
+## 2026-10-04 · Base de la nube: cuentas con PIN, permisos por sección y avisos (cache `v26`, sin desplegar)
+
+**Para quien lo usa**
+- Todavía no cambia nada en el cuaderno que abrís con doble clic. Queda lista la versión en la nube (Vercel + Supabase) para cuando se publique: cada persona entra con **usuario y PIN de 6 números**, Nicole administra (suma personas, cambia un PIN olvidado, pone en pausa) y cada quien elige, sección por sección, quién puede **ver** o **editar** su cuaderno. Lo marcado “solo para mí” no lo ve nadie más.
+- En la nube, cada persona tiene su propio cuaderno en el dispositivo, aunque lo compartan. Ajustes muestra con quién entraste y un enlace a **Mi cuenta** (PIN, avisos en este dispositivo, quién ve mi cuaderno).
+- Avisos de mañana y noche que se activan solo desde Mi cuenta y nunca muestran lo que escribiste.
+- Lo compartido todavía no viaja: la sincronización llega después de las hojas (A7). Mi cuenta lo dice.
+
+**Para quien lo mantiene**
+- Next.js 16.3.8 en la raíz (`app/`, `lib/`, `proxy.ts`, `next.config.ts`, `vercel.json`). El cuaderno se copia a `public/` (`tools/copy-notebook.mjs`); con Supabase recibe `<meta name="mc-cloud">` y `js/cloud.js` activa las cuentas: base `mi-cuaderno@<id>`, preferencias `mc.ui.<id>.*`, redirección a `/entrar` sin sesión. CSP estricta para el cuaderno.
+- `supabase/migrations/20261004120000_cuentas_permisos.sql`: personas, demoras de ingreso, permisos, partes del cuaderno por sección, registro de seguridad, avisos y latido; RLS en todo. `js/core/sections.js` es el mapa campo → sección (test contra la migración).
+- PIN: Argon2id + pimienta; contraseña de Supabase derivada por HMAC; demoras progresivas. Latido diario (`/api/keepalive`) para que Supabase gratis no se pause. SW: solo la navegación al cuaderno sale de la caché, y suma el manejador `push`.
+- Pruebas: `npm run test:cloud` (PIN, plan de avisos, RLS contra Postgres 16 real: 20), `npm run e2e:cloud` (next start: 3), dos E2E “nube:” en `npm run check`, `npm run typecheck` y `npm run build` en verde. Puesta en marcha, variables, MCP de las dos cuentas y red del entorno: [`docs/NUBE.md`](docs/NUBE.md). Decisión: D37.
+
 ## 2026-10-04 · El índice de Páginas responde siempre después de borrar (cache `v25`)
 
 **Para quien lo usa**

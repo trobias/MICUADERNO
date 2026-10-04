@@ -102,6 +102,7 @@
   }
 
   function render(main) {
+    var cleanups = [];
     var s = MC.clone(M.settings());
     var left = h('section.page.page--margin.settings-page');
     var right = h('section.page.page--margin.settings-page');
@@ -296,6 +297,19 @@
       });
     }
 
+    // Con cuentas (etapa B, D37): quién tiene la sesión y un enlace a su cuenta. Sin cuentas no aparece.
+    if (MC.cloud && MC.cloud.on && MC.cloud.person) {
+      var who = h('p.t-text', 'Este cuaderno es de la persona con sesión en este dispositivo.');
+      var showMe = function (me) { who.textContent = 'Entraste como ' + me.name + ' (' + me.username + ').'; };
+      if (MC.cloud.me) showMe(MC.cloud.me);
+      var offMe = MC.on('cloud:me', showMe);
+      right.appendChild(c.section('Mi cuenta', [
+        who,
+        h('p.t-text', h('a', { href: MC.cloud.accountUrl }, 'Mi cuenta'), ': cambiar el PIN, avisos en este dispositivo y quién puede ver mi cuaderno.')
+      ], { id: 'st-account' }));
+      cleanups.push(offMe);
+    }
+
     right.appendChild(c.section('Mis datos', [
       h('p.privacy.t-text', MC.icon('lock'), 'Tus páginas viven en este dispositivo. No se mandan a ningún lado. Por eso conviene hacer una copia de vez en cuando ♡'),
       h('h3.subhead', 'Copia de seguridad'),
@@ -322,7 +336,7 @@
     about.textContent = 'MI CUADERNO ' + VERSION + ' · guardado en ' + (MC.store.kind() === 'indexeddb' ? 'este navegador' : 'memoria (temporal)');
     right.appendChild(about);
 
-    return { destroy: function () { alive = false; offSettings(); note = null; } };
+    return { destroy: function () { alive = false; offSettings(); cleanups.forEach(function (f) { f(); }); note = null; } };
   }
 
   MC.views = MC.views || {};

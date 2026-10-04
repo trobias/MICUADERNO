@@ -3,11 +3,11 @@
    NO pasan por acá: viven en IndexedDB. Al cambiar cualquier archivo de SHELL, subir CACHE_VERSION. */
 'use strict';
 
-var CACHE_VERSION = 'mi-cuaderno-v25';
+var CACHE_VERSION = 'mi-cuaderno-v26';
 var SHELL = [
   './', 'index.html', 'manifest.webmanifest',
   'css/fonts.css', 'css/tokens.css', 'css/base.css', 'css/notebook.css', 'css/components.css', 'css/views.css', 'css/print.css',
-  'js/core/ns.js', 'js/core/history.js', 'js/core/dates.js', 'js/core/routes.js', 'js/core/recurrence.js', 'js/core/store.js', 'js/core/model.js', 'js/core/backup.js',
+  'js/core/ns.js', 'js/cloud.js', 'js/core/history.js', 'js/core/dates.js', 'js/core/routes.js', 'js/core/recurrence.js', 'js/core/store.js', 'js/core/model.js', 'js/core/backup.js',
   'js/core/zip.js', 'js/core/exporters.js', 'js/core/insights.js',
   'js/ui/icons.js', 'js/ui/stickers.js', 'js/ui/motion.js', 'js/ui/components.js', 'js/ui/activity.js', 'js/ui/images.js', 'js/ui/draw.js', 'js/ui/scrapbook.js', 'js/ui/scenes.js',
   'js/views/cover.js', 'js/views/onboarding.js', 'js/views/today.js', 'js/views/calendar.js', 'js/views/agenda.js', 'js/views/routines.js',
@@ -35,13 +35,16 @@ self.addEventListener('message', function (event) {
   if (event.data && event.data.type === 'skipWaiting') self.skipWaiting();
 });
 
-// Cache-first para el shell; navegación → index.html (funciona sin conexión).
+// Cache-first para el shell; navegación al cuaderno → index.html (funciona sin conexión).
 self.addEventListener('fetch', function (event) {
   var req = event.request;
   if (req.method !== 'GET') return;
   var url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
   if (req.mode === 'navigate') {
+    // Solo el cuaderno (raíz del alcance o index.html). En la nube, /entrar y /cuenta van siempre a la red.
+    var scopePath = new URL(self.registration.scope).pathname;
+    if (url.pathname !== scopePath && url.pathname !== scopePath + 'index.html') return;
     event.respondWith(caches.match('index.html').then(function (hit) {
       return hit || fetch(req);
     }).catch(function () { return caches.match('index.html'); }));
@@ -56,6 +59,20 @@ self.addEventListener('fetch', function (event) {
       }
       return res;
     });
+  }));
+});
+
+/* Avisos Web Push de la nube (etapa B, D37). El servidor manda solo textos genéricos, nunca contenido escrito
+   por la persona; si el aviso llega sin datos, se muestra uno neutro. */
+self.addEventListener('push', function (event) {
+  var data = {};
+  try { data = event.data ? event.data.json() : {}; } catch (e) { data = {}; }
+  event.waitUntil(self.registration.showNotification(data.title || 'MI CUADERNO', {
+    body: data.body || 'Tu cuaderno está acá.',
+    icon: 'assets/icons/notification-icon.png',
+    badge: 'assets/icons/notification-badge.png',
+    tag: data.tag || 'mi-cuaderno',
+    data: { url: typeof data.url === 'string' && data.url.charAt(0) === '/' ? '.' + data.url : './#/hoy' }
   }));
 });
 

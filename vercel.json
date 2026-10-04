@@ -1,0 +1,8 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "crons": [
+    { "path": "/api/keepalive", "schedule": "17 9 * * *" },
+    { "path": "/api/push/cron?ventana=720", "schedule": "35 11 * * *" }
+  ]
+}

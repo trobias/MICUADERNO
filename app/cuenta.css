@@ -1,0 +1,51 @@
+/* Páginas de la cuenta (entrar, preparar, mi cuenta): una hoja crema sobre la tela, con los tokens del
+   cuaderno. Sin colores propios: todo sale de css/tokens.css. */
+body.account {
+  min-height: 100dvh;
+  margin: 0;
+  background: var(--cloth) var(--tex-cloth);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  display: grid;
+  place-items: start center;
+  padding: var(--s-6) var(--s-4);
+}
+.sheet {
+  width: min(100%, 34rem);
+  background: var(--paper) var(--tex-paper);
+  border-radius: var(--radius-page);
+  padding: var(--s-6) var(--page-pad);
+  display: grid;
+  gap: var(--s-5);
+}
+.sheet--wide { width: min(100%, 52rem); }
+.sheet h1 { font-family: var(--font-display); font-size: var(--fs-2xl); font-weight: 400; margin: 0; }
+.sheet h2 { font-family: var(--font-display); font-size: var(--fs-lg); font-weight: 400; margin: 0; }
+.sheet p { margin: 0; line-height: var(--line); }
+.sheet .lead { font-family: var(--font-text); color: var(--ink-soft); }
+.form { display: grid; gap: var(--s-4); }
+.form label { display: grid; gap: var(--s-2); font-size: var(--fs-sm); color: var(--ink-soft); }
+.form input, .form select {
+  font: inherit; font-size: var(--fs-md); color: var(--ink);
+  background: var(--paper-shade); border: 1px solid var(--rule-strong); border-radius: var(--radius-note);
+  padding: var(--s-3); min-height: 44px;
+}
+.form input:focus-visible, .form select:focus-visible { outline: var(--focus); outline-offset: 2px; }
+.form .row { display: flex; flex-wrap: wrap; gap: var(--s-3); align-items: center; }
+.check { display: flex !important; align-items: center; gap: var(--s-2); }
+.check input { min-height: auto; width: 20px; height: 20px; }
+.note { font-family: var(--font-text); color: var(--ink-soft); font-size: var(--fs-sm); }
+.note[data-kind="problem"] { color: var(--error-ink); }
+.note[data-kind="problem"]::before { content: '· '; }
+.block { display: grid; gap: var(--s-3); padding-top: var(--s-4); border-top: 1px dashed var(--rule-strong); }
+.people { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s-3); }
+.people li { display: grid; gap: var(--s-2); padding-bottom: var(--s-3); border-bottom: 1px solid var(--rule); }
+.people .who { font-family: var(--font-text); font-size: var(--fs-md); }
+.people .meta { font-size: var(--fs-sm); color: var(--ink-soft); }
+.grants { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
+.grants th, .grants td { text-align: left; padding: var(--s-2); border-bottom: 1px solid var(--rule); }
+.grants th { font-weight: 400; color: var(--ink-soft); }
+.grants select { min-height: 36px; padding: var(--s-1) var(--s-2); }
+.back { font-family: var(--font-text); color: var(--ink); }
+.table-scroll { overflow-x: auto; }
+@media (max-width: 480px) { body.account { padding: var(--s-3) var(--s-3); } .sheet { padding: var(--s-5) var(--s-4); } }

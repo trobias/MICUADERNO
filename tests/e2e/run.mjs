@@ -30,7 +30,7 @@ function watchErrors(page) {
 }
 
 async function newPage(browser, opts = {}) {
-  const context = await browser.newContext({ viewport: opts.viewport || { width: 1280, height: 860 }, reducedMotion: opts.reducedMotion || 'no-preference', hasTouch: opts.hasTouch === true, acceptDownloads: true });
+  const context = await browser.newContext({ serviceWorkers: opts.serviceWorkers || 'allow', viewport: opts.viewport || { width: 1280, height: 860 }, reducedMotion: opts.reducedMotion || 'no-preference', hasTouch: opts.hasTouch === true, acceptDownloads: true });
   const page = await context.newPage();
   const errors = watchErrors(page);
   return { context, page, errors };
@@ -1507,6 +1507,75 @@ await test('volver al calendario: doble cierre, arranque directo en un cuadro y 
   await fresh.waitForTimeout(300);
   assert.ok(!fresh.url().includes('#/hoy'), 'atrás volvió a abrir Hoy');
   await second.context.close();
+});
+
+await test('nube: con cuentas cada persona abre su propia base y sus preferencias; sin sesión va al ingreso (D37)', async () => {
+  // Sin service worker: las respuestas simuladas no pasan por su caché (en la nube, la caché ya trae la marca).
+  const { page, errors, context } = await newPage(browser, { serviceWorkers: 'block' });
+  const A = '11111111-1111-4111-8111-111111111111', B = '22222222-2222-4222-8222-222222222222';
+  let me = { id: A, username: 'nicole', name: 'Nicole', admin: true }, meStatus = 200;
+  // Lo que agrega tools/copy-notebook.mjs al publicar: <meta name="mc-cloud">. La API se simula.
+  await context.route('**/index.html', async (route) => {
+    const res = await route.fetch();
+    const html = (await res.text()).replace('<meta name="viewport"', '<meta name="mc-cloud" content="1">\n  <meta name="viewport"');
+    await route.fulfill({ response: res, body: html, headers: { ...res.headers(), 'content-type': 'text/html; charset=utf-8' } });
+  });
+  await context.route('**/api/me', (route) => route.fulfill({ status: meStatus, contentType: 'application/json', body: JSON.stringify(meStatus === 200 ? me : { error: 'Sin sesión.' }) }));
+  await context.route('**/api/auth/logout', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":true}' }));
+  await context.route('**/entrar', (route) => route.fulfill({ status: 200, contentType: 'text/html', body: '<!doctype html><title>Entrar</title><p id="entrar">entrar</p>' }));
+  const setPerson = (id) => context.addCookies([{ name: 'mc_person', value: id, url: `http://127.0.0.1:${PORT}/` }]);
+
+  // Sin persona: al ingreso, sin abrir ninguna base.
+  await page.goto(HTTP_URL);
+  await page.waitForURL(/\/entrar$/, { timeout: 4000 });
+
+  // Nicole escribe en su cuaderno.
+  await setPerson(A);
+  await page.goto(HTTP_URL);
+  await onboard(page);
+  await page.fill('#notes', 'lo de Nicole');
+  await page.waitForTimeout(700);
+  assert.equal(await page.evaluate(() => MC.cloud.suffix), '@' + A);
+  const dbs = await page.evaluate(async () => (await indexedDB.databases()).map((d) => d.name));
+  assert.ok(dbs.includes('mi-cuaderno@' + A), JSON.stringify(dbs));
+  assert.ok(!dbs.includes('mi-cuaderno'), 'con cuentas no se usa la base sin dueña');
+  const keys = await page.evaluate(() => Object.keys(localStorage).filter((k) => k.startsWith('mc.ui.')));
+  assert.ok(keys.every((k) => k.startsWith('mc.ui.' + A + '.')), JSON.stringify(keys));
+  // Ajustes muestra la cuenta, con enlace.
+  await goto(page, '#/ajustes');
+  const account = 'section[aria-labelledby="st-account"]';
+  await page.waitForSelector(account);
+  assert.match(await page.textContent(account), /Entraste como Nicole \(nicole\)/);
+  assert.equal(await page.getAttribute(account + ' a', 'href'), '/cuenta');
+
+  // Otra persona en el mismo navegador: cuaderno nuevo, sin lo de Nicole.
+  me = { id: B, username: 'otra', name: 'Otra persona', admin: false };
+  await setPerson(B);
+  await page.goto(HTTP_URL);
+  await onboard(page, 'Nicole');
+  assert.equal(await page.inputValue('#notes'), '');
+
+  // Sesión vencida: al ingreso.
+  meStatus = 401;
+  await page.goto(HTTP_URL);
+  await page.waitForURL(/\/entrar$/, { timeout: 4000 });
+  // Cookie y sesión de personas distintas: se cierra la sesión y al ingreso.
+  meStatus = 200; me = { id: A, username: 'nicole', name: 'Nicole', admin: true };
+  await page.goto(HTTP_URL);
+  await page.waitForURL(/\/entrar$/, { timeout: 4000 });
+  assert.deepEqual(errors.filter((e) => !/401|Failed to load resource/.test(e)), []);
+  await context.close();
+});
+
+await test('nube: sin la marca de cuentas (file:// o servidor simple) no cambia nada', async () => {
+  const { page, errors, context } = await newPage(browser);
+  await page.goto(HTTP_URL);
+  await onboard(page);
+  assert.equal(await page.evaluate(() => MC.cloud.on), false);
+  assert.equal(await page.evaluate(() => MC.ui.prefix), '');
+  assert.equal(await page.locator('#st-account').count(), 0);
+  assert.deepEqual(errors, []);
+  await context.close();
 });
 
 await browser.close();

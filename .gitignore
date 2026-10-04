@@ -10,3 +10,11 @@ dist/
 
 # Log que deja Chromium al correr los E2E en Windows
 debug.log
+
+# Nube (Next.js): generado
+.next/
+public/
+next-env.d.ts
+*.tsbuildinfo
+.vercel
+.env*.local

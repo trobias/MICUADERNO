@@ -4,7 +4,7 @@ Leé esto primero. Si venís sin contexto de conversaciones anteriores, seguí c
 
 ## Qué es
 
-Un diario personal digital con forma de **cuaderno de tela bordado**: emociones escritas al comenzar/cerrar el día y antes/después de actividades, estados amables, rutinas recurrentes, páginas libres con stickers, calendario, mapa del año, exportación e impresión. **Hoy** es 100 % local (IndexedDB), offline, sin cuenta ni servidor. La nube con cuenta/PIN, roles, Supabase y Vercel está aprobada para la etapa B; no afirmar que ya existe. Español rioplatense, neutro en género.
+Un diario personal digital con forma de **cuaderno de tela bordado**: emociones escritas al comenzar/cerrar el día y antes/después de actividades, estados amables, rutinas recurrentes, páginas libres con stickers, calendario, mapa del año, exportación e impresión. **Hoy** es 100 % local (IndexedDB), offline, sin cuenta ni servidor. La **base** de la nube (Next.js + Supabase: cuenta con usuario y PIN, Nicole admin, permisos por sección con RLS, push, latido anti-pausa) está hecha y probada en local pero **no desplegada ni sincronizando** (D37, `docs/NUBE.md`); no afirmar que está publicada. Español rioplatense, neutro en género.
 
 ## Skills del repo que aplican (leelas antes de tocar UI)
 
@@ -49,6 +49,8 @@ css/components.css      parches, casillas de punto cruz, notas, botones-etiqueta
 css/views.css           layouts por vista
 css/print.css           impresión
 js/core/ns.js           namespace, utilidades DOM (h, $, on), ids, debounce
+js/cloud.js             cuentas de la nube: solo con <meta name="mc-cloud">; base y preferencias por persona (D37)
+js/core/sections.js     mapa campo → sección para permisos (única fuente; test contra la migración)
 js/core/dates.js        fechas locales AAAA-MM-DD, nombres en español
 js/core/routes.js       rutas #/…: armar (MC.routes.day(fecha)…) y leer (parse); única fuente
 js/core/recurrence.js   reglas de rutinas → ¿ocurre en esta fecha? + descripción humana
@@ -75,7 +77,13 @@ assets/fonts/           woff2 autoalojadas
 assets/icons/           favicon, iconos PWA, notificación (generados por tools/make-icons.mjs)
 tests/unit/             node:test sobre js/core
 tests/e2e/              Playwright
-tools/                  serve.mjs, make-icons.mjs, build-fonts.mjs, dist.mjs, check.mjs, shot.mjs (captura para QA)
+app/ lib/ proxy.ts      nube (Next.js 16): /entrar, /preparar, /cuenta, /api; sesión, PIN, personas, avisos
+next.config.ts          CSP y cabeceras; `/` → index.html copiado a public/ (generado, no editar)
+vercel.json             cron diarios: latido anti-pausa de Supabase y avisos
+supabase/migrations/    esquema y RLS de la nube
+docs/NUBE.md            puesta en marcha, variables, MCP de Supabase y de Vercel (dos cuentas), red del entorno
+tests/cloud/            PIN, plan de avisos, RLS en Postgres 16 real, humo de next start
+tools/                  copy-notebook.mjs (cuaderno → public/), serve.mjs, make-icons.mjs, build-fonts.mjs, dist.mjs, check.mjs, shot.mjs (captura para QA)
 CHANGELOG.md            qué cambió en cada entrega (actualizarlo al commitear algo visible)
 HANDOFF.md              traspaso: cómo trabaja la dueña, historia, estado, preguntas abiertas
 MIGRATION_PLAN.md       orden A→B→C vigente y criterios para cada entrega
@@ -120,6 +128,10 @@ npm install       # solo para e2e/íconos: instala playwright-core (no descarga 
 npm run e2e       # recorridos en file:// y http:// (al final informa cuántos pasaron) (Chromium en /opt/pw-browsers/chromium o CHROMIUM=/ruta; puerto 4199 o E2E_PORT=…)
 npm run check     # sintaxis + unit + e2e
 npm run serve     # http://localhost:4173 (probar PWA/SW)
+npm run typecheck # nube: tipos de Next + tsc
+npm run build     # nube: build de producción
+npm run test:cloud  # nube: PIN, avisos y RLS (Postgres 16 local en /usr/lib/postgresql/16/bin o PGBIN=…)
+npm run e2e:cloud   # nube: después de build, next start + Chromium
 ```
 
 En Windows: `CHROMIUM` apunta a un `chrome.exe` (por ejemplo el de `%LOCALAPPDATA%\ms-playwright\chromium-<build>\chrome-win\`); varias suites en paralelo → un `E2E_PORT` distinto cada una.
@@ -159,3 +171,16 @@ Probar a mano además: doble clic en `index.html`; mobile 375px; teclado solo; `
 - Guardar datos importantes solo en localStorage.
 - Módulos ES o dependencias por CDN (rompen `file://` y offline).
 - Animaciones en loop o que se disparan mientras la persona escribe.
+
+## Nube (Next.js 16)
+
+- El cuaderno no se reescribe para la nube: se copia a `public/` en cada build. No edites `public/`; editá los archivos de la raíz.
+- Lo que cambie en la nube: `docs/NUBE.md` + D37. Las tablas nuevas van con RLS y un caso en `tests/cloud/rls.test.mjs`. Una sección nueva va en `js/core/sections.js` **y** en la migración (lo vigila un test).
+- El navegador nunca habla con Supabase ni recibe la clave secreta. Nada de contenido escrito por la persona en avisos, registros ni logs.
+- Pasos externos (crear servicios, cargar secretos, desplegar) solo con el ok de la dueña. Los secretos van en variables de entorno, nunca en el repo ni en el chat.
+
+<!-- BEGIN:nextjs-agent-rules -->
+# This is NOT the Next.js you know
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+<!-- END:nextjs-agent-rules -->

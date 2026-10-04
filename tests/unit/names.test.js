@@ -9,7 +9,7 @@ const { ROOT } = require('./_load');
 
 const NOT_THIS = new RegExp('\\b' + String.fromCharCode(83, 111, 102, 105) + '\\b', 'i');
 const TEXT = /\.(js|mjs|cjs|md|json|html|css|webmanifest|txt|csv|svg|xml|xsd|py|sh|ya?ml)$/i;
-const SKIP = new Set(['.git', 'node_modules', 'dist']);
+const SKIP = new Set(['.git', 'node_modules', 'dist', '.next', 'public', '.vercel']); // public/ y .next/ son copias generadas
 
 function walk(dir, out) {
   for (const f of fs.readdirSync(dir, { withFileTypes: true })) {

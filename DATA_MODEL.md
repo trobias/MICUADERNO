@@ -299,6 +299,22 @@ v5 es **aditiva** (D34): los stores y campos nuevos conviven con los viejos hast
 - **En una copia `.json`**: `MIGRATIONS[5]` agrega `weeks`, `templates` y `marks` vacíos si faltan. Los registros pasan por los mismos normalizadores. Una copia v6 o más nueva se rechaza (“versión más nueva”).
 - **Contrato v6** (A13): borra `mood`, `kind/body/items`, `cover` y `moodLabels` dentro de `onupgradeneeded`, después de guardar una instantánea y ofrecer “Descargar la copia de antes”.
 
+## Nube (base, etapa B · D37)
+
+**En el dispositivo:** con cuentas, la base IndexedDB se llama `mi-cuaderno@<id de la persona>` (sin cuentas, `mi-cuaderno`) y las preferencias de UI `mc.ui.<id>.<clave>`. La cookie `mc_person` guarda solo ese id. Mismos stores, mismas versiones.
+
+**En Supabase** (`supabase/migrations/20261004120000_cuentas_permisos.sql`, RLS en todas):
+| Tabla | Qué guarda |
+|---|---|
+| `sections` | Las 9 secciones (igual que `js/core/sections.js`). |
+| `profiles` | Persona: `id` (= Supabase Auth), `username`, `display_name`, `pin_hash` (Argon2id; ilegible desde el navegador), `is_admin`, `disabled_at`, `timezone`. |
+| `notebook_grants` | `owner_id` comparte `section` con `grantee_id` en nivel `ver`/`editar`. |
+| `notebook_parts` | (B5) cada registro de IndexedDB partido por sección: `store`, `record_id`, `section`, `data` JSONB, `private`, `updated_at`, `deleted_at`. |
+| `audit_events` | Eventos de seguridad, nunca contenido. |
+| `login_throttle`, `push_subscriptions`, `push_log`, `keepalive` | Demoras de ingreso, dispositivos con aviso, avisos enviados por día, latido diario. |
+
+`MC.sections.split(store, registro)` decide las partes: los campos de identidad, fechas, papelera y privacidad van en todas; el resto según el mapa (por ejemplo `days.morning/evening/energy/sleep` → `emociones`, lo demás del día → `escritura`; `activities.feel` → `emociones`). Un campo nuevo cae en la sección por defecto de su store.
+
 ## Migraciones
 
 `js/core/backup.js` exporta `MIGRATIONS = { 1: d => d }`. Para agregar una versión: escribir `N: d => {...}` que transforme datos v(N-1) → vN y subir `SCHEMA_VERSION`.

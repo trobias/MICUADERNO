@@ -345,6 +345,14 @@ Ajustes: inicio del día (on/off + hora, default 08:30), cierre del día (on/off
 - Abierta por doble clic (`file://`): funciona igual, sin instalación ni service worker (los navegadores no lo permiten en `file://`).
 - Actualización: el SW nuevo queda en espera; la app muestra “Hay una versión nueva del cuaderno — actualizar”.
 
+### 15.1 Cuentas en la nube (base, sin desplegar · D36–D37)
+
+Solo cuando el cuaderno se sirve desde Vercel con Supabase configurado (index con `<meta name="mc-cloud">`); en `file://` o en un servidor simple no cambia nada.
+- **Entrar** (`/entrar`): usuario + PIN de 6 números. Si se equivoca varias veces, se pide esperar con un texto amable. Sin sesión, el cuaderno manda acá.
+- **Preparar** (`/preparar`): con la clave `SETUP_TOKEN`, crea la primera persona, que administra. Deja de funcionar cuando ya hay alguien.
+- **Mi cuenta** (`/cuenta`, enlazada desde Ajustes → Mi cuenta): cambiar el PIN (pide el actual); avisos en este dispositivo (mañana/noche, probar, desactivar); quien administra ve **Personas** (sumar, cambiar su PIN, poner en pausa/reactivar); todos ven **Quién puede ver mi cuaderno** (por sección: nada / ver / editar); cerrar sesión en este dispositivo.
+- Cada persona tiene su base local propia en el dispositivo; cerrar sesión no borra nada. Lo compartido viaja recién con la sincronización (B5).
+
 ## 16. Accesibilidad
 
 WCAG 2.2 AA como piso: contraste de texto ≥ 4.5:1, foco visible propio, todo operable por teclado (incluye stickers: flechas mueven, `[` `]` rotan, `Supr` borra), labels en todos los inputs, `aria-live` para “guardado”, decoraciones con `aria-hidden`, targets ≥ 44 px en táctil, respeto de `prefers-reduced-motion` y del ajuste interno.
@@ -400,7 +408,7 @@ skills/               colección de skills (no es parte de la app)
 
 - **Siempre:** correr `npm run check` antes de commitear; mantener SPEC/DESIGN/AGENTS al día; validar todo archivo importado; `aria-hidden` en decoración.
 - **Preguntar antes:** agregar dependencias de runtime, cambiar el esquema (requiere migración + `schemaVersion`), cambiar la paleta de ánimos, agregar un destino de navegación.
-- **Nunca:** enviar datos a un servidor, agregar analytics, lenguaje de culpa, sonido automático, pedir permisos al abrir, cargar recursos de CDN en runtime.
+- **Nunca:** enviar contenido del cuaderno a un servidor fuera de la sincronización aprobada (B5, D35–D37), agregar analytics, lenguaje de culpa, sonido automático, pedir permisos al abrir, cargar recursos de CDN en runtime.
 
 ## 22. Criterios de éxito
 

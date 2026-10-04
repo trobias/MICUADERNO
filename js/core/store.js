@@ -10,6 +10,8 @@
   // v3 (esquema v5, D34): weeks (semana-planner), templates (plantillas de hojas), marks (referencias, victorias),
   // índice pages.date; files.updatedAt completado. Puramente aditiva.
   var DB_VERSION = 3;
+  // Con cuentas (js/cloud.js, etapa B) cada persona tiene su base: `mi-cuaderno@<id>`. Sin cuentas, la de siempre.
+  function dbName() { return DB_NAME + ((MC.cloud && MC.cloud.suffix) || ''); }
   var STORES = {
     meta: { keyPath: 'key' },
     days: { keyPath: 'date' },
@@ -75,7 +77,7 @@
       if (!root.indexedDB) { reject(new Error('IndexedDB no disponible')); return; }
       var open;
       var blocked = false;
-      try { open = root.indexedDB.open(DB_NAME, DB_VERSION); } catch (e) { reject(e); return; }
+      try { open = root.indexedDB.open(dbName(), DB_VERSION); } catch (e) { reject(e); return; }
       open.onupgradeneeded = function (e) {
         var db = open.result;
         var hadFiles = db.objectStoreNames.contains('files');
@@ -210,7 +212,7 @@
       opts = opts || {};
       if (root.BroadcastChannel && root.document && !channel) {
         try {
-          channel = new root.BroadcastChannel('mi-cuaderno');
+          channel = new root.BroadcastChannel(dbName());
           channel.onmessage = function (e) { MC.emit('store:remote', e.data); };
         } catch (e) { channel = null; }
       }

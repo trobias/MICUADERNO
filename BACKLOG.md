@@ -14,7 +14,7 @@ Cada idea pendiente, con su estado. **Nada se pierde por estar fuera de la fase 
 | **EXPERIMENTAL** | probar en chico; si no suma, se descarta |
 | **BLOCKED** | espera otra cosa (dice cuál) |
 
-**Dónde estamos (04/10/2026):** rige la migración A→B→C de [`MIGRATION_PLAN.md`](MIGRATION_PLAN.md). A0–A4 hechos; **A5 es el siguiente trabajo de producto**. Las tablas históricas de abajo guardan ideas de `VISION.md`, pero su columna NEXT/LATER ya no define la prioridad ni autoriza saltar la migración. DA4 se retiró a pedido de la dueña; la PWA pública futura va a Vercel, no a GitHub Pages.
+**Dónde estamos (04/10/2026):** rige la migración A→B→C de [`MIGRATION_PLAN.md`](MIGRATION_PLAN.md). A0–A4 hechos, el índice de Páginas arreglado y la **base de la nube** (B-base) adelantada a pedido de la dueña; **A5 es el siguiente trabajo de producto**. Las tablas históricas de abajo guardan ideas de `VISION.md`, pero su columna NEXT/LATER ya no define la prioridad ni autoriza saltar la migración. DA4 se retiró a pedido de la dueña; la PWA pública futura va a Vercel, no a GitHub Pages.
 
 ## Pedido del 03/10, rastreo por entrega
 
@@ -33,7 +33,8 @@ Cada idea pendiente, con su estado. **Nada se pierde por estar fuera de la fase 
 | Escenas más frecuentes | A10 | NEXT | Motion con propósito, silencio al escribir y control de rendimiento. |
 | Balde y tipos de trazo | A11 | NEXT | Editables al reabrir, presión/semilla y deshacer. |
 | Cruces, redundancia, QA y contrato v6 | A12–A13 | NEXT | Matriz de navegación, accesibilidad, migración de datos y tests. |
-| Nube, PIN, Nicole admin, permisos, PWA/push | B | LATER tras A | Auth + RLS real, sync local, preview protegido y pruebas de seguridad. |
+| Nube: base de cuentas (Next.js + Supabase), PIN, Nicole admin, permisos por sección con RLS, push y latido anti-pausa | B-base | Hecho en local, sin desplegar | `docs/NUBE.md`, D37. Falta el deploy con las cuentas de la dueña (§3) y probar en un celular real. |
+| Nube: sincronización offline por persona, vista de solo lectura para quien recibe permiso, Storage privado | B5–B8 | LATER tras A7 | Outbox, `notebook_parts` partido con `MC.sections`, lápidas, importar la copia `.json`, E2E de dos dispositivos. |
 | React/TypeScript y escenas especiales/Three.js si sirve | C | LATER tras B | Paridad vista por vista; fallback y motion reducido. |
 
 Otros ítems históricos que coinciden parcialmente (ME1/ME4/EL9/PE5, etc.) se cierran **solo** cuando la capacidad completa está entregada; no borrar ideas de estas tablas por tener ya un campo v5.

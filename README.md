@@ -4,7 +4,7 @@
 
 Un diario personal con forma de cuaderno de tela bordado: podés escribir cómo te sentiste al empezar y terminar el día, y antes o después de una actividad, con tus propias palabras. Hay actividades con estados amables (*lo hice · hice un poquito · lo dejo para otro día · hoy no salió*), rutinas, páginas libres, stickers y dibujos, adjuntos, calendario, año bordado y recuerdos. Nada se pierde de golpe: hay papelera, deshacer y un “guardado ✓” que avisa cuándo quedó guardado; cada día o página puede marcarse como privado.
 
-**En la versión actual, todo queda en este dispositivo.** No hay cuenta, servidor, nube ni estadísticas de uso. Está aprobada una migración por etapas hacia cuenta con PIN, permisos por sección y copia offline; todavía no está publicada ni conectada. Ver [`MIGRATION_PLAN.md`](MIGRATION_PLAN.md).
+**En la versión actual, todo queda en este dispositivo.** No hay estadísticas de uso. La base de la versión en la nube (cuenta con usuario y PIN, permisos por sección, avisos) ya está hecha pero **todavía no está publicada** ni sincroniza datos: ver [`docs/NUBE.md`](docs/NUBE.md) y [`MIGRATION_PLAN.md`](MIGRATION_PLAN.md).
 
 ## Cómo abrirlo
 
@@ -31,9 +31,14 @@ npm run e2e       # recorridos reales en Chromium (file:// y http://); al final 
 npm run check     # sintaxis + unit + e2e
 npm run serve     # http://localhost:4173 para probar la PWA
 npm run dist      # arma dist/MI-CUADERNO/ + .zip para regalar
+npm run dev       # nube: Next.js en http://localhost:3000 (con .env.local de Supabase, con cuentas)
+npm run build     # nube: build de producción (lo que corre Vercel)
+npm run test:cloud  # nube: PIN, avisos y RLS contra un Postgres local
 ```
 
-HTML + CSS + JavaScript sin frameworks ni paso de build. Fuentes (OFL) incluidas: Young Serif, Castoro, Atkinson Hyperlegible Next y Nanum Pen Script.
+La capa de la nube (Next.js + Supabase en Vercel) está en `app/`, `lib/`, `proxy.ts` y `supabase/`; cómo publicarla, en [`docs/NUBE.md`](docs/NUBE.md).
+
+El cuaderno es HTML + CSS + JavaScript sin frameworks ni paso de build (la capa de cuentas en la nube usa Next.js, aparte). Fuentes (OFL) incluidas: Young Serif, Castoro, Atkinson Hyperlegible Next y Nanum Pen Script.
 
 ---
 
