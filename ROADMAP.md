@@ -33,7 +33,7 @@ Antes de sumar mucho contenido nuevo, que nada se pierda y que todo se pueda des
 - **Papelera** con borrado suave y retención (DA1).
 - **Deshacer / rehacer** común con `Ctrl+Z` / `Ctrl+Shift+Z` (DA2).
 - **“guardando… → guardado ✓”** en todas las superficies (DA3).
-- **Cuánto ocupa mi cuaderno**, con desglose y aviso de copia grande (DA4, con E2E).
+- ~~**Cuánto ocupa mi cuaderno** (DA4)~~: se retiró el 04/10/2026 a pedido de la dueña.
 - **Privacidad de esta página** (no recuerdo / no insights / no revisiones) que respeten insights y *Mi año* (PV1).
 - Seguimiento de DA1 completado: editar un día en papelera conserva su contenido, bajar la retención avisa qué vencería y “Cuánto ocupa” incluye imágenes borradas. Sacar actividades sigue siendo definitivo con “Deshacer”; no las manda a papelera.
 - Reglas permanentes desde ya: todo lo nuevo entra en la copia con migración y test (DA6) y degrada con elegancia (DA7).
@@ -66,7 +66,7 @@ Referencias comunes en vez de copias (VISION §3).
 - Imágenes con miniatura, Blob, carga diferida y deduplicación; arrastrar/soltar y pegar (MD1, MD2).
 - Formato **`.micuaderno`** con la media separada (DA5).
 - **Notas de voz** (MD3) y **canciones** offline-first (MD4, investigar antes la privacidad del link).
-- Depende de: DA4 (medir antes de optimizar).
+- Depende de: nada (DA4 se retiró; medir con herramientas de desarrollo cuando haga falta).
 
 ### Fase 7 · Revisiones — LATER
 - **Esta semana** (RV1) → **revisión mensual** con scrapbook automático editable (RV2) → **capítulo anual** de *Mi año* (RV3).

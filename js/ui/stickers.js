@@ -4,9 +4,11 @@
   'use strict';
   var MC = root.MC || (root.MC = {});
 
+  // Colores del arte: nombres de los tokens fijos `--st-*` (css/tokens.css). El SVG se pinta con clases
+  // (`sf-*` relleno, `ss-*` trazo), nunca con hex ni estilos inline.
   var C = {
-    ink: '#493D3B', paper: '#FFF9ED', butter: '#F6D978', blush: '#F4B9C6', rose: '#D98FA1',
-    peach: '#F4C3A2', sage: '#B9CBA7', sageDeep: '#7E9A6E', lavender: '#C9B8DE', cloud: '#EEE8F4', wax: '#FBEBC0'
+    ink: 'ink', paper: 'paper', butter: 'butter', blush: 'blush', rose: 'rose',
+    peach: 'peach', sage: 'sage', sageDeep: 'sage-deep', lavender: 'lavender', cloud: 'cloud', wax: 'wax'
   };
 
   // Cada sticker: shapes (con corte blanco), details (solo trazo, sin corte).
@@ -183,15 +185,19 @@
       out += ' ' + k + '="' + obj[k] + '"';
     });
     if (obj.t) out += ' transform="' + obj.t + '"';
+    var cls = [];
     if (pass === 'cut') {
       var sw = obj.stroke && obj.fill === 'none' ? (obj.sw || 3) + 7 : 7;
-      out += ' fill="' + (obj.fill === 'none' ? 'none' : '#fff') + '" stroke="#fff" stroke-width="' + sw + '"';
+      if (obj.fill === 'none') out += ' fill="none"'; else cls.push('sf-cut');
+      cls.push('ss-cut');
+      out += ' stroke-width="' + sw + '"';
     } else {
-      out += ' fill="' + (obj.fill || 'none') + '"';
-      if (obj.noOutline) out += ' stroke="none"';
-      else out += ' stroke="' + (obj.stroke || C.ink) + '" stroke-width="' + (obj.sw || 1.6) + '"';
+      if (obj.fill && obj.fill !== 'none') cls.push('sf-' + obj.fill); else out += ' fill="none"';
+      if (obj.noOutline || obj.stroke === 'none') out += ' stroke="none"';
+      else { cls.push('ss-' + (obj.stroke || C.ink)); out += ' stroke-width="' + (obj.sw || 1.6) + '"'; }
       if (obj.opacity != null) out += ' opacity="' + obj.opacity + '"';
     }
+    if (cls.length) out += ' class="' + cls.join(' ') + '"';
     return out;
   }
 
@@ -219,7 +225,7 @@
     4: '<circle cx="12" cy="6.6" r="2.9"/><circle cx="16.6" cy="9.9" r="2.9"/><circle cx="14.9" cy="15.2" r="2.9"/><circle cx="9.1" cy="15.2" r="2.9"/><circle cx="7.4" cy="9.9" r="2.9"/><circle class="fill" cx="12" cy="11.2" r="2"/>',
     5: '<circle cx="12" cy="12" r="4.6"/><path d="M12 2.6v2.3M12 19.1v2.3M2.6 12h2.3M19.1 12h2.3M5.4 5.4l1.6 1.6M17 17l1.6 1.6M5.4 18.6 7 17M17 7l1.6-1.6"/>'
   };
-  var MOOD_HEX = { 1: '#584488', 2: '#954A7E', 3: '#C15C67', 4: '#D67F46', 5: '#CAAE31' };
+  var MOOD_HEX = { 1: '#584488', 2: '#954A7E', 3: '#C15C67', 4: '#D67F46', 5: '#CAAE31' }; // color-ok: los parches de ánimo se van con las emociones escritas (A4)
 
   /** Parche bordado completo (50×50) como string SVG. */
   function patchMarkup(mood) {
@@ -232,7 +238,8 @@
   function miniPatchMarkup(mood) {
     return '<svg class="mini-patch" viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
       '<circle cx="12" cy="12" r="11" fill="' + MOOD_HEX[mood] + '" stroke="' + MOOD_HEX[mood] + '"/>' +
-      '<g class="patch-glyph" stroke="#FFF9ED" transform="translate(4.8 4.8) scale(0.6)">' + MOOD_GLYPHS[mood].replace('class="fill"', 'fill="#FFF9ED"') + '</g></svg>';
+      '<g class="patch-glyph" stroke="#FFF9ED" transform="translate(4.8 4.8) scale(0.6)">' + // color-ok (A4)
+      MOOD_GLYPHS[mood].replace('class="fill"', 'fill="#FFF9ED"') + '</g></svg>'; // color-ok (A4)
   }
 
   /** Glifo de ánimo solo en tinta (impresión): toma el color de `color` (currentColor). */

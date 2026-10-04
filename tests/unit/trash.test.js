@@ -145,3 +145,13 @@ test('papelera: los adjuntos de una página vuelven con ella y se van solo cuand
   assert.equal(await MC.store.get('files', all.f.id), undefined);
   assert.ok(await MC.store.get('files', kept.f.id));
 });
+
+test('retención: cuenta solo lo que vencería con un plazo más corto (Ajustes avisa antes de acortarlo)', () => {
+  const at = '2026-10-02T00:00:00.000Z';
+  const items = [
+    { row: { deletedAt: '2026-09-01T00:00:00.000Z' } },
+    { row: { deletedAt: '2026-09-30T00:00:00.000Z' } }
+  ];
+  assert.equal(MC.model.countDueTrash(items, 7, at), 1);
+  assert.equal(MC.model.countDueTrash(items, 0, at), 0);
+});

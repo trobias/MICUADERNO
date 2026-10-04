@@ -99,7 +99,7 @@
     },
     te: function (r) {
       var x = r.left + 22, y = r.bottom - 96;
-      var el = h('div.scene.scene-tea', { html: MC.stickers.markup('taza') + '<svg class="steam" viewBox="0 0 60 60"><g fill="none" stroke="#B3A5A0" stroke-width="2" stroke-linecap="round"><path pathLength="1" d="M20 58c-6-8 6-12 0-22s4-14 0-22"/><path pathLength="1" d="M31 58c-6-8 6-12 0-22s4-14 0-22"/><path pathLength="1" d="M42 58c-6-8 6-12 0-22s4-14 0-22"/></g></svg>' });
+      var el = h('div.scene.scene-tea', { html: MC.stickers.markup('taza') + '<svg class="steam" viewBox="0 0 60 60"><g fill="none" class="scene-steam" stroke-width="2" stroke-linecap="round"><path pathLength="1" d="M20 58c-6-8 6-12 0-22s4-14 0-22"/><path pathLength="1" d="M31 58c-6-8 6-12 0-22s4-14 0-22"/><path pathLength="1" d="M42 58c-6-8 6-12 0-22s4-14 0-22"/></g></svg>' });
       el.style.transform = 'translate(' + x + 'px,' + y + 'px)';
       layer.appendChild(el);
       var fade = el.animate([{ opacity: 0 }, { opacity: 1, offset: 0.12 }, { opacity: 1, offset: 0.85 }, { opacity: 0 }], { duration: 7000, fill: 'both' });
@@ -112,7 +112,7 @@
       return { el: el, anims: [fade].concat(steam), done: fade };
     },
     hojas: function (r) {
-      var el = h('div.scene.scene-leaves', { html: '<svg viewBox="0 0 220 140"><g fill="#493D3B" opacity=".07"><path d="M10 130C60 90 110 60 210 10" stroke="#493D3B" stroke-width="3" fill="none"/><ellipse cx="60" cy="98" rx="10" ry="22" transform="rotate(-55 60 98)"/><ellipse cx="88" cy="96" rx="10" ry="22" transform="rotate(30 88 96)"/><ellipse cx="110" cy="66" rx="9" ry="20" transform="rotate(-50 110 66)"/><ellipse cx="140" cy="64" rx="9" ry="20" transform="rotate(35 140 64)"/><ellipse cx="164" cy="38" rx="8" ry="18" transform="rotate(-45 164 38)"/></g></svg>' });
+      var el = h('div.scene.scene-leaves', { html: '<svg viewBox="0 0 220 140"><g class="scene-leaf" opacity=".07"><path d="M10 130C60 90 110 60 210 10" class="scene-leaf__stem" stroke-width="3" fill="none"/><ellipse cx="60" cy="98" rx="10" ry="22" transform="rotate(-55 60 98)"/><ellipse cx="88" cy="96" rx="10" ry="22" transform="rotate(30 88 96)"/><ellipse cx="110" cy="66" rx="9" ry="20" transform="rotate(-50 110 66)"/><ellipse cx="140" cy="64" rx="9" ry="20" transform="rotate(35 140 64)"/><ellipse cx="164" cy="38" rx="8" ry="18" transform="rotate(-45 164 38)"/></g></svg>' });
       var x = r.right - 250, y = r.top + 70;
       el.style.width = '220px';
       layer.appendChild(el);

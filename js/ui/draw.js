@@ -18,8 +18,8 @@
   function toHex(v) {
     if (/^#[0-9a-f]{6}$/i.test(v)) return v.toUpperCase();
     var probe = document.createElement('canvas').getContext('2d');
-    probe.fillStyle = v || '#000';
-    return /^#[0-9a-f]{6}$/i.test(probe.fillStyle) ? probe.fillStyle.toUpperCase() : '#493D3B';
+    probe.fillStyle = v || '#000'; // color-ok: sonda funcional
+    return /^#[0-9a-f]{6}$/i.test(probe.fillStyle) ? probe.fillStyle.toUpperCase() : '#493D3B'; // color-ok: tinta por defecto de un trazo
   }
 
   /** Dibuja trazos y textos en un contexto (escala = px por unidad lógica). */
@@ -28,7 +28,7 @@
     drawing.strokes.forEach(function (s) {
       ctx.save();
       ctx.globalCompositeOperation = s.erase ? 'destination-out' : 'source-over';
-      ctx.strokeStyle = s.erase ? '#000' : s.color;
+      ctx.strokeStyle = s.erase ? '#000' : s.color; // color-ok: la goma borra con cualquier color opaco
       ctx.fillStyle = ctx.strokeStyle;
       ctx.lineWidth = s.width * scale;
       ctx.lineCap = 'round';

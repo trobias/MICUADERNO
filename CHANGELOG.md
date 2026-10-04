@@ -2,6 +2,18 @@
 
 Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantiene. El porqué de cada decisión está en `DECISIONS.md` (Dn); lo que falta, en `ROADMAP.md`. Cada entrega que toca archivos de la app sube `CACHE_VERSION` en `sw.js` para que las PWA instaladas se actualicen.
 
+## 2026-10-04 · Stickers sin sombra, fuera “Cuánto ocupa” y todos los colores en tokens (cache `v22`)
+
+**Para quien lo usa**
+- Los stickers y los dibujos ya no llevan sombra ni el borde claro alrededor (en un dibujo transparente se notaba raro). Queda solo el borde blanco de corte de los stickers.
+- En Ajustes → Mis datos ya no está “Cuánto ocupa mi cuaderno”. La papelera y su aviso al acortar el plazo siguen igual.
+
+**Para quien lo mantiene** (paso A2 del plan del 03/10)
+- Fuera `--shadow-sticker` y el halo de `.sticker--img` (también en el selector, las plantillas, el cierre del día y la mariposa de las escenas).
+- DA4 retirado: sale la medición de `settings.js` (y su test unitario y su E2E); `countDueTrash` pasa a `MC.model` (su test, a `trash.test.js`).
+- Todo color a `css/tokens.css`: avisos (`--error-ink`, `--danger`), cantos de cintas, elástico, bastidor, arte de stickers fijo (`--st-*`, pintado con clases `sf-*`/`ss-*` en vez de `fill="#…"`), escenas e impresión (`--print-*`, siempre tinta sobre blanco). El alto contraste del sistema se mudó a `tokens.css`.
+- `tests/unit/guards.test.js`: ningún hex fuera de `tokens.css` (en JS, solo con la marca `color-ok`) y la copia de seguridad cubre todos los stores (`MC.store.INTERNAL_STORES`).
+
 ## 2026-10-04 · Arreglos de base: escenas, menús y volver al calendario (cache `v21`)
 
 **Para quien lo usa**

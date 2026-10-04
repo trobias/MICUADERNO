@@ -101,151 +101,6 @@
     });
   }
 
-  /* ---------- Medición de almacenamiento (DA4) ---------- */
-  var LARGE_THRESHOLD = 5 * 1024 * 1024; // 5 MB
-  // Fotos, dibujos y adjuntos viajan como data URL (base64) dentro de la copia .json: con 4 MB de eso
-  // la descarga ya pesa y tarda aunque haya poco texto, así que el aviso aparece antes del total de 5 MB.
-  var MEDIA_LARGE_THRESHOLD = 4 * 1024 * 1024;
-  var DATA_URL = /^data:/;
-
-  function utf8Bytes(str) {
-    if (!str) return 0;
-    if (typeof TextEncoder !== 'undefined') return new TextEncoder().encode(str).length;
-    var b = 0;
-    for (var i = 0; i < str.length; i++) {
-      var ch = str.charCodeAt(i);
-      if (ch < 0x80) b += 1;
-      else if (ch < 0x800) b += 2;
-      else if (ch >= 0xd800 && ch <= 0xdbff) { b += 4; i++; }
-      else b += 3;
-    }
-    return b;
-  }
-
-  /** Tamaño aproximado de un registro en JSON. Los data URL (ASCII) se cuentan por su largo, sin copiarlos. */
-  function itemBytes(item) {
-    if (item == null) return 0;
-    if (typeof item === 'string') return utf8Bytes(item);
-    var bytes = 0, rest = {};
-    Object.keys(item).forEach(function (k) {
-      var v = item[k];
-      if (typeof v === 'string' && DATA_URL.test(v)) bytes += k.length + v.length + 6; // "k":"v",
-      else rest[k] = v;
-    });
-    try { return bytes + utf8Bytes(JSON.stringify(rest)); } catch (e) { return bytes; }
-  }
-
-  function formatSize(bytes) {
-    if (bytes == null || isNaN(bytes) || bytes <= 0) return '0 B';
-    if (bytes < 1024) return bytes + ' B';
-    if (bytes < 1024 * 1024) {
-      var kb = bytes / 1024;
-      var strKb = (kb < 10 ? kb.toFixed(1) : Math.round(kb).toString()).replace('.0', '').replace('.', ',');
-      return strKb + ' KB';
-    }
-    var mb = bytes / (1024 * 1024);
-    var strMb = (mb < 100 ? mb.toFixed(1) : Math.round(mb).toString()).replace('.0', '').replace('.', ',');
-    return strMb + ' MB';
-  }
-
-  function isAudio(f) {
-    return !!f && ((typeof f.type === 'string' && f.type.toLowerCase().indexOf('audio/') === 0) || (typeof f.name === 'string' && /\.(mp3|m4a|wav|ogg|aac|flac)$/i.test(f.name)));
-  }
-
-  /**
-   * Cuenta registro por registro, sin guardarlos: se le pasan los de un store y se pueden soltar.
-   * add(store, registro) con store = meta | days | activities | routines | pages | images | files.
-   */
-  function storageTally() {
-    var cats = { texto: [0, 0], fotos: [0, 0], audio: [0, 0], dibujos: [0, 0], otros: [0, 0] };
-    var counts = { dias: 0, actividades: 0, rutinas: 0, paginas: 0 };
-    var trashCount = 0;
-    var COUNT = { days: 'dias', activities: 'actividades', routines: 'rutinas', pages: 'paginas' };
-    function put(cat, bytes) { cats[cat][0] += bytes; cats[cat][1]++; }
-    return {
-      add: function (store, r) {
-        if (r == null) return;
-        if (store !== 'meta' && M.isDeleted(r)) trashCount++;
-        var bytes = itemBytes(r);
-        if (store === 'images') put(r.kind === 'drawing' ? 'dibujos' : 'fotos', bytes);
-        else if (store === 'files') put(isAudio(r) ? 'audio' : 'otros', bytes);
-        else { cats.texto[0] += bytes; if (COUNT[store]) counts[COUNT[store]]++; }
-      },
-      result: function (estimate, options) {
-        options = options || {};
-        var largeThreshold = options.largeThreshold || LARGE_THRESHOLD;
-        var mediaThreshold = options.mediaThreshold || MEDIA_LARGE_THRESHOLD;
-        var LABELS = { texto: 'Texto', fotos: 'Fotos', audio: 'Audio', dibujos: 'Dibujos', otros: 'Otros' };
-        var breakdown = {}, total = 0;
-        Object.keys(cats).forEach(function (k) {
-          total += cats[k][0];
-          breakdown[k] = { bytes: cats[k][0], formatted: formatSize(cats[k][0]), count: cats[k][1], label: LABELS[k] };
-        });
-        breakdown.texto.count = counts.dias + counts.actividades + counts.rutinas + counts.paginas;
-        var mediaBytes = total - cats.texto[0];
-        var originUsage = (estimate && estimate.usage != null) ? estimate.usage : null;
-        var originQuota = (estimate && estimate.quota != null) ? estimate.quota : null;
-        return {
-          total: total,
-          trashCount: trashCount,
-          formattedTotal: formatSize(total),
-          breakdown: breakdown,
-          counts: {
-            dias: counts.dias, actividades: counts.actividades, rutinas: counts.rutinas, paginas: counts.paginas,
-            fotos: cats.fotos[1], audio: cats.audio[1], dibujos: cats.dibujos[1], otros: cats.otros[1]
-          },
-          isLarge: total >= largeThreshold || mediaBytes >= mediaThreshold,
-          largeThreshold: largeThreshold,
-          originUsage: originUsage,
-          originQuota: originQuota,
-          formattedOriginUsage: originUsage != null ? formatSize(originUsage) : null
-        };
-      }
-    };
-  }
-
-  /** Mide un cuaderno ya cargado (la forma de M.everything()). Lógica pura, cubierta por tests. */
-  function measureStorage(all, estimate, options) {
-    all = all || {};
-    var t = storageTally();
-    if (all.meta && typeof all.meta === 'object' && Object.keys(all.meta).length) t.add('meta', all.meta);
-    ['days', 'activities', 'routines', 'pages', 'images', 'files'].forEach(function (s) {
-      (all[s] || []).forEach(function (r) { t.add(s, r); });
-    });
-    return t.result(estimate, options);
-  }
-
-  /*
-   * En la app se mide de a un store por vez (sin juntar todo el cuaderno con sus data URL en memoria),
-   * las imágenes también se leen del store para contar las que están en papelera, y el resultado se guarda hasta el próximo
-   * cambio: volver a Ajustes sin haber tocado nada no vuelve a leer nada.
-   */
-  var storageCache = null;
-  function forgetStorage() { storageCache = null; }
-  MC.on('store:changed', forgetStorage);
-  MC.on('store:remote', forgetStorage);
-
-  function collectStorage() {
-    if (storageCache) return storageCache;
-    var S = MC.store, t = storageTally();
-    var estimateP = (root.navigator && navigator.storage && navigator.storage.estimate)
-      ? navigator.storage.estimate().catch(function () { return null; })
-      : Promise.resolve(null);
-    var chain = S.getAll('meta').then(function (rows) { rows.forEach(function (r) { t.add('meta', r); }); });
-    ['days', 'activities', 'routines', 'pages', 'files', 'images'].forEach(function (s) {
-      chain = chain.then(function () { return S.getAll(s); }).then(function (rows) { rows.forEach(function (r) { t.add(s, r); }); });
-    });
-    var p = storageCache = Promise.all([chain, estimateP]).then(function (res) { return t.result(res[1]); });
-    p.catch(function () { if (storageCache === p) storageCache = null; });
-    return p;
-  }
-
-  function countDueTrash(items, days, now) {
-    if (days === 0) return 0;
-    var time = now == null ? Date.now() : (typeof now === 'number' ? now : Date.parse(now));
-    return items.filter(function (item) { return time - Date.parse(item.row.deletedAt) > days * 86400000; }).length;
-  }
-
   function render(main) {
     var s = MC.clone(M.settings());
     var left = h('section.page.page--margin.settings-page');
@@ -326,93 +181,6 @@
     var lastBackup = h('p.t-meta');
     M.getMeta('lastBackupAt', null).then(function (v) { lastBackup.textContent = D.fromISO(v) ? 'Última copia: ' + D.longLabel(D.fromISO(v)) : 'Todavía no guardaste ninguna copia.'; });
 
-    // Cuánto ocupa mi cuaderno (DA4). Se mide recién cuando el bloque se ve (en el celular queda más abajo).
-    // Solo el total es región viva: el desglose no se lee entero cada vez que se abre Ajustes.
-    var storageTotal = h('p.t-meta.storage-total', { 'aria-live': 'polite' }, 'Calculando cuánto ocupa tu cuaderno…');
-    var storageDetail = h('div.storage-detail');
-    var storageBox = h('div.storage-info', storageTotal, storageDetail);
-
-    function renderStorageBreakdown(data) {
-      storageTotal.className = 't-text storage-total';
-      storageTotal.textContent = '';
-      storageTotal.append('Tu cuaderno ocupa aprox. ', h('strong.num', data.formattedTotal), ' en datos guardados.');
-      if (data.trashCount) storageTotal.append(' Incluye ' + data.trashCount + ' ' + (data.trashCount === 1 ? 'elemento' : 'elementos') + ' en la papelera.');
-
-      function detailText(cat) {
-        if (cat === 'texto') {
-          var parts = [];
-          if (data.counts.dias) parts.push(data.counts.dias + ' ' + (data.counts.dias === 1 ? 'día' : 'días'));
-          if (data.counts.paginas) parts.push(data.counts.paginas + ' ' + (data.counts.paginas === 1 ? 'página' : 'páginas'));
-          if (!parts.length) return 'días, páginas, rutinas';
-          return parts.join(', ');
-        }
-        if (cat === 'fotos') {
-          return data.counts.fotos === 0 ? 'ninguna' : (data.counts.fotos + ' ' + (data.counts.fotos === 1 ? 'foto' : 'fotos'));
-        }
-        if (cat === 'audio') {
-          return data.counts.audio === 0 ? 'ninguno' : (data.counts.audio + ' ' + (data.counts.audio === 1 ? 'audio' : 'audios'));
-        }
-        if (cat === 'dibujos') {
-          return data.counts.dibujos === 0 ? 'ninguno' : (data.counts.dibujos + ' ' + (data.counts.dibujos === 1 ? 'dibujo' : 'dibujos'));
-        }
-        if (cat === 'otros') {
-          return data.counts.otros === 0 ? 'ninguno' : (data.counts.otros + ' ' + (data.counts.otros === 1 ? 'adjunto' : 'adjuntos'));
-        }
-        return '';
-      }
-
-      function row(icon, label, catKey) {
-        var dt = detailText(catKey);
-        return h('li.storage-row', { dataset: { cat: catKey } },
-          h('span.storage-row__name', MC.icon(icon), h('span.storage-row__label', label), dt ? h('span.t-meta', '(' + dt + ')') : null),
-          h('span.num.storage-row__size', data.breakdown[catKey].formatted));
-      }
-
-      MC.clear(storageDetail);
-      storageDetail.appendChild(h('ul.storage-list',
-        row('text', 'Texto', 'texto'),
-        row('sticker', 'Fotos', 'fotos'),
-        row('play', 'Audio', 'audio'),
-        row('edit', 'Dibujos', 'dibujos'),
-        row('box', 'Otros', 'otros')));
-
-      // Aviso sobre estimación del navegador vs datos del cuaderno
-      if (data.originUsage != null) {
-        storageDetail.appendChild(h('p.t-meta.storage-note',
-          'El navegador estima aprox. ' + data.formattedOriginUsage + ' para este sitio (incluyendo la aplicación y la memoria en caché).'));
-      }
-
-      // Aviso de copia grande si supera el umbral
-      if (data.isLarge) {
-        storageDetail.appendChild(h('div.slip.slip--butter.storage-large',
-          h('p', 'Tu cuaderno es grande y tiene páginas, imágenes o archivos: la copia de seguridad (.json) puede ser pesada y tardar un momento en descargarse ♡')));
-      }
-    }
-
-    var storageAlive = true;
-    function measureNow() {
-      collectStorage().then(function (data) { if (storageAlive) renderStorageBreakdown(data); }).catch(function (err) {
-        console.warn('[MI CUADERNO] No se pudo calcular el espacio:', err);
-        if (storageAlive) storageTotal.textContent = 'Espacio: guardado localmente en este dispositivo.';
-      });
-    }
-    var storageSeen = null;
-    if (typeof IntersectionObserver === 'function') {
-      storageSeen = new IntersectionObserver(function (entries) {
-        if (!entries.some(function (e) { return e.isIntersecting; })) return;
-        storageSeen.disconnect();
-        storageSeen = null;
-        measureNow();
-      });
-      storageSeen.observe(storageBox);
-    } else {
-      measureNow();
-    }
-    function stopStorage() {
-      storageAlive = false;
-      if (storageSeen) { storageSeen.disconnect(); storageSeen = null; }
-    }
-
     function action(icon, label, fn, cls) {
       var b = h('button.' + (cls || 'label-btn.label-btn--soft'), { type: 'button' }, MC.icon(icon), label);
       b.addEventListener('click', fn);
@@ -420,6 +188,7 @@
     }
 
     // Papelera (DA1): se abre solo cuando la persona quiere verla.
+    var alive = true;
     var trashList = h('ul.trash-list');
     var trashEmpty = h('p.slip', 'La papelera está limpia ♡');
     var retentionNote = h('p.t-meta', { id: 'st-retention-note', role: 'status' });
@@ -444,7 +213,7 @@
             if (chosen === 0 || (before !== 0 && chosen >= before)) return;
             M.trashItems().then(function (items) {
               if (+select.value !== chosen) return;
-              var count = countDueTrash(items, chosen);
+              var count = M.countDueTrash(items, chosen);
               if (count) retentionNote.textContent = count + ' ' + (count === 1 ? 'cosa se borraría' : 'cosas se borrarían') + ' definitivamente la próxima vez que abras el cuaderno. Podés restaurarlas antes desde esta papelera.';
             }).catch(function () {
               if (+select.value === chosen) retentionNote.textContent = 'No se pudo revisar qué vencería. Podés conservar siempre lo que hay en la papelera.';
@@ -463,7 +232,7 @@
     function paintTrash() {
       var labels = { days: 'Día', activities: 'Actividad', routines: 'Rutina', pages: 'Página', images: 'Imagen o dibujo', files: 'Adjunto' };
       M.trashItems().then(function (items) {
-        if (!storageAlive) return;
+        if (!alive) return;
         MC.clear(trashList);
         trashEmpty.hidden = items.length > 0;
         emptyButton.hidden = items.length === 0;
@@ -489,8 +258,6 @@
 
     right.appendChild(c.section('Mis datos', [
       h('p.privacy.t-text', MC.icon('lock'), 'Tus páginas viven en este dispositivo. No se mandan a ningún lado. Por eso conviene hacer una copia de vez en cuando ♡'),
-      h('h3.subhead', 'Cuánto ocupa mi cuaderno'),
-      storageBox,
       h('h3.subhead', 'Copia de seguridad'),
       h('div.data-actions',
         action('download', 'Guardar una copia (.json)', function () { MC.backup.download().then(function () { c.toast('Copia guardada en tus descargas.'); M.getMeta('lastBackupAt').then(function (v) { lastBackup.textContent = 'Última copia: ' + D.longLabel(D.fromDate(new Date(v))); }); }); }, 'label-btn'),
@@ -515,19 +282,13 @@
     about.textContent = 'MI CUADERNO ' + VERSION + ' · guardado en ' + (MC.store.kind() === 'indexeddb' ? 'este navegador' : 'memoria (temporal)');
     right.appendChild(about);
 
-    return { destroy: function () { stopStorage(); offSettings(); note = null; } };
+    return { destroy: function () { alive = false; offSettings(); note = null; } };
   }
 
   MC.views = MC.views || {};
   MC.views.settings = {
     render: render,
     VERSION: VERSION,
-    exportFile: exportFile,
-    measureStorage: measureStorage,
-    collectStorage: collectStorage,
-    countDueTrash: countDueTrash,
-    formatSize: formatSize,
-    LARGE_THRESHOLD: LARGE_THRESHOLD,
-    MEDIA_LARGE_THRESHOLD: MEDIA_LARGE_THRESHOLD
+    exportFile: exportFile
   };
 })(typeof window !== 'undefined' ? window : globalThis);

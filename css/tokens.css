@@ -46,6 +46,47 @@
   --thread-done-text: #4E6B41;
   --thread-partial-text: #9E552B;
 
+  /* Avisos (nunca para la vida de la persona: solo campos y acciones destructivas) */
+  --error-ink: #9C4F66;   /* borde y texto de un campo con error */
+  --danger: #9C5468;      /* fondo del botón-etiqueta que borra */
+
+  /* Cantos de las cintas (un punto más oscuros que su papel) */
+  --butter-deep: #B08D2A;
+  --rose-deep: #C67D90;
+
+  /* Objetos del cuaderno que no cambian con el tema: elástico de la tapa, bastidor de madera */
+  --elastic: #6D4B52;
+  --elastic-light: #8D6169;
+  --hoop-cloth: #FBF6EA;
+  --wood: #D9BC8C;
+  --wood-deep: #C7A574;
+  --hole: #D3C7B6;        /* agujerito vacío de la tela aida del año */
+
+  /* Arte de los stickers: son objetos impresos con sus propios colores (no siguen el tema) */
+  --st-ink: #493D3B;
+  --st-paper: #FFF9ED;
+  --st-cut: #FFFFFF;      /* borde blanco de corte */
+  --st-butter: #F6D978;
+  --st-blush: #F4B9C6;
+  --st-rose: #D98FA1;
+  --st-peach: #F4C3A2;
+  --st-sage: #B9CBA7;
+  --st-sage-deep: #7E9A6E;
+  --st-lavender: #C9B8DE;
+  --st-satin: #A895C4;    /* trama del raso lavanda de la mariposa de la tapa */
+  --st-cloud: #EEE8F4;
+  --st-wax: #FBEBC0;
+
+  /* Impresión: siempre tinta sobre blanco, con cualquier tema */
+  --print-paper: #FFFFFF;
+  --print-ink: #2F2725;
+  --print-ink-mid: #4F4341;
+  --print-ink-soft: #796966;
+  --print-rule: #D3C9DF;
+  --print-faint: #CBBFBC;
+  --print-rose: #D98FA1;
+  --print-done: #5F8150;
+
   /* Tela de tapa (se redefine por [data-cover]) */
   --cloth: #6F8A6A;
   --cloth-deep: #5F7A5A;
@@ -90,7 +131,6 @@
   /* Elevación */
   --shadow-page: 0 1px 0 var(--paper-edge), 0 2px 0 -1px var(--paper-shade), 0 22px 44px -26px rgb(40 30 28 / 0.55);
   --shadow-note: 0 1px 1px rgb(73 61 59 / 0.12), 0 6px 12px -6px rgb(73 61 59 / 0.28);
-  --shadow-sticker: drop-shadow(0 1px 1px rgb(73 61 59 / 0.28)) drop-shadow(0 3px 3px rgb(73 61 59 / 0.12));
   --shadow-tab: 0 2px 4px -1px rgb(40 30 28 / 0.25);
 
   /* Motion (ver DESIGN §12) */
@@ -121,6 +161,11 @@
 [data-motion='suaves'] { --dur-page: 320ms; --dur-cover: 600ms; }
 [data-motion='reducidas'] { --move: 0; --dur-page: 180ms; --dur-cover: 250ms; --dur-panel: 180ms; }
 [data-motion='ninguna'] { --move: 0; --dur-press: 0ms; --dur-ui: 0ms; --dur-panel: 0ms; --dur-page: 0ms; --dur-cover: 0ms; }
+
+/* Alto contraste del sistema */
+@media (prefers-contrast: more) {
+  :root { --ink-soft: #5A4C49; --rule: #BDB2CC; --placeholder: #5A4C49; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   :root:not([data-motion='completas']):not([data-motion='suaves']) { --move: 0; }

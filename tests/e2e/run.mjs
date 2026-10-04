@@ -164,43 +164,6 @@ await test('backup: exportar → borrar todo → restaurar deja el cuaderno igua
   await context.close();
 });
 
-await test('Ajustes: Mis datos muestra desglose y avisa cuando la copia es grande (DA4, file://)', async () => {
-  const { page, errors, context } = await newPage(browser);
-  await page.goto(FILE_URL);
-  await onboard(page);
-  await goto(page, '#/ajustes');
-  await page.locator('.storage-info').scrollIntoViewIfNeeded();
-  await page.waitForFunction(() => document.querySelector('.storage-row[data-cat="texto"]'));
-  assert.match(await page.textContent('.storage-total'), /Tu cuaderno ocupa aprox\./);
-  assert.equal(await page.locator('.storage-row').count(), 5);
-  assert.equal(await page.locator('.storage-large').count(), 0);
-
-  // Datos sintéticos locales: el adjunto supera el umbral de 4 MB de media.
-  await page.evaluate(async (date) => {
-    const day = await MC.model.getDay(date);
-    day.notes = 'Una nota de Nicole';
-    await MC.model.saveDay(day);
-    const image = document.createElement('canvas').toDataURL('image/png');
-    await MC.model.saveImage({ kind: 'upload', name: 'foto de Nicole', src: image });
-    await MC.model.saveImage({ kind: 'drawing', name: 'dibujo de Nicole', src: image, drawing: { strokes: [] } });
-    await MC.model.addFile({ owner: 'day:' + date, name: 'voz.m4a', type: 'audio/mp4', data: 'data:audio/mp4;base64,' + 'A'.repeat(4 * 1024 * 1024) });
-    await MC.model.addFile({ owner: 'day:' + date, name: 'nota.pdf', type: 'application/pdf', data: 'data:application/pdf;base64,AAAA' });
-  }, TODAY);
-  await goto(page, '#/hoy');
-  await goto(page, '#/ajustes');
-  await page.locator('.storage-info').scrollIntoViewIfNeeded();
-  await page.waitForSelector('.storage-large');
-  for (const [cat, count] of [['texto', 'día'], ['fotos', 'foto'], ['audio', 'audio'], ['dibujos', 'dibujo'], ['otros', 'adjunto']]) {
-    const row = page.locator(`.storage-row[data-cat="${cat}"]`);
-    assert.match(await row.textContent(), new RegExp(count));
-    assert.doesNotMatch(await row.locator('.storage-row__size').textContent(), /^0 B$/);
-  }
-  assert.match(await page.textContent('.storage-total'), /4(?:,\d)? MB/);
-  assert.match(await page.textContent('.storage-large'), /copia de seguridad/);
-  assert.deepEqual(errors, []);
-  await context.close();
-});
-
 await test('backup inválido: aviso claro y nada cambia', async () => {
   const { page, context } = await newPage(browser);
   await page.goto(FILE_URL);
@@ -1156,7 +1119,7 @@ await test('atajo ?go=nota lleva a escribir', async () => {
   await context.close();
 });
 
-await test('DA1: editar un día en papelera conserva lo anterior; espacio y retención incluyen lo borrado', async () => {
+await test('DA1: editar un día en papelera conserva lo anterior; la papelera y la retención incluyen lo borrado', async () => {
   for (const width of [1280, 375]) {
     const { page, context, errors } = await newPage(browser, { viewport: { width, height: 860 } });
     await page.goto(FILE_URL);
@@ -1173,9 +1136,8 @@ await test('DA1: editar un día en papelera conserva lo anterior; espacio y rete
       await MC.model.sendToTrash('pages', old.id, new Date(Date.now() - 20 * 86400000).toISOString());
     });
     await goto(page, await page.evaluate(() => MC.routes.settings()));
-    await page.locator('.storage-total').scrollIntoViewIfNeeded();
-    await page.waitForFunction(() => document.querySelector('.storage-total').textContent.includes('3 elementos en la papelera'));
     await page.getByRole('button', { name: 'Ver papelera', exact: true }).click();
+    await page.waitForFunction(() => document.querySelectorAll('.trash-item').length === 3);
     await page.selectOption('#st-retention', '7');
     await page.waitForFunction(() => document.querySelector('#st-retention-note').textContent.includes('1 cosa se borraría'));
     await goto(page, await page.evaluate(() => MC.routes.today()));

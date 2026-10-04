@@ -121,14 +121,11 @@ input.write { min-height: var(--line); height: var(--line); border-bottom: 1px s
   font-size: var(--fs-md);
 }
 .input:focus-visible, .select:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
-.input[aria-invalid='true'] { border-color: #9C4F66; border-bottom-color: #9C4F66; }
+.input[aria-invalid='true'] { border-color: var(--error-ink); border-bottom-color: var(--error-ink); }
 input[type='time'].input, input[type='date'].input { font-variant-numeric: tabular-nums; }
 
 input[type='checkbox'], input[type='radio'] { accent-color: var(--thread-done); width: 20px; height: 20px; margin: 0; }
 
-@media (prefers-contrast: more) {
-  :root { --ink-soft: #5A4C49; --rule: #BDB2CC; --placeholder: #5A4C49; }
-}
 
 @media (forced-colors: active) {
   .stitch-box, .mood-patch { forced-color-adjust: auto; border: 1px solid CanvasText; }

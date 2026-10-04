@@ -376,7 +376,7 @@
     document.body.dataset.cover = s.cover;
     MC.motion.apply(s.motion);
     var meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute('content', getComputedStyle(document.body).getPropertyValue('--cloth').trim() || '#6F8A6A');
+    if (meta) meta.setAttribute('content', getComputedStyle(document.body).getPropertyValue('--cloth').trim() || '#6F8A6A'); // color-ok: respaldo del theme-color (A9 lo calcula el motor de temas)
   }
 
   function storageWarning() {

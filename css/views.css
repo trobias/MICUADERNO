@@ -15,7 +15,7 @@
 .field--inline > span { font-size: var(--fs-sm); color: var(--ink-soft); }
 .input--num { width: 5.5em; }
 .input--time { width: auto; min-width: 7.5em; }
-.form-error { color: #9C4F66; font-size: var(--fs-sm); min-height: 1.2em; }
+.form-error { color: var(--error-ink); font-size: var(--fs-sm); min-height: 1.2em; }
 .form-error:empty { display: none; }
 
 /* ---------- Hoy ---------- */
@@ -48,7 +48,6 @@
 .reflection__label svg { width: 16px; height: 16px; color: var(--mood-5); }
 .reflection__hint { font-family: var(--font-ui); font-style: normal; font-size: var(--fs-xs); }
 .closing-flourish { position: absolute; right: 0; top: -58px; width: 64px; height: 64px; pointer-events: none; }
-.closing-flourish svg { filter: var(--shadow-sticker); }
 .backup-slip, .notify-slip { margin: 0 0 var(--s-6); }
 .storage-warning { position: sticky; top: 0; z-index: 100; margin: 0 auto; max-width: 760px; }
 
@@ -205,7 +204,6 @@ a.months__year { text-decoration: none; padding: 4px 6px; border-radius: 6px; }
   background-size: 100% 28px;
 }
 .template__sticker { position: absolute; top: 6px; right: 6px; width: 40px; height: 40px; transform: rotate(8deg); }
-.template__sticker svg { filter: var(--shadow-sticker); }
 .template__title { font-family: var(--font-text); font-size: var(--fs-md); line-height: 1.2; padding-right: 30px; }
 .template__kind { font-size: var(--fs-xs); color: var(--ink-soft); }
 @media (hover: hover) and (pointer: fine) { .template:hover { border-color: var(--rose); } }
@@ -230,8 +228,8 @@ a.months__year { text-decoration: none; padding: 4px 6px; border-radius: 6px; }
 .hoop-frame {
   padding: 12px 8px 10px;
   border-radius: 10px;
-  background: #FBF6EA;
-  box-shadow: inset 0 0 0 5px #D9BC8C, inset 0 0 0 6px #C7A574, 0 8px 18px -12px rgb(40 30 28 / 0.5);
+  background: var(--hoop-cloth);
+  box-shadow: inset 0 0 0 5px var(--wood), inset 0 0 0 6px var(--wood-deep), 0 8px 18px -12px rgb(40 30 28 / 0.5);
   overflow-x: auto;
 }
 .hoop { display: grid; gap: 2px; min-width: 306px; padding: 6px 4px; }
@@ -257,7 +255,7 @@ a.months__year { text-decoration: none; padding: 4px 6px; border-radius: 6px; }
   left: 50%; top: 50%;
   width: 14px; height: 14px;
   margin: -7px 0 0 -7px;
-  background: radial-gradient(circle at center, #D3C7B6 1.2px, transparent 1.6px);
+  background: radial-gradient(circle at center, var(--hole) 1.2px, transparent 1.6px);
 }
 .stitch-cell[data-mood]::before {
   background:
@@ -329,15 +327,6 @@ a.months__year { text-decoration: none; padding: 4px 6px; border-radius: 6px; }
 .trash-item .t-meta { margin: 4px 0 8px; }
 .danger-zone { margin-top: var(--s-5); padding-top: var(--s-3); border-top: 1.5px dashed var(--rule-strong); }
 .about { margin-top: var(--s-7); }
-/* Cuánto ocupa mi cuaderno (DA4) */
-.storage-total { margin: 0 0 var(--s-3); }
-.storage-list { list-style: none; margin: 0 0 var(--s-3); padding: 0; }
-.storage-row { display: flex; align-items: center; justify-content: space-between; gap: var(--s-2); padding: var(--s-2) 0; border-bottom: 1px dashed var(--rule); font-size: var(--fs-sm); }
-.storage-row__name { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); min-width: 0; }
-.storage-row__label { font-weight: 500; }
-.storage-row__size { font-weight: 600; white-space: nowrap; }
-.storage-note { margin: var(--s-2) 0; }
-.storage-large { margin: var(--s-3) 0; }
 .time-row { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); flex-wrap: wrap; }
 .notify-settings { display: grid; gap: var(--s-3); }
 
@@ -347,7 +336,10 @@ a.months__year { text-decoration: none; padding: 4px 6px; border-radius: 6px; }
 
 /* ---------- Escenas ---------- */
 .scene { top: 0; left: 0; will-change: transform, opacity; }
-.scene-butterfly svg { width: 100%; height: 100%; filter: var(--shadow-sticker); transform-origin: center; }
+.scene-butterfly svg { width: 100%; height: 100%; transform-origin: center; }
+.scene-steam { stroke: var(--ink-faint); }
+.scene-leaf { fill: var(--ink); }
+.scene-leaf__stem { stroke: var(--ink); }
 .scene-tea { width: 70px; height: 70px; }
 .scene-tea > svg:first-child { width: 70px; height: 70px; }
 .scene-tea .steam { position: absolute; left: 6px; top: -46px; width: 52px; height: 52px; }

@@ -434,7 +434,7 @@
   /** Trazos y textos de un dibujo, para poder volver a editarlo. Coordenadas 0..1000. */
   function sanitizeDrawing(d) {
     if (!d || typeof d !== 'object') return null;
-    var color = function (c) { return typeof c === 'string' && /^#[0-9a-fA-F]{6}$/.test(c) ? c : '#493D3B'; };
+    var color = function (c) { return typeof c === 'string' && /^#[0-9a-fA-F]{6}$/.test(c) ? c : '#493D3B'; }; // color-ok: color guardado de un trazo
     return {
       strokes: (Array.isArray(d.strokes) ? d.strokes : []).slice(0, 2000).map(function (s) {
         return {
@@ -610,6 +610,16 @@
     return getPages().then(function (ps) { return ps.filter(function (p) { return pageDate(p) === date; }); });
   }
 
+  /**
+   * Cuántos elementos de la papelera vencerían con una retención de `days` días (0 = conservar siempre).
+   * `items`: lo que devuelve trashItems(). Ajustes lo usa para avisar antes de acortar el plazo.
+   */
+  function countDueTrash(items, days, now) {
+    if (days === 0) return 0;
+    var time = now == null ? Date.now() : (typeof now === 'number' ? now : Date.parse(now));
+    return items.filter(function (item) { return time - Date.parse(item.row.deletedAt) > days * 86400000; }).length;
+  }
+
   /** Todo lo necesario para exportar/insights. */
   function everything() {
     return MC.store.dumpAll().then(function (all) {
@@ -723,7 +733,7 @@
   }
 
   MC.model = {
-    STATUSES: STATUSES, STATUS_LABEL: STATUS_LABEL, routineOccurrences: routineOccurrences, MOMENTS: MOMENTS, MOMENT_LABEL: MOMENT_LABEL,
+    STATUSES: STATUSES, STATUS_LABEL: STATUS_LABEL, routineOccurrences: routineOccurrences, countDueTrash: countDueTrash, MOMENTS: MOMENTS, MOMENT_LABEL: MOMENT_LABEL,
     COVERS: COVERS, MOTION: MOTION, PAPERS: PAPERS, PRIVACY_FLAGS: PRIVACY_FLAGS, TRASH_RETENTION: TRASH_RETENTION,
     sanitizePrivacy: sanitizePrivacy, isPrivate: isPrivate, sanitizeDeletedAt: sanitizeDeletedAt, isDeleted: isDeleted,
     defaultSettings: defaultSettings, mergeSettings: mergeSettings,

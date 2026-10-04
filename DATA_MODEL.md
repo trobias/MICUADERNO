@@ -7,7 +7,7 @@
 - **Fechas como texto local `AAAA-MM-DD`.** Un día del cuaderno es un día del calendario de la persona, no un instante UTC. Nunca guardar `Date` para identificar días (evita corrimientos por zona horaria).
 - **Instantes como ISO 8601** (`createdAt`, `updatedAt`) en UTC.
 - **IDs**: `crypto.randomUUID()` si existe; si no, `Date.now().toString(36) + random`. Prefijos legibles (`act_`, `rut_`, `pag_`, `stk_`).
-- **Nada se deriva y se guarda.** Rutinas → ocurrencias se calculan; insights se calculan; almacenamiento ocupado se calcula.
+- **Nada se deriva y se guarda.** Rutinas → ocurrencias se calculan; insights se calculan.
 - **Todo registro tiene `updatedAt`** para futuras fusiones.
 - **Borrado suave en la misma tabla.** La papelera no usa stores separados: cada registro borrado conserva su forma y suma `deletedAt: ISO | null` (D25).
 - **Privacidad en la fuente.** Las preferencias de privacidad emocional viven con el registro (`privacy`) y las herramientas de análisis las respetan.
@@ -247,19 +247,6 @@ Suma `images` y `files` (vacíos en una copia v2). IndexedDB pasa a la versión 
   2. Exportar entidades con `deletedAt` y `privacy` genera un JSON v4 fiel; al reimportar, los valores se preservan.
   3. Sanitización de registros sin `deletedAt` ni `privacy` no arroja errores ni altera el objeto original.
   4. Copias con `schemaVersion: 5` se rechazan con el mensaje amigable predeterminado (“Esta copia es de una versión más nueva del cuaderno”).
-
-## Medición de almacenamiento (DA4)
-
-Implementado en `MC.views.settings.measureStorage(everything, estimate)` (commit `31cf336`): cálculo derivado en tiempo real sin store propio en IndexedDB.
-
-- **Categorías del desglose:**
-  - `texto`: días, actividades, rutinas, páginas y metadatos (JSON serializado en UTF-8).
-  - `fotos`: imágenes de scrapbook y fotos adjuntas (`kind === 'upload'`).
-  - `audio`: archivos adjuntos de audio (MIME `audio/*` o extensiones `.mp3`, `.m4a`, `.wav`, etc.).
-  - `dibujos`: trazos vectoriales y mapas de bits generados en el cuaderno (`kind === 'drawing'`).
-  - `otros`: adjuntos no clasificables en las categorías anteriores.
-- **Umbral de aviso:** `LARGE_THRESHOLD = 5 * 1024 * 1024` (5 MB). Si el peso de los datos propios supera este valor, `isLarge` es `true` y la interfaz presenta un papelito informativo advirtiendo que la descarga de la copia de seguridad puede demorar.
-- **Estimación de origen:** integra opcionalmente `navigator.storage.estimate()` para contrastar los datos del cuaderno con el uso total reportado por el navegador (aplicación + caché de fuentes y shell).
 
 ## Resumen del calendario (derivado, no se guarda)
 

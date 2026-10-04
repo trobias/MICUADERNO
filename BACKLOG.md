@@ -121,7 +121,7 @@ Al empezar un ítem: pasarlo a NOW, leer `VISION.md` §0 y la decisión que lo c
 
 | # | Qué | Estado | Depende de | Notas / hoy |
 |---|---|---|---|---|
-| MD1 | **Imágenes optimizadas**: miniatura aparte, Blob en IndexedDB en vez de data URL, carga diferida, object URLs liberadas, deduplicar por hash. [24, 71] | NEXT | DA4 | Hoy: rasterizadas a 900 px como data URL (D24). |
+| MD1 | **Imágenes optimizadas**: miniatura aparte, Blob en IndexedDB en vez de data URL, carga diferida, object URLs liberadas, deduplicar por hash. [24, 71] | NEXT | — | Hoy: rasterizadas a 900 px como data URL (D24). |
 | MD2 | **Arrastrar y soltar** y **pegar del portapapeles** imágenes en cualquier hoja. [24] | NEXT | — | Portapapeles denegado → mensaje amable. |
 | MD3 | **Notas de voz** con `MediaRecorder` (grabar, reproducir, renombrar, borrar, pegar en una página), con forma de casetera/cinta. [27] | LATER | MD1, EL1 | Sin `MediaRecorder` → no aparece la opción. |
 | MD4 | **Canciones**: tarjeta desde un link de Spotify/YouTube/YouTube Music/URL, con título, artista y nota; offline-first; nunca reproductor. [50–53] | NEEDS RESEARCH | EL1 | Choca con “sin fetch a terceros” (AGENTS): por defecto se guarda solo lo que la persona escribe + el proveedor reconocido por la URL; traer título/portada solo con un toque explícito y avisando. D25. |
@@ -179,7 +179,7 @@ Ya no están arriba porque están hechos. El detalle, en `CHANGELOG.md` (por fec
 | DA1 | Papelera: borrado suave (`deletedAt`) en páginas, rutinas, imágenes, dibujos y adjuntos; restaurar, vaciar, retención (30 días por defecto, 0 = nunca) con aviso al acortarla; un día en papelera se restaura al editarlo. Sacar actividades sigue siendo definitivo con “Deshacer”. | 02/10/2026 | D26, `SPEC.md`, `DATA_MODEL.md`, `js/core/model.js`, `js/views/settings.js` |
 | DA2 | Deshacer/rehacer por superficie (`MC.history`): stickers, dibujo y acciones de actividades; `Ctrl+Z`/`Ctrl+Shift+Z`/`Ctrl+Y` solo fuera de campos de texto; botones en las barras existentes. | 02/10/2026 | D26, `js/core/history.js` |
 | DA3 | “guardando… → guardado ✓” igual en día, página, scrapbook y Ajustes; aviso amable si no se pudo guardar. | 02/10/2026 | D26, `c.savedNote` en `js/ui/components.js` |
-| DA4 | Cuánto ocupa el cuaderno, con desglose y aviso de copia grande (incluye lo que está en papelera). | 02/10/2026 | `js/views/settings.js` |
+| DA4 | Cuánto ocupa el cuaderno: **retirado el 04/10/2026** a pedido de la dueña (“innecesario”). | 02/10 → 04/10/2026 | `CHANGELOG.md` 04/10 |
 | PV1 | Privacidad por día o página (no recuerdo / no insights / no revisiones); esquema v4 con migración desde v3. | 02/10/2026 | D26, `DATA_MODEL.md`, `js/core/backup.js` |
 | T6 | En el celular, los marcadores se esconden mientras el teclado está abierto. | 02/10/2026 | DESIGN §10, `js/app.js` |
 | — | La ✕ del cuadro vuelve siempre al calendario (antes fallaba al ir y volver a la misma hoja). | 03/10/2026 | `CHANGELOG.md`, `js/app.js` |

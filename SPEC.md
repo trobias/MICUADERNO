@@ -204,7 +204,6 @@ El calendario es donde aparece **todo lo que tiene fecha**: ánimo, escritura, r
 - **Recordatorios**: ver §14.
 - **Mis datos**:
   - Texto de privacidad.
-  - **Cuánto ocupa mi cuaderno (DA4):** bloque interactivo que calcula el espacio exacto de los datos del cuaderno con desglose por categoría (*Texto*, *Fotos*, *Audio*, *Dibujos*, *Otros*), comparación con la cuota total estimada por el navegador (`navigator.storage.estimate()`), y un aviso amable en papelito manteca si la copia supera los 5 MB (`LARGE_THRESHOLD`).
   - **Papelera (DA1):** selector de tiempo de retención (`settings.trashRetentionDays`, default 30 días; opciones 7, 15, 30, 60 días o nunca), acceso al listado de elementos en papelera con opción de **Restaurar** o **Eliminar definitivamente**, y botón **Vaciar papelera** con confirmación clara.
   - **Copia de seguridad y exportación:** guardar copia (`.json` v4); abrir/restaurar copia; exportar (TXT, CSV, XLSX); imprimir; recordatorio de copia (cada 7/14/30 días/nunca); borrar todo (doble confirmación, escribiendo “borrar”).
 - **Guardado visible (DA3):** cada cambio de configuración se confirma con `c.savedNote`.
@@ -218,7 +217,7 @@ Para evitar pérdidas accidentales y dar tranquilidad (filosofía amable), el bo
 - **Aislamiento:** las listas activas, el resumen del calendario (`MC.model.summarize`), la agenda y las observaciones de `insights.js` filtran los registros con `deletedAt != null`. La única excepción es abrir explícitamente una fecha para revisar su hoja en papelera, con aviso y restauración al editar. Sacar una actividad desde Hoy o Agenda usa borrado definitivo con Deshacer; el esquema admite su marca de papelera, pero esa acción no la utiliza.
 - **Retención configurable:** `settings.trashRetentionDays` (default 30 días). En cada inicio del cuaderno, los elementos cuyo `deletedAt` supere el período de retención se eliminan de manera definitiva (`delete` físico en IndexedDB).
 - **Restauración:** cualquier elemento en papelera puede devolverse a la vida (`deletedAt = null`). Una página regresa al índice y al calendario; una rutina retoma sus apariciones; una foto o dibujo reaparece en *Mis stickers*; un adjunto vuelve a su día o página. Abrir la fecha de un día en papelera permite revisar su contenido con un aviso; editarlo lo restaura. Un guardado vacío no lo elimina y un borrador anterior al borrado no lo sobrescribe.
-- **Retención y espacio:** al acortar el plazo, Ajustes anuncia cuántos registros vencerían en el próximo arranque; no los borra en ese momento. La medición incluye todos los registros conservados, también las imágenes en papelera, y señala la cantidad de elementos borrados.
+- **Retención:** al acortar el plazo, Ajustes anuncia cuántos registros vencerían en el próximo arranque (`MC.model.countDueTrash`); no los borra en ese momento.
 - **Vaciado manual:** opción en Ajustes → Mis datos → Papelera para vaciar todo el contenido borrado de una sola vez, previa confirmación amable.
 - **Preservación en copias:** la papelera se incluye en el archivo de backup `.json` (con sus fechas `deletedAt`). Si la persona exporta e importa su cuaderno en otro dispositivo, sus elementos en papelera y sus plazos de retención siguen existiendo.
 
@@ -335,7 +334,6 @@ Ver `DATA_MODEL.md` para esquema. Resumen:
 - **localStorage**: solo preferencias livianas de UI (última ruta, cantidad de aperturas de tapa, borrador transitorio). Nada importante vive solo ahí.
 - **Backup JSON**: `{ app: "mi-cuaderno", kind: "backup", schemaVersion: 4, exportedAt, data: {...} }`. Import valida estructura, aplica migraciones automáticas (`migrations[v]`), rechaza archivos de otra app o versiones futuras (≥ 5) con mensaje claro. Incluye elementos en papelera con `deletedAt` y marcas de `privacy`.
 - **Restaurar = reemplazar** (con advertencia y opción de descargar la copia actual antes). No hay “merge” en v1 para evitar duplicados ambiguos.
-- **Cuánto ocupa mi cuaderno (DA4):** cálculo en tiempo real (`measureStorage`) con desglose de texto, fotos, audio, dibujos y otros adjuntos, junto con aviso amable si la copia supera 5 MB.
 - **Papelera y retención (DA1):** borrado suave universal con purga automática según `settings.trashRetentionDays` (default 30 días) y vaciado manual.
 - **TXT**: diario legible, día por día.
 - **CSV**: `dias.csv` y `actividades.csv` (UTF-8 con BOM para Excel, separador `,`, comillas RFC 4180).
@@ -402,7 +400,7 @@ skills/               colección de skills (no es parte de la app)
 
 ## 20. Estrategia de pruebas
 
-- **Unit (node:test):** fechas, recurrencias (incluye 29/02, día 31, n-ésimo día, intervalos, temporales), materialización de rutinas, validación y migración de backups (v1→v2, v2→v3, v3→v4, rechazo de v5), historial de deshacer/rehacer (`MC.history`: límites, reversión, eventos), papelera (DA1: soft-delete, retención, purga, restauración), privacidad emocional (PV1: exclusión en insights y recuerdos), medición de almacenamiento (DA4: desglose y umbral grande), CSV (escapes), ZIP/XLSX (estructura válida), insights (umbrales, redacción no causal).
+- **Unit (node:test):** fechas, recurrencias (incluye 29/02, día 31, n-ésimo día, intervalos, temporales), materialización de rutinas, validación y migración de backups (v1→v2, v2→v3, v3→v4, rechazo de v5), historial de deshacer/rehacer (`MC.history`: límites, reversión, eventos), papelera (DA1: soft-delete, retención, purga, restauración), privacidad emocional (PV1: exclusión en insights y recuerdos), CSV (escapes), ZIP/XLSX (estructura válida), insights (umbrales, redacción no causal).
 - **E2E (Playwright/Chromium):** primera apertura → onboarding → registrar ánimo → actividades con estados → recargar y ver persistencia → rutina que aparece → calendario → exportar JSON → borrar → restaurar → datos de vuelta. En `file://` y en `http://` (SW registrado, offline con red cortada). Viewports 375×812, 820×1180, 1440×900.
 - **QA visual:** capturas desktop + mobile revisadas contra DESIGN.md; detector de `impeccable` una vez al final.
 

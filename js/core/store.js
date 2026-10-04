@@ -186,6 +186,8 @@
 
   MC.store = {
     STORE_NAMES: STORE_NAMES,
+    // Stores que no van en la copia de seguridad (p. ej. la cola de sincronización de la etapa B). Hoy: ninguno.
+    INTERNAL_STORES: [],
     init: function (opts) {
       opts = opts || {};
       if (root.BroadcastChannel && root.document && !channel) {

@@ -77,6 +77,9 @@ Para **texto chico** en color de hilo (“un poquito”, “guardado”, “×2�
 
 Texto sobre tela: solo el de la tapa y el de las pestañas (sobre papel de color). Nunca párrafos sobre tela.
 
+### 3.4b Colores que no cambian con el tema
+Viven en `css/tokens.css` como cualquier otro, pero un tema propio no los toca: el arte de los stickers y de la mariposa de la tapa (`--st-*`, pintado con clases `sf-*`/`ss-*`), el elástico de la tapa (`--elastic*`), el bastidor de madera del año (`--wood*`, `--hoop-cloth`, `--hole`) y la impresión (`--print-*`: siempre tinta sobre blanco). Un test guardián falla si aparece un color en hex fuera de `tokens.css` (en JS solo se admite con la marca `color-ok` y una razón).
+
 ### 3.5 Superficies del navegador
 `::selection` fondo `--butter`, texto `--ink`. `caret-color: --mood-3`. Scrollbar: `scrollbar-color: var(--paper-edge) transparent; scrollbar-width: thin`. Foco: ver §11.
 
@@ -116,7 +119,7 @@ Escala (rem, base 16px):
 - Elevación (una sola por objeto):
   - `--shadow-page`: `0 1px 0 var(--paper-edge), 0 18px 40px -24px rgb(40 30 28 / .45)`
   - `--shadow-note`: `0 1px 1px rgb(73 61 59 / .12), 0 6px 12px -6px rgb(73 61 59 / .28)`
-  - `--shadow-sticker`: `drop-shadow(0 1px 1px rgb(73 61 59 / .25))` (sticker troquelado: borde blanco de 2px + sombra corta)
+  - Stickers y dibujos **sin sombra** (pedido de la dueña, 04/10): el troquelado se nota solo por el borde blanco de corte; una sombra o un halo alrededor de un dibujo transparente se veía raro.
 
 ## 6. Lenguaje de bordado (componentes firma)
 
@@ -142,13 +145,12 @@ Escala (rem, base 16px):
 - **Cuadro desplegable al abrirse**: sale desde el lado de los marcadores (18px desde la derecha; en el celular 14px desde abajo) + fundido, 260ms `--ease-out`.
 - **Cuadro desplegable** (`.panel`, un `<dialog>` modal): tela de la tapa como fondo, adentro las mismas hojas de siempre; barra superior fija con “Volver al calendario”. Se abre con un fundido + 14px de caída (260 ms, `--ease-out`); en celular ocupa toda la pantalla.
 - **Tira de meses** (`.months`): 12 meses en minúscula Castoro; el actual con fondo manteca, el de hoy con un puntito rosa. El año entre las flechas es un enlace a *Mi año* (subrayado punteado al pasar).
-- **Mis stickers** (`.sticker--img`): la imagen con un borde de papel troquelado (tres `drop-shadow` en `--paper`) y la sombra corta del sticker; 110px de ancho base, escala 0,4–3.
+- **Mis stickers** (`.sticker--img`): la imagen tal cual, sin sombra ni halo (04/10); 110px de ancho base, escala 0,4–3.
 - **Hoja para dibujar** (`.sheet--draw`): papel crema con renglón de borde; herramientas como botones-etiqueta con costura punteada al elegirlas; colores en círculos de 22px tomados de los tokens (tinta, los 5 hilos de ánimo, verde y lavanda de estado, rosa, salvia, manteca, papel); grosores como trazos.
 - **Hilitos del mes** (`.cell-line`, ≥700px): línea de 0,68rem en Atkinson con hilo de 3px a la izquierda del color de su marcador (`--rose` agenda, `--thread-done` rutina, `--thread-later` página) y fondo al 22 %; máx. 3 por día + “+N más”. En el celular no se muestran (quedan las marcas).
 - **Días de una rutina** (`.day-cell.is-routine` + `.mark-routine`): tinte `--sage` al 50 % sobre papel, borde de hilo `--thread-done` suave y el ícono de rutinas de 12px en las marcas (estado nunca solo por color). Aviso arriba (`.routine-filter`): papelito salvia con borde punteado, texto + “Ver la rutina” + “Dejar de mostrar”.
 - **Rutina resaltada** (`.routine.is-focus`): tinte salvia + hilo de 3px a la izquierda, sin animación; recibe el foco.
 - **Enlaces dentro del texto** (fechas, “viene del…”, “próxima: …”, iniciales del bastidor): mismo texto que antes, con subrayado fino o punteado; nunca botones nuevos.
-- **Desglose de almacenamiento en Ajustes** (`.storage-info`, DA4): tipografía Atkinson, total en negrita (`.num`), lista de filas (`.storage-row`) con separadores `1px dashed var(--rule)`, iconos SVG de 18 px en tinta suave y contador en `.t-meta`. Si la copia supera 5 MB, se presenta un papelito manteca (`.slip.slip--butter`) avisando con cariño que la descarga puede tardar un momento.
 - **Panel de papelera** (`.trash-panel`, DA1): papel crema con listado de elementos en baja temporal; cada ítem muestra su tipo con glifo suave, nombre o título, fecha de borrado en `.t-meta` (`--ink-soft`), y botones-etiqueta suaves (`.label-btn.label-btn--soft`) para *Restaurar* y *Eliminar definitivamente*. Botón *Vaciar papelera* en el encabezado con confirmación en diálogo modal. Estado vacío con `.slip`: “La papelera está limpia ♡”.
 - **Privacidad de la hoja** (`.privacy-popover`, PV1): botón discreto en el encabezado de la hoja (Día y Página) con ícono de candado (`lock`) en `--ink-soft`. Al abrirse, despliega un recuadro de papel crema con tres opciones amables acompañadas de casillas de punto cruz o selectores suaves. Si hay opciones activadas, el candado permanece sutilmente visible junto a la fecha o título.
 - **Deshacer y rehacer** (`.history-ctrls`, DA2): controles integrados en las barras existentes (dibujo, scrapbook, barra de hoja). Botones-etiqueta o circulares con glifos claros de flecha curva. Estado deshabilitado al 50 % de opacidad y `cursor: not-allowed` (el estado nunca se comunica solo con color).
@@ -246,7 +248,7 @@ Reglas del director de escenas:
 - **Error de almacenamiento:** papelito rosa arriba (`.slip.slip--blush`): “No pude guardar en este dispositivo; sigue como borrador en esta pestaña. Podés descargar una copia para resguardar tus datos ♡” + botón de descarga.
 - **Deshabilitado:** 50 % opacidad + `cursor: not-allowed`, nunca gris frío.
 
-Los días abiertos desde la papelera muestran un papelito junto al encabezado: editar restaura lo ya guardado. El selector de retención tiene una descripción accesible que anuncia cuántas cosas vencerían al acortar el plazo. “Cuánto ocupa” aclara que su total incluye la papelera.
+Los días abiertos desde la papelera muestran un papelito junto al encabezado: editar restaura lo ya guardado. El selector de retención tiene una descripción accesible que anuncia cuántas cosas vencerían al acortar el plazo.
 
 ## 15. Impresión
 

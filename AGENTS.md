@@ -89,7 +89,7 @@ skills/                 colección de skills del proyecto (no es parte de la app
 
 - `js/core/store.js` + `js/core/backup.js`: tocar con cuidado; cualquier cambio de forma de datos exige migración y subir `SCHEMA_VERSION` (ver DATA_MODEL.md).
 - `js/core/recurrence.js`: cubierto por tests; agregá casos antes de cambiar.
-- `css/tokens.css`: única fuente de valores visuales. No hardcodear colores en otros archivos.
+- `css/tokens.css`: única fuente de valores visuales. No hardcodear colores en otros archivos (lo vigila `tests/unit/guards.test.js`; en JS un hex funcional lleva la marca `color-ok` con su razón). El arte de stickers usa clases `sf-*`/`ss-*` con tokens `--st-*`, y la impresión `--print-*`: ninguno de los dos sigue al tema.
 
 ## Reglas visuales (resumen de DESIGN.md)
 

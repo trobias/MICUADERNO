@@ -113,11 +113,11 @@
   height: 118px;
   z-index: 4;
   pointer-events: none;
-  background: linear-gradient(90deg, color-mix(in srgb, var(--butter) 80%, #b08d2a) 0 1.5px, var(--butter) 1.5px calc(100% - 1.5px), color-mix(in srgb, var(--butter) 80%, #b08d2a) calc(100% - 1.5px));
+  background: linear-gradient(90deg, color-mix(in srgb, var(--butter) 80%, var(--butter-deep)) 0 1.5px, var(--butter) 1.5px calc(100% - 1.5px), color-mix(in srgb, var(--butter) 80%, var(--butter-deep)) calc(100% - 1.5px));
   clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 86%, 0 100%);
   filter: drop-shadow(0 2px 1px rgb(73 61 59 / 0.2));
 }
-.ribbon--rose { background: linear-gradient(90deg, #c67d90 0 1.5px, var(--rose) 1.5px calc(100% - 1.5px), #c67d90 calc(100% - 1.5px)); }
+.ribbon--rose { background: linear-gradient(90deg, var(--rose-deep) 0 1.5px, var(--rose) 1.5px calc(100% - 1.5px), var(--rose-deep) calc(100% - 1.5px)); }
 
 /* ---------- Marcadores (pestañas de tela al costado del cuaderno, DECISIONS D22) ---------- */
 .tabs {
@@ -355,7 +355,7 @@
   right: 26px;
   width: 15px;
   border-radius: 3px;
-  background: linear-gradient(90deg, #6d4b52, #8d6169 45%, #6d4b52);
+  background: linear-gradient(90deg, var(--elastic), var(--elastic-light) 45%, var(--elastic));
   box-shadow: -2px 0 4px rgb(0 0 0 / 0.25);
 }
 .cover__hint { font-size: var(--fs-sm); color: color-mix(in srgb, var(--cloth-ink) 85%, transparent); letter-spacing: 0.02em; }

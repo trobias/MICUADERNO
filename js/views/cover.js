@@ -8,10 +8,10 @@
   var BUTTERFLY =
     '<svg class="cover__butterfly" viewBox="0 0 92 78" aria-hidden="true" focusable="false">' +
     '<defs>' +
-    '<pattern id="satin-a" width="3" height="3" patternUnits="userSpaceOnUse" patternTransform="rotate(35)"><rect width="3" height="3" fill="#F4B9C6"/><path d="M0 .6h3" stroke="#D98FA1" stroke-width=".8"/></pattern>' +
-    '<pattern id="satin-b" width="3" height="3" patternUnits="userSpaceOnUse" patternTransform="rotate(-35)"><rect width="3" height="3" fill="#C9B8DE"/><path d="M0 .6h3" stroke="#A895C4" stroke-width=".8"/></pattern>' +
+    '<pattern id="satin-a" width="3" height="3" patternUnits="userSpaceOnUse" patternTransform="rotate(35)"><rect width="3" height="3" class="sf-blush"/><path d="M0 .6h3" class="ss-rose" stroke-width=".8"/></pattern>' +
+    '<pattern id="satin-b" width="3" height="3" patternUnits="userSpaceOnUse" patternTransform="rotate(-35)"><rect width="3" height="3" class="sf-lavender"/><path d="M0 .6h3" class="ss-satin" stroke-width=".8"/></pattern>' +
     '</defs>' +
-    '<g stroke="#FFF9ED" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round">' +
+    '<g class="ss-paper" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round">' +
     '<path d="M44 36C35 17 16 8 9 18 3 27 16 39 44 40z" fill="url(#satin-a)"/>' +
     '<path d="M48 36C57 17 76 8 83 18 89 27 76 39 48 40z" fill="url(#satin-a)"/>' +
     '<path d="M44 42C31 43 19 52 24 61 28 69 40 62 45 48z" fill="url(#satin-b)"/>' +
