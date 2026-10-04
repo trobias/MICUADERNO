@@ -9,15 +9,15 @@
 - La tapa es **tela de encuadernar** (lino) de un color pleno, con una mariposa bordada y un elástico.
 - Abierto, la tela de la tapa **enmarca** las hojas: el fondo de la app *es* el interior de las tapas, no un escritorio ni un gradiente.
 - Las hojas son **papel crema** con renglones suaves y margen rosado.
-- Lo que la persona marca se **borda**: las actividades se completan con **punto cruz**, los ánimos son **parches bordados**, el año es un **bastidor de punto cruz** que se va llenando día a día.
+- Lo que la persona marca se **borda**: las actividades se completan con **punto cruz**, las emociones escritas llevan un hilo junto a su palabra y el año es un **bastidor de punto cruz** que se va llenando día a día.
 - Los adornos son **papelería**: cintas-marcador, washi tape, stickers troquelados, notas adhesivas. Pocos y bien puestos.
 
 Test de identidad: si sacás el logo y cambiás el color, ¿sigue pareciendo un diario de tela bordado? Si no, está mal.
 
 ### Contrato de dirección (resumen del comentario en `index.html`)
-- **Tesis:** el registro diario como bordado lento; rechaza el dashboard de hábitos (cards, rachas, gráficos).
+- **Tesis:** el registro diario como bordado lento; rechaza las cards de hábitos y las rachas. A8 sumará gráficos de conteos útiles dentro del cuaderno, según D31, sin convertirlo en un tablero de puntajes.
 - **Mundo propio:** tela de encuadernar a página completa + papel crema + hilo de bordar como color de dato.
-- **Primer viewport:** cuaderno abierto; a la izquierda la fecha grande y los 5 parches de ánimo; a la derecha la lista del día con casillas de punto cruz. Acción principal: tocar un parche.
+- **Primer viewport actual:** cuaderno abierto; fecha grande, campo discreto para escribir cómo te sentiste y lista del día con casillas de punto cruz. Acción principal: escribir una palabra propia o marcar una actividad. A6 pondrá la semana planner al centro.
 - **Interacción firma:** marcar una actividad borda una ✕ en dos puntadas.
 
 ## 2. Principios de composición
@@ -51,17 +51,7 @@ Uso: notas adhesivas (butter), cintas (rose/butter), washi (blush/sage/lavender 
 
 ### 3.3 Hilos (color que **codifica** algo)
 
-**Ánimo** — rampa ordinal validada con `dataviz/validate_palette.js --ordinal` sobre `#FFF9ED`: luminosidad monótona (oscuro = pesado, claro = muy bien), saltos ΔL ≥ 0.06, contraste del extremo claro 2.08:1. La separación CVD entre 1 y 2 es 6.3 (banda 6–8), por eso **cada ánimo lleva además su glifo propio** (codificación secundaria obligatoria) y su nombre en tooltips/aria.
-
-| Ánimo | Token | Hilo | Glifo |
-|---|---|---|---|
-| 1 pesado | `--mood-1` | `#584488` | nube con lluvia |
-| 2 bajito | `--mood-2` | `#954A7E` | nube |
-| 3 normal | `--mood-3` | `#C15C67` | sol tras nube |
-| 4 bien | `--mood-4` | `#D67F46` | flor |
-| 5 muy bien | `--mood-5` | `#CAAE31` | sol |
-
-Cada hilo tiene un **tinte** para fondos (`--mood-n-tint`, mezcla 22 % con papel) usado en el parche seleccionado y en el calendario.
+**Emociones escritas (D28, A4)** — no hay rampa ordinal ni cinco valores predefinidos. Cada vista cuenta palabras y asigna hasta ocho hilos `--emotion-1…8` por frecuencia; las menos usadas llevan tinta neutra. En Ajustes se puede fijar un color `#RRGGBB` para una palabra, que tiene prioridad. La palabra aparece **siempre** en texto (Día, actividad, celda, leyenda o nombre accesible del punto del Año): el color solo ayuda a encontrarla. Los ocho hilos base viven en `css/tokens.css` y no cambian con el tema del cuaderno. Las variables `--mood-*` restantes pertenecen a la paleta de dibujo y a acentos históricos; no son una escala de datos.
 
 **Estados de actividad** (hilo sobre papel, ≥3:1 como componente gráfico):
 `--thread-done #5F8150` (salvia oscura) · `--thread-partial #BF6E3F` (durazno tostado) · `--thread-later #6E5CA0` (lavanda oscura) · `--thread-skip` = `--ink-soft`.
@@ -81,7 +71,7 @@ Texto sobre tela: solo el de la tapa y el de las pestañas (sobre papel de color
 Viven en `css/tokens.css` como cualquier otro, pero un tema propio no los toca: el arte de los stickers y de la mariposa de la tapa (`--st-*`, pintado con clases `sf-*`/`ss-*`), el elástico de la tapa (`--elastic*`), el bastidor de madera del año (`--wood*`, `--hoop-cloth`, `--hole`) y la impresión (`--print-*`: siempre tinta sobre blanco). Un test guardián falla si aparece un color en hex fuera de `tokens.css` (en JS solo se admite con la marca `color-ok` y una razón).
 
 ### 3.5 Superficies del navegador
-`::selection` fondo `--butter`, texto `--ink`. `caret-color: --mood-3`. Scrollbar: `scrollbar-color: var(--paper-edge) transparent; scrollbar-width: thin`. Foco: ver §11.
+`::selection` fondo `--butter`, texto `--ink`. `caret-color: --mood-3` (hilo de tinta del lápiz, no codifica emoción). Scrollbar: `scrollbar-color: var(--paper-edge) transparent; scrollbar-width: thin`. Foco: ver §11.
 
 ## 4. Tipografía
 
@@ -115,7 +105,7 @@ Escala (rem, base 16px):
 
 - Espaciado base 4px: `--s-1 4` `--s-2 8` `--s-3 12` `--s-4 16` `--s-5 24` `--s-6 32` `--s-7 48` `--s-8 64`.
 - Padding de hoja: `clamp(20px, 4vw, 56px)` lateral; margen izquierdo de escritura 44px con línea de margen.
-- Radios: hoja `4px 10px 10px 4px` (esquina externa apenas gastada); nota adhesiva `2px`; botones-etiqueta `6px`; parches de ánimo círculo; nada de `rounded-3xl` genérico.
+- Radios: hoja `4px 10px 10px 4px` (esquina externa apenas gastada); nota adhesiva `2px`; botones-etiqueta `6px`; hilos de emoción pequeños; nada de `rounded-3xl` genérico.
 - Elevación (una sola por objeto):
   - `--shadow-page`: `0 1px 0 var(--paper-edge), 0 18px 40px -24px rgb(40 30 28 / .45)`
   - `--shadow-note`: `0 1px 1px rgb(73 61 59 / .12), 0 6px 12px -6px rgb(73 61 59 / .28)`
@@ -129,12 +119,12 @@ Escala (rem, base 16px):
   - postponed: puntada corrida horizontal con punta de flecha en `--thread-later` + anotación manuscrita “otro día”.
   - skipped: nudito francés (círculo 5px) en `--ink-soft`.
   - El texto **nunca se tacha**; done lleva un subrayado de puntada corrida muy suave.
-- **Parche de ánimo** (`.mood-patch`): círculo 52px (44px mínimo táctil) con borde de puntada (dashed 1.5px en hilo) y glifo en hilo. Seleccionado: relleno `--mood-n-tint`, borde continuo, leve rotación (-4° a 4°, fija por ánimo) — como un parche cosido.
+- **Emociones escritas** (`.feelings`, `.feeling-chip`, `.feeling-mark`): campo de texto, botón Agregar y sugerencias de palabras que ya se anotaron; cada palabra agregada lleva un hilo de color y un botón de quitar con nombre accesible. La marca en el calendario conserva la palabra legible. Son frases propias de la persona, sin glifo que las ordene o valore.
 - **Puntada corrida** (`.running-stitch`): separador de secciones = línea discontinua `8px trazo / 6px espacio` en `--rule` más oscuro. Reemplaza a `<hr>` y a bordes de cards.
-- **Bastidor del año**: tela aida (grilla de agujeritos) 12 × 31; día con ánimo = ✕ de punto cruz rellena en el hilo del ánimo; día con algo anotado pero sin ánimo = medio punto en `--ink-faint` (leyenda: “algo anotado, sin ánimo”); día inexistente (30/02) = sin agujeros.
+- **Bastidor del año**: tela aida (grilla de agujeritos) 12 × 31; día con emociones = ✕ en el hilo de la primera palabra del cierre o del inicio y nombre accesible con todas las palabras; día con algo anotado sin emoción = medio punto en `--ink-faint`; día inexistente (30/02) = sin agujeros. Leyenda palabra + hilo.
 - **Botón-etiqueta** (`.label-btn`): etiqueta tejida: fondo `--ink`, texto `--paper`, radio 6px, costura interna punteada `1px rgb(255 249 237 / .45)` a 3px. Variante suave: fondo `--paper-shade`, texto `--ink`.
 - **Cinta-marcador**: cinta de raso (butter o rose) que cuelga del borde superior de la hoja activa; en el calendario, cae sobre el día seleccionado.
-- **Marcas de la celda del mes** (`.day-cell__marks`, fila de 14px bajo el parche, 0.72rem): punto de tinta (`.mark-ink`, escribió) · estrella `--mood-5` (`.mark-star`, recuerdo) · `×n` en `--thread-done-text` (`.mark-x`, hechas) · cajita `box` 12px + número en `--ink-soft` (`.mark-plan`, planeado; solo hoy y adelante) · ícono `paginas` 12px en `--thread-later` (`.mark-page`, página empezada). Todas `aria-hidden`: el significado va en el `aria-label` del día. Nada de rojo ni de “faltan”.
+- **Marcas de la celda del mes** (`.day-cell__marks`, fila de 14px bajo las palabras, 0.72rem): punto de tinta (`.mark-ink`, escribió) · estrella `--mood-5` (`.mark-star`, recuerdo) · `×n` en `--thread-done-text` (`.mark-x`, hechas) · cajita `box` 12px + número en `--ink-soft` (`.mark-plan`, planeado; solo hoy y adelante) · ícono `paginas` 12px en `--thread-later` (`.mark-page`, página empezada). Todas `aria-hidden`: el significado va en el `aria-label` del día. Nada de rojo ni de “faltan”.
 
 ## 7. Papelería
 
@@ -202,7 +192,7 @@ Tokens: `--ease-out: cubic-bezier(0.23, 1, 0.32, 1)` · `--ease-in-out: cubic-be
 | Momento | Frecuencia | Motion |
 |---|---|---|
 | Marcar casilla | decenas/día | bordado de la ✕ en 2×140ms; nada más se mueve |
-| Tocar parche | 2/día | parche se “cose”: escala 0.94→1 + rotación a su ángulo, 200ms |
+| Agregar una emoción | ocasional | aparece el hilo y la palabra, sin desplazar el texto que se está escribiendo |
 | Cambiar de día (flechas) | varias/día | hoja se desliza 12px + fade, 260ms (View Transitions si hay, fallback WAAPI) |
 | Abrir un marcador | varias/día | el marcador sale de atrás de la hoja (−8px → +4px) y el cuadro se despliega desde ese lado (18px; abajo en el celular) |
 | Soltar sticker | ocasional | asentamiento: escala 1.06→1 y rotación ±2°, 260ms |
@@ -214,7 +204,7 @@ Tokens: `--ease-out: cubic-bezier(0.23, 1, 0.32, 1)` · `--ease-in-out: cubic-be
 | Calendario que se actualiza solo | con cada cambio | **ninguno**: se redibuja aparte y se cambia entero (sin parpadeo, sin animar los números ni las marcas) |
 | Abrir tapa | 1/sesión | primeras 3 veces: elástico se corre + tapa gira sobre bisagra izquierda, 900ms; luego fade 250ms |
 | Cierre del día guardado | 1/día | una ramita/luna aparece a su lado, 600ms, una vez |
-| Escenas ambientales | rara | ver §13 |
+| Escenas ambientales | ocasionales hoy; más frecuentes desde A10 | ver §13 y D33 |
 
 Nunca: `transition: all`, `scale(0)`, `ease-in` en UI, rebotes, motion en atajos de teclado, parallax, cosas siguiendo al cursor. Hover con movimiento solo en `@media (hover: hover) and (pointer: fine)`.
 
@@ -252,7 +242,7 @@ Los días abiertos desde la papelera muestran un papelito junto al encabezado: e
 
 ## 15. Impresión
 
-Documento dedicado (`js/views/print.js` + `css/print.css`): `@page { size: A4 | A5 | letter }` con márgenes 15/14 mm (11/10 mm en A5). Portada (título, frase, nombre, rango, mariposa), una hoja por mes con calendario de glifos y cantidad de cosas hechas, **los días en secuencia** (sin cortar un día entre dos hojas, `break-inside: avoid`, para no gastar una hoja por día), páginas libres (una hoja cada una) y rutinas. Sin fondos de tela; todo en tinta: imprime bien en blanco y negro gracias a los glifos de ánimo y las marcas de punto cruz.
+Documento dedicado (`js/views/print.js` + `css/print.css`): `@page { size: A4 | A5 | letter }` con márgenes 15/14 mm (11/10 mm en A5). Portada (título, frase, nombre, rango, mariposa), una hoja por mes con palabras de emoción y cantidad de cosas hechas, **los días en secuencia** (sin cortar un día entre dos hojas, `break-inside: avoid`), páginas libres y rutinas. Emociones de cada actividad antes/después si se anotaron. Sin fondos de tela; todo en tinta y texto legible en blanco y negro.
 
 ## 16. Íconos de la app
 
@@ -267,9 +257,9 @@ Elegido entre tres exploraciones (mariposa sobre hoja, cuaderno cerrado con etiq
 | Parches con glifo + color | Color como único portador de significado |
 | “Hoy no salió” con un nudito suave | Tachar, rojo, “fallaste” |
 | Escena una vez, después silencio | Animaciones en loop |
-| Tela de color pleno como fondo | Gradientes, glass, glows, neumorphism |
+| Tela de color pleno como fondo de fábrica | Gradientes y acabados solo elegidos en Ajustes desde A9; nunca glass o glows genéricos |
 | Young Serif para fechas | Mayúsculas espaciadas como eyebrow sobre títulos |
-| Insights con conteos (“8 de 11”) | Porcentajes de “mejora”, gráficos de SaaS |
+| Insights y gráficos editoriales de conteos desde A8, con tabla accesible | Porcentajes de “mejora”, rachas, puntajes o gráficos de SaaS |
 | Deshacer con botones accesibles y atajos fuera de inputs | Confiar solo en atajos o solo en color para deshabilitar |
 | Guardado visible con estado reposo sin toasts repetitivos | Llenar la pantalla de carteles y toasts con cada letra tipeada |
 | Papelera con retención amable y restauración simple | Borrado destructivo inmediato e irreversible |

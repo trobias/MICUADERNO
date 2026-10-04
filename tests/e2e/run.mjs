@@ -16,6 +16,7 @@ const TODAY = (() => { const d = new Date(); return `${d.getFullYear()}-${String
 
 const results = [];
 async function test(name, fn) {
+  if (process.env.E2E_GREP && !name.toLowerCase().includes(process.env.E2E_GREP.toLowerCase())) return;
   const t0 = Date.now();
   try { await fn(); results.push([true, name, Date.now() - t0]); console.log(`  ✓ ${name}`); }
   catch (e) { results.push([false, name]); console.log(`  ✗ ${name}\n    ${String(e && e.stack || e).split('\n').slice(0, 4).join('\n    ')}`); }
@@ -57,6 +58,12 @@ async function goto(page, hash) {
   await page.waitForTimeout(350);
 }
 
+async function addFeeling(page, word, scope = '.section--mood') {
+  await page.fill(`${scope} .feelings__input`, word);
+  await page.locator(`${scope} .feelings__input`).press('Enter');
+  await page.waitForSelector(`${scope} .feeling-chip:has-text("${word}")`);
+}
+
 const browser = await chromium.launch({ executablePath });
 const server = await startServer(PORT);
 console.log('MI CUADERNO · E2E');
@@ -77,7 +84,7 @@ await test('registrar el día y que persista al recargar (file://)', async () =>
   const { page, errors, context } = await newPage(browser);
   await page.goto(FILE_URL);
   await onboard(page);
-  await page.click('.section--mood .mood-patch[data-mood="4"]');
+  await addFeeling(page, 'con energía');
   await page.fill('#intention', 'tomar agua');
   const add = page.locator('.add-activity input');
   for (const t of ['caminar', 'leer', 'ordenar']) { await add.fill(t); await add.press('Enter'); }
@@ -93,12 +100,41 @@ await test('registrar el día y que persista al recargar (file://)', async () =>
   await openCover(page);
   await page.waitForSelector('.activity');
   const state = await page.evaluate(() => ({
-    mood: document.querySelector('.section--mood .mood-patch[aria-pressed="true"]')?.dataset.mood,
+    feelings: [...document.querySelectorAll('.section--mood .feeling-chip')].map((el) => el.dataset.feeling),
     statuses: [...document.querySelectorAll('.activity')].map((li) => li.dataset.status),
     notes: document.querySelector('#notes').value,
     intention: document.querySelector('#intention').value
   }));
-  assert.deepEqual(state, { mood: '4', statuses: ['done', 'partial', 'skipped'], notes: 'Un día tranquilo.', intention: 'tomar agua' }, JSON.stringify(state));
+  assert.deepEqual(state, { feelings: ['con energía'], statuses: ['done', 'partial', 'skipped'], notes: 'Un día tranquilo.', intention: 'tomar agua' }, JSON.stringify(state));
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+await test('emociones libres en una actividad y colores propios en Ajustes', async () => {
+  const { page, errors, context } = await newPage(browser);
+  await page.goto(FILE_URL);
+  await onboard(page);
+  await addFeeling(page, 'con ansiedad');
+  const input = page.locator('.add-activity input');
+  await input.fill('Caminar'); await input.press('Enter');
+  await page.waitForSelector('.activity:has-text("Caminar")');
+  await page.locator('.activity .icon-btn').first().click();
+  await page.click('.menu__item:has-text("Cómo me sentí antes y después")');
+  const feelInputs = page.locator('dialog.sheet .feelings__input');
+  await feelInputs.nth(0).fill('sin energía'); await feelInputs.nth(0).press('Enter');
+  await feelInputs.nth(1).fill('con energía'); await feelInputs.nth(1).press('Enter');
+  await page.click('dialog.sheet button:has-text("Guardar")');
+  await page.waitForSelector('.activity__feeling:has-text("Después: con energía")');
+  await goto(page, '#/ajustes');
+  await page.fill('.emotion-colors__add .input', 'con ansiedad');
+  await page.locator('.emotion-colors__add input[type="color"]').fill('#865faf');
+  await page.click('.emotion-colors__add button:has-text("Elegir color")');
+  await page.waitForFunction(() => MC.model.settings().emotionColors['con ansiedad'] === '#865FAF');
+  await page.reload(); await openCover(page);
+  await goto(page, '#/hoy');
+  assert.equal(await page.locator('.section--mood .feeling-chip').evaluate((el) => el.style.getPropertyValue('--feeling-color')), '#865FAF');
+  assert.match(await page.textContent('.activity__feeling'), /Antes: sin energía/);
+  assert.match(await page.textContent('.activity'), /Después: con energía/);
   assert.deepEqual(errors, []);
   await context.close();
 });
@@ -128,9 +164,9 @@ await test('rutina: se crea y aparece sola en Hoy; marcarla la guarda', async ()
 await test('backup: exportar → borrar todo → restaurar deja el cuaderno igual', async () => {
   const { page, errors, context } = await newPage(browser);
   await page.goto(FILE_URL);
-  await onboard(page, 'Lu');
+  await onboard(page);
   await page.fill('#notes', 'esto tiene que volver');
-  await page.click('.section--mood .mood-patch[data-mood="2"]');
+  await addFeeling(page, 'cansancio');
   await page.waitForTimeout(700);
   await goto(page, '#/ajustes');
   const [download] = await Promise.all([page.waitForEvent('download'), page.click('button:has-text("Guardar una copia (.json)")')]);
@@ -159,7 +195,7 @@ await test('backup: exportar → borrar todo → restaurar deja el cuaderno igua
   await page.waitForSelector('.day-head');
   await page.waitForTimeout(300);
   assert.equal(await page.inputValue('#notes'), 'esto tiene que volver');
-  assert.match(await page.textContent('.day-head__greet'), /Lu/);
+  assert.match(await page.textContent('.day-head__greet'), /Nicole/);
   assert.deepEqual(errors, []);
   await context.close();
 });
@@ -346,11 +382,11 @@ await test('calendario, semana y año muestran lo registrado; teclado en el mes'
   const { page, errors, context } = await newPage(browser);
   await page.goto(FILE_URL);
   await onboard(page);
-  await page.click('.section--mood .mood-patch[data-mood="5"]');
+  await addFeeling(page, 'calma');
   await page.waitForTimeout(400);
   await goto(page, '#/calendario/mes/' + TODAY.slice(0, 7));
   const cell = page.locator(`.day-cell[data-date="${TODAY}"]`);
-  assert.equal(await cell.getAttribute('data-mood'), '5');
+  assert.equal(await cell.getAttribute('data-feeling'), 'calma');
   await cell.focus();
   await page.keyboard.press('ArrowRight');
   const focused = await page.evaluate(() => document.activeElement.dataset.date);
@@ -358,7 +394,7 @@ await test('calendario, semana y año muestran lo registrado; teclado en el mes'
   await goto(page, '#/calendario/semana/' + TODAY);
   assert.equal(await page.locator('.week-day').count(), 7);
   await goto(page, '#/anio');
-  assert.equal(await page.locator(`.stitch-cell[data-date="${TODAY}"]`).getAttribute('data-mood'), '5');
+  assert.equal(await page.locator(`.stitch-cell[data-date="${TODAY}"]`).getAttribute('data-feeling'), 'calma');
   assert.equal(await page.locator('.stitch-cell').count() >= 365, true);
   assert.deepEqual(errors, []);
   await context.close();
@@ -565,9 +601,9 @@ await test('calendario en vivo: se actualiza detrás del cuadro y desde otra pes
   await cell(TODAY).focus();
   await page.keyboard.press('Enter');
   await page.waitForSelector('#panel[open] .day-head');
-  await page.click('#panel .section--mood .mood-patch[data-mood="4"]');
-  const moodIs = (k, m) => page.waitForFunction(([k, m]) => { const c = document.querySelector(`#main .day-cell[data-date="${k}"]`); return c && c.dataset.mood === m; }, [k, m], { timeout: 4000 });
-  await moodIs(TODAY, '4'); // el día ya muestra el ánimo detrás del cuadro
+  await addFeeling(page, 'con energía', '#panel .section--mood');
+  const feelingIs = (k, word) => page.waitForFunction(([k, word]) => { const c = document.querySelector(`#main .day-cell[data-date="${k}"]`); return c && c.dataset.feeling === word; }, [k, word], { timeout: 4000 });
+  await feelingIs(TODAY, 'con energía'); // el día ya muestra la emoción detrás del cuadro
   assert.equal(await page.locator('#panel').evaluate((d) => d.open), true, 'el cuadro sigue abierto');
   // Escribir mientras el fondo se redibuja: no se pierde ni una letra, ni el foco.
   await page.click('#notes');
@@ -591,8 +627,8 @@ await test('calendario en vivo: se actualiza detrás del cuadro y desde otra pes
   const errors2 = watchErrors(other2);
   await other2.goto(HTTP_URL);
   await other2.waitForFunction(() => window.MC && MC.store && MC.store.kind && MC.store.kind());
-  await other2.evaluate(async (k) => { const d = await MC.model.getDay(k); d.evening.mood = 2; await MC.model.saveDay(d); }, TODAY);
-  await moodIs(TODAY, '2'); // llegó el cambio de la otra pestaña, sin recargar
+  await other2.evaluate(async (k) => { const d = await MC.model.getDay(k); d.evening = { mood: null, feelings: ['cansancio'], at: new Date().toISOString() }; await MC.model.saveDay(d); }, TODAY);
+  await feelingIs(TODAY, 'cansancio'); // llegó el cambio de la otra pestaña, sin recargar
   assert.deepEqual(errors, []);
   assert.deepEqual(errors2, []);
   await context.close();
@@ -954,12 +990,12 @@ await test('pantalla única: tocar un día abre su cuadro, cerrar vuelve al cale
   const { page, errors, context } = await newPage(browser);
   await page.goto(FILE_URL);
   await onboard(page);
-  await page.click('.section--mood .mood-patch[data-mood="3"]');
+  await addFeeling(page, 'motivada');
   await page.waitForTimeout(400);
   await page.click('#panel-close');
   await page.waitForFunction(() => !document.getElementById('panel').open);
   assert.match(page.url(), /#\/calendario/);
-  await page.waitForFunction((k) => { const c = document.querySelector(`#main .day-cell[data-date="${k}"]`); return c && c.dataset.mood === '3'; }, TODAY, { timeout: 4000 }); // el calendario ya tiene el ánimo
+  await page.waitForFunction((k) => { const c = document.querySelector(`#main .day-cell[data-date="${k}"]`); return c && c.dataset.feeling === 'motivada'; }, TODAY, { timeout: 4000 }); // el calendario ya tiene la emoción
   // Otro día del mes
   const other = await page.$eval('.day-cell:not(.is-out)', (el) => el.dataset.date);
   await page.click(`.day-cell[data-date="${other}"]`);

@@ -2,6 +2,8 @@
 
 `schemaVersion: 5` · Base IndexedDB `mi-cuaderno` (versión IDB 3: stores `weeks`, `templates` y `marks`, índice `pages.date`; ver “Esquema v5”).
 
+**Uso activo desde A4:** `days.morning/evening.feelings` y `activities.feel.before/after` se escriben desde la interfaz. `MC.model.feelingsOf(slot, settings)` hace lectura dual: si `feelings` es array, lo respeta incluso vacío; si es `null`, convierte `mood` con `legacyMoodLabels` (o `moodLabels` de una copia vieja). `emotionKey` normaliza mayúsculas y tildes para deduplicar y para `settings.emotionColors`; conserva la palabra escrita para mostrarla. `emotionPalette` asigna ocho hilos por frecuencia de la vista, con prioridad a colores elegidos. `summarize` devuelve `morning`, `evening` y `feelings` como arrays de palabras; `mood` ya no es el dato visible. TXT/CSV/XLSX e impresión exportan las palabras y antes/después de actividades. El v5 sigue siendo **aditivo**; no reescribir `updatedAt` al leer ni retirar formas antiguas hasta A13.
+
 ## Principios
 
 - **Fechas como texto local `AAAA-MM-DD`.** Un día del cuaderno es un día del calendario de la persona, no un instante UTC. Nunca guardar `Date` para identificar días (evita corrimientos por zona horaria).
@@ -178,12 +180,12 @@ Un sticker pegado la usa con `sticker: 'img:<id>'`. Si la imagen se manda a la p
 {
   app: 'mi-cuaderno',
   kind: 'backup',
-  schemaVersion: 4,
+  schemaVersion: 5,
   exportedAt: ISO,
   data: {
     meta: { createdAt, settings },
     days: [...], activities: [...], routines: [...], pages: [...],
-    images: [...], files: [...]
+    images: [...], files: [...], weeks: [...], templates: [...], marks: [...]
   }
 }
 ```
@@ -271,8 +273,8 @@ v5 es **aditiva** (D34): los stores y campos nuevos conviven con los viejos hast
 ### Campos nuevos en stores existentes
 | Store | Campo | Forma | Paso |
 |---|---|---|---|
-| `days` | `morning.feelings`, `evening.feelings` | `[string]` (emociones escritas) o `null` si nunca se anotaron; conviven con `mood` hasta v6 | A4 |
-| `activities` | `feel` | `{ before: [string], after: [string] }` o `null` | A4/A6 |
+| `days` | `morning.feelings`, `evening.feelings` | `[string]` (emociones escritas) o `null` si nunca se anotaron; conviven con `mood` hasta v6 | A4 visible |
+| `activities` | `feel` | `{ before: [string], after: [string] }` o `null` | A4 visible; A6 lo pondrá también en la semana editable |
 | `activities` | `moves` | `[{ from: 'AAAA-MM-DD', to: 'AAAA-MM-DD', at: ISO }]`, máx. 50 | A3 |
 | `pages` (hojas) | `blocks`, `values` | como en `templates`; `null` mientras la hoja siga con `kind/body/items` | A7 |
 | `pages` | `templateId`, `routineId` | de qué plantilla nació; de qué repetición es ocurrencia | A7 |
@@ -283,8 +285,8 @@ v5 es **aditiva** (D34): los stores y campos nuevos conviven con los viejos hast
 | `images.drawing.strokes[]` | paso de relleno | `{ tool: 'fill', x, y, color, tolerance: 0..255 }` (sin `points`), en el mismo orden que los trazos | A11 |
 | `files` | `updatedAt` | ISO (= `createdAt` en los viejos) | A3 |
 | `meta.settings` | `theme` | `null` (tela de la tapa) o `{ preset, cloth, cloth2, angle, paper, ink, accents: [4], finish }` con hex `#RRGGBB` | A9 |
-| `meta.settings` | `emotionColors` | `{ [clave]: '#RRGGBB' }`, máx. 200 | A4 |
-| `meta.settings` | `legacyMoodLabels` | los 5 nombres de ánimo congelados al pasar a emociones (convierte `mood n` → emoción) | A4 |
+| `meta.settings` | `emotionColors` | `{ [clave]: '#RRGGBB' }`, máx. 200 | A4 visible en Ajustes |
+| `meta.settings` | `legacyMoodLabels` | los 5 nombres de ánimo congelados al pasar a emociones (convierte `mood n` → emoción) | A4, compatibilidad hasta v6 |
 
 ### Reglas nuevas
 - **Ids deterministas** (D34): una ocurrencia de repetición que se marca se guarda como `act_<idRutina>_<AAAA-MM-DD>` (y una hoja que se repite, `pag_<idRutina>_<AAAA-MM-DD>`): marcarla dos veces, desde dos pestañas o dos dispositivos, escribe el mismo registro. Si quedaron dos de antes, la lista del día muestra uno (el más nuevo).

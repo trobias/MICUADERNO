@@ -16,7 +16,7 @@
       if (destroyed) return;
       // Misma cuenta que el calendario, sobre lo ya cargado. Sin rutinas: el año solo borda lo registrado.
       var sum = M.summarize(all.days, all.activities, { from: year + '-01-01', to: year + '-12-31' });
-      var labels = M.settings().moodLabels;
+      var palette = M.emotionPalette(all.days.filter(function (d) { return d.date.slice(0, 4) === year; }), all.meta.settings);
 
       // Encabezado
       var y = +year;
@@ -26,13 +26,13 @@
           h('h1.t-display', 'Mi año ', h('span.cal-head__year', year)),
           h('a.icon-btn', { href: R.year(y + 1), 'aria-label': 'Año siguiente' }, MC.icon('arrow-right')))));
 
-      var filled = Object.keys(sum).filter(function (k) { return sum[k].mood; }).length;
+      var filled = Object.keys(sum).filter(function (k) { return sum[k].feelings.length; }).length;
       left.appendChild(h('p.year-intro.t-text', filled
-        ? 'Cada punto cruz es un día con su ánimo. ' + (filled === 1 ? 'Ya hay uno bordado.' : 'Ya hay ' + filled + ' bordados.')
-        : 'Un bastidor listo para bordar: cada día que registres cómo terminó, aparece un punto cruz del color de ese ánimo.'));
+        ? 'Cada punto cruz es un día con una emoción anotada. ' + (filled === 1 ? 'Ya hay uno bordado.' : 'Ya hay ' + filled + ' bordados.')
+        : 'Un bastidor listo para bordar: cada día que anotes una emoción aparece un punto cruz.'));
 
       // Bastidor
-      var hoop = h('div.hoop', { role: 'grid', 'aria-label': 'Ánimo de cada día de ' + year, style: { '--cols': 12 } });
+      var hoop = h('div.hoop', { role: 'grid', 'aria-label': 'Emociones de cada día de ' + year, style: { '--cols': 12 } });
       var head = h('div.hoop__row.hoop__row--head', { role: 'row' }, h('span.hoop__corner', { role: 'columnheader', 'aria-label': 'Día' }));
       // Cada inicial de mes lleva a ese mes en el calendario.
       D.MONTHS_SHORT.forEach(function (m, i) {
@@ -47,12 +47,13 @@
           if (d > D.daysInMonth(y, m)) { row.appendChild(h('span.hoop__gap', { role: 'gridcell', 'aria-hidden': 'true' })); continue; }
           var key = D.make(y, m, d);
           var info = sum[key];
-          var mood = info && info.mood;
-          var label = d + ' de ' + D.MONTHS[m - 1] + (mood ? ': ' + labels[mood - 1] : info && (info.wrote || info.total) ? ': sin ánimo registrado' : '');
+          var feelings = info ? info.feelings : [];
+          var label = d + ' de ' + D.MONTHS[m - 1] + (feelings.length ? ': ' + feelings.join(', ') : info && (info.wrote || info.total) ? ': sin emoción registrada' : '');
           var cell = h('button.stitch-cell', {
             type: 'button', role: 'gridcell', tabindex: '-1', 'aria-label': label,
-            dataset: { date: key, mood: mood ? String(mood) : null, row: String(d), col: String(m) },
-            class: [key === today ? 'is-today' : null, !mood && info && (info.wrote || info.total) ? 'is-half' : null, key > today ? 'is-future' : null].filter(Boolean).join(' ')
+            dataset: { date: key, feeling: feelings.length ? feelings[0] : null, row: String(d), col: String(m) },
+            style: { '--c': feelings.length ? palette.color(feelings[0]) : null },
+            class: [key === today ? 'is-today' : null, !feelings.length && info && (info.wrote || info.total) ? 'is-half' : null, key > today ? 'is-future' : null].filter(Boolean).join(' ')
           });
           cell.addEventListener('click', go);
           cell.addEventListener('keydown', onKey);
@@ -66,8 +67,9 @@
       cells.forEach(function (x) { if (x.dataset.date === focusKey) x.tabIndex = 0; });
 
       left.appendChild(h('ul.mood-legend.year-legend', { 'aria-label': 'Referencias' },
-        [1, 2, 3, 4, 5].map(function (mm) { return h('li', h('span.stitch-cell.stitch-cell--key', { dataset: { mood: String(mm) }, 'aria-hidden': 'true' }), c.moodMark(mm), labels[mm - 1]); }),
-        h('li', h('span.stitch-cell.stitch-cell--key.is-half', { 'aria-hidden': 'true' }), 'algo anotado, sin ánimo')));
+        palette.labels.map(function (value) { return h('li', h('span.stitch-cell.stitch-cell--key', { dataset: { feeling: value }, style: { '--c': palette.color(value) }, 'aria-hidden': 'true' }), value); }),
+        palette.otherCount ? h('li', 'Otras emociones, con su nombre') : null,
+        h('li', h('span.stitch-cell.stitch-cell--key.is-half', { 'aria-hidden': 'true' }), 'algo anotado, sin emoción')));
 
       function go(e) { location.hash = R.day(e.currentTarget.dataset.date); }
       function onKey(e) {

@@ -6,7 +6,7 @@
 
   var MARK = { pending: '[ ]', done: '[x]', partial: '[/]', postponed: '[→]', skipped: '[·]' };
 
-  function moodName(settings, n) { return n ? settings.moodLabels[n - 1] : ''; }
+  function emotionText(slot, settings) { return MC.model.feelingsOf(slot, settings).join('; '); }
 
   function groupBy(list, key) {
     var out = {};
@@ -46,17 +46,19 @@
       lines.push(D.capitalize(D.longLabel(date)) + ' de ' + date.slice(0, 4));
       lines.push('');
       if (d) {
-        if (d.morning.mood) lines.push('Arranqué: ' + moodName(s, d.morning.mood));
+        if (emotionText(d.morning, s)) lines.push('Arranqué: ' + emotionText(d.morning, s));
         if (d.intention.trim()) lines.push('Algo que quería cuidar: ' + d.intention.trim());
       }
       (acts[date] || []).forEach(function (a) {
         lines.push('  ' + MARK[a.status] + ' ' + a.title + (a.routineId && routineName[a.routineId] ? '  (rutina)' : ''));
+        if (a.feel && a.feel.before && a.feel.before.length) lines.push('    Antes: ' + a.feel.before.join('; '));
+        if (a.feel && a.feel.after && a.feel.after.length) lines.push('    Después: ' + a.feel.after.join('; '));
       });
       if (d) {
         if (d.notes.trim()) { lines.push(''); lines.push(d.notes.trim()); }
         if (d.energy) lines.push('Energía: ' + ['poquita', 'media', 'mucha'][d.energy - 1]);
         if (d.sleep != null) lines.push('Dormí: ' + String(d.sleep).replace('.', ',') + ' h');
-        if (d.evening.mood) lines.push('Terminé: ' + moodName(s, d.evening.mood));
+        if (emotionText(d.evening, s)) lines.push('Terminé: ' + emotionText(d.evening, s));
         REFLECTION_LABELS.forEach(function (r) {
           if (d.reflection[r[0]].trim()) lines.push(r[1] + ': ' + d.reflection[r[0]].trim());
         });
@@ -102,12 +104,12 @@
     var s = all.meta.settings;
     var byDay = {}; all.days.forEach(function (d) { byDay[d.date] = d; });
     var acts = groupBy(all.activities, 'date');
-    var rows = [['fecha', 'animo_inicio', 'animo_final', 'energia', 'sueno_horas', 'intencion', 'notas',
+    var rows = [['fecha', 'emociones_inicio', 'emociones_final', 'energia', 'sueno_horas', 'intencion', 'notas',
       'me_hizo_bien', 'algo_dificil', 'algo_lindo', 'para_guardar', 'libre', 'actividades_hechas', 'actividades_total']];
     allDates(all).forEach(function (date) {
       var d = byDay[date] || MC.model.emptyDay(date);
       var list = acts[date] || [];
-      rows.push([date, moodName(s, d.morning.mood), moodName(s, d.evening.mood),
+      rows.push([date, emotionText(d.morning, s), emotionText(d.evening, s),
         d.energy ? ['poquita', 'media', 'mucha'][d.energy - 1] : '', d.sleep == null ? '' : d.sleep,
         d.intention, d.notes, d.reflection.good, d.reflection.hard, d.reflection.lovely, d.reflection.keep, d.reflection.free,
         list.filter(function (a) { return a.status === 'done'; }).length, list.length]);
@@ -118,9 +120,10 @@
   function activitiesTable(all) {
     all = MC.model.activeOnly(all);
     var routineName = {}; all.routines.forEach(function (r) { routineName[r.id] = r.title; });
-    var rows = [['fecha', 'actividad', 'estado', 'rutina']];
+    var rows = [['fecha', 'actividad', 'estado', 'rutina', 'emociones_antes', 'emociones_despues']];
     all.activities.forEach(function (a) {
-      rows.push([a.date, a.title, MC.model.STATUS_LABEL[a.status], a.routineId ? (routineName[a.routineId] || '(rutina borrada)') : '']);
+      rows.push([a.date, a.title, MC.model.STATUS_LABEL[a.status], a.routineId ? (routineName[a.routineId] || '(rutina borrada)') : '',
+        a.feel && a.feel.before ? a.feel.before.join('; ') : '', a.feel && a.feel.after ? a.feel.after.join('; ') : '']);
     });
     return rows;
   }
@@ -128,10 +131,10 @@
   function moodsTable(all) {
     all = MC.model.activeOnly(all);
     var s = all.meta.settings;
-    var rows = [['fecha', 'momento', 'animo', 'valor']];
+    var rows = [['fecha', 'momento', 'emocion']];
     all.days.forEach(function (d) {
-      if (d.morning.mood) rows.push([d.date, 'al empezar', moodName(s, d.morning.mood), d.morning.mood]);
-      if (d.evening.mood) rows.push([d.date, 'al terminar', moodName(s, d.evening.mood), d.evening.mood]);
+      MC.model.feelingsOf(d.morning, s).forEach(function (word) { rows.push([d.date, 'al empezar', word]); });
+      MC.model.feelingsOf(d.evening, s).forEach(function (word) { rows.push([d.date, 'al terminar', word]); });
     });
     return rows;
   }
@@ -164,13 +167,16 @@
     all = MC.model.activeOnly(all);
     var s = all.meta.settings;
     var dates = allDates(all);
-    var counts = [0, 0, 0, 0, 0];
-    all.days.forEach(function (d) { var m = d.evening.mood || d.morning.mood; if (m) counts[m - 1]++; });
+    var counts = {}, labels = {};
+    all.days.forEach(function (d) {
+      var words = MC.model.feelingsOf(d.evening, s).length ? MC.model.feelingsOf(d.evening, s) : MC.model.feelingsOf(d.morning, s);
+      words.forEach(function (word) { var key = MC.model.emotionKey(word); counts[key] = (counts[key] || 0) + 1; labels[key] = labels[key] || word; });
+    });
     var rows = [['MI CUADERNO', s.name || ''], ['exportado', D.today()],
       ['desde', dates[0] || ''], ['hasta', dates[dates.length - 1] || ''],
       ['días con algo escrito', all.days.length], ['actividades', all.activities.length],
-      ['rutinas', all.routines.length], ['páginas', all.pages.length], ['', ''], ['ánimo del día (final o inicial)', 'días']];
-    s.moodLabels.forEach(function (l, i) { rows.push([l, counts[i]]); });
+      ['rutinas', all.routines.length], ['páginas', all.pages.length], ['', ''], ['emoción del día (final o inicial)', 'días']];
+    Object.keys(counts).sort(function (a, b) { return counts[b] - counts[a] || a.localeCompare(b, 'es'); }).forEach(function (key) { rows.push([labels[key], counts[key]]); });
     return rows;
   }
 
@@ -251,7 +257,7 @@
     return toXLSX([
       { name: 'Resumen', rows: summaryTable(all) },
       { name: 'Días', rows: daysTable(all) },
-      { name: 'Estados', rows: moodsTable(all) },
+      { name: 'Emociones', rows: moodsTable(all) },
       { name: 'Actividades', rows: activitiesTable(all) },
       { name: 'Rutinas', rows: routinesTable(all) },
       { name: 'Reflexiones', rows: reflectionsTable(all) }

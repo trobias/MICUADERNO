@@ -30,7 +30,6 @@
 .day-head__tools { display: flex; gap: var(--s-4); flex-wrap: wrap; align-items: center; }
 
 .future-note { color: var(--ink-soft); font-style: italic; margin: calc(var(--s-4) * -1) 0 var(--s-5); }
-.section--mood .moods { margin-left: -6px; }
 .intention { margin: var(--s-6) 0 var(--s-7); margin-left: 6px; }
 .activities-empty { font-family: var(--font-text); font-style: italic; }
 .page--right > .section:first-of-type, .page--right > section:first-child { margin-top: 44px; }
@@ -39,7 +38,7 @@
 .body-field { display: flex; align-items: center; gap: var(--s-3); flex-wrap: wrap; }
 .body-field__label { font-family: var(--font-text); font-style: italic; min-width: 5.5em; color: var(--ink-soft); }
 
-.closing .moods { margin: var(--s-2) 0 var(--s-5) -6px; }
+.closing .feelings { margin: var(--s-2) 0 var(--s-5); }
 .closing__open { justify-self: start; }
 .closing__content { display: grid; gap: var(--s-2); position: relative; }
 .reflections { display: grid; gap: var(--s-4); }
@@ -103,8 +102,9 @@ a.months__year { text-decoration: none; padding: 4px 6px; border-radius: 6px; }
   text-align: center;
 }
 .day-cell__num { font-family: var(--font-display); font-size: 1.05rem; line-height: 1; align-self: flex-start; padding-left: 4px; font-variant-numeric: tabular-nums; }
-.day-cell__patch { align-self: center; }
-.day-cell__patch .mini-patch { width: 26px; height: 26px; }
+.day-cell__feelings { display: grid; gap: 1px; min-width: 0; max-width: 100%; justify-items: center; overflow: hidden; }
+.day-cell__feelings .feeling-mark { max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.65rem; }
+.day-cell__feelings .feeling-mark__thread { width: 7px; height: 7px; }
 .day-cell__marks { display: flex; gap: 5px; align-items: center; margin-top: auto; min-height: 14px; font-size: 0.72rem; color: var(--thread-done-text); font-weight: 650; }
 .mark-ink { display: inline-block; width: 7px; height: 7px; border-radius: 50% 40% 55% 45%; background: var(--ink); }
 .mark-star { display: inline-block; width: 13px; height: 13px; color: var(--mood-5); }
@@ -133,7 +133,7 @@ a.months__year { text-decoration: none; padding: 4px 6px; border-radius: 6px; }
 .day-pages--week { margin-top: var(--s-1); font-size: var(--fs-xs); }
 .mood-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: var(--s-5) 0 var(--s-4); font-size: var(--fs-xs); color: var(--ink-soft); }
 .mood-legend li { display: inline-flex; align-items: center; gap: 6px; }
-.mood-legend .mini-patch { width: 18px; height: 18px; }
+.week-day__feelings { display: inline-flex; flex-wrap: wrap; gap: 2px 8px; }
 
 .week-title { font-size: var(--fs-xl); display: grid; }
 .week-title__range { font-family: var(--font-text); font-style: italic; font-size: var(--fs-md); color: var(--ink-soft); }
@@ -257,17 +257,12 @@ a.months__year { text-decoration: none; padding: 4px 6px; border-radius: 6px; }
   margin: -7px 0 0 -7px;
   background: radial-gradient(circle at center, var(--hole) 1.2px, transparent 1.6px);
 }
-.stitch-cell[data-mood]::before {
+.stitch-cell[data-feeling]::before {
   background:
     linear-gradient(45deg, transparent 38%, var(--c) 38% 62%, transparent 62%),
     linear-gradient(-45deg, transparent 38%, var(--c) 38% 62%, transparent 62%);
 }
-.stitch-cell[data-mood='1'] { --c: var(--mood-1); }
-.stitch-cell[data-mood='2'] { --c: var(--mood-2); }
-.stitch-cell[data-mood='3'] { --c: var(--mood-3); }
-.stitch-cell[data-mood='4'] { --c: var(--mood-4); }
-.stitch-cell[data-mood='5'] { --c: var(--mood-5); }
-.stitch-cell.is-half:not([data-mood])::before { background: linear-gradient(45deg, transparent 42%, var(--ink-faint) 42% 58%, transparent 58%); }
+.stitch-cell.is-half:not([data-feeling])::before { background: linear-gradient(45deg, transparent 42%, var(--ink-faint) 42% 58%, transparent 58%); }
 .stitch-cell.is-today::after { content: ''; position: absolute; left: 50%; top: 50%; width: 18px; height: 18px; margin: -9px 0 0 -9px; border: 1.5px dashed var(--ink); border-radius: 3px; }
 .stitch-cell.is-future::before { opacity: 0.55; }
 .stitch-cell:focus-visible { outline: 2px solid var(--focus); outline-offset: 0; }
@@ -310,8 +305,12 @@ a.months__year { text-decoration: none; padding: 4px 6px; border-radius: 6px; }
 .settings-title { font-size: var(--fs-2xl); margin-bottom: var(--s-6); }
 .settings-page .section + .section { margin-top: var(--s-7); }
 .page--margin.settings-page:last-child > .section:first-child { margin-top: 64px; }
-.mood-names { display: grid; gap: 8px; }
-.mood-names li { display: flex; align-items: center; gap: 10px; }
+.emotion-colors { display: grid; gap: var(--s-2); padding: 0; margin: var(--s-3) 0; list-style: none; }
+.emotion-colors li { display: grid; grid-template-columns: minmax(90px, 1fr) 48px minmax(95px, 120px); align-items: center; gap: var(--s-2); }
+.emotion-colors input[type='color'], .emotion-colors__add input[type='color'] { width: 44px; height: 38px; padding: 2px; border: 1px solid var(--rule-strong); background: var(--paper); }
+.emotion-colors__code { width: 100%; }
+.emotion-colors__add { display: flex; align-items: end; gap: var(--s-2); flex-wrap: wrap; }
+.emotion-colors__add .input { min-width: 120px; flex: 1; }
 .motion-choices { display: grid; gap: 8px; }
 .motion-choice { display: grid; gap: 2px; text-align: left; padding: 10px 14px; border-radius: var(--radius-label); border: 1.5px dashed var(--rule-strong); }
 .motion-choice[aria-checked='true'] { border-style: solid; border-color: var(--ink); background: color-mix(in srgb, var(--butter) 30%, var(--paper)); }
@@ -357,12 +356,9 @@ a.months__year { text-decoration: none; padding: 4px 6px; border-radius: 6px; }
   .day-head__top { padding-right: 34px; }
   .page--right > .section:first-of-type, .week-mini__title, .page--margin.settings-page:last-child > .section:first-child { margin-top: var(--s-4); }
   .day-cell { min-height: 58px; padding: 4px 1px; }
-  .day-cell__patch .mini-patch { width: 20px; height: 20px; }
+  .day-cell__feelings .feeling-mark { max-width: 38px; }
   .day-cell__marks { font-size: 0.64rem; gap: 3px; }
   .month, .month__row { gap: 2px; }
-  .mood-patch { width: 58px; }
-  .mood-patch svg { width: 46px; height: 46px; }
-  .moods { gap: 4px 0; justify-content: space-between; }
 }
 
 /* ---------- Agenda (poner cosas en el calendario) ---------- */

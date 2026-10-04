@@ -1,12 +1,27 @@
 # MI CUADERNO — Roadmap
 
-Estado al 03/10/2026: **MVP y Fase 1 hechos; ninguna fase en curso**. Lo próximo es la verificación en dispositivos (V7 primero) y después Fase 5 + Fase 2 (ver “Próximo paso sugerido”, al final). Lo hecho está en `SPEC.md` y `CHANGELOG.md`. Acá va **el orden** de lo que falta, agrupado por la infraestructura que comparte; cada ítem (con su estado NOW/NEXT/LATER…) está en [`BACKLOG.md`](BACKLOG.md) y la experiencia que se busca, en [`VISION.md`](VISION.md). Las decisiones de arquitectura de la visión: `DECISIONS.md` D25.
+Estado al 04/10/2026: **etapa A del plan nuevo en curso**. A0–A4 están terminados; A5 es el siguiente paso. El orden vigente, los criterios de cada entrega y la futura nube están en [`MIGRATION_PLAN.md`](MIGRATION_PLAN.md). La tabla de fases históricas más abajo conserva la visión anterior como referencia de ideas: **no es el orden de implementación actual**. Lo visible hoy está en `SPEC.md` y lo entregado por commit, en `CHANGELOG.md`.
+
+## Ruta aprobada ahora
+
+| Tramo | Estado | Próximo resultado |
+|---|---|---|
+| A0–A3 · protección, navegación, limpieza y datos v5 | Hecho en `main` | Commits `34e9b6e`, `cc7697d`, `4f124d7`, `a39dad2`. |
+| A4 · emociones libres | Hecho | Día, actividad, calendarios, Año, ajustes, exportación, impresión e insights sin escala de cinco. |
+| A5 · Mis hojas y cuatro marcadores | Siguiente | Fuera Agenda/Rutinas como marcadores, sin perder repeticiones. |
+| A6–A7 · semana planner y hojas/plantillas | Pendiente | Semana inicial editable; Guardar y repetir hojas. |
+| A8–A11 · Año, temas, escenas, dibujo | Pendiente | Métricas amables, colores propios, más escenas, balde/trazos. |
+| A12–A13 · QA y contrato v6 | Pendiente | Navegación completa, accesibilidad, revisión de redundancia, migración segura. |
+| B · Next.js, Supabase y Vercel | Pendiente | Cuenta/PIN, Nicole admin, permisos por sección, sync offline, push/PWA. |
+| C · React y motion | Pendiente | Migrar vistas una a una; escenas especiales si aportan y rinden bien. |
+
+Cada paso exige `npm run check`, revisión visual y documentación del cambio. La verificación en Firefox/Safari/dispositivos reales sigue pendiente; no sustituye la suite Chromium. Publicar en GitHub Pages (V7) deja de ser un objetivo porque la migración de nube aprobada usa Vercel.
 
 Regla de este roadmap: **la app no tiene que sentirse grande**. Cada fase es una capacidad bien diseñada que después usan varias ideas; no una lista de features sueltas.
 
 ## Hecho
 
-MVP completo del brief §64 y, después: una sola pantalla con el calendario al centro (D17); todo lo que tiene fecha en el calendario (D18); rutas, cuentas y dibujos en un solo lugar (D19); secciones conectadas por las fechas (D20); calendario en vivo (D21); marcadores que abren cuadros y Agenda con alta/edición/baja (D22); el mes muestra todo y todo se anima, “Completas” por defecto (D23); dibujar, imágenes propias como stickers y adjuntos (D24). Fase 1 integrada: papelera, deshacer/rehacer, guardado visible, medición de espacio, privacidad y corrección del teclado móvil (D26). Después: la ✕ del cuadro vuelve siempre al calendario (03/10, router con `history.state`). `schemaVersion` 4, caché `mi-cuaderno-v19`; puerta de calidad con 91 unit y 34 E2E.
+MVP completo del brief §64 y, después: pantalla única con calendario (D17), todo lo fechado visible (D18), rutas/cuentas/dibujos compartidos (D19), secciones conectadas (D20), calendario en vivo (D21), marcadores y Agenda (D22), motion completo (D23), dibujo, imágenes y adjuntos (D24), Fase 1 (D26). En la etapa A ya se cerraron A0–A4: seguridad de base, navegación/índice/escenas, sombras y desglose de espacio retirados, esquema v5 y emociones escritas. El desglose “Cuánto ocupa” que tuvo la Fase 1 se retiró en A2. La cantidad de tests del gate se lee de `npm run check`, no de una cifra histórica.
 
 ---
 
@@ -22,7 +37,7 @@ Lo construido no se probó todavía fuera de Chromium headless.
 | V4 | Lector de pantalla real (NVDA / VoiceOver) en Hoy, calendario, Agenda, bastidor, dibujo | skill `accessibility` | P1 |
 | V5 | Detector completo de `impeccable` y `axe-core` | corrió en modo degradado | P2 |
 | V6 | Almacenamiento lleno (cuota de IndexedDB con fotos y adjuntos) | brief §67, D24; ahora más probable | P1 |
-| V7 | Publicar en GitHub Pages y probar la actualización de versión (`CACHE_VERSION`) | brief §86 | P1 |
+| V7 | Probar actualización de `CACHE_VERSION` en PWA instalada; el despliegue objetivo será Vercel en B, no GitHub Pages | brief §86, D35 | P1 |
 
 ## Fases
 
@@ -85,8 +100,6 @@ Referencias comunes en vez de copias (VISION §3).
 - **Ocultar mi cuaderno** puede ir antes (PV2); **bloqueo** con PIN tras investigar cifrado (PV3).
 - **Notificaciones por categoría**, horarios, no molestar y mensajes con contexto (NO1–NO3), cuando V3 confirme que llegan.
 
-## Próximo paso sugerido
+## Próximo paso
 
-1. V7 publicar en GitHub Pages → V1–V3 y V6 en dispositivos reales.
-2. Fase 5 (chica, alto impacto en el día a día) y en paralelo Fase 2 (motor de elementos; ya tiene deshacer y papelera de la Fase 1).
-3. Fase 3 (memorias), que ya puede apoyarse en la privacidad PV1.
+Implementar A5 según [`MIGRATION_PLAN.md`](MIGRATION_PLAN.md): cuatro marcadores, Mis hojas y editor de repetición accesible desde el día, con rutas antiguas redirigidas. Conservar la verificación de dispositivos como trabajo pendiente y avanzar por A6–A13 antes de preparar B/C.

@@ -6,15 +6,8 @@
 
   var REFL = [['good', 'Qué me hizo bien'], ['hard', 'Algo difícil'], ['lovely', 'Algo lindo'], ['keep', 'Qué quiero guardar'], ['free', 'Más']];
 
-  function glyph(n) { return h('span', { html: MC.stickers.inkGlyphMarkup(n, 'p-glyph') }); }
-
-  function moodPrint(n, labels) {
-    return h('span.p-mood', glyph(n), M.moodLabel(n, labels));
-  }
-
   function build(all, opts) {
     var s = all.meta.settings;
-    var labels = s.moodLabels;
     var inRange = function (k) { return k >= opts.from && k <= opts.to; };
     var days = all.days.filter(function (d) { return inRange(d.date); });
     var acts = all.activities.filter(function (a) { return inRange(a.date); });
@@ -23,7 +16,7 @@
     acts.forEach(function (a) { (byDate[a.date] = byDate[a.date] || { day: null, acts: [] }).acts.push(a); });
     var dates = Object.keys(byDate).sort();
     // El calendario de cada mes sale de la misma cuenta que el calendario de la pantalla.
-    var sum = M.summarize(all.days, all.activities, { from: opts.from, to: opts.to });
+    var sum = M.summarize(all.days, all.activities, { from: opts.from, to: opts.to, settings: s });
     var doc = h('div.print-doc', { dataset: { size: opts.size } });
 
     if (opts.cover) {
@@ -50,14 +43,13 @@
             var info = D.monthKey(k) === m ? sum[k] : null;
             tr.appendChild(h('td', { class: D.monthKey(k) === m ? null : 'is-out' },
               h('span.p-month__num', String(D.parse(k).d)),
-              info && info.mood ? glyph(info.mood) : null,
+              info && info.feelings.length ? h('span.p-month__feelings', info.feelings.join(', ')) : null,
               info && info.done ? h('span.p-month__done', '×' + info.done) : null));
           });
           tbody.appendChild(tr);
         }
         table.appendChild(tbody);
-        doc.appendChild(h('section.p-sheet.p-month-sheet', h('h2.p-h', D.capitalize(D.monthLabel(m))), table,
-          h('p.p-legend', [1, 2, 3, 4, 5].map(function (n) { return moodPrint(n, labels); }))));
+        doc.appendChild(h('section.p-sheet.p-month-sheet', h('h2.p-h', D.capitalize(D.monthLabel(m))), table));
         m = D.addMonths(m, 1);
       }
     }
@@ -68,12 +60,14 @@
         var e = byDate[k], d = e.day;
         var block = h('article.p-day',
           h('h3.p-day__date', D.capitalize(D.longLabel(k)) + ' de ' + k.slice(0, 4)));
-        var moods = [];
-        if (d && d.morning.mood) moods.push(h('span', 'Arranqué: ', moodPrint(d.morning.mood, labels)));
-        if (d && d.evening.mood) moods.push(h('span', 'Terminé: ', moodPrint(d.evening.mood, labels)));
-        if (moods.length) block.appendChild(h('p.p-day__moods', moods));
+        var feelings = [];
+        if (d && M.feelingsOf(d.morning, s).length) feelings.push(h('span', 'Arranqué: ' + M.feelingsOf(d.morning, s).join(', ')));
+        if (d && M.feelingsOf(d.evening, s).length) feelings.push(h('span', 'Terminé: ' + M.feelingsOf(d.evening, s).join(', ')));
+        if (feelings.length) block.appendChild(h('p.p-day__moods', feelings));
         if (d && d.intention.trim()) block.appendChild(h('p.p-day__intention', 'Algo que quería cuidar: ' + d.intention.trim()));
-        if (e.acts.length) block.appendChild(h('ul.p-acts', e.acts.map(function (a) { return h('li', h('span', { html: MC.stickers.statusMarkup(a.status) }), a.title); })));
+        if (e.acts.length) block.appendChild(h('ul.p-acts', e.acts.map(function (a) { return h('li', h('span', { html: MC.stickers.statusMarkup(a.status) }), a.title,
+          a.feel && a.feel.before && a.feel.before.length ? h('span.p-act__feel', 'Antes: ' + a.feel.before.join(', ')) : null,
+          a.feel && a.feel.after && a.feel.after.length ? h('span.p-act__feel', 'Después: ' + a.feel.after.join(', ')) : null); })));
         if (d && d.notes.trim()) block.appendChild(h('p.p-day__notes', d.notes.trim()));
         if (d) REFL.forEach(function (r) { if (d.reflection[r[0]].trim()) block.appendChild(h('p.p-day__refl', h('em', r[1] + ': '), d.reflection[r[0]].trim())); });
         flow.appendChild(block);

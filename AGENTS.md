@@ -1,10 +1,10 @@
 # AGENTS.md — MI CUADERNO
 
-Leé esto primero. Si venís sin contexto de conversaciones anteriores, seguí con **`HANDOFF.md`** (arranca con el estado en una línea: qué se hizo y qué sigue; después cómo trabaja la dueña, historia de pedidos, preguntas abiertas y cómo retomar). Después `SPEC.md` (qué hace), `DESIGN.md` (cómo se ve y se mueve) y `DATA_MODEL.md` (qué se guarda). Hacia dónde va: `VISION.md` (la experiencia que se busca, **referencia, no implementación literal**). Lo que falta: `ROADMAP.md` (fases) y `BACKLOG.md` (cada idea con su estado). Recién ahí abrí el código relevante.
+Leé esto primero. Si venís sin contexto de conversaciones anteriores, seguí con **`HANDOFF.md`** (estado real y cómo retomar) y **`MIGRATION_PLAN.md`** (plan A→B→C aprobado y pasos pendientes). Después `SPEC.md` (qué hace hoy), `DESIGN.md` (cómo se ve y se mueve) y `DATA_MODEL.md` (qué se guarda). Hacia dónde va: `VISION.md` (referencia, no implementación literal). Lo que falta: `ROADMAP.md` y `BACKLOG.md`. Recién ahí abrí el código relevante. Los encabezados antiguos de esos documentos pueden describir ideas históricas; la ruta vigente es `MIGRATION_PLAN.md`.
 
 ## Qué es
 
-Un diario personal digital con forma de **cuaderno de tela bordado**: registro de ánimo, actividades con estados amables, rutinas recurrentes, páginas libres con stickers, calendario, mapa del año, exportación e impresión. 100 % local (IndexedDB), offline, sin cuenta ni servidor. Español rioplatense, neutro en género.
+Un diario personal digital con forma de **cuaderno de tela bordado**: emociones escritas al comenzar/cerrar el día y antes/después de actividades, estados amables, rutinas recurrentes, páginas libres con stickers, calendario, mapa del año, exportación e impresión. **Hoy** es 100 % local (IndexedDB), offline, sin cuenta ni servidor. La nube con cuenta/PIN, roles, Supabase y Vercel está aprobada para la etapa B; no afirmar que ya existe. Español rioplatense, neutro en género.
 
 ## Skills del repo que aplican (leelas antes de tocar UI)
 
@@ -18,7 +18,7 @@ Un diario personal digital con forma de **cuaderno de tela bordado**: registro d
 
 - Amable siempre: nunca “fallaste”, “racha perdida”, rojo de error para la vida de la persona.
 - No clínico: insights descriptivos con conteos, nunca causalidad ni diagnóstico.
-- Silencio visual: la pantalla puede estar quieta; motion con propósito; escenas raras.
+- Silencio visual: la pantalla puede estar quieta; motion con propósito. D33 pide escenas más frecuentes en A10, nunca mientras la persona escribe ni por encima del contenido.
 - Privacidad: nada sale del dispositivo. Sin analytics, sin CDNs en runtime, sin fetch a terceros.
 - Nombre de ejemplo (tests, docs, capturas, textos de prueba): siempre **Nicole**. Ningún otro nombre, ni de ejemplo ni de broma (lo vigila `tests/unit/names.test.js`).
 
@@ -60,8 +60,8 @@ js/core/exporters.js    TXT, CSV, XLSX
 js/core/insights.js     “Lo que fui notando”
 js/ui/icons.js          sprite SVG de íconos
 js/ui/stickers.js       arte SVG de stickers + glifos de ánimo
-js/ui/components.js     parche de ánimo, casilla de punto cruz, diálogos, toasts, askDate, etc.
-js/ui/activity.js       fila de actividad (casilla + menú: estados, pasar a otro día, renombrar, sacar); Hoy y Agenda
+js/ui/components.js     editor de emociones libres, casilla de punto cruz, diálogos, toasts, askDate, etc.
+js/ui/activity.js       fila de actividad (casilla + menú: estados, antes/después, pasar a otro día, renombrar, sacar); Hoy y Agenda (hasta A5)
 js/ui/motion.js         nivel de motion, helpers WAAPI, transiciones de vista
 js/ui/scenes.js         director de escenas ocasionales
 js/ui/scrapbook.js      capa de stickers (arrastrar, rotar, teclado) + Mis stickers (img:<id>)
@@ -78,6 +78,7 @@ tests/e2e/              Playwright
 tools/                  serve.mjs, make-icons.mjs, build-fonts.mjs, dist.mjs, check.mjs, shot.mjs (captura para QA)
 CHANGELOG.md            qué cambió en cada entrega (actualizarlo al commitear algo visible)
 HANDOFF.md              traspaso: cómo trabaja la dueña, historia, estado, preguntas abiertas
+MIGRATION_PLAN.md       orden A→B→C vigente y criterios para cada entrega
 VISION.md               visión de memoria/scrapbook/privacidad (referencia, con numeración del pedido)
 ROADMAP.md              fases y verificación pendiente
 BACKLOG.md              cada idea pendiente con estado NOW/NEXT/LATER/NEEDS DESIGN/…
@@ -102,7 +103,7 @@ skills/                 colección de skills del proyecto (no es parte de la app
 
 - Solo `transform`/`opacity` (y `stroke-dashoffset` para bordar). Easing `--ease-out`. UI ≤ 300ms salvo rituales raros (tapa).
 - Respetar `html[data-motion]` (completas/suaves/reducidas/ninguna). El default es **Completas** para todas las personas (D23, pedido de la dueña); quien elige menos en Ajustes, lo tiene.
-- Escenas solo vía `MC.scenes` (respeta frecuencia, foco, tecleo, `document.hidden`).
+- Escenas solo vía `MC.scenes` (respeta frecuencia, foco, tecleo, `document.hidden`). A10 ajustará frecuencia y escenas; C podrá añadir Motion/Three.js con fallback si aporta al cuaderno.
 
 ## Almacenamiento y privacidad
 
@@ -143,8 +144,9 @@ Probar a mano además: doble clic en `index.html`; mobile 375px; teclado solo; `
 - Imágenes propias (D24): nunca guardar SVG/HTML del usuario; todo pasa por canvas → WebP/PNG (`MC.images.importImage`). Un sticker `img:<id>` sin imagen no se dibuja.
 - Las ocurrencias de rutina son virtuales hasta que se marcan (`item.virtual`); usá `MC.model.setStatus`, nunca escribas actividades de rutina a mano. Al marcarse toman un id determinista (`M.occurrenceId(rutina, fecha)`, D34) y `saveItem` se suma a la que ya exista.
 - Esquema v5 (D34, expandir → contraer): los campos nuevos conviven con los viejos (`feelings` con `mood`, `blocks/values` con `kind/body/items`, `theme` con `cover`) hasta el contrato v6. Un normalizador nunca descarta un campo que la UI de hoy todavía escribe, y leer nunca inventa `createdAt`/`updatedAt` (se estampan al escribir con `stamp`). Store nuevo → `STORES` en `store.js` + `backup.js` + `everything()` + papelera (lo vigila `guards.test.js`).
+- Emociones (D28): la UI escribe palabras libres en `feelings` y `activity.feel`; `MC.model.feelingsOf` convierte registros `mood` viejos con `legacyMoodLabels` sin modificar la copia. Un array vacío es una elección explícita. `emotionPalette` distribuye ocho hilos por frecuencia; `emotionColors` guarda colores propios. Nunca volver a tratar emociones como escala ordinal en observaciones.
 - Rutas: nunca escribir `'#/…'` a mano; usar `MC.routes.*`. Una ruta nueva se agrega en `js/core/routes.js` con su test (D19).
-- Antes de dibujar o contar algo, buscá si ya existe (D19): `MC.model.summarize` / `countsAsDone` / `hasWriting` / `moodLabel` / `pageTitle`, `MC.dates.fromISO`, `MC.c.moodMark` / `statusMark` / `pageLink(s)`, `MC.stickers.statusMarkup`.
+- Antes de dibujar o contar algo, buscá si ya existe (D19): `MC.model.summarize` / `countsAsDone` / `hasWriting` / `feelingsOf` / `emotionPalette` / `pageTitle`, `MC.dates.fromISO`, `MC.c.feelingEditor` / `feelingMark` / `statusMark` / `pageLink(s)`, `MC.stickers.statusMarkup`.
 - Conexiones (D20): una vista nueva se conecta con las demás por las fechas: de cada cosa a sus días y de cada día a sus cosas (SPEC §5.1). Enlaces sobre texto que ya existe, no botones nuevos.
 - Todo lo que tiene fecha tiene que verse en el calendario (DECISIONS D18). Si agregás algo fechado, sumalo en `MC.model.summarize` (con test) y dale marca + texto en la celda y la leyenda de `js/views/calendar.js`. En días pasados, nunca mostrar lo que quedó sin hacer.
 - El calendario de fondo se redibuja solo después de cada cambio guardado (D21): no hace falta avisarle. Una vista del calendario tiene que devolver `{ destroy, ready }` (`ready` = promesa de “ya está dibujado”) para que el cambio sea sin parpadeo.
@@ -153,7 +155,7 @@ Probar a mano además: doble clic en `index.html`; mobile 375px; teclado solo; `
 
 - Rachas, puntajes, badges, confeti, “¡Genial!🎉”.
 - Pedir permisos de notificación al abrir.
-- Dashboards/gráficos de barras para el ánimo.
+- Rachas, puntajes o gráficos que valoren una emoción como “mejor”; D31 sí permite en A8 gráficos descriptivos con tabla accesible.
 - Guardar datos importantes solo en localStorage.
 - Módulos ES o dependencias por CDN (rompen `file://` y offline).
 - Animaciones en loop o que se disparan mientras la persona escribe.

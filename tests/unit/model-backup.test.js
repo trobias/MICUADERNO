@@ -173,7 +173,7 @@ test('summarize con rango ignora lo de afuera; “hecho” incluye un poquito', 
   assert.deepEqual(Object.keys(sum), ['2026-10-01']);
   assert.equal(sum['2026-10-01'].done, 1);
   assert.equal(sum['2026-10-01'].total, 2);
-  assert.equal(sum['2026-10-01'].mood, 4);
+  assert.deepEqual(sum['2026-10-01'].feelings, ['bien']);
   assert.equal(M.countsAsDone('partial'), true);
   assert.equal(M.countsAsDone('skipped'), false);
 });

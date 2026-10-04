@@ -97,6 +97,10 @@
       if (it.movedFrom) meta.appendChild(h('a.activity__routine.activity__from', { href: R.day(it.movedFrom) }, MC.icon('later'), 'viene del ' + D.shortLabel(it.movedFrom)));
       var n = statusNote(it);
       if (n) meta.appendChild(n);
+      if (it.feel) {
+        if (it.feel.before && it.feel.before.length) meta.appendChild(h('span.activity__feeling', 'Antes: ' + it.feel.before.join(', ')));
+        if (it.feel.after && it.feel.after.length) meta.appendChild(h('span.activity__feeling', 'Después: ' + it.feel.after.join(', ')));
+      }
       meta.hidden = !meta.firstChild;
     }
     paintMeta();
@@ -169,6 +173,28 @@
       });
     }
 
+    function editFeelings() {
+      var before = MC.clone(it);
+      var feel = M.sanitizeFeel(it.feel) || { before: [], after: [] };
+      var suggestions = M.emotionSuggestions();
+      c.dialog({ title: 'Cómo te sentiste con «' + it.title + '»', content: [
+        h('div.field', h('h3', 'Antes de hacerla'), c.feelingEditor({ value: feel.before, label: 'Antes de ' + it.title,
+          suggestions: suggestions, onChange: function (v) { feel.before = v; } })),
+        h('div.field', h('h3', 'Después de hacerla'), c.feelingEditor({ value: feel.after, label: 'Después de ' + it.title,
+          suggestions: suggestions, onChange: function (v) { feel.after = v; } }))
+      ], actions: [
+        { label: 'Cancelar', kind: 'text' },
+        { label: 'Guardar', onClick: function () {
+          return M.saveItem(it, { feel: M.sanitizeFeel(feel) }).then(function (stored) {
+            Object.assign(it, stored, { virtual: undefined });
+            li.dataset.id = stored.id;
+            paintMeta();
+            recordChange('Cambiar emociones de actividad', before, MC.clone(it));
+          });
+        } }
+      ] });
+    }
+
     more.addEventListener('click', function () {
       var items = M.STATUSES.map(function (st) {
         return {
@@ -177,6 +203,7 @@
         };
       });
       items.push('sep');
+      items.push({ label: 'Cómo me sentí antes y después…', icon: 'edit', onSelect: editFeelings });
       items.push({ label: 'Pasar a mañana', icon: 'later', onSelect: function () { moveToDate(D.addDays(it.date, 1), 'Quedó anotado para mañana.'); } });
       items.push({ label: 'Pasar a otro día…', icon: 'calendario', onSelect: moveTo });
       items.push({ label: 'Cambiar el nombre', icon: 'edit', onSelect: startRename });

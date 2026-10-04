@@ -37,8 +37,8 @@ La visión de memoria, scrapbook, privacidad y experiencia personal (revisiones,
 
 1. **El cuaderno es el objeto central.** Todo se presenta como papel, páginas, pestañas, stickers.
 2. **Amable siempre.** Ningún estado se nombra como fracaso. Ver §8 (copy).
-3. **Registrar < 60 s.** La acción principal (ánimo + una actividad) nunca está a más de un toque de distancia al abrir.
-4. **Opcional por defecto.** Nada es obligatorio: ni nombre, ni ánimo, ni reflexión. Una página vacía está bien.
+3. **Registrar < 60 s.** La acción principal (escribir cómo te sentiste y anotar una actividad) está en Hoy al abrir.
+4. **Opcional por defecto.** Nada es obligatorio: ni nombre, ni emoción, ni reflexión. Una página vacía está bien.
 5. **Silencio visual.** Una pantalla puede estar completamente quieta. Las escenas vivas son ocasionales.
 6. **Local y exportable.** Los datos son de la persona. Siempre puede llevárselos (JSON, TXT, CSV, XLSX, impresión).
 7. **Descriptivo, nunca causal.** Los insights cuentan (“8 de 11 veces”), no concluyen.
@@ -96,7 +96,7 @@ Todo lo que tiene fecha lleva a su día, y cada día lleva a sus cosas (DECISION
 4. “Abrir mi cuaderno” → **Hoy**, con foco visual en “¿Cómo arrancaste hoy?”.
 
 ### 6.2 Uso diario
-Abrir → (tapa breve o directo, según ajuste) → calendario → marcador **Hoy** (o tocar el día) → sello de ánimo → ver actividades del día (propias + rutinas) → marcar estados → escribir → más tarde “¿Cómo terminó tu día?” + reflexiones.
+Abrir → (tapa breve o directo, según ajuste) → calendario → marcador **Hoy** (o tocar el día) → escribir una o varias palabras sobre cómo te sentiste → ver actividades del día (propias + rutinas) → marcar estados → escribir → más tarde “¿Cómo terminó tu día?” + reflexiones.
 
 ### 6.3 Revisión
 Calendario → tocar un mes en la tira → tocar un día → se abre su página en el cuadro (editable, pasada o futura) → cerrar y seguir mirando.
@@ -111,7 +111,7 @@ Páginas → “nueva página” → elegir en blanco o una plantilla (lista, ca
 Ajustes → “Mis datos” → **Guardar una copia (.json)**. Para restaurar: “Abrir otra copia” → elegir archivo → se valida → se muestra qué contiene (días, rutinas, páginas, fecha) → advertencia clara → “Reemplazar mi cuaderno” (con opción previa de descargar la copia actual).
 
 ### 6.7 Exportar / imprimir
-Ajustes → “Llevarme mi cuaderno”: TXT (diario legible), CSV (días / actividades), XLSX (hojas: Resumen, Días, Estados, Actividades, Rutinas, Reflexiones), **Imprimir mi cuaderno** (A4, A5, Carta; rango; secciones) → diálogo de impresión del sistema → PDF o papel.
+Ajustes → “Llevarme mi cuaderno”: TXT (diario legible), CSV (días / actividades), XLSX (hojas: Resumen, Días, Emociones, Actividades, Rutinas, Reflexiones), **Imprimir mi cuaderno** (A4, A5, Carta; rango; secciones) → diálogo de impresión del sistema → PDF o papel.
 
 ### 6.8 Recordatorios
 Nunca se piden permisos al abrir. Después de ≥ 3 días distintos con registros aparece un papelito: “¿Querés que te deje un pequeño recordatorio para volver a tu cuaderno? ♡”. Solo al aceptar se pide el permiso del navegador. Todo se configura en Ajustes.
@@ -128,12 +128,12 @@ Nunca se piden permisos al abrir. Después de ≥ 3 días distintos con registro
 Secciones, en orden de lectura (mobile) o repartidas en doble página (desktop: izquierda = mañana y lista; derecha = durante y cierre):
 
 1. **Encabezado**: saludo según hora (“Buenos días / Buenas tardes / Buenas noches, {nombre} ♡”), día de semana + fecha. Flechas día anterior/siguiente y “Ir a hoy” si no es hoy (para saltar lejos se usa el calendario, que queda debajo). Indicador unificado de **guardado visible** `c.savedNote` (DA3) y acceso discreto a **Privacidad de este día** (PV1: no mostrar en recuerdos, no incluir en insights, no incluir en revisiones).
-2. **¿Cómo arrancaste hoy?** — 5 sellos de ánimo (ver §9). Tocar el mismo sello lo quita.
+2. **¿Cómo arrancaste hoy?** — campo para escribir una o varias emociones (§9), sugerencias solo de palabras que ya anotaste, cada palabra se puede sacar.
 3. **Algo que quiero cuidar hoy…** — nota adhesiva, una línea o dos.
-4. **Lo de hoy** — lista de actividades: propias del día + ocurrencias de rutinas. Cada una con 5 estados (§10). Agregar inline. Editar texto, mover a mañana (“lo dejo para otro día” ofrece “pasar a mañana”), o sacar (borrado definitivo con deshacer inmediato, DA2). Pila de deshacer (`Ctrl+Z` / `Ctrl+Shift+Z`) para cambios de estado y acciones fuera de inputs.
+4. **Lo de hoy** — lista de actividades: propias del día + ocurrencias de rutinas. Cada una con 5 estados (§10) y emociones opcionales **antes y después**, editables desde el menú y visibles junto a la fila. Agregar inline. Editar texto, mover a mañana o sacar (borrado definitivo con deshacer inmediato, DA2). Pila de deshacer (`Ctrl+Z` / `Ctrl+Shift+Z`) para cambios de estado y acciones fuera de inputs.
 5. **Durante el día** — texto libre sobre renglones (deshacer nativo del navegador mientras se escribe).
 6. **Energía / sueño** (si están activados) — energía 1-3 (“poquita / media / mucha”), horas de sueño (0–14, pasos de 0,5).
-7. **¿Cómo terminó tu día?** — sellos de ánimo + reflexiones: *qué me hizo bien*, *algo difícil*, *algo lindo*, *qué quiero guardar* (⇒ recuerdo), *texto libre*. Se muestra plegado como “cerrar el día” antes de las 17 h si está vacío; siempre se puede desplegar.
+7. **¿Cómo terminó tu día?** — emociones escritas + reflexiones: *qué me hizo bien*, *algo difícil*, *algo lindo*, *qué quiero guardar* (⇒ recuerdo), *texto libre*. Se muestra plegado como “cerrar el día” antes de las 17 h si está vacío; siempre se puede desplegar.
 8. **Páginas de este día** — si ese día se empezó alguna página libre, un enlace a cada una (así el calendario también encuentra las páginas).
 9. **Adjuntos** del día: cualquier archivo (una foto, una entrada, un PDF, un audio) para abrirlo desde ahí; una imagen adjunta se puede pegar como sticker. Sacar un adjunto lo envía a la papelera (DA1).
 10. **Capa de stickers** del día (scrapbook) — botón “stickers”: arte del cuaderno, **Mis stickers** (imágenes subidas y dibujos) y **Dibujar**. Pila de deshacer/rehacer dedicada (DA2) para mover, escalar, rotar, pegar y despegar.
@@ -141,11 +141,11 @@ Secciones, en orden de lectura (mobile) o repartidas en doble página (desktop: 
 Guardado automático y visible (DA3): cada cambio se anota al instante como borrador local y se escribe en IndexedDB a los 400 ms; si la pestaña se cierra antes, el borrador se recupera al volver. El componente `c.savedNote` transiciona sutilmente por `guardando…` → `guardado ✓` → reposo (se oculta tras ~1.5 s). Si IndexedDB falla o la memoria está llena, no pierde datos en silencio: avisa amablemente que el contenido se mantiene como borrador local e invita a descargar una copia. Días futuros: editables (planear). Días pasados: editables.
 
 ### 7.3 Calendario
-El calendario es donde aparece **todo lo que tiene fecha**: ánimo, escritura, recuerdos, actividades, rutinas y páginas.
+El calendario es donde aparece **todo lo que tiene fecha**: emociones, escritura, recuerdos, actividades, rutinas y páginas.
 
 - **Mes** (pantalla principal): tira de 12 meses + grilla lunes-domingo. Cada día muestra:
   - número;
-  - parche del ánimo final (o inicial si no hay final);
+  - palabras de cómo te sentiste al final (o al inicio si no hay final), con hilo de color y texto;
   - punto de tinta si escribió; estrellita si guardó un recuerdo;
   - **×n** cosas hechas (o a medias);
   - **hoy y días que vienen:** cajita vacía **□n** con lo que queda planeado, *contando las rutinas que tocan ese día* aunque todavía no se hayan marcado;
@@ -154,7 +154,7 @@ El calendario es donde aparece **todo lo que tiene fecha**: ánimo, escritura, r
   
   Los días pasados **no** muestran lo que quedó sin marcar (sin cuentas de “pendientes” para atrás: amable, ver D18). Cada marca tiene su texto en el `aria-label` del día (“una cosa planeada”, “empezaste una página”) y su lugar en la leyenda. Todo lo que esté en la papelera (`deletedAt != null`) se ignora por completo (DA1). Hoy con borde a lápiz; el último día abierto lleva una cinta-marcador. Tocar un día → su página en el cuadro desplegable.
 - **Animaciones** (con motion “Completas”/“Suaves”): cambiar de mes desliza la hoja hacia ese lado; pasar de mes a semana (o al revés) la acomoda con una escala apenas; el día nuevo se arma aparte y entra cuando está listo (sin parpadeo).
-- **Semana**: agenda de 7 días (desktop: lun-mié izquierda / jue-dom derecha). Cada día: ánimo, actividades (incluye rutinas futuras virtuales), primera línea escrita y enlaces a las páginas empezadas ese día. Tocar → abre el día.
+- **Semana**: agenda de 7 días (desktop: lun-mié izquierda / jue-dom derecha). Cada día: emociones, actividades (incluye rutinas futuras virtuales), primera línea escrita y enlaces a las páginas empezadas ese día. Tocar → abre el día. La semana planner editable y por defecto corresponde a A6; aún no está hecha.
 - **Mi año** sigue mostrando solo lo registrado: una rutina sin marcar no borda medio punto. Días con `privacy.noReviews` no aportan recuerdos a “Lo que guardé” (PV1), y elementos borrados no se computan (DA1).
 - **Los días de una rutina** (desde Rutinas o *Lo que fui notando*): el mes marca con tinte de salvia + el ícono de rutinas los días que la tocan de hoy en adelante y los días pasados en que se hizo (también “un poquito”). Los días pasados en que no se hizo no se marcan. Arriba, un aviso con “Ver la rutina” y “Dejar de mostrar”.
 - Navegación anterior/siguiente, “hoy”.
@@ -179,8 +179,8 @@ El calendario es donde aparece **todo lo que tiene fecha**: ánimo, escritura, r
 - “Empezada el …” es un enlace al día en que se empezó (ese día la página también aparece en el calendario).
 
 ### 7.6 Mi año
-- **Bordado**: 12 columnas (meses) × 31 filas (días). Día sin registro = punto de cruz a lápiz sin llenar (bonito vacío). Día con ánimo = parche del color del hilo de ese ánimo + glifo accesible en tooltip/label.
-- Leyenda de ánimos siempre visible (glifo + nombre + color).
+- **Bordado**: 12 columnas (meses) × 31 filas (días). Día sin registro = punto de cruz a lápiz sin llenar (bonito vacío). Día con emoción = hilo de color y palabra accesible en el nombre del día.
+- Leyenda de las palabras más anotadas en ese año, siempre con texto además de color.
 - Tocar un día → abre su página. La inicial de cada mes lleva a ese mes en el calendario.
 - **Lo que fui notando**: 3-6 observaciones descriptivas (§12), cada una con el camino a sus días. Respeta estrictamente `privacy.noInsights` y omite registros borrados (PV1, DA1).
 - **Lo que guardé**: lista de recuerdos (“qué quiero guardar”) del año, como papelitos. Respeta `privacy.noReviews` y `privacy.noMemory` (PV1), además de ignorar lo que esté en papelera (DA1).
@@ -199,13 +199,13 @@ El calendario es donde aparece **todo lo que tiene fecha**: ánimo, escritura, r
 - La fila de cada actividad es la misma que en la página del día (`js/ui/activity.js`), con historial de acciones (`MC.history`, DA2) para deshacer cambios involuntarios.
 
 ### 7.7 Ajustes
-- **Vos**: nombre, tapa, nombres de los 5 ánimos (editables), qué registrar.
+- **Vos**: nombre y qué registrar. **Mis emociones** permite elegir color por palabra, con selector nativo o código `#RRGGBB`; las palabras del registro nunca salen de una lista cerrada.
 - **Cómo se mueve**: animaciones *Completas / Suaves / Reducidas / Ninguna* (default para todas las personas: *Completas*, D23; si el sistema pide menos movimiento, Ajustes lo sugiere bajar; “Ninguna” elegida antes se respeta); escenas ocasionales on/off; mostrar la tapa al abrir.
 - **Recordatorios**: ver §14.
 - **Mis datos**:
   - Texto de privacidad.
   - **Papelera (DA1):** selector de tiempo de retención (`settings.trashRetentionDays`, default 30 días; opciones 7, 15, 30, 60 días o nunca), acceso al listado de elementos en papelera con opción de **Restaurar** o **Eliminar definitivamente**, y botón **Vaciar papelera** con confirmación clara.
-  - **Copia de seguridad y exportación:** guardar copia (`.json` v4); abrir/restaurar copia; exportar (TXT, CSV, XLSX); imprimir; recordatorio de copia (cada 7/14/30 días/nunca); borrar todo (doble confirmación, escribiendo “borrar”).
+  - **Copia de seguridad y exportación:** guardar copia (`.json` v5); abrir/restaurar copia; exportar (TXT, CSV, XLSX); imprimir; recordatorio de copia (cada 7/14/30 días/nunca); borrar todo (doble confirmación, escribiendo “borrar”).
 - **Guardado visible (DA3):** cada cambio de configuración se confirma con `c.savedNote`.
 - **Instalar**: si el navegador lo permite, botón “Instalar en este dispositivo”.
 
@@ -271,19 +271,11 @@ La tranquilidad de que nada se pierde se transmite con un componente unificado `
 - Empty states propios: “Esta página todavía está en blanco.”, “Tu semana recién empieza.”, “Todavía no guardaste ningún recuerdo este año.”, “Cuando quieras, escribí la primera línea.”
 - El ♡ se usa como firma, máximo una vez por pantalla.
 
-## 9. Ánimo
+## 9. Emociones
 
-Cinco niveles ordenados, con nombre editable, glifo propio y color de hilo (ver DESIGN §3.3):
+Una persona puede escribir una o varias palabras o frases cortas al empezar (`morning.feelings`) y al terminar (`evening.feelings`) el día; ambos campos son opcionales y se pueden vaciar. No hay escala, puntuación ni lista cerrada. Las sugerencias muestran solo palabras ya anotadas por esa persona. Cada palabra se ve junto a un hilo; el calendario y *Mi año* asignan hasta ocho colores según frecuencia en la vista, y un color fijado en Ajustes tiene prioridad. El texto siempre comunica el dato aunque no se distinga el color.
 
-| Valor | Nombre default | Glifo |
-|---|---|---|
-| 1 | pesado | nube con lluvia |
-| 2 | bajito | nube |
-| 3 | normal | sol detrás de nube |
-| 4 | bien | flor |
-| 5 | muy bien | sol |
-
-Se registra al empezar (`morning.mood`) y al terminar (`evening.mood`). Ambos opcionales.
+Una actividad guarda opcionalmente `feel.before` y `feel.after`, visibles en su fila y exportables. Las copias con `mood: 1..5` se siguen leyendo mediante `legacyMoodLabels` del cuaderno de origen; `[]` significa que la persona quitó las emociones y no debe reponer el valor viejo. El contrato v6 recién retirará `mood` después de una migración segura.
 
 ## 10. Estados de actividad
 
@@ -324,15 +316,15 @@ Reglas:
 
 Cada observación dice de qué días habla (`day`, `days` o `routineId` + `month`), así se puede ir a verlos: “Ir a ese día”, “Ver los días” (lista desplegable de fechas) o “Ver en el calendario” (los días de la rutina). “Hoy empezaste este cuaderno” no lleva a ningún lado.
 
-Catálogo inicial: días desde que empezó el cuaderno; veces que escribió esta semana; rutina más acompañada del mes (“Caminaste 6 días este mes”); día de la semana que más suele empezar con ánimo alto; comparación entre empezar y terminar el día (“Terminaste el día igual o mejor de lo que empezaste 12 de 18 veces”); co-ocurrencia descriptiva actividad-ánimo (“Los días que caminaste terminaste el día bien o muy bien 8 de 11 veces”).
+Catálogo actual: días desde que empezó el cuaderno; veces que escribió esta semana; rutina más acompañada del mes; palabra de emoción repetida esta semana; días con alguna palabra compartida al empezar y terminar; coocurrencia descriptiva entre una actividad hecha y una palabra anotada al cerrar; recuerdos guardados en el año. No clasifica palabras como mejores o peores. A8 ampliará los conteos y agregará gráficos.
 
 ## 13. Datos, backup y exportación
 
 Ver `DATA_MODEL.md` para esquema. Resumen:
 
-- **IndexedDB** (`mi-cuaderno`): `meta`, `days`, `activities`, `routines`, `pages`, `images`, `files`. Versión IDB 2.
+- **IndexedDB** (`mi-cuaderno`): `meta`, `days`, `activities`, `routines`, `pages`, `images`, `files`, `weeks`, `templates`, `marks`. Versión IDB 3; los tres últimos ya tienen contrato pero todavía no toda su interfaz.
 - **localStorage**: solo preferencias livianas de UI (última ruta, cantidad de aperturas de tapa, borrador transitorio). Nada importante vive solo ahí.
-- **Backup JSON**: `{ app: "mi-cuaderno", kind: "backup", schemaVersion: 4, exportedAt, data: {...} }`. Import valida estructura, aplica migraciones automáticas (`migrations[v]`), rechaza archivos de otra app o versiones futuras (≥ 5) con mensaje claro. Incluye elementos en papelera con `deletedAt` y marcas de `privacy`.
+- **Backup JSON**: `{ app: "mi-cuaderno", kind: "backup", schemaVersion: 5, exportedAt, data: {...} }`. Import valida estructura, aplica migraciones automáticas (`MIGRATIONS[v]`), rechaza archivos de otra app o versiones futuras (> 5) con mensaje claro. Incluye elementos en papelera, marcas de `privacy`, emociones libres y nuevos stores v5.
 - **Restaurar = reemplazar** (con advertencia y opción de descargar la copia actual antes). No hay “merge” en v1 para evitar duplicados ambiguos.
 - **Papelera y retención (DA1):** borrado suave universal con purga automática según `settings.trashRetentionDays` (default 30 días) y vaciado manual.
 - **TXT**: diario legible, día por día.

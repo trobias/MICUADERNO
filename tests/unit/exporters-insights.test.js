@@ -44,6 +44,29 @@ test('txt: incluye días, marcas y reflexiones', () => {
   assert.match(txt, /Qué quiero guardar: recuerdo 4/);
 });
 
+test('emociones escritas: exportaciones e insights conservan palabras sin escala', () => {
+  const s = sample();
+  s.days.forEach((d, i) => {
+    d.morning = { mood: null, feelings: i % 2 ? ['cansancio'] : ['con energía'] };
+    d.evening = { mood: null, feelings: ['calma'] };
+  });
+  s.activities[0].feel = { before: ['cansancio'], after: ['calma'] };
+  const txt = MC.exporters.toTXT(s);
+  assert.match(txt, /Arranqué: con energía/);
+  assert.match(txt, /Después: calma/);
+  const days = MC.exporters.daysTable(s);
+  assert.deepEqual(days[0].slice(0, 3), ['fecha', 'emociones_inicio', 'emociones_final']);
+  assert.deepEqual(days[1].slice(1, 3), ['con energía', 'calma']);
+  const activities = MC.exporters.activitiesTable(s);
+  assert.deepEqual(activities[0].slice(-2), ['emociones_antes', 'emociones_despues']);
+  assert.deepEqual(activities[1].slice(-2), ['cansancio', 'calma']);
+  assert.deepEqual(MC.exporters.moodsTable(s)[0], ['fecha', 'momento', 'emocion']);
+  const observations = MC.insights.compute(s, '2026-09-20');
+  assert.ok(observations.some((x) => x.id === 'week-feeling' && /«calma»/.test(x.text)));
+  assert.ok(observations.some((x) => x.id === 'activity-feeling' && /«calma»/.test(x.text)));
+  assert.ok(observations.every((x) => !/igual o mejor|salud|causa/i.test(x.text)));
+});
+
 test('xlsx: zip válido con 6 hojas', () => {
   const bytes = MC.exporters.workbook(sample());
   assert.equal(bytes[0], 0x50); assert.equal(bytes[1], 0x4b);
@@ -83,7 +106,7 @@ test('insights: pocos datos → solo lo que corresponde', () => {
   const s = sample();
   s.days = s.days.slice(0, 2); s.activities = [];
   const list = MC.insights.compute(s, '2026-09-02');
-  assert.ok(list.every((i) => ['since', 'week-writing'].includes(i.id)));
+  assert.ok(list.every((i) => ['since', 'week-writing', 'week-feeling'].includes(i.id)));
 });
 
 test('insights: cada observación dice de qué días habla, y coinciden con la cuenta', () => {

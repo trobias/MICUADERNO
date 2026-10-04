@@ -14,7 +14,28 @@ Cada idea pendiente, con su estado. **Nada se pierde por estar fuera de la fase 
 | **EXPERIMENTAL** | probar en chico; si no suma, se descarta |
 | **BLOCKED** | espera otra cosa (dice cuál) |
 
-**Dónde estamos (03/10/2026):** no hay ítems de producto en NOW porque la Fase 1 se cerró el 02/10 (ver “Cerrados recientemente”, al final). Lo próximo según `ROADMAP.md`: verificación V7 → V1–V6, después la Fase 5 (ES1–ES3, PE5) y la Fase 2 (EL1 primero). Al tomar uno, pasalo a NOW.
+**Dónde estamos (04/10/2026):** rige la migración A→B→C de [`MIGRATION_PLAN.md`](MIGRATION_PLAN.md). A0–A4 hechos; **A5 es el siguiente trabajo de producto**. Las tablas históricas de abajo guardan ideas de `VISION.md`, pero su columna NEXT/LATER ya no define la prioridad ni autoriza saltar la migración. DA4 se retiró a pedido de la dueña; la PWA pública futura va a Vercel, no a GitHub Pages.
+
+## Pedido del 03/10, rastreo por entrega
+
+| Pedido | Paso | Estado al 04/10 | Criterio de cierre |
+|---|---|---|---|
+| Seguridad de base, bug de Páginas y volver al calendario | A0–A1 | Hecho | E2E en Chromium; el síntoma original de Páginas no se reprodujo, queda probar otros motores. |
+| Quitar sombra y “Cuánto ocupa” | A2 | Hecho | Visual y tests de regresión. |
+| Contrato para semana, hojas, emociones, tema, dibujo y victorias | A3 | Hecho | v5 aditivo; sus campos nuevos no significan UI lista. |
+| Emociones escritas, también antes/después de actividades | A4 | Hecho | Día, actividad, calendarios, Año, Ajustes, TXT/CSV/XLSX, impresión, recordatorios, insights y copia vieja. |
+| Fuera Agenda/Rutinas como marcadores; Mis hojas inicial | A5 | NOW siguiente | Cuatro marcadores y editor de repetición sin datos huérfanos. |
+| Semana planner por defecto | A6 | NEXT | Grilla Importante/días/Notas, edición, pasado amable, foco y cierre. |
+| Hojas del día, plantillas propias, Guardar y repetir | A7 | NEXT | Un editor común, frecuencia semanal/mensual/anual y papelera. |
+| Año con métricas, victorias y gráficos | A8 | NEXT | Conteos descriptivos, privacidad, SVG con tabla accesible. |
+| Colores infinitos y código hex | A9 | NEXT | Temas, degradados/acabados, contraste, preview y copia. Color por emoción individual ya entra en A4. |
+| Escenas más frecuentes | A10 | NEXT | Motion con propósito, silencio al escribir y control de rendimiento. |
+| Balde y tipos de trazo | A11 | NEXT | Editables al reabrir, presión/semilla y deshacer. |
+| Cruces, redundancia, QA y contrato v6 | A12–A13 | NEXT | Matriz de navegación, accesibilidad, migración de datos y tests. |
+| Nube, PIN, Nicole admin, permisos, PWA/push | B | LATER tras A | Auth + RLS real, sync local, preview protegido y pruebas de seguridad. |
+| React/TypeScript y escenas especiales/Three.js si sirve | C | LATER tras B | Paridad vista por vista; fallback y motion reducido. |
+
+Otros ítems históricos que coinciden parcialmente (ME1/ME4/EL9/PE5, etc.) se cierran **solo** cuando la capacidad completa está entregada; no borrar ideas de estas tablas por tener ya un campo v5.
 
 Al empezar un ítem: pasarlo a NOW, leer `VISION.md` §0 y la decisión que lo cubre (D25 para todo lo de la visión). Al terminarlo: sacarlo de acá y anotarlo en `CHANGELOG.md`.
 
@@ -153,7 +174,7 @@ Al empezar un ítem: pasarlo a NOW, leer `VISION.md` §0 y la decisión que lo c
 |---|---|---|---|
 | T1 | Partir `js/views/today.js` (≈370 líneas) en encabezado, cierre y cuerpo. | NEXT | Conviene antes de ES4. |
 | T2 | E2E de “pasar a mañana”, deshacer al sacar, stickers con teclado, restaurar scroll. | NEXT | |
-| T3 | Subir `CACHE_VERSION` automáticamente en `npm run dist`. | NEXT | Hoy `v19`. |
+| T3 | Subir `CACHE_VERSION` automáticamente en `npm run dist`. | NEXT | Hoy se sube manualmente; A4 usa `v24`. |
 | T4 | Sacar los `woff2` duplicados del dist (las fuentes ya van embebidas). | LATER | |
 | T5 | Un ícono por atajo de la PWA. | LATER | |
 | T8 | Los números de la suite (unit/E2E) y la caché se repiten a mano en `AGENTS.md`, `HANDOFF.md`, `ROADMAP.md` y `README.md`, y se desactualizan. | LATER | Junto con T3: que `npm run check`/`dist` los informe, o nombrarlos en un solo lugar. |

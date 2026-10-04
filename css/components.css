@@ -127,46 +127,21 @@
 [data-motion='reducidas'] .saved-note { transition: none; }
 .saved-row { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-3); }
 
-/* ---------- Parches de ánimo ---------- */
-.moods { display: flex; flex-wrap: wrap; gap: 6px 4px; }
-.mood-patch {
-  --thread: var(--mood-3);
-  --tint: var(--mood-3-tint);
-  display: grid;
-  justify-items: center;
-  gap: 4px;
-  width: 64px;
-  padding: 4px 0;
-  border-radius: 10px;
-  color: var(--ink-soft);
-  font-size: var(--fs-xs);
-  line-height: 1.2;
-  text-align: center;
-}
-.mood-patch svg { width: 50px; height: 50px; transition: transform var(--dur-ui) var(--ease-out); }
-.mood-patch .patch-ring { fill: var(--paper); stroke: var(--thread); stroke-width: 1.6; stroke-dasharray: 3.2 2.6; transition: fill var(--dur-ui) ease; }
-.mood-patch .patch-glyph { fill: none; stroke: var(--thread); stroke-width: 1.35; stroke-linecap: round; stroke-linejoin: round; }
-.mood-patch .patch-glyph .fill { fill: var(--thread); stroke: none; }
-.mood-patch[aria-pressed='true'] { color: var(--ink); font-weight: 600; }
-.mood-patch[aria-pressed='true'] .patch-ring { fill: var(--tint); stroke-dasharray: none; stroke-width: 2.2; }
-.mood-patch[aria-pressed='true'] svg { transform: rotate(var(--tilt, -3deg)); }
-.mood-patch.is-stamping svg { animation: patch-sew var(--dur-ui) var(--ease-out); }
-@keyframes patch-sew { from { transform: scale(0.94) rotate(0deg); } to { transform: scale(1) rotate(var(--tilt, -3deg)); } }
-@media (hover: hover) and (pointer: fine) {
-  .mood-patch:hover .patch-ring { fill: color-mix(in srgb, var(--tint) 45%, var(--paper)); }
-}
-.mood-patch[data-mood='1'] { --thread: var(--mood-1); --tint: var(--mood-1-tint); --tilt: -4deg; }
-.mood-patch[data-mood='2'] { --thread: var(--mood-2); --tint: var(--mood-2-tint); --tilt: 3deg; }
-.mood-patch[data-mood='3'] { --thread: var(--mood-3); --tint: var(--mood-3-tint); --tilt: -2deg; }
-.mood-patch[data-mood='4'] { --thread: var(--mood-4); --tint: var(--mood-4-tint); --tilt: 4deg; }
-.mood-patch[data-mood='5'] { --thread: var(--mood-5); --tint: var(--mood-5-tint); --tilt: -3deg; }
-.moods--small .mood-patch { width: 54px; }
-.moods--small .mood-patch svg { width: 40px; height: 40px; }
-
-/* Mini parche (calendario, semana) */
-.mini-patch { width: 22px; height: 22px; flex: none; }
-.mini-patch circle { stroke-width: 1.5; }
-.mini-patch .patch-glyph { fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+/* Emociones libres: un hilo con palabra y una herramienta de escritura discreta. */
+.feelings { display: grid; gap: var(--s-2); min-width: 0; }
+.feelings__list { display: flex; flex-wrap: wrap; gap: var(--s-2); margin: 0; padding: 0; list-style: none; }
+.feeling-chip { display: inline-flex; align-items: center; gap: 5px; min-height: 36px; padding: 2px 4px 2px 9px; border: 1px solid var(--rule-strong); border-radius: var(--radius-label); background: var(--paper); color: var(--ink); }
+.feeling-chip__thread, .feeling-mark__thread { display: inline-block; width: 10px; height: 10px; flex: none; border: 2px solid var(--feeling-color, var(--ink-soft)); border-radius: 50%; }
+.feeling-chip__remove { display: grid; place-items: center; width: 30px; height: 30px; padding: 0; border: 0; background: transparent; color: var(--ink-soft); cursor: pointer; }
+.feeling-chip__remove svg { width: 14px; height: 14px; }
+.feeling-chip__remove:focus-visible { outline: 2px solid var(--focus); outline-offset: 0; }
+.feelings__entry { display: flex; align-items: end; gap: var(--s-2); min-width: 0; }
+.feelings__input { min-width: 0; flex: 1; }
+.feelings__suggestions { display: flex; flex-wrap: wrap; gap: var(--s-1); }
+.feelings__suggestions:empty { display: none; }
+.feelings__suggestion { padding: 3px 7px; border: 1px dashed var(--rule-strong); border-radius: var(--radius-label); color: var(--ink-soft); font-family: var(--font-text); font-style: italic; font-size: var(--fs-xs); }
+.feelings__suggestion:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.feeling-mark { display: inline-flex; align-items: center; gap: 5px; min-width: 0; color: var(--ink); font-size: var(--fs-xs); overflow-wrap: anywhere; }
 
 /* ---------- Casilla de punto cruz ---------- */
 .stitch-box {

@@ -11,35 +11,52 @@
     return open.length ? open[open.length - 1] : document.body;
   };
 
-  /* ---------- Parches de ánimo ---------- */
-  /**
-   * Grupo de 5 botones-toggle (aria-pressed). Tocar el elegido lo quita.
-   * opts: { value, labels, groupLabel, onChange(value|null), small }
-   */
-  c.moodPicker = function (opts) {
-    var value = opts.value || null;
-    var group = h('div.moods', { role: 'group', 'aria-label': opts.groupLabel });
-    if (opts.small) group.classList.add('moods--small');
-    var buttons = [1, 2, 3, 4, 5].map(function (m) {
-      var b = h('button.mood-patch', {
-        type: 'button', dataset: { mood: String(m) }, 'aria-pressed': String(value === m),
-        html: MC.stickers.patchMarkup(m)
-      });
-      b.appendChild(h('span', opts.labels[m - 1]));
-      b.addEventListener('click', function () {
-        value = value === m ? null : m;
-        buttons.forEach(function (x, i) { x.setAttribute('aria-pressed', String(value === i + 1)); });
-        if (value) {
-          b.classList.remove('is-stamping');
-          void b.offsetWidth;
-          b.classList.add('is-stamping');
-        }
-        opts.onChange(value);
-      });
-      return b;
+  /** Palabras libres, sin escala. Las sugerencias salen solo de lo ya escrito por la persona. */
+  c.feelingEditor = function (opts) {
+    var values = MC.model.sanitizeFeelings(opts.value) || [];
+    var input = h('input.input.feelings__input', {
+      type: 'text', maxlength: 40, placeholder: 'Escribí cómo te sentiste',
+      'aria-label': opts.label || 'Emoción'
     });
-    buttons.forEach(function (b) { group.appendChild(b); });
-    return group;
+    var suggestions = h('div.feelings__suggestions', { 'aria-label': 'Palabras que ya anotaste' });
+    var list = h('ul.feelings__list', { 'aria-label': 'Emociones anotadas' });
+    var add = h('button.label-btn.label-btn--soft', { type: 'button' }, MC.icon('plus'), 'Agregar');
+    function render() {
+      MC.clear(list);
+      values.forEach(function (value, i) {
+        var remove = h('button.feeling-chip__remove', { type: 'button', 'aria-label': 'Sacar ' + value }, MC.icon('close'));
+        remove.addEventListener('click', function () { values.splice(i, 1); render(); opts.onChange(values.slice()); input.focus(); });
+        var chosen = MC.model.settings().emotionColors[MC.model.emotionKey(value)];
+        var color = opts.color ? opts.color(value, i) : chosen || 'var(--emotion-' + (i % 8 + 1) + ')';
+        list.appendChild(h('li.feeling-chip', { dataset: { feeling: value }, style: { '--feeling-color': color } },
+          h('span.feeling-chip__thread', { 'aria-hidden': 'true' }), h('span', value), remove));
+      });
+    }
+    function commit(word) {
+      word = typeof word === 'string' ? word : input.value;
+      var next = MC.model.sanitizeFeelings(values.concat(word));
+      if (!word.trim() || !next || next.length === values.length) { input.value = ''; return; }
+      values = next; input.value = ''; render(); opts.onChange(values.slice()); input.focus();
+    }
+    add.addEventListener('click', function () { commit(); });
+    input.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); commit(); } });
+    input.addEventListener('input', function () { MC.emit('typing'); });
+    if (opts.suggestions) Promise.resolve(opts.suggestions).then(function (words) {
+      (words || []).slice(0, 6).forEach(function (word) {
+        var button = h('button.feelings__suggestion', { type: 'button' }, word);
+        button.addEventListener('click', function () { commit(word); });
+        suggestions.appendChild(button);
+      });
+    }).catch(function () {});
+    render();
+    return h('div.feelings', { role: 'group', 'aria-label': opts.label || 'Emociones' }, list,
+      h('div.feelings__entry', input, add), suggestions);
+  };
+
+  /** Hilo y palabra; el color es una ayuda visual, nunca el único significado. */
+  c.feelingMark = function (value, palette) {
+    return h('span.feeling-mark', { style: { '--feeling-color': palette ? palette.color(value) : 'var(--ink-soft)' } },
+      h('span.feeling-mark__thread', { 'aria-hidden': 'true' }), h('span', value));
   };
 
   /* ---------- Casilla de punto cruz ---------- */
@@ -356,13 +373,6 @@
   };
 
   /* ---------- Piezas que se repiten entre vistas ---------- */
-  /** Parche chico de ánimo. Con `label` también lo nombra (tooltip + texto para lectores de pantalla). */
-  c.moodMark = function (n, label) {
-    var el = h('span.mood-mark', { html: MC.stickers.miniPatchMarkup(n) });
-    if (label) { el.title = label; el.appendChild(h('span.sr-only', label)); }
-    return el;
-  };
-
   /** Marca quieta del estado de una actividad (el texto del estado lo pone quien la usa). */
   c.statusMark = function (status) {
     return h('span.status-mark', { 'aria-hidden': 'true', html: MC.stickers.statusMarkup(status) });

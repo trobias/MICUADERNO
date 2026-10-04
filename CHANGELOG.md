@@ -2,6 +2,20 @@
 
 Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantiene. El porqué de cada decisión está en `DECISIONS.md` (Dn); lo que falta, en `ROADMAP.md`. Cada entrega que toca archivos de la app sube `CACHE_VERSION` en `sw.js` para que las PWA instaladas se actualicen.
 
+## 2026-10-04 · Emociones con tus propias palabras (A4, cache `v24`)
+
+**Para quien lo usa**
+- Al empezar y cerrar un día, las emociones se escriben libremente: una o varias palabras, sin elegir entre cinco estados. Las palabras ya anotadas aparecen como sugerencias y cada una se puede sacar. Las actividades también permiten anotar cómo te sentiste **antes y después** desde su menú; ambas se leen junto a la actividad.
+- Mes, semana y *Mi año* muestran palabras e hilos de color. Hasta ocho colores se asignan a las palabras más frecuentes en la vista; Ajustes → Mis emociones permite fijar un color por palabra con selector o código hex. El color siempre acompaña al texto.
+- “Lo que fui notando” cuenta palabras repetidas o compartidas entre inicio y cierre y coincidencias descriptivas con actividades, sin valorar emociones como altas/bajas. TXT, CSV, XLSX e impresión incluyen las palabras y antes/después; los recordatorios reconocen que ya escribiste una emoción.
+- Los días guardados con los cinco ánimos anteriores se siguen leyendo con los nombres que tenía ese cuaderno. Quitar una palabra no resucita el ánimo viejo.
+
+**Para quien lo mantiene**
+- `MC.model.feelingsOf`, `emotionKey`, `emotionPalette` y `emotionSuggestions` centralizan compatibilidad y presentación. `summarize` expone arrays `morning/evening/feelings`; `c.feelingEditor` y `c.feelingMark` sustituyen al selector de cinco parches. `legacyMoodLabels` queda congelado al cargar ajustes, hasta el contrato v6 (A13). Sin cambio de esquema: A3 ya había abierto los campos v5.
+- Se cambiaron todos los consumidores activos: Día, fila de actividad, Calendario, Año, Ajustes, observaciones, exportadores, impresión, recordatorios y atajo PWA. `sw.js` ya leía ambos formatos desde A0; caché v24.
+- `MIGRATION_PLAN.md` trae el plan externo al repo; `HANDOFF.md`, `ROADMAP.md`, `BACKLOG.md`, `SPEC.md`, `DESIGN.md`, `DATA_MODEL.md`, `DECISIONS.md`, `AGENTS.md`, `PRODUCT.md` y `README.md` distinguen lo implementado de lo pendiente para agentes sin contexto.
+- Verificación: `npm run check` pasó con sintaxis de 34 archivos, 94 unit y 43/43 E2E Chromium en `file://`/HTTP. Capturas revisadas en desktop y 375 px; sin errores de página ni scroll horizontal en esas capturas. Una corrida anterior tuvo una falla intermitente en el E2E A0 entre pestañas; pasó aislado y en la corrida completa posterior. WebKit, Firefox y dispositivos reales quedan pendientes.
+
 ## 2026-10-04 · Contrato de datos v5: lugar para lo nuevo sin perder nada (cache `v23`)
 
 **Para quien lo usa**

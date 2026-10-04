@@ -25,11 +25,8 @@
   [data-size='a5'] .p-month td { height: 15mm; }
   .p-month td.is-out { color: var(--print-faint); }
   .p-month__num { font-family: var(--font-display); font-size: 10pt; }
-  .p-month .p-glyph { width: 8mm; height: 8mm; margin: 1mm auto 0; }
+  .p-month__feelings { display: block; margin-top: 1mm; font-family: var(--font-text); font-style: italic; font-size: 7pt; overflow-wrap: anywhere; }
   .p-month__done { position: absolute; right: 1.5mm; bottom: 1mm; font-family: var(--font-ui); font-size: 7pt; color: var(--print-done); }
-  .p-legend { display: flex; flex-wrap: wrap; gap: 3mm 6mm; margin-top: 5mm; font-size: 8.5pt; }
-  .p-mood { display: inline-flex; align-items: center; gap: 1.5mm; }
-  .p-mood .p-glyph { width: 5mm; height: 5mm; }
 
   .p-flow { columns: 1; }
   .p-day { break-inside: avoid; page-break-inside: avoid; padding: 0 0 5mm; margin: 0 0 5mm; border-bottom: 0.8pt dashed var(--print-rule); }
@@ -38,6 +35,7 @@
   .p-day__intention { font-style: italic; margin-bottom: 2mm; }
   .p-acts { list-style: none; padding: 0; margin: 0 0 2mm; display: grid; gap: 1mm; }
   .p-acts li { display: flex; align-items: center; gap: 2mm; }
+  .p-act__feel { color: var(--print-ink-mid); font-family: var(--font-text); font-style: italic; font-size: 8.5pt; }
   .p-acts .st-mark { width: 4.5mm; height: 4.5mm; }
   /* En papel todo va en tinta: los estados se leen por la forma de la puntada, no por el color. */
   .print-doc .st-mark__box { stroke: var(--print-ink-soft); }

@@ -47,10 +47,10 @@
       var jobs = [];
       function due(kind, time) { return log[kind] !== today && nowMin >= minutes(time) && nowMin < minutes(time) + 120; }
       if (s.notify.morning.on && due('morning', s.notify.morning.time)) {
-        jobs.push(M.getDay(today).then(function (d) { if (!d.morning.mood) return show('morning').then(function () { log.morning = today; }); log.morning = today; }));
+        jobs.push(M.getDay(today).then(function (d) { if (!M.feelingsOf(d.morning).length) return show('morning').then(function () { log.morning = today; }); log.morning = today; }));
       }
       if (s.notify.evening.on && due('evening', s.notify.evening.time)) {
-        jobs.push(M.getDay(today).then(function (d) { if (!d.evening.mood) return show('evening').then(function () { log.evening = today; }); log.evening = today; }));
+        jobs.push(M.getDay(today).then(function (d) { if (!M.feelingsOf(d.evening).length) return show('evening').then(function () { log.evening = today; }); log.evening = today; }));
       }
       if (s.notify.routines && due('routines', s.notify.morning.time)) {
         jobs.push(M.itemsForDay(today).then(function (items) {

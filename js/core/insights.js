@@ -40,7 +40,6 @@
     today = today || D.today();
     all = visible(all);
     var s = all.meta.settings;
-    var good = s.moodLabels[3] + ' o ' + s.moodLabels[4];
     var out = [];
     var byDay = {};
     all.days.forEach(function (d) { byDay[d.date] = d; });
@@ -78,57 +77,66 @@
       out.push({ id: 'routine-month', text: '«' + routineTitle[topRoutine] + '» te acompañó ' + days(perRoutine[topRoutine]) + ' este mes.', routineId: topRoutine, month: monthPrefix });
     }
 
-    // 4. Día de la semana que más veces arranca bien
-    var mornings = all.days.filter(function (d) { return d.morning.mood; });
-    if (mornings.length >= 10) {
-      var perWd = {};
-      mornings.forEach(function (d) {
-        var wd = D.weekday(d.date);
-        var st = perWd[wd] || (perWd[wd] = { n: 0, good: 0, goodDays: [] });
-        st.n++;
-        if (d.morning.mood >= 4) { st.good++; st.goodDays.push(d.date); }
+    // 4. Una palabra que volvió a aparecer esta semana, sin valorarla.
+    var perWord = {};
+    D.range(weekStart, today).forEach(function (date) {
+      var d = byDay[date];
+      if (!d) return;
+      var seen = {};
+      M.feelingsOf(d.morning, s).concat(M.feelingsOf(d.evening, s)).forEach(function (word) {
+        var key = M.emotionKey(word);
+        if (seen[key]) return;
+        seen[key] = true;
+        var entry = perWord[key] || (perWord[key] = { word: word, dates: [] });
+        entry.dates.push(date);
       });
-      var best = null;
-      Object.keys(perWd).forEach(function (wd) {
-        var st = perWd[wd];
-        if (st.n < 3 || st.good === 0) return;
-        if (!best || st.good / st.n > best.ratio || (st.good / st.n === best.ratio && st.n > best.n)) {
-          best = { wd: +wd, ratio: st.good / st.n, good: st.good, n: st.n, days: st.goodDays };
-        }
-      });
-      if (best && best.ratio >= 0.5) {
-        out.push({ id: 'weekday', text: 'Los ' + plural(best.wd) + ' arrancaste ' + good + ' ' + best.good + ' de ' + best.n + ' veces.', days: best.days.slice().sort() });
-      }
+    });
+    var repeated = Object.keys(perWord).map(function (key) { return perWord[key]; }).sort(function (a, b) {
+      return b.dates.length - a.dates.length || a.word.localeCompare(b.word, 'es');
+    })[0];
+    if (repeated && repeated.dates.length >= 2) {
+      out.push({ id: 'week-feeling', text: 'Esta semana anotaste «' + repeated.word + '» ' + times(repeated.dates.length) + '.', days: repeated.dates });
     }
 
-    // 5. Cómo empieza vs. cómo termina
-    var both = all.days.filter(function (d) { return d.morning.mood && d.evening.mood; });
+    // 5. Palabras compartidas al empezar y terminar el día.
+    var both = all.days.filter(function (d) { return M.feelingsOf(d.morning, s).length && M.feelingsOf(d.evening, s).length; });
     if (both.length >= MIN_SAMPLE) {
-      var sameDays = both.filter(function (d) { return d.evening.mood >= d.morning.mood; }).map(function (d) { return d.date; }).sort();
-      out.push({ id: 'start-end', text: 'Terminaste el día igual o mejor de lo que empezaste ' + sameDays.length + ' de ' + both.length + ' veces.', days: sameDays });
+      var shared = both.filter(function (d) {
+        var morning = M.feelingsOf(d.morning, s).map(M.emotionKey);
+        return M.feelingsOf(d.evening, s).some(function (word) { return morning.indexOf(M.emotionKey(word)) !== -1; });
+      }).map(function (d) { return d.date; }).sort();
+      if (shared.length) out.push({ id: 'start-end', text: 'Anotaste alguna palabra tanto al empezar como al terminar el día ' + shared.length + ' de ' + both.length + ' veces.', days: shared });
     }
 
-    // 6. Co-ocurrencia actividad → cierre del día (descriptivo)
+    // 6. Co-ocurrencia descriptiva entre una actividad y una palabra de cierre.
     var perTitle = {};
     all.activities.forEach(function (a) {
       if (a.status !== 'done') return;
       var d = byDay[a.date];
-      if (!d || !d.evening.mood) return;
+      if (!d || !M.feelingsOf(d.evening, s).length) return;
       var key = a.routineId && routineTitle[a.routineId] ? 'r:' + a.routineId : 't:' + norm(a.title);
-      var st = perTitle[key] || (perTitle[key] = { title: a.routineId && routineTitle[a.routineId] ? routineTitle[a.routineId] : a.title.trim(), dates: {}, good: 0, n: 0, goodDays: [] });
+      var st = perTitle[key] || (perTitle[key] = { title: a.routineId && routineTitle[a.routineId] ? routineTitle[a.routineId] : a.title.trim(), dates: {}, n: 0, words: {} });
       if (st.dates[a.date]) return;
       st.dates[a.date] = true;
       st.n++;
-      if (d.evening.mood >= 4) { st.good++; st.goodDays.push(a.date); }
+      M.feelingsOf(d.evening, s).forEach(function (word) {
+        var wordKey = M.emotionKey(word);
+        var entry = st.words[wordKey] || (st.words[wordKey] = { word: word, dates: [] });
+        entry.dates.push(a.date);
+      });
     });
     var bestPair = null;
     Object.keys(perTitle).forEach(function (k) {
       var st = perTitle[k];
-      if (st.n < MIN_SAMPLE || st.good / st.n < 0.6) return;
-      if (!bestPair || st.n > bestPair.n) bestPair = st;
+      if (st.n < MIN_SAMPLE) return;
+      Object.keys(st.words).forEach(function (wordKey) {
+        var entry = st.words[wordKey];
+        if (entry.dates.length < 2) return;
+        if (!bestPair || entry.dates.length > bestPair.dates.length) bestPair = { title: st.title, word: entry.word, dates: entry.dates, n: st.n };
+      });
     });
     if (bestPair) {
-      out.push({ id: 'activity-mood', text: 'Los días que hiciste «' + bestPair.title + '» terminaste ' + good + ' ' + bestPair.good + ' de ' + bestPair.n + ' veces.', days: bestPair.goodDays.slice().sort() });
+      out.push({ id: 'activity-feeling', text: 'En los días en que hiciste «' + bestPair.title + '», anotaste «' + bestPair.word + '» al terminar ' + bestPair.dates.length + ' de ' + bestPair.n + ' veces.', days: bestPair.dates.slice().sort() });
     }
 
     // 7. Recuerdos del año

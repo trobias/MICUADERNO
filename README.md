@@ -2,9 +2,9 @@
 
 *un lugarcito para mí ♡*
 
-Un diario personal con forma de cuaderno de tela bordado: cómo arrancó y cómo terminó cada día, lo que querías hacer (con estados amables: *lo hice · hice un poquito · lo dejo para otro día · hoy no salió*), rutinas que aparecen solas, una agenda para poner cosas en cualquier día, páginas libres, stickers propios y dibujos, adjuntos, un calendario donde se ve todo, un año bordado en punto cruz y recuerdos. Nada se pierde de golpe: hay papelera, deshacer y un “guardado ✓” que avisa cuándo quedó guardado; cada día o página puede marcarse como privado.
+Un diario personal con forma de cuaderno de tela bordado: podés escribir cómo te sentiste al empezar y terminar el día, y antes o después de una actividad, con tus propias palabras. Hay actividades con estados amables (*lo hice · hice un poquito · lo dejo para otro día · hoy no salió*), rutinas, páginas libres, stickers y dibujos, adjuntos, calendario, año bordado y recuerdos. Nada se pierde de golpe: hay papelera, deshacer y un “guardado ✓” que avisa cuándo quedó guardado; cada día o página puede marcarse como privado.
 
-**Todo queda en este dispositivo.** No hay cuenta, ni servidor, ni nube, ni estadísticas de uso.
+**En la versión actual, todo queda en este dispositivo.** No hay cuenta, servidor, nube ni estadísticas de uso. Está aprobada una migración por etapas hacia cuenta con PIN, permisos por sección y copia offline; todavía no está publicada ni conectada. Ver [`MIGRATION_PLAN.md`](MIGRATION_PLAN.md).
 
 ## Cómo abrirlo
 
@@ -22,7 +22,7 @@ Un diario personal con forma de cuaderno de tela bordado: cómo arrancó y cómo
 
 ## Para quien desarrolla
 
-Leé primero [`AGENTS.md`](AGENTS.md) y [`HANDOFF.md`](HANDOFF.md) (traspaso para retomar sin contexto), después [`SPEC.md`](SPEC.md), [`DESIGN.md`](DESIGN.md) y [`DATA_MODEL.md`](DATA_MODEL.md). Decisiones en [`DECISIONS.md`](DECISIONS.md). Hacia dónde va, en [`VISION.md`](VISION.md); lo que falta, en [`ROADMAP.md`](ROADMAP.md) (fases) y [`BACKLOG.md`](BACKLOG.md) (cada idea con su estado).
+Leé primero [`AGENTS.md`](AGENTS.md), [`HANDOFF.md`](HANDOFF.md) (estado para retomar sin contexto) y [`MIGRATION_PLAN.md`](MIGRATION_PLAN.md) (orden aprobado A→B→C). Después [`SPEC.md`](SPEC.md), [`DESIGN.md`](DESIGN.md) y [`DATA_MODEL.md`](DATA_MODEL.md). Decisiones en [`DECISIONS.md`](DECISIONS.md). La visión histórica, en [`VISION.md`](VISION.md); estado, en [`ROADMAP.md`](ROADMAP.md) y [`BACKLOG.md`](BACKLOG.md).
 
 ```
 npm test          # pruebas unitarias (sin dependencias)

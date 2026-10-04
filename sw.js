@@ -3,7 +3,7 @@
    NO pasan por acá: viven en IndexedDB. Al cambiar cualquier archivo de SHELL, subir CACHE_VERSION. */
 'use strict';
 
-var CACHE_VERSION = 'mi-cuaderno-v23';
+var CACHE_VERSION = 'mi-cuaderno-v24';
 var SHELL = [
   './', 'index.html', 'manifest.webmanifest',
   'css/fonts.css', 'css/tokens.css', 'css/base.css', 'css/notebook.css', 'css/components.css', 'css/views.css', 'css/print.css',
@@ -104,7 +104,7 @@ function readMeta() {
 function closeDb(m) { try { if (m && m.db) m.db.close(); } catch (e) { /* ya cerrada */ } }
 
 /** ¿Ya anotó cómo se sintió? Lee la forma vieja (ánimo 1–5) y la nueva (emociones escritas). */
-function felt(part) { return !!(part && (part.mood || (part.feelings && part.feelings.length))); }
+function felt(part) { return !!(part && (Array.isArray(part.feelings) ? part.feelings.length : part.mood)); }
 
 function saveLog(db, log) {
   return new Promise(function (resolve) {

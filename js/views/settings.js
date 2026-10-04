@@ -115,19 +115,59 @@
     // Vos
     var name = h('input.input', { id: 'st-name', type: 'text', value: s.name, maxlength: 40, autocomplete: 'given-name' });
     name.addEventListener('change', function () { save({ name: name.value.trim() }); });
-    var moodInputs = h('ul.mood-names');
-    s.moodLabels.forEach(function (l, i) {
-      var inp = h('input.input', { type: 'text', value: l, maxlength: 24, 'aria-label': 'Nombre del ánimo ' + (i + 1) });
-      inp.addEventListener('change', function () {
-        var labels = MC.$$('input', moodInputs).map(function (x) { return x.value; });
-        save({ moodLabels: labels });
+    left.appendChild(c.section('Vos', h('div.field', h('label', { for: 'st-name' }, 'Cómo querés que te llame'), name), { id: 'st-you' }));
+
+    // Los colores son opcionales; las palabras se escriben libremente en los días y actividades.
+    var emotionList = h('ul.emotion-colors');
+    var newEmotion = h('input.input', { type: 'text', maxlength: 40, placeholder: 'Una palabra tuya', 'aria-label': 'Emoción para elegir color' });
+    var newColor = h('input', { type: 'color', value: '#0A5A9A', 'aria-label': 'Color de la nueva emoción' }); // color-ok: valor inicial del selector nativo
+    var colorHint = h('p.t-meta', 'Si no elegís uno, el calendario asigna un hilo según las emociones que aparecen en esa vista.');
+    function paintEmotionColors(words) {
+      MC.clear(emotionList);
+      var colors = M.settings().emotionColors;
+      words.forEach(function (word) {
+        var key = M.emotionKey(word);
+        var chosen = colors[key];
+        var swatch = h('input', { type: 'color', value: chosen || '#0A5A9A', 'aria-label': 'Color de ' + word }); // color-ok: valor inicial del selector nativo
+        var code = h('input.input.emotion-colors__code', { type: 'text', value: chosen || '', maxlength: 7,
+          placeholder: '#RRGGBB', 'aria-label': 'Código de color de ' + word });
+        function setColor(value) {
+          var next = Object.assign({}, M.settings().emotionColors);
+          if (value) next[key] = value; else delete next[key];
+          save({ emotionColors: next });
+          code.value = value || '';
+          if (value) swatch.value = value;
+          code.setAttribute('aria-invalid', 'false');
+        }
+        swatch.addEventListener('change', function () { setColor(swatch.value.toUpperCase()); });
+        code.addEventListener('change', function () {
+          var value = code.value.trim();
+          if (value && !/^#[0-9a-fA-F]{6}$/.test(value)) { code.setAttribute('aria-invalid', 'true'); return; }
+          setColor(value.toUpperCase());
+        });
+        emotionList.appendChild(h('li', h('span', word), swatch, code));
       });
-      moodInputs.appendChild(h('li', c.moodMark(i + 1), inp));
+    }
+    var knownEmotions = [];
+    M.emotionSuggestions().then(function (words) {
+      if (!left.isConnected) return;
+      knownEmotions = words.concat(Object.keys(M.settings().emotionColors).filter(function (key) { return !words.some(function (word) { return M.emotionKey(word) === key; }); }));
+      paintEmotionColors(knownEmotions);
     });
-    left.appendChild(c.section('Vos', [
-      h('div.field', h('label', { for: 'st-name' }, 'Cómo querés que te llame'), name),
-      h('div.field', h('span', 'Cómo se llaman tus ánimos'), moodInputs)
-    ], { id: 'st-you' }));
+    var addEmotionColor = h('button.label-btn.label-btn--soft', { type: 'button' }, MC.icon('plus'), 'Elegir color');
+    addEmotionColor.addEventListener('click', function () {
+      var word = M.sanitizeFeelings([newEmotion.value]);
+      if (!word || !word.length) { newEmotion.focus(); return; }
+      var key = M.emotionKey(word[0]);
+      var next = Object.assign({}, M.settings().emotionColors); next[key] = newColor.value.toUpperCase();
+      save({ emotionColors: next });
+      if (!knownEmotions.some(function (value) { return M.emotionKey(value) === key; })) knownEmotions.push(word[0]);
+      paintEmotionColors(knownEmotions);
+      newEmotion.value = '';
+      newEmotion.focus();
+    });
+    left.appendChild(c.section('Mis emociones', [colorHint, emotionList,
+      h('div.emotion-colors__add', newEmotion, newColor, addEmotionColor)], { id: 'st-emotions' }));
 
     // Tapa
     var covers = h('div.cover-choices', { role: 'group', 'aria-label': 'Tapas' });

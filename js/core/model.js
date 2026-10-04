@@ -68,7 +68,7 @@
     var out = {};
     if (!m || typeof m !== 'object' || Array.isArray(m)) return out;
     Object.keys(m).slice(0, 200).forEach(function (k) {
-      var key = String(k).trim().slice(0, 40);
+      var key = emotionKey(String(k).slice(0, 40));
       if (key && HEX6.test(m[k])) out[key] = m[k].toUpperCase();
     });
     return out;
@@ -131,6 +131,9 @@
   function loadSettings() {
     return getMeta('settings', null).then(function (s) {
       settingsCache = mergeSettings(s);
+      // Congelamos los nombres elegidos antes de retirar el selector de cinco ánimos.
+      // Las copias viejas siguen trayendo su propio settings.moodLabels.
+      if (!settingsCache.legacyMoodLabels) settingsCache.legacyMoodLabels = settingsCache.moodLabels.slice();
       return settingsCache;
     });
   }
@@ -744,6 +747,60 @@
     return n ? l[n - 1] : null;
   }
 
+  /** Lee ambas formas durante v5: [] significa que la persona quitó las emociones. */
+  function feelingsOf(slot, setting) {
+    if (!slot) return [];
+    if (Array.isArray(slot)) return sanitizeFeelings(slot) || [];
+    if (Array.isArray(slot.feelings)) return sanitizeFeelings(slot.feelings) || [];
+    var labels = (setting || settings()).legacyMoodLabels || (setting || settings()).moodLabels;
+    var old = slot.mood && labels && labels[slot.mood - 1];
+    return old ? [old] : [];
+  }
+
+  function emotionKey(value) {
+    return String(value || '').trim().toLocaleLowerCase('es').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  }
+
+  /** Ocho hilos fijos por frecuencia; el resto conserva su palabra y usa tinta neutra. */
+  function emotionPalette(days, setting) {
+    var counts = {}, labels = {}, chosen = (setting || settings()).emotionColors || {};
+    (days || []).forEach(function (d) {
+      [d.morning, d.evening].forEach(function (slot) {
+        feelingsOf(slot, setting).forEach(function (value) {
+          var key = emotionKey(value);
+          counts[key] = (counts[key] || 0) + 1;
+          if (!labels[key]) labels[key] = value;
+        });
+      });
+    });
+    var order = Object.keys(counts).sort(function (a, b) { return counts[b] - counts[a] || a.localeCompare(b, 'es'); });
+    var colors = {};
+    order.forEach(function (key, i) { colors[key] = chosen[key] || (i < 8 ? 'var(--emotion-' + (i + 1) + ')' : 'var(--ink-soft)'); });
+    return { labels: order.slice(0, 8).map(function (key) { return labels[key]; }), otherCount: Math.max(0, order.length - 8),
+      color: function (value) { var key = emotionKey(value); return colors[key] || chosen[key] || 'var(--ink-soft)'; },
+      count: function (value) { return counts[emotionKey(value)] || 0; } };
+  }
+
+  function emotionSuggestions() {
+    return Promise.all([S().getAll('days'), S().getAll('activities')]).then(function (rows) {
+      var counts = {}, labels = {};
+      function add(value) {
+        var key = emotionKey(value);
+        if (!key) return;
+        counts[key] = (counts[key] || 0) + 1;
+        labels[key] = labels[key] || value;
+      }
+      rows[0].filter(function (d) { return !isDeleted(d); }).forEach(function (d) {
+        feelingsOf(d.morning).concat(feelingsOf(d.evening)).forEach(add);
+      });
+      rows[1].filter(function (a) { return !isDeleted(a); }).forEach(function (a) {
+        if (a.feel) (a.feel.before || []).concat(a.feel.after || []).forEach(add);
+      });
+      return Object.keys(counts).sort(function (a, b) { return counts[b] - counts[a] || a.localeCompare(b, 'es'); })
+        .slice(0, 12).map(function (key) { return labels[key]; });
+    });
+  }
+
   function pageTitle(p) { return (p && p.title && p.title.trim()) || 'Sin título'; }
 
   /** Día de una página en el calendario: el elegido o, si no hay, el día en que se empezó. */
@@ -751,7 +808,7 @@
 
   /* ---------- resúmenes para calendario, año e impresión ---------- */
   function blankSummary(date) {
-    return { date: date, morning: null, evening: null, mood: null, wrote: false, memory: '', done: 0, total: 0, pending: 0, planned: 0, routines: 0, byRoutine: {}, items: [], pages: [] };
+    return { date: date, morning: [], evening: [], feelings: [], wrote: false, memory: '', done: 0, total: 0, pending: 0, planned: 0, routines: 0, byRoutine: {}, items: [], pages: [] };
   }
 
   /**
@@ -769,9 +826,9 @@
     days.forEach(function (d) {
       if (isDeleted(d) || !inRange(d.date)) return;
       var s = at(d.date);
-      s.morning = d.morning.mood;
-      s.evening = d.evening.mood;
-      s.mood = d.evening.mood || d.morning.mood;
+      s.morning = feelingsOf(d.morning, extra.settings);
+      s.evening = feelingsOf(d.evening, extra.settings);
+      s.feelings = s.evening.length ? s.evening : s.morning;
       s.wrote = hasWriting(d);
       s.memory = d.reflection.keep.trim();
     });
@@ -962,6 +1019,7 @@
     sanitizeBlocks: sanitizeBlocks, sanitizeValues: sanitizeValues, BLOCK_TYPES: BLOCK_TYPES,
     normalizeWeek: normalizeWeek, normalizeTemplate: normalizeTemplate, normalizeMark: normalizeMark,
     sanitizeFeelings: sanitizeFeelings, sanitizeFeel: sanitizeFeel, sanitizeMoves: sanitizeMoves,
+    feelingsOf: feelingsOf, emotionKey: emotionKey, emotionPalette: emotionPalette, emotionSuggestions: emotionSuggestions,
     sanitizeTheme: sanitizeTheme, sanitizeEmotionColors: sanitizeEmotionColors, occurrenceId: occurrenceId, DRAW_TOOLS: DRAW_TOOLS,
     sanitizeStickers: sanitizeStickers, summarize: summarize, summaryRange: summaryRange, pagesOn: pagesOn, everything: everything,
     hasWriting: hasWriting, countsAsDone: countsAsDone, moodLabel: moodLabel, pageTitle: pageTitle, pageDate: pageDate,

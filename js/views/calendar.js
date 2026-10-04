@@ -65,6 +65,7 @@
     var ready = Promise.all([M.summaryRange(grid[0], grid[grid.length - 1]), routineId ? M.getRoutines() : null]).then(function (res) {
       if (destroyed) return;
       var sum = res[0];
+      var palette = M.emotionPalette(Object.keys(sum).map(function (k) { return sum[k]; }), M.settings());
       var routine = routineId ? (res[1] || []).filter(function (x) { return x.id === routineId; })[0] || null : null;
       var label = D.monthLabel(month);
       page.appendChild(h('header.cal-head',
@@ -85,7 +86,7 @@
           var inMonth = D.monthKey(key) === month;
           var parts = [D.parse(key).d + ' de ' + D.MONTHS[D.parse(key).m - 1]];
           if (key === today) parts.push('hoy');
-          if (info && info.mood) parts.push(M.moodLabel(info.mood));
+          if (info && info.feelings.length) parts.push('te sentiste ' + info.feelings.join(', '));
           // Pasado: solo lo hecho (sin cuentas de lo que quedó). Hoy y adelante: lo planeado, rutinas incluidas.
           var ahead = key >= today;
           var planned = ahead && info ? info.pending : 0;
@@ -110,11 +111,12 @@
           var btn = h('button.day-cell', {
             type: 'button', role: 'gridcell', tabindex: '-1',
             'aria-label': parts.join(', '), 'aria-selected': String(key === marked),
-            dataset: { date: key, mood: info && info.mood ? String(info.mood) : null, routine: rMark },
+            dataset: { date: key, feeling: info && info.feelings.length ? info.feelings[0] : null, routine: rMark },
             class: [inMonth ? null : 'is-out', key === today ? 'is-today' : null, key > today ? 'is-future' : null, rMark ? 'is-routine' : null].filter(Boolean).join(' ')
           },
             h('span.day-cell__num', String(D.parse(key).d)),
-            info && info.mood ? h('span.day-cell__patch', { html: MC.stickers.miniPatchMarkup(info.mood) }) : null,
+            info && info.feelings.length ? h('span.day-cell__feelings', info.feelings.slice(0, 2).map(function (f) { return c.feelingMark(f, palette); }),
+              info.feelings.length > 2 ? h('span.t-meta', '+' + (info.feelings.length - 2)) : null) : null,
             lineItems.length ? h('span.day-cell__lines', { 'aria-hidden': 'true' },
               lineItems.slice(0, 3).map(function (l) { return h('span.cell-line', { dataset: { kind: l.kind } }, l.title); }),
               lineItems.length > 3 ? h('span.cell-line.cell-line--more', '+' + (lineItems.length - 3) + ' más') : null) : null,
@@ -135,7 +137,7 @@
         table.appendChild(r);
       }
       page.appendChild(table);
-      page.appendChild(legend(routine));
+      page.appendChild(legend(routine, palette));
 
       var focusKey = marked || month + '-01';
       cells.forEach(function (b) { if (b.dataset.date === focusKey) b.tabIndex = 0; });
@@ -161,10 +163,10 @@
     return { destroy: function () { destroyed = true; }, ready: ready };
   }
 
-  function legend(routine) {
-    var labels = M.settings().moodLabels;
+  function legend(routine, palette) {
     return h('ul.mood-legend', { 'aria-label': 'Referencias' },
-      [1, 2, 3, 4, 5].map(function (m) { return h('li', c.moodMark(m), labels[m - 1]); }),
+      palette.labels.map(function (label) { return h('li', c.feelingMark(label, palette)); }),
+      palette.otherCount ? h('li', 'Otras emociones, con su nombre') : null,
       h('li', h('span.mark-ink'), 'escribiste'),
       h('li', h('span.mark-star', { html: '<svg viewBox="0 0 24 24"><use href="#i-star"/></svg>' }), 'recuerdo'),
       h('li', h('span.mark-x', '×'), 'hecho'),
@@ -201,8 +203,9 @@
             h('h1.t-display.week-title', 'Semana', h('span.week-title__range', title)),
             h('a.icon-btn', { href: R.week(D.addDays(start, 7)), 'aria-label': 'Semana siguiente' }, MC.icon('arrow-right'))),
           h('div.cal-head__tools', (today < start || today > end) ? h('a.text-btn', { href: R.week(today) }, 'Esta semana') : null, modeSwitch('semana', D.monthKey(date), date))));
+        var palette = M.emotionPalette(r[1], M.settings());
         D.range(start, end).forEach(function (k, i) {
-          (i < 3 ? leftPage : rightPage).appendChild(dayBlock(k, byDay[k], lists[i], today, pagesByDay[k] ? pagesByDay[k].pages : []));
+          (i < 3 ? leftPage : rightPage).appendChild(dayBlock(k, byDay[k], lists[i], today, pagesByDay[k] ? pagesByDay[k].pages : [], palette));
         });
         if (!r[1].length && !Object.keys(pagesByDay).length && lists.every(function (l) { return !l.length; })) {
           leftPage.appendChild(h('p.section__hint.week-empty', 'Tu semana recién empieza.'));
@@ -212,13 +215,13 @@
     return { destroy: function () { destroyed = true; }, ready: ready };
   }
 
-  function dayBlock(k, day, list, today, pages) {
-    var mood = day && (day.evening.mood || day.morning.mood);
+  function dayBlock(k, day, list, today, pages, palette) {
+    var feelings = day && (M.feelingsOf(day.evening).length ? M.feelingsOf(day.evening) : M.feelingsOf(day.morning));
     var p = D.parse(k);
     var head = h('a.week-day__head', { href: R.day(k) },
       h('span.week-day__name', D.capitalize(D.DAYS[D.weekday(k)])),
       h('span.week-day__num.t-display', String(p.d)),
-      mood ? c.moodMark(mood, M.moodLabel(mood)) : null);
+      feelings && feelings.length ? h('span.week-day__feelings', feelings.map(function (word) { return c.feelingMark(word, palette); })) : null);
     var ul = h('ul.week-day__list');
     list.slice(0, 7).forEach(function (it) {
       ul.appendChild(h('li', { dataset: { status: it.status } },

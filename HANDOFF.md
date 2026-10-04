@@ -1,8 +1,8 @@
 # MI CUADERNO — Traspaso para el próximo agente
 
-Para retomar el desarrollo **sin haber estado en las conversaciones anteriores**. Leelo después de `AGENTS.md` y antes de tocar código. Estado al 03/10/2026.
+Para retomar el desarrollo **sin haber estado en las conversaciones anteriores**. Leelo después de `AGENTS.md` y antes de tocar código. Estado al 04/10/2026. El plan ejecutable completo está en [`MIGRATION_PLAN.md`](MIGRATION_PLAN.md); no hace falta tener acceso al plan externo ni a la conversación.
 
-**En una línea:** el MVP y la Fase 1 están hechos y en `main`; no hay ninguna fase en curso. Lo próximo es publicar y probar en dispositivos reales (V7 → V1–V6 en `ROADMAP.md`) y después la Fase 5 con la Fase 2 en paralelo. Qué falta, ítem por ítem: `BACKLOG.md`.
+**En una línea:** el cuaderno local está en la etapa **A** de la migración aprobada. A0–A4 están terminados y probados en Chromium; A4 reemplazó la escala de cinco ánimos por emociones escritas. Lo próximo es **A5: Mis hojas y menos marcadores**; después la semana planner. La nube y React vienen en B y C, respectivamente. `ROADMAP.md` y `MIGRATION_PLAN.md` dan el orden; `BACKLOG.md` conserva el resto de ideas.
 
 ## 1. Cómo trabaja la dueña del proyecto
 
@@ -34,20 +34,18 @@ Para retomar el desarrollo **sin haber estado en las conversaciones anteriores**
 | 13 | “Terminá ya, commit por cambio y pusheá.” | Integrado y pusheado a `main`; nueva regla de git (§1). | — |
 | 14 | “Está bugueado volver al calendario desde algunos lugares.” | La ✕ vuelve siempre al calendario: el router guarda la posición de cada paso en `history.state`. | `CHANGELOG.md` 2026-10-03, `js/app.js` |
 | 15 | “¿Qué fases faltan?” y “documentá todo para cualquier agente sin contexto”. | Este traspaso, `ROADMAP.md` y `BACKLOG.md` al día. | — |
+| 16 | Semana planner, emociones libres, colores, fuera Agenda/Rutinas, hojas y plantillas, Mi año con estrellas/gráficos, escenas, dibujo, y nube con PIN/roles. | Migración A → B → C aprobada. Ver estado exacto en §3 y pasos en `MIGRATION_PLAN.md`. | D27–D36 |
+| 17 | “Una vez que termines un cambio estable, documentá todos los cambios y commits, lo que falta, el plan y cómo retomarlo sin memoria”. | Este traspaso, `MIGRATION_PLAN.md`, `ROADMAP.md`, `BACKLOG.md` y docs de producto sincronizados. | Commit A4 |
 
 ## 3. Estado actual
 
-- Todo lo de la tabla está en `main` (y en la rama de la sesión). `schemaVersion` 4, `CACHE_VERSION` `mi-cuaderno-v19`. Fase 1 (DA1–DA4, PV1, T6) integrada el 2026-10-02.
-- `npm run check` verifica sintaxis, **91 unit** y **34 E2E** sobre `file://` y HTTP. Para E2E necesita la dependencia local `playwright-core` y un navegador Chromium indicado con `CHROMIUM`.
+- **Commits de la etapa A:** A0 `34e9b6e`, A1 `cc7697d`, A2 `4f124d7`, A3 `a39dad2`; para A4, consultá `git log -5 --oneline`. A0 protege IndexedDB de pestañas viejas/versiones nuevas; A1 repara navegación/escenas/menús y cubre el índice de Páginas; A2 quita sombras y el desglose de almacenamiento, centraliza colores; A3 crea el contrato v5 aditivo (sin adelantar UI). A4 agrega emociones escritas al día y actividades, calendarios, Año, ajustes de color, observaciones, exportación, impresión y notificaciones. Ver `CHANGELOG.md` para efectos visibles y pruebas.
+- `schemaVersion` **5**, IndexedDB **3**. `CACHE_VERSION` debe ser `mi-cuaderno-v24` con A4. Las formas viejas (`mood`, `moodLabels`, `kind/body/items`) siguen legibles hasta A13/v6: no borrarlas en A5–A12.
+- `npm run check` pasó en A4: sintaxis de 34 archivos, 94 pruebas unitarias y 43/43 recorridos Chromium E2E sobre `file://` y HTTP. Para E2E se usa `playwright-core` local y `CHROMIUM` apunta a un ejecutable Chromium. Una corrida anterior tuvo una falla intermitente en el caso A0 de cambio de versión entre pestañas; el caso aislado y la corrida completa posterior pasaron. No se atribuye esa falla a A4 ni se declara resuelta su intermitencia.
 - **Nunca se probó en dispositivos reales** ni se publicó: ver `ROADMAP.md` → Verificación pendiente (V1–V7).
-- Fase 1 y T6 ya están integrados: no rehacerlos. El seguimiento de DA1 está completado. Antes de avanzar a Fase 2, revisar la verificación pendiente V1–V7 en `ROADMAP.md`.
-- **Qué se hizo** (detalle en `CHANGELOG.md`, por fecha): MVP → pantalla única (D17) → todo en el calendario (D18) → conexiones (D19–D21) → marcadores y Agenda (D22) → motion en todo (D23) → dibujo, Mis stickers, adjuntos (D24) → visión documentada (D25) → Fase 1 (D26) → arreglo del router (03/10).
-- **Qué queda, en orden** (`ROADMAP.md` → “Próximo paso sugerido”):
-  1. V7: publicar en GitHub Pages y probar que se actualiza la versión; después V1–V6 (otros navegadores, PWA instalada, notificaciones, lector de pantalla, almacenamiento lleno). Esto necesita dispositivos reales: pedirle ayuda a la dueña.
-  2. Fase 5 · Escribir tranquila (ES1–ES3, PE5): chica y de alto impacto.
-  3. Fase 2 · Motor de elementos (EL1 primero: nace de los stickers con migración).
-  4. Fase 3 · Memorias (se apoya en PV1, ya hecho).
-  5. Fases 4, 6–10 según `ROADMAP.md`.
+- Fase 1 y T6 ya están integrados: no rehacerlos. DA4 (“Cuánto ocupa”) se retiró en A2. Los viejos ítems de V1–V7 siguen como **verificación pendiente**, pero GitHub Pages ya no es el objetivo de despliegue: B apunta a Vercel.
+- **Qué queda en orden:** A5 Mis hojas y cuatro marcadores; A6 semana planner inicial y editable; A7 hojas/plantillas/Guardar y repetición; A8 Mi año y métricas; A9 tema propio; A10 escenas; A11 dibujo; A12 QA cruzada; A13 contrato v6. Después B cuenta/nube/roles/PWA/push y C vistas React/escenas 2.0. Cada paso, archivos, invariantes y pruebas: `MIGRATION_PLAN.md`.
+- **Lo que NO está implementado todavía:** Next.js/React/Supabase, login/PIN, roles/RLS, push remoto, semana planner por defecto, Mis hojas, plantilla aplicada al día, tema completo, gráficos/victorias y nuevos pinceles. Los campos v5 para esas funciones existen; no interpretarlos como función terminada.
 - **Ramas y worktrees viejos**: quedaron ramas `trobias/*` locales y worktrees de Orca de la Fase 1, ya integrados en `main`. No borrarlos sin su ok.
 
 ## 4. Preguntas abiertas (esperan a la dueña; no decidir solo)
@@ -58,13 +56,14 @@ Para retomar el desarrollo **sin haber estado en las conversaciones anteriores**
 4. **Historial de git**: versiones viejas de los tests en el historial todavía tienen el nombre de ejemplo anterior. Reescribir historia exige force-push a `main`; se le ofreció y no respondió. No hacerlo sin un “sí” explícito.
 5. Nombre de la vista “Volver a mí” (VISION §3): elegir con ella.
 6. **Sacar una actividad** sigue siendo definitivo (con “Deshacer” en el aviso), no va a la papelera: lo decidió la Fase 1 para no romper ese flujo (D26). Si ella quiere actividades en la papelera, es un cambio chico en `js/ui/activity.js` + `MC.model`.
-7. **Publicar (V7)**: ¿GitHub Pages desde `main` del repo actual? Confirmar antes de activar nada público.
+7. **Nube:** falta elegir/crear el proyecto de Supabase y un entorno preview, definir la política de restaurar/borrar con sincronización y verificar permisos reales. No crear servicios ni desplegar sin confirmar la operación externa. La dueña ya aprobó la arquitectura A→B→C.
+8. **Páginas:** el bloqueo del índice tras borrar no se reprodujo en Chromium, aunque A1 corrigió dos posibles causas y agregó E2E. Pedir navegador y pasos exactos solo si vuelve a pasar; probar otros motores cuando se disponga de ellos.
 
 ## 5. Cómo retomar (paso a paso)
 
-1. `AGENTS.md` → este archivo → `SPEC.md` → `DESIGN.md` → `DATA_MODEL.md` → `DECISIONS.md` (sobre todo D17–D26) → `ROADMAP.md` / `BACKLOG.md` → `VISION.md` si vas a tocar algo de la visión.
+1. `AGENTS.md` → este archivo → `MIGRATION_PLAN.md` → `SPEC.md` → `DESIGN.md` → `DATA_MODEL.md` → `DECISIONS.md` (D27–D36 para el pedido actual) → `ROADMAP.md` / `BACKLOG.md` → `VISION.md` si tocás algo de la visión. El plan externo era un borrador de 03/10 y contiene cifras de tests y versiones ya superadas; este archivo y el código mandan.
 2. `npm test` (no necesita nada) y `npm install && npm run e2e` (usa el Chromium del sistema en `/opt/pw-browsers/chromium`, o `CHROMIUM=/ruta`). En Windows funciona igual: apuntá `CHROMIUM` al `chrome.exe` de un Chromium de Playwright (`%LOCALAPPDATA%\ms-playwright\chromium-<build>\chrome-win\chrome.exe`) o a otro Chromium instalado. Si corrés varias suites a la vez (varios worktrees), usá un `E2E_PORT` distinto en cada una.
-3. Elegí un ítem del backlog (NOW primero), leé la decisión que lo cubre y buscá la primitiva existente (AGENTS → “Antes de tomar algo de la visión”).
+3. Seguí el próximo paso A del `MIGRATION_PLAN.md`, leé la decisión que lo cubre y buscá la primitiva existente (AGENTS → “Antes de tomar algo de la visión”). No saltes a B/C ni al antiguo roadmap de Fases 2–10 por un encabezado viejo.
 4. Implementá con su test (unit en `tests/unit/`, recorrido en `tests/e2e/run.mjs`), estilos solo con tokens, y **revisá a ojo en 1366px y 375px** (ver §6).
 5. Docs: SPEC/DESIGN/DATA_MODEL según corresponda, decisión nueva en `DECISIONS.md` si no es obvia, `CHANGELOG.md` (para quien lo usa + para quien lo mantiene), sacar el ítem de `BACKLOG.md`, `ROADMAP.md` si cerró una fase. Si tocaste algún archivo del shell, subí `CACHE_VERSION` en `sw.js`.
 6. `npm run check` en verde → commit (uno por cambio) → push a `main` (§1).
@@ -79,11 +78,11 @@ Para retomar el desarrollo **sin haber estado en las conversaciones anteriores**
 ## 7. Mapa rápido del código vivo
 
 - Arranque y navegación: `js/app.js` (calendario de fondo + `<dialog id="panel">` + marcadores `TABS`; `renderBase` arma aparte y anima; `refreshBase` en vivo; `placeTabs` muda los marcadores; `track`/`requestClose`: cada paso del historial lleva su posición en `history.state.mcAt` y cerrar vuelve con `history.go` hasta el último calendario; los reemplazos van por `replaceHash`).
-- Fase 1: `js/core/history.js` (`MC.history`: una pila por superficie, atajos solo fuera de campos de texto) · papelera y privacidad en `js/core/model.js` (`deletedAt`, `privacy`, `restoreTrash`, purga al arrancar) · `c.savedNote` en `js/ui/components.js` (guardando/guardado/aviso de fallo) · Papelera y “Cuánto ocupa” en `js/views/settings.js` · migración 3→4 en `js/core/backup.js`.
+- Fase 1: `js/core/history.js` (`MC.history`: una pila por superficie, atajos solo fuera de campos de texto) · papelera y privacidad en `js/core/model.js` (`deletedAt`, `privacy`, `restoreTrash`, purga al arrancar) · `c.savedNote` en `js/ui/components.js` (guardando/guardado/aviso de fallo) · Papelera en `js/views/settings.js` (“Cuánto ocupa” se retiró en A2) · migraciones hasta v5 en `js/core/backup.js`.
 - Rutas: `js/core/routes.js` (`MC.routes.*`; nunca `'#/…'` a mano).
-- Datos: `js/core/store.js` (stores: meta, days, activities, routines, pages, images, files) · `js/core/model.js` (todo el dominio; `summarize` = única cuenta por día) · `js/core/backup.js` (copia, validación, migraciones).
+- Datos: `js/core/store.js` (stores: meta, days, activities, routines, pages, images, files, weeks, templates, marks) · `js/core/model.js` (dominio; `summarize` = cuenta común por día, `feelingsOf` = lectura dual) · `js/core/backup.js` (copia, validación, migraciones).
 - Vistas: `js/views/{calendar,today,agenda,routines,pages,year,settings,print,cover,onboarding}.js`.
-- Piezas compartidas: `js/ui/components.js` (`MC.c.*`: diálogos, menú, avisos, `askDate`, `moodMark`, `statusMark`, `pageLink(s)`) · `js/ui/activity.js` (fila de actividad) · `js/ui/scrapbook.js` (stickers + Mis stickers) · `js/ui/draw.js` (dibujo) · `js/ui/images.js` (subir imágenes, adjuntos) · `js/ui/motion.js` · `js/ui/scenes.js`.
+- Piezas compartidas: `js/ui/components.js` (`MC.c.*`: diálogos, menú, avisos, `askDate`, `feelingEditor`, `feelingMark`, `statusMark`, `pageLink(s)`) · `js/ui/activity.js` (fila de actividad y emociones antes/después) · `js/ui/scrapbook.js` (stickers + Mis stickers) · `js/ui/draw.js` (dibujo) · `js/ui/images.js` (subir imágenes, adjuntos) · `js/ui/motion.js` · `js/ui/scenes.js`.
 
 ## 8. Trabajo con varios agentes (cómo se cerró la Fase 1)
 

@@ -26,7 +26,7 @@
     var isToday = date === today;
     var isFuture = date > today;
     var s = M.settings();
-    var labels = s.moodLabels;
+    var suggestions = M.emotionSuggestions();
     var day = null;
     var items = [];
     var saved = c.savedNote();
@@ -139,9 +139,9 @@
 
       if (s.track.morning && !isFuture) {
         left.appendChild(c.section(isToday ? '¿Cómo arrancaste hoy?' : '¿Cómo arrancó ese día?',
-          c.moodPicker({
-            value: day.morning.mood, labels: labels, groupLabel: 'Ánimo al empezar el día',
-            onChange: function (v) { day.morning = { mood: v, at: v ? MC.nowISO() : null }; persist(); persist.flush(); }
+          c.feelingEditor({
+            value: M.feelingsOf(day.morning, s), label: 'Cómo te sentiste al empezar el día', suggestions: suggestions,
+            onChange: function (v) { day.morning = { mood: null, feelings: v, at: v.length ? MC.nowISO() : null }; persist(); persist.flush(); }
           }), { id: 'q-morning', className: 'section--mood' }));
       }
 
@@ -279,18 +279,18 @@
     }
 
     function closingSection() {
-      var hasEvening = day.evening.mood || REFLECTIONS.some(function (r) { return day.reflection[r.key].trim(); });
+      var hasEvening = M.feelingsOf(day.evening, s).length || REFLECTIONS.some(function (r) { return day.reflection[r.key].trim(); });
       var hr = new Date().getHours();
       var startOpen = !isToday || hasEvening || hr >= 17;
       var regionId = MC.uid('closing');
       var content = h('div.closing__content', { id: regionId });
 
       if (s.track.evening) {
-        content.appendChild(c.moodPicker({
-          value: day.evening.mood, labels: labels, groupLabel: 'Ánimo al terminar el día',
+        content.appendChild(c.feelingEditor({
+          value: M.feelingsOf(day.evening, s), label: 'Cómo te sentiste al terminar el día', suggestions: suggestions,
           onChange: function (v) {
-            var first = !day.evening.mood && v;
-            day.evening = { mood: v, at: v ? MC.nowISO() : null };
+            var first = !M.feelingsOf(day.evening, s).length && v.length;
+            day.evening = { mood: null, feelings: v, at: v.length ? MC.nowISO() : null };
             persist(); persist.flush();
             if (first) closingFlourish(content);
           }
@@ -367,7 +367,7 @@
       var focus = MC.ui.get('focusOnLoad', null);
       if (focus) {
         MC.ui.set('focusOnLoad', null);
-        var sel = focus === 'notes' ? '#notes' : '.section--mood .mood-patch';
+        var sel = focus === 'notes' ? '#notes' : '.section--mood .feelings__input';
         // Si la tapa sigue puesta, la tapa enfoca esto al abrirse.
         if (document.querySelector('.cover')) MC.pendingFocus = sel;
         else setTimeout(function () { var el = MC.$(sel); if (el) { el.focus(); el.scrollIntoView({ block: 'center' }); } }, 60);

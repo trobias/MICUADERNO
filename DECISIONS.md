@@ -81,7 +81,7 @@ Registro breve de decisiones de arquitectura y producto. Formato: contexto → d
 
 ## D19 · Un solo lugar para rutas, cuentas y dibujos (2026-10-01)
 **Contexto:** al conectar las secciones entre sí aparecieron copias de la misma lógica: unas 40 direcciones `#/…` escritas a mano en 10 archivos; tres cuentas de “qué hubo ese día” que no coincidían (la impresión contaba solo `done`, el calendario `done` + `partial`); tres dibujos de los estados de punto cruz (casilla, semana, impresión); seis conversiones de `createdAt` a fecha; el parche de ánimo con su nombre armado a mano en cada vista.
-**Decisión:** `js/core/routes.js` (`MC.routes`) arma y lee todas las rutas, con tests; `MC.model.summarize` es la única cuenta por día y `countsAsDone` la única regla de “hecho”; `MC.stickers.STITCH` es el único dibujo de las puntadas (`statusMarkup` para la marca quieta); piezas compartidas en `MC.c`: `moodMark`, `statusMark`, `pageLink`, `pageLinks`; `MC.dates.fromISO` para instantes guardados.
+**Decisión:** `js/core/routes.js` (`MC.routes`) arma y lee todas las rutas, con tests; `MC.model.summarize` es la única cuenta por día y `countsAsDone` la única regla de “hecho”; `MC.stickers.STITCH` es el único dibujo de las puntadas (`statusMarkup` para la marca quieta); piezas compartidas en `MC.c`: `statusMark`, `pageLink`, `pageLinks` y, desde A4, `feelingEditor`/`feelingMark` en lugar del antiguo `moodMark`; `MC.dates.fromISO` para instantes guardados.
 **Consecuencias:** agregar una ruta o un enlace es un cambio en un lugar. La impresión ahora cuenta “un poquito” como hecho, igual que el calendario. `sw.js` no puede cargar `MC.routes` (no tiene `window`): sus `#/hoy` quedan escritos a mano y un test verifica que sigan siendo rutas válidas.
 
 ## D20 · Las secciones se conectan por las fechas (2026-10-01)
@@ -144,7 +144,7 @@ Registro breve de decisiones de arquitectura y producto. Formato: contexto → d
 ## D28 · Emociones escritas en vez de la escala de 5 (2026-10-04)
 **Contexto:** “hay muchísimas emociones” (triste, sin energía, con energía, con ansiedad, con motivación…): una lista cerrada de 5 no alcanza. La dueña eligió que las emociones escritas **reemplacen** los parches.
 **Decisión:** el día (al empezar y al terminar) y cada actividad (antes y después) llevan emociones escritas, con sugerencias (las más usadas + una base neutra en género). El color de cada emoción sale de una paleta fija apta para daltonismo, asignada por frecuencia en cada vista (el resto, “otras”), y la persona lo puede fijar; nunca es el único portador de significado (palabra en texto, en `aria-label` y en la leyenda). Las observaciones dejan de comparar ánimos “mejores” y cuentan palabras.
-**Consecuencias:** D6 queda como historia. La migración convierte `mood n` en la emoción con el nombre que la persona tenía (`legacyMoodLabels`). Estado: contrato; se implementa en el paso A4.
+**Consecuencias:** D6 queda como historia. A4 implementa escritura libre en Día y Actividad y lectura dual de `mood n` con el nombre que la persona tenía (`legacyMoodLabels`); la escala no se usa para insights ni exportaciones nuevas. El campo viejo se conserva hasta v6. A8 ampliará los conteos del Año.
 
 ## D29 · Hojas del día, plantillas y “Guardar” (2026-10-04)
 **Contexto:** “las páginas deberían ser una plantilla para poner en cualquier día y escribir ahí”. Hasta ahora una página era una hoja suelta con un día, y sus 12 plantillas solo ponían un texto inicial.

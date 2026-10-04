@@ -16,11 +16,11 @@ Anyone who wants a personal notebook (the user chose "para cualquiera"): copy st
 
 ## Product Purpose
 
-MI CUADERNO is a private digital notebook — diary, planner, mood log, routines and scrapbook in one object — that lives entirely on the person's device. Success: opening it feels like opening a beautiful paper notebook; logging something takes under a minute; over months it gives the person back their own story (calendar, year map, memories, exports).
+MI CUADERNO is a private digital notebook — diary, planner, free-text emotions, routines and scrapbook in one object — that currently lives entirely on the person's device. Success: opening it feels like opening a beautiful paper notebook; logging something takes under a minute; over months it gives the person back their own story (calendar, year map, memories, exports). The approved A→B→C migration in `MIGRATION_PLAN.md` adds an account/PIN, section permissions and cloud sync in B; those are not current capabilities.
 
 ## Positioning
 
-A journal that never punishes: activity states are human ("lo hice", "hice un poquito", "lo dejo para otro día", "hoy no salió"), there are no streaks to lose, insights only count and never conclude, and nothing ever leaves the device (no account, no server, no telemetry).
+A journal that never punishes: activity states are human ("lo hice", "hice un poquito", "lo dejo para otro día", "hoy no salió"), there are no streaks to lose, insights only count and never conclude. The current local app sends no content away; B must explain cloud storage and guest access honestly before turning either on.
 
 ## Operating Context
 

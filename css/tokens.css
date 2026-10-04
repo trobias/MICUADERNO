@@ -37,6 +37,16 @@
   --mood-4-tint: color-mix(in srgb, var(--mood-4) 24%, var(--paper));
   --mood-5-tint: color-mix(in srgb, var(--mood-5) 30%, var(--paper));
 
+  /* Ocho hilos nominales para las emociones escritas; validados para contraste y CVD sobre --paper. */
+  --emotion-1: #0A5A9A;
+  --emotion-2: #3D7A2F;
+  --emotion-3: #8667B9;
+  --emotion-4: #CB6F4F;
+  --emotion-5: #904379;
+  --emotion-6: #A1790C;
+  --emotion-7: #00A0A1;
+  --emotion-8: #963950;
+
   /* Hilos de estado */
   --thread-done: #5F8150;
   --thread-partial: #BF6E3F;
