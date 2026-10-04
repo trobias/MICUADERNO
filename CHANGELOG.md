@@ -2,6 +2,15 @@
 
 Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantiene. El porqué de cada decisión está en `DECISIONS.md` (Dn); lo que falta, en `ROADMAP.md`. Cada entrega que toca archivos de la app sube `CACHE_VERSION` en `sw.js` para que las PWA instaladas se actualicen.
 
+## 2026-10-04 · El índice de Páginas responde siempre después de borrar (cache `v25`)
+
+**Para quien lo usa**
+- Después de mandar una página a la papelera, el índice vuelve a responder enseguida: se marca el enlace al pasar el mouse y se puede abrir otra página sin salir al calendario.
+
+**Para quien lo mantiene**
+- Causa reproducida (1 de 6 corridas): `MC.motion.swap` animaba `#panel-body`, el contenedor fijo del cuadro, mientras se reemplazaba su contenido; Chromium dejaba a veces el hit-test y el foco del contenido viejo. Ahora se anima la hoja nueva (`firstElementChild`) con la misma duración, curva y desplazamiento. Con el arreglo, 0 de 9 corridas fallaron. Detalle en [`PAGES_INDEX_INVESTIGATION.md`](PAGES_INDEX_INVESTIGATION.md).
+- Falta confirmarlo en el dispositivo de la dueña y en WebKit/Firefox.
+
 ## 2026-10-04 · Cobertura del índice de Páginas tras borrar
 
 - El recorrido E2E del índice ahora usa un contexto con tacto real: `tap()` ya no se sustituye silenciosamente por `click()`. Si falla el toque, la prueba falla.

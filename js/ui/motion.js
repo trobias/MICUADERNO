@@ -34,11 +34,14 @@
   /** Transición de página: la hoja se desliza apenas (dir: 1 adelante, -1 atrás, 0 cambio de pestaña). */
   function swap(container, render, dir) {
     var dur = duration(dir ? 'panel' : 'ui');
-    if (!dur || !allows('fade') || !container.animate) { render(); return; }
+    render();
+    // Se anima la hoja nueva, nunca el contenedor fijo del cuadro: animar #panel-body mientras se reemplaza su
+    // contenido dejaba a veces el índice nuevo sin hit-test ni foco en Chromium (Páginas tras borrar).
+    var el = container.firstElementChild;
+    if (!dur || !allows('fade') || !el || !el.animate) return;
     var dx = allows('move') && dir ? 12 * dir : 0;
     var dy = allows('move') && !dir ? 8 : 0; // pasar de un marcador a otro: la hoja nueva sube apenas
-    render();
-    container.animate(
+    el.animate(
       [{ opacity: 0, transform: 'translate(' + dx + 'px, ' + dy + 'px)' }, { opacity: 1, transform: 'none' }],
       { duration: dur, easing: 'cubic-bezier(0.23, 1, 0.32, 1)' }
     );

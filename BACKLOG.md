@@ -20,8 +20,8 @@ Cada idea pendiente, con su estado. **Nada se pierde por estar fuera de la fase 
 
 | Pedido | Paso | Estado al 04/10 | Criterio de cierre |
 |---|---|---|---|
-| Seguridad de base y volver al calendario; cobertura inicial de Páginas | A0–A1 | Hecho | A1 agregó E2E, pero el síntoma de Páginas sigue abierto en la fila siguiente. |
-| Índice de Páginas que a veces no responde después de borrar | A1 → A5/A7 | NEEDS RESEARCH | Otra corrida informó 42/43 E2E sin traza; `3403078` corrigió el falso toque móvil y amplió el diagnóstico, no la app. Ver [`PAGES_INDEX_INVESTIGATION.md`](PAGES_INDEX_INVESTIGATION.md). |
+| Seguridad de base y volver al calendario; cobertura inicial de Páginas | A0–A1 | Hecho | A1 agregó E2E; el síntoma de Páginas se arregló después (fila siguiente). |
+| Índice de Páginas que a veces no responde después de borrar | A1 → B-base | Hecho en Chromium (v25) | Reproducido 1/6; `MC.motion.swap` animaba el contenedor fijo del cuadro mientras cambiaba su contenido. Ahora anima la hoja nueva: 0/9. Falta confirmarlo en el dispositivo de la dueña y en otros motores. Ver [`PAGES_INDEX_INVESTIGATION.md`](PAGES_INDEX_INVESTIGATION.md). |
 | Quitar sombra y “Cuánto ocupa” | A2 | Hecho | Visual y tests de regresión. |
 | Contrato para semana, hojas, emociones, tema, dibujo y victorias | A3 | Hecho | v5 aditivo; sus campos nuevos no significan UI lista. |
 | Emociones escritas, también antes/después de actividades | A4 | Hecho | Día, actividad, calendarios, Año, Ajustes, TXT/CSV/XLSX, impresión, recordatorios, insights y copia vieja. |

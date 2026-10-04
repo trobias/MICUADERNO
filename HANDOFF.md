@@ -57,7 +57,7 @@ Para retomar el desarrollo **sin haber estado en las conversaciones anteriores**
 5. Nombre de la vista “Volver a mí” (VISION §3): elegir con ella.
 6. **Sacar una actividad** sigue siendo definitivo (con “Deshacer” en el aviso), no va a la papelera: lo decidió la Fase 1 para no romper ese flujo (D26). Si ella quiere actividades en la papelera, es un cambio chico en `js/ui/activity.js` + `MC.model`.
 7. **Nube:** falta elegir/crear el proyecto de Supabase y un entorno preview, definir la política de restaurar/borrar con sincronización y verificar permisos reales. No crear servicios ni desplegar sin confirmar la operación externa. La dueña ya aprobó la arquitectura A→B→C.
-8. **Páginas:** el síntoma del índice tras borrar sigue abierto en `BACKLOG.md`. A1 corrigió dos posibles causas y agregó E2E; otra corrida informó 42/43 sin guardar la traza. `3403078` corrigió el falso toque móvil y amplió el diagnóstico; el caso pasó seis veces aislado antes del ajuste, una vez con `tap()` real y dos suites completas (43/43). La investigación completa, la importancia, los límites de la evidencia y los pasos para retomar están en [`PAGES_INDEX_INVESTIGATION.md`](PAGES_INDEX_INVESTIGATION.md). No decir que la falla de la app quedó arreglada.
+8. **Páginas:** el índice que a veces no respondía tras borrar se **reprodujo y arregló en Chromium** (cache `v25`): `MC.motion.swap` animaba `#panel-body` mientras se reemplazaba su contenido y Chromium dejaba el hit-test del contenedor viejo; ahora se anima la hoja nueva (antes 1/6 corridas fallaban, después 0/9). Falta confirmarlo en el navegador o celular de la dueña y en otros motores. Detalle en [`PAGES_INDEX_INVESTIGATION.md`](PAGES_INDEX_INVESTIGATION.md).
 
 ## 5. Cómo retomar (paso a paso)
 

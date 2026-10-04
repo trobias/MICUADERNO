@@ -1,6 +1,6 @@
-# Índice de Páginas después de borrar — investigación abierta
+# Índice de Páginas después de borrar — investigación y arreglo
 
-Estado al 04/10/2026: **síntoma de la persona usuaria pendiente de confirmar y resolver**. El commit `3403078` corrigió la cobertura E2E y amplió el diagnóstico; **no modificó la app ni demostró la causa de la falla intermitente**. Este archivo es el punto de partida para cualquier agente que vuelva a trabajar en Páginas, Mis hojas o navegación.
+Estado al 04/10/2026: **reproducido y arreglado en Chromium (cache `v25`)**; queda confirmar en el navegador o dispositivo de la persona usuaria y en otros motores. El commit `3403078` corrigió la cobertura E2E y amplió el diagnóstico; el arreglo de la app está en `js/ui/motion.js` (ver «Causa y arreglo» al final). Este archivo es el punto de partida para cualquier agente que vuelva a trabajar en Páginas, Mis hojas o navegación.
 
 ## Qué se reportó y cuánto importa
 
@@ -22,6 +22,8 @@ En otra corrida se informó **42/43 E2E**, con fallo en el caso del índice. Qui
 | Suite completa antes del ajuste | 43/43 E2E pasaron. |
 | Caso aislado después del ajuste | 1/1 pasó con `tap()` auténtico. |
 | `npm run check` después del ajuste | Sintaxis de 34 JS, 94 unitarias y 43/43 E2E Chromium. |
+| Caso aislado con el arreglo de `motion.js` | 0/9 fallaron (sin el arreglo, 1/6). |
+| `npm run check` con el arreglo | Sintaxis de 35 JS, 99 unitarias y 43/43 E2E Chromium. |
 
 Se encontró un defecto **del test**: el contexto móvil no tenía `hasTouch` y `tap()` hacía fallback silencioso a `click()`. `3403078` habilitó tacto en ese contexto, quitó el fallback y amplió el error de hit-test con enlace, coordenadas, elemento superior, scroll y animaciones del panel. Eso fortalece la prueba móvil y prepara la próxima reproducción; no equivale a reparar el síntoma de escritorio.
 
@@ -33,3 +35,13 @@ Se encontró un defecto **del test**: el contexto móvil no tenía `hasTouch` y 
 4. Corregir la causa demostrada, ejecutar el caso enfocado con `$env:E2E_GREP='páginas: después de borrar'; npm run e2e`, después `npm run check` y revisar a mano mouse/teclado/toque. Mantener una prueba que falle antes y pase después. Actualizar este archivo, `BACKLOG.md`, `HANDOFF.md` y `CHANGELOG.md` al cerrar el síntoma.
 
 **Prioridad:** tratar como falla de navegación si se reproduce; mantenerlo visible en el backlog. La intermitencia del E2E, sin traza ni reproducción actual, no demuestra que deban detenerse tareas independientes de preparación de la nube. La futura vista Mis hojas debe preservar y ampliar este recorrido antes de retirar Páginas.
+
+## Causa y arreglo (04/10/2026, cache `v25`)
+
+**Reproducción.** Con el caso aislado repetido seis veces sin cambios, falló 1 de 6 (`base: 1/6`). En la corrida fallida, `document.elementsFromPoint()` sobre los enlaces del índice **salteaba todo el subárbol de `#panel-body`** (devolvía el `<dialog>` y lo que estaba detrás), el enlace no tomaba foco con `focus()` y no figuraba como ignorado en el árbol de accesibilidad; no había animaciones en curso, ni `inert`, ni diálogos o popovers sobrantes. Forzar `display: none` → `''` en `#panel-body` devolvía de inmediato el hit-test y el foco: el contenido estaba dibujado pero Chromium había quedado con una capa de hit-test vieja del contenedor.
+
+**Causa.** `MC.motion.swap()` animaba `#panel-body` —el contenedor fijo del cuadro— con WAAPI (`opacity`/`transform`) en el mismo tick en que se reemplazaba su contenido (borrar → navegar al índice → dibujo asíncrono de `renderIndex`). Esa combinación (contenedor compuesto que cambia de hijos mientras se anima) dejaba a veces el hit-test del contenedor desactualizado en Chromium.
+
+**Arreglo.** `swap()` ahora anima **la hoja nueva** (`container.firstElementChild`), nunca el contenedor fijo. La transición se ve igual (misma duración, curva y desplazamiento; respeta `html[data-motion]`), pero el contenedor que recibe los clics no queda compuesto. Comprobación: el mismo caso repetido nueve veces con el arreglo, `fix: 0/9` (antes `1/6`), y `npm run check` completo.
+
+**Si vuelve a fallar**, seguir los pasos de arriba: puede haber otra causa en otro motor. El caso E2E se mantiene sin cambios.
