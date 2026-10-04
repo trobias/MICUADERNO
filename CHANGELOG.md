@@ -7,6 +7,7 @@ Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantien
 - El recorrido E2E del índice ahora usa un contexto con tacto real: `tap()` ya no se sustituye silenciosamente por `click()`. Si falla el toque, la prueba falla.
 - Una falla de hit-test ahora informa qué enlace, coordenadas y elemento superior vio Chromium, además del scroll y las animaciones del panel. No se cambió la interfaz ni se atribuye una causa sin una corrida fallida con estos datos.
 - El caso pasó seis veces aislado antes del ajuste y otra vez con `tap()` real. `npm run check` posterior pasó: 94 unit y 43/43 E2E Chromium. Sigue pendiente probar el síntoma original en otros navegadores o con pasos precisos del dispositivo afectado.
+- Investigación y criterio para retomar: [`PAGES_INDEX_INVESTIGATION.md`](PAGES_INDEX_INVESTIGATION.md). El síntoma de la app queda marcado como abierto en `BACKLOG.md`.
 
 ## 2026-10-04 · Emociones con tus propias palabras (A4, cache `v24`)
 

@@ -13,7 +13,7 @@ La referencia visual de la segunda imagen era una paleta pastel (`#F2CFD7`, `#D6
 | Paso | Estado | Evidencia / salida |
 |---|---|---|
 | A0 · Base segura | Hecho | `34e9b6e`: pestaña vieja, `VersionError`, guardado antes de cambio de versión. |
-| A1 · Navegación y bugs | Hecho | `cc7697d`: escenas al salir de Decorar, menús, doble cierre, ruta directa, `trail` en sesión; E2E del índice de Páginas. El fallo original no se reprodujo en Chromium. |
+| A1 · Navegación y bugs | Hecho con seguimiento abierto | `cc7697d`: escenas al salir de Decorar, menús, doble cierre, ruta directa, `trail` en sesión; E2E del índice de Páginas. El síntoma original del índice sigue en investigación: [`PAGES_INDEX_INVESTIGATION.md`](PAGES_INDEX_INVESTIGATION.md). |
 | A2 · Limpieza visual | Hecho | `4f124d7`: sin sombras en stickers/dibujos, fuera “Cuánto ocupa”, colores en tokens. |
 | A3 · Esquema v5 aditivo | Hecho | `a39dad2`: IndexedDB v3, stores `weeks/templates/marks`, campos `feelings`, `feel`, `moves`, bloques de hojas, tema, regla anual, IDs de ocurrencia. Lo nuevo en el esquema **no implica** UI terminada. |
 | A4 · Emociones escritas | Hecho | Día, Actividad, Calendario, Año, Ajustes, observaciones, exportación, impresión y recordatorios con lectura de copias viejas. `npm run check`: 94 unit y 43/43 E2E Chromium; ver `CHANGELOG.md`. |
@@ -21,7 +21,7 @@ La referencia visual de la segunda imagen era una paleta pastel (`#F2CFD7`, `#D6
 
 ### A5 · Menos marcadores y Mis hojas inicial
 
-Quedan Hoy · Mis hojas · Mi año · Ajustes. Eliminar Agenda y Rutinas como marcadores, conservando **todos sus datos** y el motor `js/core/recurrence.js`. `#/agenda` debe redirigir a la semana; rutas antiguas de Rutinas/Páginas a Mis hojas. Mis hojas debe reunir índice actual y repetición, incluso pausadas. Extraer un editor de repetición (`MC.repeat.editor`) reutilizable desde actividades y hojas; empezar con valores de la fecha abierta, contemplar regla anual. Conservar el filtro de calendario por repetición. Si se eliminan scripts, quitarlos de `index.html` y `sw.js` `SHELL`; subir caché. `today.js` hoy toma privacidad de `pages.js`: extraer antes de borrar esa vista. Actualizar rutas, unitarias y E2E de navegación; comprobar que no haya rutinas huérfanas.
+Quedan Hoy · Mis hojas · Mi año · Ajustes. Eliminar Agenda y Rutinas como marcadores, conservando **todos sus datos** y el motor `js/core/recurrence.js`. `#/agenda` debe redirigir a la semana; rutas antiguas de Rutinas/Páginas a Mis hojas. Mis hojas debe reunir índice actual y repetición, incluso pausadas. Extraer un editor de repetición (`MC.repeat.editor`) reutilizable desde actividades y hojas; empezar con valores de la fecha abierta, contemplar regla anual. Conservar el filtro de calendario por repetición. Si se eliminan scripts, quitarlos de `index.html` y `sw.js` `SHELL`; subir caché. `today.js` hoy toma privacidad de `pages.js`: extraer antes de borrar esa vista. Actualizar rutas, unitarias y E2E de navegación; comprobar que no haya rutinas huérfanas. Antes de reemplazar el índice, leer [`PAGES_INDEX_INVESTIGATION.md`](PAGES_INDEX_INVESTIGATION.md) y conservar la prueba de borrar → abrir otra hoja sin salir al calendario.
 
 ### A6 · Semana planner inicial
 
