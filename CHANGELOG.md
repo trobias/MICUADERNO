@@ -2,6 +2,12 @@
 
 Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantiene. El porqué de cada decisión está en `DECISIONS.md` (Dn); lo que falta, en `ROADMAP.md`. Cada entrega que toca archivos de la app sube `CACHE_VERSION` en `sw.js` para que las PWA instaladas se actualicen.
 
+## 2026-10-04 · Cobertura del índice de Páginas tras borrar
+
+- El recorrido E2E del índice ahora usa un contexto con tacto real: `tap()` ya no se sustituye silenciosamente por `click()`. Si falla el toque, la prueba falla.
+- Una falla de hit-test ahora informa qué enlace, coordenadas y elemento superior vio Chromium, además del scroll y las animaciones del panel. No se cambió la interfaz ni se atribuye una causa sin una corrida fallida con estos datos.
+- El caso pasó seis veces aislado antes del ajuste y otra vez con `tap()` real. `npm run check` posterior pasó: 94 unit y 43/43 E2E Chromium. Sigue pendiente probar el síntoma original en otros navegadores o con pasos precisos del dispositivo afectado.
+
 ## 2026-10-04 · Emociones con tus propias palabras (A4, cache `v24`)
 
 **Para quien lo usa**

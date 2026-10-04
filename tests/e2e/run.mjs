@@ -30,7 +30,7 @@ function watchErrors(page) {
 }
 
 async function newPage(browser, opts = {}) {
-  const context = await browser.newContext({ viewport: opts.viewport || { width: 1280, height: 860 }, reducedMotion: opts.reducedMotion || 'no-preference', acceptDownloads: true });
+  const context = await browser.newContext({ viewport: opts.viewport || { width: 1280, height: 860 }, reducedMotion: opts.reducedMotion || 'no-preference', hasTouch: opts.hasTouch === true, acceptDownloads: true });
   const page = await context.newPage();
   const errors = watchErrors(page);
   return { context, page, errors };
@@ -1331,15 +1331,23 @@ async function assertIndexAlive(page, label) {
   await page.waitForTimeout(300);
   const st = await page.evaluate(() => {
     const links = [...document.querySelectorAll('.toc__link')];
-    const hits = links.map((a) => { const r = a.getBoundingClientRect(); const top = document.elementFromPoint(r.left + Math.min(40, r.width / 2), r.top + r.height / 2); return !!top && a.contains(top); });
+    const hits = links.map((a) => {
+      const r = a.getBoundingClientRect();
+      const x = r.left + Math.min(40, r.width / 2), y = r.top + r.height / 2;
+      const top = document.elementFromPoint(x, y);
+      return { ok: !!top && a.contains(top), title: a.textContent.trim(), x: Math.round(x), y: Math.round(y),
+        top: top ? top.tagName.toLowerCase() + (top.id ? '#' + top.id : '') + (top.className && typeof top.className === 'string' ? '.' + top.className.trim().replace(/\s+/g, '.') : '') : null };
+    });
     return {
       hits,
+      panelScroll: document.getElementById('panel').scrollTop,
+      panelAnimations: document.getElementById('panel-body').getAnimations().length,
       extraDialogs: [...document.querySelectorAll('dialog[open]')].filter((d) => d.id !== 'panel').length,
       popovers: [...document.querySelectorAll('[popover]')].filter((p) => p.matches(':popover-open')).length,
       inert: document.querySelectorAll('[inert]').length
     };
   });
-  assert.ok(st.hits.length > 0 && st.hits.every(Boolean), `${label}: algo tapa los enlaces del índice (${JSON.stringify(st)})`);
+  assert.ok(st.hits.length > 0 && st.hits.every((hit) => hit.ok), `${label}: algo tapa los enlaces del índice (${JSON.stringify(st)})`);
   assert.deepEqual([st.extraDialogs, st.popovers, st.inert], [0, 0, 0], `${label}: quedó algo colgado`);
   await page.mouse.move(2, 2);
   await page.hover('.toc__link >> nth=0');
@@ -1389,7 +1397,7 @@ await test('páginas: después de borrar, el índice responde siempre (decorando
     await context.close();
   }
   // Táctil en el celular.
-  const { page, context, errors } = await newPage(browser, { viewport: { width: 375, height: 812 } });
+  const { page, context, errors } = await newPage(browser, { viewport: { width: 375, height: 812 }, hasTouch: true });
   await page.goto(FILE_URL);
   await onboard(page);
   await page.evaluate(async () => { for (const t of ['Uno', 'Dos']) await MC.model.savePage({ title: t, kind: 'text', body: 'x', date: MC.dates.today() }); });
@@ -1399,7 +1407,7 @@ await test('páginas: después de borrar, el índice responde siempre (decorando
   await deletePageFromMenu(page);
   await page.waitForSelector('.toc__link');
   await page.waitForTimeout(300);
-  await page.locator('.toc__link >> nth=0').tap().catch(() => page.click('.toc__link >> nth=0'));
+  await page.locator('.toc__link >> nth=0').tap();
   await page.waitForSelector('.free-page .page-title');
   assert.deepEqual(errors, []);
   await context.close();
