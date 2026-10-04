@@ -207,7 +207,7 @@
       metaEl = null;
       sheet.appendChild(dayMeta());
       sheet.appendChild(MC.images.attachments('page:' + page.id, { onSticker: function (img) { if (scrap) scrap.addImage(img); } }));
-      scrap = MC.scrapbook.attach(sheet, { stickers: page.stickers, label: 'esta página', note: saved, onChange: function (list) { page.stickers = list; persist(); } });
+      scrap = MC.scrapbook.attach(sheet, { stickers: page.stickers, label: 'esta página', note: saved, onChange: function (list) { if (!page) return; page.stickers = list; persist(); } });
       sheet.appendChild(scrap.toolbar);
       if (MC.ui.get('drawOnOpen', null) === page.id) {
         MC.ui.set('drawOnOpen', null);

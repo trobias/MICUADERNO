@@ -137,6 +137,7 @@ Probar a mano además: doble clic en `index.html`; mobile 375px; teclado solo; `
 
 - `file://` bloquea: módulos ES, `fetch` de archivos locales, `@font-face` locales y el manifest. Por eso: scripts clásicos, fuentes embebidas, manifest inyectado solo en http(s).
 - Los datos del día se guardan con borrador local + IndexedDB (ver DECISIONS D13): no saltear `persist()`.
+- Cerrar el cuadro (`requestClose`): no se llama dos veces seguidas (hay guarda) y espera a que el router procese un cambio de ruta pendiente. Llegar directo a un cuadro (PWA, notificación, `?go=`, fin de la bienvenida) siembra el calendario detrás con `seedBase`; el recorrido (`trail`/`at`) vive en `sessionStorage` (T7). Para ver qué tapa un clic en un navegador real: `index.html?debug=hit`.
 - Marcadores (D22): la `nav#tabs` se muda adentro del cuadro abierto y vuelve al cerrarlo (`placeTabs`); no la dupliques.
 - Pantalla única (DECISIONS D17): las vistas que no son el calendario se renderizan dentro de `#panel-body`. Menús/avisos van en `MC.c.layer()` (el diálogo abierto), no en `body`.
 - Imágenes propias (D24): nunca guardar SVG/HTML del usuario; todo pasa por canvas → WebP/PNG (`MC.images.importImage`). Un sticker `img:<id>` sin imagen no se dibuja.

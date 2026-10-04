@@ -83,6 +83,7 @@
     if (!openMenu) return;
     var m = openMenu;
     openMenu = null;
+    m.closed = true;
     document.removeEventListener('pointerdown', m.onOutside, true);
     window.removeEventListener('resize', m.onResize);
     try { if (supportsPopover && m.el.matches(':popover-open')) m.el.hidePopover(); } catch (e) { /* noop */ }
@@ -130,7 +131,9 @@
     openMenu = state;
     var observer = new MutationObserver(function () { if (!menu.isConnected) { anchor.setAttribute('aria-expanded', 'false'); observer.disconnect(); } });
     observer.observe(menu.parentNode, { childList: true });
-    setTimeout(function () { document.addEventListener('pointerdown', state.onOutside, true); }, 0);
+    // Se agrega en el próximo turno (el toque que abrió el menú no lo cierra); si para entonces el menú
+    // ya se cerró, no se agrega: si no, quedaría colgado y cerraría el próximo menú al primer toque.
+    setTimeout(function () { if (!state.closed) document.addEventListener('pointerdown', state.onOutside, true); }, 0);
     window.addEventListener('resize', state.onResize);
     var checked = buttons.filter(function (b) { return b.getAttribute('aria-checked') === 'true'; })[0];
     (checked || buttons[0]).focus();

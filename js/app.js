@@ -36,6 +36,31 @@
   var at = -1;              // posición de la entrada actual en `trail`
   var replacing = false;    // el próximo hashchange reemplaza la entrada actual (location.replace)
   var booted = false;
+  var closing = false;      // un cierre en camino (✕/Esc/afuera repetidos no retroceden el doble)
+  var closingTimer = null;
+
+  /* El recorrido sobrevive a una recarga o a la actualización del service worker (T7). */
+  var TRAIL_KEY = 'mc.trail';
+  function saveTrail() {
+    try { root.sessionStorage.setItem(TRAIL_KEY, JSON.stringify({ trail: trail, at: at, base: lastBaseHash })); } catch (e) { /* sin sessionStorage: cerrar usa lastBaseHash */ }
+  }
+  function loadTrail() {
+    try {
+      var v = JSON.parse(root.sessionStorage.getItem(TRAIL_KEY) || 'null');
+      if (!v || !Array.isArray(v.trail) || typeof v.at !== 'number') return;
+      trail = v.trail.filter(function (x) { return typeof x === 'string'; });
+      at = Math.min(v.at, trail.length - 1);
+      if (typeof v.base === 'string' && v.base) lastBaseHash = v.base;
+    } catch (e) { /* recorrido ilegible: se empieza de nuevo */ }
+  }
+  /** Deja el calendario como primera entrada del historial (antes de un cuadro al que se llegó directo). */
+  function seedBase(baseHash) {
+    trail = [baseHash];
+    at = 0;
+    lastBaseHash = baseHash;
+    try { history.replaceState({ mcAt: 0 }, '', location.pathname + location.search + baseHash); } catch (e) { /* noop */ }
+    saveTrail();
+  }
 
   MC.views = MC.views || {};
 
@@ -256,7 +281,14 @@
   }
 
   /** Cerrar a pedido de la persona: vuelve al calendario usando el historial si se puede. */
-  function requestClose() {
+  function requestClose(tries) {
+    // Si hay un cambio de ruta todavía sin procesar, se cierra después (si no, se mide desde una posición vieja).
+    tries = typeof tries === 'number' ? tries : 0;
+    if (booted && tries < 20 && (location.hash || R.calendar()) !== lastHash) { setTimeout(function () { requestClose(tries + 1); }, 30); return; }
+    if (closing) return;
+    closing = true;
+    clearTimeout(closingTimer);
+    closingTimer = setTimeout(function () { closing = false; }, 1000);
     for (var i = at; i >= 0; i--) {
       var r = trail[i] && parse(trail[i]);
       if (r && r.kind === 'base') {
@@ -287,10 +319,13 @@
       try { history.replaceState({ mcAt: at }, ''); } catch (e) { /* sin historial manejable: cerrar usa lastBaseHash */ }
     }
     replacing = false;
+    saveTrail();
   }
 
   /* ---------- Router ---------- */
   function onHash() {
+    closing = false;
+    clearTimeout(closingTimer);
     var hash = location.hash || R.calendar();
     if (hash === lastHash) return;
     var prev = lastHash ? parse(lastHash) : null;
@@ -308,6 +343,7 @@
       closePanel();
       var fresh = renderBase(route.params);
       lastBaseHash = hash;
+      saveTrail();
       if (!fresh && hadPanel) {
         // Volver del cuadro: si algo cambió (o pasó la medianoche) se redibuja sin parpadeo; el foco vuelve al día.
         if (baseDirty || base.day !== D.today()) refreshBase().then(focusMarkedDay);
@@ -393,9 +429,33 @@
     if (panel && panel.instance && panel.instance.flush) panel.instance.flush();
   }
 
+  /**
+   * `?debug=hit`: muestra abajo qué elemento queda bajo el puntero y si hay diálogos, menús o partes inertes
+   * abiertos. Sirve para que la dueña vea, en su propio navegador, qué tapa un clic que “no anda”.
+   */
+  function setupHitDebug() {
+    var out = h('div.hit-debug', { 'aria-hidden': 'true' });
+    function describe(el) {
+      if (!el || !el.tagName) return '—';
+      var cls = typeof el.className === 'string' && el.className.trim() ? '.' + el.className.trim().split(/\s+/).join('.') : '';
+      return el.tagName.toLowerCase() + (el.id ? '#' + el.id : '') + cls;
+    }
+    document.addEventListener('pointermove', function (e) {
+      var layer = MC.c.layer();
+      if (out.parentNode !== layer) layer.appendChild(out); // arriba de todo, también con un cuadro abierto
+      var chain = [];
+      for (var el = document.elementFromPoint(e.clientX, e.clientY); el && chain.length < 4; el = el.parentElement) chain.push(describe(el));
+      var dialogs = MC.$$('dialog[open]').map(describe);
+      var popovers = MC.$$('[popover]').filter(function (p) { return p.matches(':popover-open'); }).length;
+      out.textContent = 'bajo el puntero: ' + chain.join(' ‹ ') + '\ndiálogos abiertos: ' + (dialogs.join(', ') || 'ninguno') +
+        ' · menús: ' + popovers + ' · inertes: ' + document.querySelectorAll('[inert]').length;
+    }, { passive: true });
+  }
+
   function boot() {
     MC.icons.injectSprite();
     buildTabs();
+    if (/[?&]debug=hit(&|$)/.test(location.search)) setupHitDebug();
     document.getElementById('panel-close').appendChild(MC.icon('close'));
     document.getElementById('panel-close').addEventListener('click', requestClose);
     // Esc cierra el cuadro, pero por el router (así el historial queda coherente).
@@ -452,6 +512,16 @@
       var start = function () {
         booted = true;
         lastHash = null;
+        var reloaded = history.state && typeof history.state.mcAt === 'number';
+        if (reloaded) loadTrail();
+        else {
+          var first = parse(location.hash || R.calendar());
+          if (first && first.kind !== 'base' && first.kind !== 'onboarding') {
+            var target = location.hash;
+            seedBase(R.calendar());
+            history.pushState(null, '', location.pathname + location.search + target);
+          }
+        }
         window.addEventListener('hashchange', onHash);
         onHash();
         if (MC.scenes) MC.scenes.start();
@@ -608,8 +678,14 @@
     }
   }
 
+  /** Fin de la bienvenida: el calendario reemplaza su entrada y recién ahí se abre `hash`. */
+  function leaveOnboarding(hash) {
+    seedBase(R.calendar());
+    location.hash = hash;
+  }
+
   MC.app = {
-    refresh: refresh, go: function (hash) { location.hash = hash; }, applySettings: applySettings, parse: parse,
+    refresh: refresh, go: function (hash) { location.hash = hash; }, applySettings: applySettings, parse: parse, leaveOnboarding: leaveOnboarding,
     panelOpen: function () { return !!panel; }, closePanel: requestClose, booted: function () { return booted; }
   };
 

@@ -176,5 +176,9 @@
     schedule(true);
   }
 
-  MC.scenes = { start: start, play: function (n) { stop(); play(n || pick()); }, stop: stop, canPlay: canPlay, NAMES: Object.keys(SCENES) };
+  MC.scenes = {
+    start: start, play: function (n) { stop(); play(n || pick()); }, stop: stop, canPlay: canPlay, NAMES: Object.keys(SCENES),
+    /** Para diagnosticar (y para las pruebas): qué está frenando las escenas. */
+    state: function () { return { decorating: decorating, dialogs: dialogs, running: !!running }; }
+  };
 })(window);

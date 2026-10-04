@@ -383,7 +383,23 @@
       draw: drawNew,
       /** Pegar una imagen propia (p. ej. un adjunto usado como sticker). */
       addImage: function (img) { if (!decorating) setDecorating(true); add('img:' + img.id); },
-      destroy: function () { flushPending(); if (noteTwin) noteTwin.release(); root.removeEventListener('blur', flushPending); document.removeEventListener('visibilitychange', onVisibility); document.removeEventListener('keydown', onShortcut, true); offHistory(); if (MC.history.active() === history) MC.history.activate(null); layer.remove(); toolbar.remove(); pageEl.classList.remove('is-decorating'); }
+      destroy: function () {
+        // Si guardar lo pendiente falla (p. ej. la hoja ya se borró), la limpieza se hace igual
+        // y la navegación sigue: un error acá no puede dejar el cuadro a medio cambiar.
+        try { flushPending(); } catch (e) { console.warn('[MI CUADERNO] No se pudo guardar lo último de los stickers:', e); } finally {
+          if (noteTwin) noteTwin.release();
+          root.removeEventListener('blur', flushPending);
+          document.removeEventListener('visibilitychange', onVisibility);
+          document.removeEventListener('keydown', onShortcut, true);
+          offHistory();
+          if (MC.history.active() === history) MC.history.activate(null);
+          layer.remove();
+          toolbar.remove();
+          pageEl.classList.remove('is-decorating');
+          // Salir de una hoja mientras se decora no puede dejar las escenas trabadas para toda la sesión.
+          if (decorating) { decorating = false; MC.emit('decorating', false); }
+        }
+      }
     };
   }
 

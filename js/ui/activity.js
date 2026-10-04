@@ -167,7 +167,7 @@
     more.addEventListener('click', function () {
       var items = M.STATUSES.map(function (st) {
         return {
-          label: st === 'pending' ? 'Sin marcar' : M.STATUS_LABEL[st], role: 'menuitemradio', checked: it.status === st,
+          label: M.STATUS_LABEL[st], role: 'menuitemradio', checked: it.status === st,
           icon: STATUS_ICON[st], onSelect: function () { setStatus(st); }
         };
       });

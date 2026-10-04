@@ -1258,6 +1258,183 @@ await test('base: si otra pestaña la actualiza, lo que se estaba escribiendo se
   await context.close();
 });
 
+/* ---------- A1: arreglos de base ---------- */
+/** Después de borrar una página, el índice tiene que responder: el enlace está arriba de todo y no queda nada colgado. */
+async function assertIndexAlive(page, label) {
+  await page.waitForSelector('.toc__link');
+  await page.waitForTimeout(300);
+  const st = await page.evaluate(() => {
+    const links = [...document.querySelectorAll('.toc__link')];
+    const hits = links.map((a) => { const r = a.getBoundingClientRect(); const top = document.elementFromPoint(r.left + Math.min(40, r.width / 2), r.top + r.height / 2); return !!top && a.contains(top); });
+    return {
+      hits,
+      extraDialogs: [...document.querySelectorAll('dialog[open]')].filter((d) => d.id !== 'panel').length,
+      popovers: [...document.querySelectorAll('[popover]')].filter((p) => p.matches(':popover-open')).length,
+      inert: document.querySelectorAll('[inert]').length
+    };
+  });
+  assert.ok(st.hits.length > 0 && st.hits.every(Boolean), `${label}: algo tapa los enlaces del índice (${JSON.stringify(st)})`);
+  assert.deepEqual([st.extraDialogs, st.popovers, st.inert], [0, 0, 0], `${label}: quedó algo colgado`);
+  await page.mouse.move(2, 2);
+  await page.hover('.toc__link >> nth=0');
+  assert.equal(await page.evaluate(() => document.querySelector('.toc__link').matches(':hover')), true, `${label}: el índice no responde al mouse`);
+  await page.click('.toc__link >> nth=0');
+  await page.waitForSelector('.free-page .page-title');
+}
+async function deletePageFromMenu(page) {
+  await page.click('button[aria-label="Opciones de la página"]');
+  await page.click('.menu__item:has-text("Borrar la página")');
+  await page.click('dialog.sheet button:has-text("Mandar a la papelera")');
+}
+
+await test('páginas: después de borrar, el índice responde siempre (decorando, con dibujo, con deshacer; file:// y http://)', async () => {
+  for (const url of [FILE_URL, HTTP_URL]) {
+    const { page, context, errors } = await newPage(browser);
+    await page.goto(url);
+    await onboard(page);
+    await page.evaluate(async () => { for (const t of ['Uno', 'Dos', 'Tres', 'Cuatro', 'Cinco']) await MC.model.savePage({ title: t, kind: 'text', body: 'x', date: MC.dates.today() }); });
+    await goto(page, await page.evaluate(() => MC.routes.pages()));
+    await page.click('.toc__link >> nth=0');
+    await page.waitForSelector('.free-page .page-title');
+    await deletePageFromMenu(page);
+    await assertIndexAlive(page, 'simple');
+    // Decorando: queda el modo decorar prendido al borrar.
+    await page.click('button:has-text("Pegar un sticker")');
+    await page.click('dialog.sheet .sticker-pick >> nth=0');
+    await page.waitForSelector('.free-page.is-decorating');
+    await page.locator('button[aria-label="Opciones de la página"]').focus();
+    await page.keyboard.press('Enter');
+    await page.click('.menu__item:has-text("Borrar la página")');
+    await page.click('dialog.sheet button:has-text("Mandar a la papelera")');
+    await assertIndexAlive(page, 'decorando');
+    // Borrar → Deshacer → borrar otra vez.
+    await deletePageFromMenu(page);
+    await page.click('.toast button:has-text("Deshacer")');
+    await page.waitForSelector('.free-page .page-title');
+    await deletePageFromMenu(page);
+    await assertIndexAlive(page, 'deshacer');
+    // Con teclado: Enter sobre un enlace del índice abre la página.
+    await deletePageFromMenu(page);
+    await page.waitForSelector('.toc__link');
+    await page.locator('.toc__link >> nth=0').focus();
+    await page.keyboard.press('Enter');
+    await page.waitForSelector('.free-page .page-title');
+    assert.deepEqual(errors, []);
+    await context.close();
+  }
+  // Táctil en el celular.
+  const { page, context, errors } = await newPage(browser, { viewport: { width: 375, height: 812 } });
+  await page.goto(FILE_URL);
+  await onboard(page);
+  await page.evaluate(async () => { for (const t of ['Uno', 'Dos']) await MC.model.savePage({ title: t, kind: 'text', body: 'x', date: MC.dates.today() }); });
+  await goto(page, await page.evaluate(() => MC.routes.pages()));
+  await page.click('.toc__link >> nth=0');
+  await page.waitForSelector('.free-page .page-title');
+  await deletePageFromMenu(page);
+  await page.waitForSelector('.toc__link');
+  await page.waitForTimeout(300);
+  await page.locator('.toc__link >> nth=0').tap().catch(() => page.click('.toc__link >> nth=0'));
+  await page.waitForSelector('.free-page .page-title');
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+await test('?debug=hit muestra qué queda bajo el puntero, también con un cuadro abierto', async () => {
+  const { page, context, errors } = await newPage(browser);
+  await page.goto(FILE_URL);
+  await onboard(page);
+  await page.goto(FILE_URL + '?debug=hit#/hoy');
+  await openCover(page);
+  await page.waitForSelector('.day-head');
+  await page.mouse.move(300, 300);
+  await page.mouse.move(320, 310);
+  await page.waitForFunction(() => { const d = document.querySelector('.hit-debug'); return d && /bajo el puntero/.test(d.textContent) && /dialog#panel/.test(d.textContent) && !!d.closest('dialog'); });
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+await test('escenas: salir de una hoja mientras se decora no las deja trabadas', async () => {
+  const { page, context, errors } = await newPage(browser);
+  await page.goto(FILE_URL);
+  await onboard(page);
+  await page.evaluate(async () => { await MC.model.savePage({ title: 'Para decorar', kind: 'text', body: 'x', date: MC.dates.today() }); });
+  await goto(page, await page.evaluate(() => MC.routes.pages()));
+  await page.click('.toc__link >> nth=0');
+  await page.click('button:has-text("Pegar un sticker")');
+  await page.click('dialog.sheet .sticker-pick >> nth=0');
+  await page.waitForSelector('.free-page.is-decorating');
+  await page.click('#panel-close');
+  await page.waitForFunction(() => !document.getElementById('panel').open);
+  assert.deepEqual(await page.evaluate(() => MC.scenes.state()), { decorating: false, dialogs: 0, running: false });
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+await test('menú: uno que se cerró enseguida no cierra el próximo', async () => {
+  const { page, context, errors } = await newPage(browser);
+  await page.goto(FILE_URL);
+  await onboard(page);
+  await page.evaluate(async () => { await MC.model.savePage({ title: 'Con menú', kind: 'text', body: 'x', date: MC.dates.today() }); });
+  await goto(page, await page.evaluate(() => MC.routes.pages()));
+  await page.click('.toc__link >> nth=0');
+  await page.waitForSelector('.free-page .page-title');
+  // Un menú que se abre y se cierra en el mismo instante (p. ej. al cambiar de vista).
+  await page.evaluate(() => { const a = document.querySelector('button[aria-label="Opciones de la página"]'); MC.c.menu(a, [{ label: 'x', onSelect() {} }]); MC.c.closeMenu(false); });
+  await page.waitForTimeout(50);
+  await page.click('button[aria-label="Opciones de la página"]');
+  await page.click('.menu__item:has-text("Privacidad de esta página")');
+  await page.waitForSelector('dialog.sheet:has-text("Privacidad de esta página")');
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+await test('volver al calendario: doble cierre, arranque directo en un cuadro y recarga (T7)', async () => {
+  const { page, context, errors } = await newPage(browser);
+  await page.goto(FILE_URL);
+  await onboard(page);
+  // Al terminar la bienvenida, cerrar Hoy vuelve al calendario y “atrás” no muestra la bienvenida.
+  await page.click('#panel-close');
+  await page.waitForFunction(() => !document.getElementById('panel').open);
+  assert.equal(await page.evaluate(() => MC.app.parse(location.hash).kind), 'base');
+  // Doble cierre: dos pedidos seguidos retroceden una sola vez.
+  await page.click('.tab[data-tab="anio"]');
+  await page.waitForFunction(() => document.getElementById('panel').open);
+  await page.click('.tab[data-tab="ajustes"]');
+  await page.waitForSelector('#panel .settings-page, #panel h1');
+  await page.evaluate(() => { MC.app.closePanel(); MC.app.closePanel(); MC.app.closePanel(); });
+  await page.waitForFunction(() => !document.getElementById('panel').open);
+  await page.waitForTimeout(400);
+  assert.ok(page.url().startsWith('file:'), 'el doble cierre sacó a la persona del cuaderno');
+  assert.equal(await page.evaluate(() => MC.app.parse(location.hash).kind), 'base');
+  // Recarga con un cuadro abierto: cerrar vuelve por el historial (adelante sigue estando el cuadro).
+  await page.click('.tab[data-tab="hoy"]');
+  await page.waitForSelector('.day-head');
+  await page.reload();
+  await openCover(page);
+  await page.waitForSelector('.day-head');
+  await page.click('#panel-close');
+  await page.waitForFunction(() => !document.getElementById('panel').open);
+  await page.goForward();
+  await page.waitForSelector('.day-head');
+  assert.deepEqual(errors, []);
+  await context.close();
+  // Arranque directo en un cuadro (PWA #/hoy, notificación): cerrar no suma pasos y “atrás” no lo reabre.
+  const second = await newPage(browser);
+  await second.page.goto(FILE_URL);
+  await onboard(second.page);
+  const fresh = await second.context.newPage();
+  await fresh.goto(FILE_URL + '#/hoy');
+  await openCover(fresh);
+  await fresh.waitForSelector('.day-head');
+  await fresh.click('#panel-close');
+  await fresh.waitForFunction(() => !document.getElementById('panel').open);
+  assert.equal(await fresh.evaluate(() => MC.app.parse(location.hash).kind), 'base');
+  await fresh.goBack().catch(() => {});
+  await fresh.waitForTimeout(300);
+  assert.ok(!fresh.url().includes('#/hoy'), 'atrás volvió a abrir Hoy');
+  await second.context.close();
+});
+
 await browser.close();
 server.close();
 const failed = results.filter((r) => !r[0]);

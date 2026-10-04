@@ -240,6 +240,19 @@
   function momentRank(m) { var i = MOMENTS.indexOf(m); return i === -1 ? 3 : i; }
 
   /**
+   * Ocurrencias de rutina en `date` que todavía no tienen actividad guardada (virtuales): el único lugar
+   * que las calcula (lista del día, resumen del calendario, semana). `marked(r)` dice si ya está marcada.
+   */
+  function routineOccurrences(routines, date, marked) {
+    var out = [];
+    (routines || []).forEach(function (r) {
+      if (isDeleted(r) || marked(r) || !R.occursOn(r, date)) return;
+      out.push({ id: 'v:' + r.id + ':' + date, virtual: true, date: date, title: r.title, status: 'pending', routineId: r.id, order: 0, movedFrom: null });
+    });
+    return out;
+  }
+
+  /**
    * Lista del día: actividades guardadas + ocurrencias de rutinas todavía no marcadas (virtuales).
    * Orden: rutinas (mañana → noche → cuando sea), después las propias por `order`.
    */
@@ -252,16 +265,7 @@
       stored.forEach(function (a) { if (a.routineId) byRoutine[a.routineId] = a; });
       var routineMap = {};
       rs.forEach(function (r) { routineMap[r.id] = r; });
-      var fromRoutines = [];
-      rs.forEach(function (r) {
-        if (byRoutine[r.id]) return;
-        if (R.occursOn(r, date)) {
-          fromRoutines.push({
-            id: 'v:' + r.id + ':' + date, virtual: true, date: date, title: r.title, status: 'pending',
-            routineId: r.id, order: 0, movedFrom: null
-          });
-        }
-      });
+      var fromRoutines = routineOccurrences(rs, date, function (r) { return !!byRoutine[r.id]; });
       var routineItems = fromRoutines.concat(stored.filter(function (a) { return a.routineId; }));
       routineItems.sort(function (a, b) {
         var ra = routineMap[a.routineId], rb = routineMap[b.routineId];
@@ -578,12 +582,11 @@
     });
     if (extra.routines && extra.routines.length && from && to) {
       D.range(from, to).forEach(function (k) {
-        extra.routines.forEach(function (r) {
-          if (isDeleted(r) || marked[r.id + '|' + k] || !R.occursOn(r, k)) return;
+        routineOccurrences(extra.routines, k, function (r) { return marked[r.id + '|' + k]; }).forEach(function (v) {
           var s = at(k);
           s.total++; s.pending++; s.planned++; s.routines++;
-          s.byRoutine[r.id] = 'pending';
-          s.items.push({ title: r.title, kind: 'routine', status: 'pending' });
+          s.byRoutine[v.routineId] = 'pending';
+          s.items.push({ title: v.title, kind: 'routine', status: 'pending' });
         });
       });
     }
@@ -720,7 +723,7 @@
   }
 
   MC.model = {
-    STATUSES: STATUSES, STATUS_LABEL: STATUS_LABEL, MOMENTS: MOMENTS, MOMENT_LABEL: MOMENT_LABEL,
+    STATUSES: STATUSES, STATUS_LABEL: STATUS_LABEL, routineOccurrences: routineOccurrences, MOMENTS: MOMENTS, MOMENT_LABEL: MOMENT_LABEL,
     COVERS: COVERS, MOTION: MOTION, PAPERS: PAPERS, PRIVACY_FLAGS: PRIVACY_FLAGS, TRASH_RETENTION: TRASH_RETENTION,
     sanitizePrivacy: sanitizePrivacy, isPrivate: isPrivate, sanitizeDeletedAt: sanitizeDeletedAt, isDeleted: isDeleted,
     defaultSettings: defaultSettings, mergeSettings: mergeSettings,

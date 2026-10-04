@@ -489,3 +489,6 @@ dialog.sheet.sheet--draw { width: min(760px, calc(100vw - 16px)); max-height: ca
 .attachment__name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink); }
 .attachment__size { margin-left: auto; padding-left: 8px; font-size: var(--fs-xs); color: var(--ink-soft); white-space: nowrap; }
 .attachment__thumb { width: 34px; height: 34px; object-fit: cover; border-radius: 4px; flex: none; }
+
+/* `?debug=hit` (solo diagnóstico): qué queda bajo el puntero. */
+.hit-debug { position: fixed; left: 8px; bottom: 8px; z-index: 2147483647; pointer-events: none; max-width: calc(100vw - 16px); padding: 4px 8px; border-radius: 6px; background: var(--ink); color: var(--paper); font: 12px/1.35 var(--font-ui); white-space: pre-wrap; }

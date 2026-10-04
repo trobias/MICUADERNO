@@ -156,7 +156,6 @@ Al empezar un ítem: pasarlo a NOW, leer `VISION.md` §0 y la decisión que lo c
 | T3 | Subir `CACHE_VERSION` automáticamente en `npm run dist`. | NEXT | Hoy `v19`. |
 | T4 | Sacar los `woff2` duplicados del dist (las fuentes ya van embebidas). | LATER | |
 | T5 | Un ícono por atajo de la PWA. | LATER | |
-| T7 | Después de recargar la página, cerrar el cuadro no conoce los pasos anteriores a la recarga y vuelve al calendario sumando un paso nuevo (no rompe nada; “atrás” sigue andando). | LATER | `js/app.js` `track`/`requestClose`. Se podría guardar `trail` en `sessionStorage`. |
 | T8 | Los números de la suite (unit/E2E) y la caché se repiten a mano en `AGENTS.md`, `HANDOFF.md`, `ROADMAP.md` y `README.md`, y se desactualizan. | LATER | Junto con T3: que `npm run check`/`dist` los informe, o nombrarlos en un solo lugar. |
 
 ## BLOCKED / descartado
@@ -184,3 +183,4 @@ Ya no están arriba porque están hechos. El detalle, en `CHANGELOG.md` (por fec
 | PV1 | Privacidad por día o página (no recuerdo / no insights / no revisiones); esquema v4 con migración desde v3. | 02/10/2026 | D26, `DATA_MODEL.md`, `js/core/backup.js` |
 | T6 | En el celular, los marcadores se esconden mientras el teclado está abierto. | 02/10/2026 | DESIGN §10, `js/app.js` |
 | — | La ✕ del cuadro vuelve siempre al calendario (antes fallaba al ir y volver a la misma hoja). | 03/10/2026 | `CHANGELOG.md`, `js/app.js` |
+| T7 | Cerrar el cuadro después de recargar (o de actualizar el SW) vuelve por el historial: el recorrido vive en `sessionStorage`. También: doble cierre sin retroceder de más, arranque directo en un cuadro (PWA, notificación, `?go=`) y fin de la bienvenida dejan el calendario detrás. | 04/10/2026 | `js/app.js` (`seedBase`, `saveTrail`, `requestClose`) |

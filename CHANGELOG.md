@@ -2,6 +2,22 @@
 
 Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantiene. El porqué de cada decisión está en `DECISIONS.md` (Dn); lo que falta, en `ROADMAP.md`. Cada entrega que toca archivos de la app sube `CACHE_VERSION` en `sw.js` para que las PWA instaladas se actualicen.
 
+## 2026-10-04 · Arreglos de base: escenas, menús y volver al calendario (cache `v21`)
+
+**Para quien lo usa**
+- Las escenas ocasionales ya no se apagan para toda la sesión si salís de una hoja mientras la estás decorando (era una de las razones por las que casi no aparecían).
+- Un menú ya no se cierra solo al primer toque (pasaba si antes otro menú se había abierto y cerrado de golpe).
+- La ✕ (o Esc) tocada dos veces rápido ya no te saca del cuaderno: vuelve una sola vez al calendario.
+- Si abrís el cuaderno directo en Hoy (desde la app instalada, una notificación o un atajo), o recién terminás la bienvenida, cerrar vuelve al calendario y “atrás” ya no reabre Hoy ni la bienvenida.
+- Después de recargar la página, cerrar un cuadro vuelve por el historial como antes de recargar (T7).
+- Para el problema de Páginas que no responden tras borrar: no se pudo reproducir en Chrome (probado en celular, tablet y compu, con mouse y táctil, dibujando, decorando y con Deshacer). Si te vuelve a pasar, abrí el cuaderno con `?debug=hit` al final de la dirección: abajo aparece qué queda bajo el puntero, y con eso se encuentra.
+
+**Para quien lo mantiene** (paso A1 del plan del 03/10)
+- `scrapbook.js` `destroy`: `try/finally`, y avisa `decorating:false` si se sale decorando. `pages.js`: el último cambio de stickers después de borrar la página no revienta. `components.js` `c.menu`: el “tocar afuera” no se agrega si el menú ya se cerró (`state.closed`).
+- `app.js`: `requestClose` con guarda de doble cierre y espera de rutas pendientes; `seedBase` + `leaveOnboarding`; recorrido en `sessionStorage` (`mc.trail`); `?debug=hit`.
+- `model.js`: `routineOccurrences` es el único cálculo de ocurrencias virtuales (lo usan la lista del día y el resumen del calendario). `MC.scenes.state()` para diagnosticar.
+- E2E nuevos (42): índice vivo después de borrar en todas sus variantes (`file://` y `http://`, mouse, teclado y táctil), escenas tras decorar, menú tras un cierre instantáneo, doble cierre / arranque directo / recarga y `?debug=hit`.
+
 ## 2026-10-04 · La base nunca escribe en el aire (cache `v20`)
 
 **Para quien lo usa**
