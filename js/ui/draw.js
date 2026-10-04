@@ -26,6 +26,8 @@
   function paint(ctx, drawing, scale, offsetX, offsetY) {
     offsetX = offsetX || 0; offsetY = offsetY || 0;
     drawing.strokes.forEach(function (s) {
+      // Pasos que este editor todavía no sabe pintar (p. ej. un relleno, D32): se saltean sin romper el dibujo.
+      if (!s.points || !s.points.length) return;
       ctx.save();
       ctx.globalCompositeOperation = s.erase ? 'destination-out' : 'source-over';
       ctx.strokeStyle = s.erase ? '#000' : s.color; // color-ok: la goma borra con cualquier color opaco

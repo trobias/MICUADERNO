@@ -138,7 +138,7 @@ await test('backup: exportar → borrar todo → restaurar deja el cuaderno igua
   await download.saveAs(file);
   const json = JSON.parse(fs.readFileSync(file, 'utf8'));
   assert.equal(json.app, 'mi-cuaderno');
-  assert.equal(json.schemaVersion, 4);
+  assert.equal(json.schemaVersion, await page.evaluate(() => MC.backup.SCHEMA_VERSION));
   assert.equal(json.data.days[0].notes, 'esto tiene que volver');
 
   await page.click('button:has-text("Borrar todo el cuaderno")');
@@ -1217,6 +1217,74 @@ await test('base: si otra pestaña la actualiza, lo que se estaba escribiendo se
     r.onerror = () => rej(r.error);
   }), TODAY);
   assert.equal(notes, 'justo antes de actualizar');
+  await context.close();
+});
+
+await test('base: una base vieja (IDB v2, datos y borrador v4) se actualiza a v3 sin perder nada, y de nuevo es idempotente (A3)', async () => {
+  const { page, context, errors } = await newPage(browser);
+  const seed = await context.newPage();
+  await seed.goto(BLANK_URL);
+  await seed.evaluate((today) => new Promise((res, rej) => {
+    const r = indexedDB.open('mi-cuaderno', 2);
+    r.onupgradeneeded = () => {
+      const db = r.result;
+      db.createObjectStore('meta', { keyPath: 'key' });
+      db.createObjectStore('days', { keyPath: 'date' });
+      const a = db.createObjectStore('activities', { keyPath: 'id' }); a.createIndex('date', 'date'); a.createIndex('routineId', 'routineId');
+      db.createObjectStore('routines', { keyPath: 'id' });
+      const p = db.createObjectStore('pages', { keyPath: 'id' }); p.createIndex('updatedAt', 'updatedAt');
+      db.createObjectStore('images', { keyPath: 'id' });
+      const f = db.createObjectStore('files', { keyPath: 'id' }); f.createIndex('owner', 'owner');
+    };
+    r.onsuccess = () => {
+      const db = r.result;
+      const tx = db.transaction(['meta', 'days', 'routines', 'pages', 'files'], 'readwrite');
+      const at = '2026-10-01T09:00:00.000Z';
+      tx.objectStore('meta').put({ key: 'settings', value: { name: 'Nicole', onboarded: true, showCover: false, cover: 'rosa', moodLabels: ['pesado', 'bajito', 'normal', 'bien', 'muy bien'], motion: 'ninguna', motionChosen: true } });
+      tx.objectStore('meta').put({ key: 'createdAt', value: '2026-09-01T10:00:00.000Z' });
+      tx.objectStore('days').put({ date: today, morning: { mood: 4, at }, evening: { mood: null, at: null }, intention: '', notes: 'escrito en la versión vieja', energy: null, sleep: null, reflection: { good: '', hard: '', lovely: '', keep: '', free: '' }, stickers: [], createdAt: at, updatedAt: at });
+      tx.objectStore('routines').put({ id: 'rut_1', title: 'Regar', rule: { type: 'daily' }, startDate: '2026-09-01', endDate: null, moment: null, archived: false, createdAt: at, updatedAt: at });
+      tx.objectStore('pages').put({ id: 'pag_1', title: 'Ideas viejas', template: 'blank', kind: 'list', paper: 'punteado', body: '', items: [{ id: 'i1', text: 'la plaza' }], pinned: false, date: today, stickers: [], createdAt: at, updatedAt: at });
+      tx.objectStore('files').put({ id: 'fil_1', owner: 'day:' + today, name: 'entrada.txt', type: 'text/plain', size: 4, data: 'data:text/plain;base64,aG9sYQ==', createdAt: at });
+      tx.oncomplete = () => { db.close(); res(); };
+      tx.onerror = () => rej(tx.error);
+    };
+    r.onerror = () => rej(r.error);
+  }), TODAY);
+  // Un borrador con la forma vieja, más nuevo que lo guardado (D13): se tiene que recuperar.
+  await seed.evaluate((today) => localStorage.setItem('mc.ui.draft.' + today, JSON.stringify({ at: Date.now(), day: { date: today, morning: { mood: 2, at: null }, notes: 'borrador más nuevo' } })), TODAY);
+  await seed.close();
+  const check = async () => {
+    await page.waitForSelector('.day-head');
+    await page.waitForFunction(() => document.querySelector('#notes') && document.querySelector('#notes').value === 'borrador más nuevo');
+    const readDb = () => page.evaluate((today) => new Promise((res) => {
+      const r = indexedDB.open('mi-cuaderno');
+      r.onsuccess = () => {
+        const d = r.result;
+        const tx = d.transaction(['files', 'pages', 'days'], 'readonly');
+        const out = { version: d.version, stores: Array.from(d.objectStoreNames).sort(), pageIdx: Array.from(tx.objectStore('pages').indexNames).sort() };
+        tx.objectStore('files').get('fil_1').onsuccess = (e) => { out.fileUpdatedAt = e.target.result.updatedAt; };
+        tx.objectStore('pages').get('pag_1').onsuccess = (e) => { out.pageItems = e.target.result.items.map((i) => i.text); };
+        tx.objectStore('days').get(today).onsuccess = (e) => { out.mood = e.target.result.morning.mood; };
+        tx.oncomplete = () => { d.close(); res(out); };
+      };
+    }), TODAY);
+    // El borrador recuperado se escribe un instante después de mostrarse.
+    let db = await readDb();
+    for (let i = 0; i < 20 && db.mood !== 2; i++) { await page.waitForTimeout(100); db = await readDb(); }
+    assert.equal(db.version, 3);
+    assert.deepEqual(db.stores, ['activities', 'days', 'files', 'images', 'marks', 'meta', 'pages', 'routines', 'templates', 'weeks']);
+    assert.deepEqual(db.pageIdx, ['date', 'updatedAt']);
+    assert.equal(db.fileUpdatedAt, '2026-10-01T09:00:00.000Z');
+    assert.deepEqual(db.pageItems, ['la plaza']);
+    assert.equal(db.mood, 2, 'el borrador (forma vieja) se guardó con su ánimo');
+    assert.equal(await page.locator('.activity:has-text("Regar")').count(), 1);
+  };
+  await page.goto(HTTP_URL + '#/hoy');
+  await check();
+  await page.reload();
+  await check();
+  assert.deepEqual(errors, []);
   await context.close();
 });
 

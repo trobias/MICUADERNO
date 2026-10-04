@@ -2,6 +2,19 @@
 
 Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantiene. El porqué de cada decisión está en `DECISIONS.md` (Dn); lo que falta, en `ROADMAP.md`. Cada entrega que toca archivos de la app sube `CACHE_VERSION` en `sw.js` para que las PWA instaladas se actualicen.
 
+## 2026-10-04 · Contrato de datos v5: lugar para lo nuevo sin perder nada (cache `v23`)
+
+**Para quien lo usa**
+- Por ahora casi nada cambia a la vista: el cuaderno se prepara para la semana-planner, las emociones escritas, las hojas con plantillas y las estrellas. Al abrirlo, la base se actualiza sola y conserva todo, también lo que estaba a medio escribir.
+- “Pasar a mañana” y “Pasar a otro día…” hacen lo mismo con una actividad propia: se muda entera al día nuevo (antes “a mañana” dejaba una copia pospuesta). Las de una rutina siguen quedando “para otro día” en su fecha y aparecen sueltas en la nueva.
+- Si se marcaba muy rápido dos veces una actividad de rutina, podía duplicarse: ya no.
+
+**Para quien lo mantiene** (paso A3 del plan; DECISIONS D27–D36 y DATA_MODEL “Esquema v5”)
+- IndexedDB v3: stores `weeks`, `templates`, `marks`, índice `pages.date`, `files.updatedAt` completado en `onupgradeneeded`.
+- `model.js`: campos nuevos que conviven con los viejos (`feelings`, `feel`, `moves`, `blocks/values/templateId/routineId`, `kind/templateId` de rutinas, herramientas y rellenos de dibujos, `theme`, `emotionColors`, `legacyMoodLabels`); normalizadores de semanas, plantillas y marcas; ids deterministas de ocurrencias (`occurrenceId`) con deduplicación al leer; leer ya no inventa fechas (`stamp` al escribir); papelera para los stores nuevos y para adjuntos con `updatedAt`.
+- `recurrence.js`: regla anual (el 29/02 cae el 28/02 en años comunes). `backup.js`: `SCHEMA_VERSION` 5 y `MIGRATIONS[5]` aditiva.
+- Tests: `schema-v5.test.js` (12) y E2E de actualización real de una base v2 con datos y un borrador viejo (42 recorridos).
+
 ## 2026-10-04 · Stickers sin sombra, fuera “Cuánto ocupa” y todos los colores en tokens (cache `v22`)
 
 **Para quien lo usa**

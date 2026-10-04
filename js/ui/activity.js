@@ -148,6 +148,16 @@
       input.select();
     }
 
+    /** “Pasar a mañana” y “Pasar a otro día…” son lo mismo con otra fecha (una sola regla en el modelo, D34). */
+    function moveToDate(date, message) {
+      var before = MC.clone(it);
+      return M.moveActivity(it, date).then(function (result) { return movedSource(before, result).then(function (after) {
+        recordMove(before, MC.clone(after), before.routineId || before.virtual ? MC.clone(result) : null);
+        c.toast(message || 'Quedó para el ' + D.longLabel(date) + '.', { action: 'Ver ese día', onAction: function () { location.hash = R.day(date); } });
+        if (opts.onMoved) opts.onMoved(it, date);
+      }); });
+    }
+
     function moveTo() {
       var from = it.date;
       c.askDate({
@@ -155,12 +165,7 @@
         hint: it.routineId ? 'Acá queda como “lo dejo para otro día” y en el día nuevo aparece suelta.' : null
       }).then(function (date) {
         if (!date || date === from) return;
-        var before = MC.clone(it);
-        M.moveActivity(it, date).then(function (result) { return movedSource(before, result).then(function (after) {
-          recordMove(before, MC.clone(after), before.routineId || before.virtual ? MC.clone(result) : null);
-          c.toast('Quedó para el ' + D.longLabel(date) + '.', { action: 'Ver ese día', onAction: function () { location.hash = R.day(date); } });
-          if (opts.onMoved) opts.onMoved(it, date);
-        }); });
+        moveToDate(date);
       });
     }
 
@@ -172,15 +177,7 @@
         };
       });
       items.push('sep');
-      items.push({ label: 'Pasar a mañana', icon: 'later', onSelect: function () {
-        var before = MC.clone(it);
-        M.moveToTomorrow(it).then(function (copy) { return movedSource(before, copy).then(function (after) {
-          recordMove(before, MC.clone(after), MC.clone(copy));
-          it.status = 'postponed'; li.dataset.status = 'postponed'; c.setStitch(box, 'postponed', it.title, false); paintMeta();
-          c.toast('Quedó anotado para mañana.');
-          if (opts.onMoved) opts.onMoved(it, D.addDays(it.date, 1));
-        }); });
-      } });
+      items.push({ label: 'Pasar a mañana', icon: 'later', onSelect: function () { moveToDate(D.addDays(it.date, 1), 'Quedó anotado para mañana.'); } });
       items.push({ label: 'Pasar a otro día…', icon: 'calendario', onSelect: moveTo });
       items.push({ label: 'Cambiar el nombre', icon: 'edit', onSelect: startRename });
       if (it.routineId && !it.routineGone) items.push({ label: 'Ver la rutina', icon: 'rutinas', onSelect: function () { location.hash = R.routine(it.routineId); } });

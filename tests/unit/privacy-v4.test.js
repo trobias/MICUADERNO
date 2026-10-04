@@ -55,12 +55,13 @@ function v3Backup() {
   };
 }
 
-test('esquema v4: la versión actual es 4', () => {
-  assert.equal(MC.backup.SCHEMA_VERSION, 4);
+test('esquema: la versión actual es la del contrato v5 (D34) y conserva la migración v4', () => {
+  assert.equal(MC.backup.SCHEMA_VERSION, 5);
   assert.equal(typeof MC.backup.MIGRATIONS[4], 'function');
+  assert.equal(typeof MC.backup.MIGRATIONS[5], 'function');
 });
 
-test('migración v3 → v4: una copia v3 real abre igual y sale como v4', async () => {
+test('migración v3 → v4 → v5: una copia v3 real abre igual y sale con la versión actual', async () => {
   await fresh();
   const original = v3Backup();
   const v = MC.backup.validate(JSON.stringify(original));
@@ -99,10 +100,10 @@ test('migración v3 → v4: una copia v3 real abre igual y sale como v4', async 
   // Los ajustes ganan la retención de la papelera y conservan lo elegido.
   assert.equal(M.settings().trashRetentionDays, 30);
   assert.equal(M.settings().cover, 'rosa');
-  assert.equal(await M.getMeta('schemaVersion'), 4);
+  assert.equal(await M.getMeta('schemaVersion'), MC.backup.SCHEMA_VERSION);
 
   const out = MC.backup.build(all);
-  assert.equal(out.schemaVersion, 4);
+  assert.equal(out.schemaVersion, MC.backup.SCHEMA_VERSION);
   assert.equal(out.data.meta.settings.trashRetentionDays, 30);
   assert.equal(out.data.days.length, 2);
   assert.equal(out.data.pages.length, 2);
@@ -120,7 +121,7 @@ test('migración v3 → v4 no reescribe registros ni pisa una retención elegida
   assert.deepEqual(MC.backup.MIGRATIONS[4]({ days: [] }), { days: [] });
 });
 
-test('copias v1 y v2 siguen abriendo en cadena hasta v4', () => {
+test('copias v1 y v2 siguen abriendo en cadena hasta la versión actual', () => {
   for (const schemaVersion of [1, 2]) {
     const v = MC.backup.validate({ app: 'mi-cuaderno', kind: 'backup', schemaVersion, data: {
       days: [{ date: '2026-03-01', notes: 'hola' }],
@@ -129,12 +130,12 @@ test('copias v1 y v2 siguen abriendo en cadena hasta v4', () => {
     assert.equal(v.ok, true, v.error);
     assert.equal(v.payload.days[0].privacy, null);
     assert.equal(v.payload.pages[0].date, '2026-03-02');
-    assert.equal(v.payload.meta.find((m) => m.key === 'schemaVersion').value, 4);
+    assert.equal(v.payload.meta.find((m) => m.key === 'schemaVersion').value, MC.backup.SCHEMA_VERSION);
   }
 });
 
-test('una copia v5 se rechaza con el mensaje amable', () => {
-  const v = MC.backup.validate({ app: 'mi-cuaderno', kind: 'backup', schemaVersion: 5, data: {} });
+test('una copia de una versión más nueva se rechaza con el mensaje amable', () => {
+  const v = MC.backup.validate({ app: 'mi-cuaderno', kind: 'backup', schemaVersion: MC.backup.SCHEMA_VERSION + 1, data: {} });
   assert.equal(v.ok, false);
   assert.match(v.error, /versión más nueva del cuaderno/);
 });

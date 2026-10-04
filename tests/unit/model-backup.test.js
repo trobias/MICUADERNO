@@ -55,15 +55,16 @@ test('borrar una rutina conserva el historial marcado', async () => {
   assert.equal((await M.itemsForDay('2026-09-30')).length, 0);
 });
 
-test('pasar a mañana', async () => {
+test('pasar a mañana: una actividad propia se muda entera y anota el paso (D34)', async () => {
   await fresh();
   const a = await M.addActivity('2026-12-31', 'ordenar mi pieza');
   await M.moveToTomorrow(a);
-  const today = await M.itemsForDay('2026-12-31');
+  assert.equal((await M.itemsForDay('2026-12-31')).length, 0);
   const tomorrow = await M.itemsForDay('2027-01-01');
-  assert.equal(today[0].status, 'postponed');
+  assert.equal(tomorrow[0].id, a.id);
   assert.equal(tomorrow[0].title, 'ordenar mi pieza');
   assert.equal(tomorrow[0].movedFrom, '2026-12-31');
+  assert.deepEqual(tomorrow[0].moves.map((m) => [m.from, m.to]), [['2026-12-31', '2027-01-01']]);
 });
 
 test('settings viejos o raros se mezclan con defaults', () => {
@@ -277,7 +278,7 @@ test('backup v3: imágenes y adjuntos van y vuelven; una copia v2 se migra', asy
   await M.saveImage({ kind: 'upload', name: 'flor', src: PNG, w: 1, h: 1 });
   await M.addFile({ owner: 'day:2026-10-01', name: 'a.txt', type: 'text/plain', size: 4, data: 'data:text/plain;base64,aG9sYQ==' });
   const json = MC.backup.build(await M.everything());
-  assert.equal(json.schemaVersion, 4);
+  assert.equal(json.schemaVersion, MC.backup.SCHEMA_VERSION);
   assert.equal(json.data.images.length, 1);
   await MC.backup.wipe();
   assert.equal((await M.loadImages()).length, 0);

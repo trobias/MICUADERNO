@@ -43,8 +43,35 @@
         comeback: false,
         mode: 'tranquilo'
       },
-      notifyAsked: false
+      notifyAsked: false,
+      theme: null,                // v5 (D30): colores propios; null = la tela de la tapa (paso A9)
+      emotionColors: {}           // v5 (D28): color elegido por emoción, { clave: '#RRGGBB' } (paso A4)
     };
+  }
+
+  var HEX6 = /^#[0-9a-fA-F]{6}$/;
+  var THEME_COLORS = ['cloth', 'cloth2', 'paper', 'ink'];
+  var THEME_FINISHES = ['mate', 'satinado', 'brillante'];
+
+  /** Colores propios (v5): solo hex válidos; lo desconocido se descarta. El motor (A9) lo completa. */
+  function sanitizeTheme(t) {
+    if (!t || typeof t !== 'object' || Array.isArray(t)) return null;
+    var out = { preset: typeof t.preset === 'string' ? t.preset.slice(0, 40) : 'propio' };
+    THEME_COLORS.forEach(function (k) { out[k] = HEX6.test(t[k]) ? t[k].toUpperCase() : null; });
+    out.angle = Number.isFinite(Number(t.angle)) ? MC.clamp(Math.round(Number(t.angle)), 0, 360) : 135;
+    out.accents = (Array.isArray(t.accents) ? t.accents : []).filter(function (c) { return HEX6.test(c); }).slice(0, 4).map(function (c) { return c.toUpperCase(); });
+    out.finish = THEME_FINISHES.indexOf(t.finish) !== -1 ? t.finish : 'mate';
+    return out.cloth ? out : null;
+  }
+
+  function sanitizeEmotionColors(m) {
+    var out = {};
+    if (!m || typeof m !== 'object' || Array.isArray(m)) return out;
+    Object.keys(m).slice(0, 200).forEach(function (k) {
+      var key = String(k).trim().slice(0, 40);
+      if (key && HEX6.test(m[k])) out[key] = m[k].toUpperCase();
+    });
+    return out;
   }
 
   /** Mezcla profunda de settings guardados sobre los defaults (tolera settings viejos/incompletos). */
@@ -84,6 +111,12 @@
       if (typeof n.comeback === 'boolean') out.notify.comeback = n.comeback;
       if (['normal', 'tranquilo', 'silencioso'].indexOf(n.mode) !== -1) out.notify.mode = n.mode;
     }
+    out.theme = sanitizeTheme(saved.theme);
+    out.emotionColors = sanitizeEmotionColors(saved.emotionColors);
+    // Los 5 nombres de ánimo congelados al pasar a emociones escritas (D28): convierten `mood n` viejos.
+    if (Array.isArray(saved.legacyMoodLabels) && saved.legacyMoodLabels.length === 5 && saved.legacyMoodLabels.every(function (l) { return typeof l === 'string' && l.trim(); })) {
+      out.legacyMoodLabels = saved.legacyMoodLabels.map(function (l) { return l.trim().slice(0, 24); });
+    }
     return out;
   }
 
@@ -112,12 +145,12 @@
   function emptyDay(date) {
     return {
       date: date,
-      morning: { mood: null, at: null },
+      morning: { mood: null, feelings: null, at: null },
       intention: '',
       notes: '',
       energy: null,
       sleep: null,
-      evening: { mood: null, at: null },
+      evening: { mood: null, feelings: null, at: null },
       reflection: { good: '', hard: '', lovely: '', keep: '', free: '' },
       stickers: [],
       privacy: null,
@@ -145,13 +178,29 @@
   function sanitizeDeletedAt(v) { return typeof v === 'string' && ISO_INSTANT.test(v) && !isNaN(Date.parse(v)) ? v : null; }
   function isDeleted(r) { return !!(r && r.deletedAt); }
 
+  /**
+   * Emociones escritas (v5, D28): textos cortos, sin repetir (sin importar mayúsculas ni tildes), máx. 12.
+   * `null` = nunca se anotaron (distinto de `[]`: se anotaron y se sacaron todas).
+   */
+  function sanitizeFeelings(list) {
+    if (!Array.isArray(list)) return null;
+    var seen = {};
+    return list.filter(function (f) { return typeof f === 'string'; }).map(function (f) { return f.replace(/\s+/g, ' ').trim().slice(0, 40); })
+      .filter(function (f) {
+        var k = f.toLocaleLowerCase('es').normalize('NFD').replace(/[̀-ͯ]/g, '');
+        if (!f || seen[k]) return false;
+        seen[k] = true;
+        return true;
+      }).slice(0, 12);
+  }
+
   function normalizeDay(raw, date) {
     var d = emptyDay(date || (raw && raw.date));
     if (!raw) return d;
     ['morning', 'evening'].forEach(function (k) {
       var m = raw[k] || {};
       var mood = Number(m.mood);
-      d[k] = { mood: mood >= 1 && mood <= 5 ? mood : null, at: typeof m.at === 'string' ? m.at : null };
+      d[k] = { mood: mood >= 1 && mood <= 5 ? mood : null, feelings: sanitizeFeelings(m.feelings), at: typeof m.at === 'string' ? m.at : null };
     });
     d.intention = str(raw.intention);
     d.notes = str(raw.notes);
@@ -186,6 +235,8 @@
   function isEmptyDay(d) {
     if (!d) return true;
     if (d.morning.mood || d.evening.mood || d.energy || d.sleep != null) return false;
+    // Un día con emociones anotadas (aunque no tenga nada más) existe: no se borra al guardar ni al restaurar.
+    if ((d.morning.feelings && d.morning.feelings.length) || (d.evening.feelings && d.evening.feelings.length)) return false;
     if (d.intention.trim() || d.notes.trim()) return false;
     if (d.stickers.length) return false;
     return !Object.keys(d.reflection).some(function (k) { return d.reflection[k].trim(); });
@@ -222,6 +273,26 @@
   }
 
   /* ---------- actividades ---------- */
+  /** Cómo se sintió antes y después de una actividad (v5): `{ before, after }` o null si nunca se anotó. */
+  function sanitizeFeel(f) {
+    if (!f || typeof f !== 'object' || Array.isArray(f)) return null;
+    var before = sanitizeFeelings(f.before) || [], after = sanitizeFeelings(f.after) || [];
+    return before.length || after.length ? { before: before, after: after } : null;
+  }
+
+  /** Pasos “a otro día” de una actividad propia (v5): `[{ from, to, at }]`, los últimos 50. */
+  function sanitizeMoves(list) {
+    if (!Array.isArray(list)) return [];
+    return list.filter(function (m) { return m && D.isValid(m.from) && D.isValid(m.to); }).slice(-50).map(function (m) {
+      return { from: m.from, to: m.to, at: sanitizeDeletedAt(m.at) };
+    });
+  }
+
+  /** Fecha guardada: se respeta si es texto; leer nunca inventa una (D34: “gana el más nuevo” necesita fechas reales). */
+  function stampOf(v) { return typeof v === 'string' && v ? v : null; }
+  /** Al escribir: createdAt si falta y updatedAt ahora. */
+  function stamp(n) { var now = MC.nowISO(); n.createdAt = n.createdAt || now; n.updatedAt = now; return n; }
+
   function normalizeActivity(a) {
     return {
       id: typeof a.id === 'string' ? a.id : MC.uid('act'),
@@ -231,9 +302,11 @@
       routineId: typeof a.routineId === 'string' ? a.routineId : null,
       order: Number.isFinite(a.order) ? a.order : Date.now(),
       movedFrom: D.isValid(a.movedFrom) ? a.movedFrom : null,
+      feel: sanitizeFeel(a.feel),
+      moves: sanitizeMoves(a.moves),
       deletedAt: sanitizeDeletedAt(a.deletedAt),
-      createdAt: a.createdAt || MC.nowISO(),
-      updatedAt: a.updatedAt || MC.nowISO()
+      createdAt: stampOf(a.createdAt),
+      updatedAt: stampOf(a.updatedAt)
     };
   }
 
@@ -259,7 +332,7 @@
   function itemsForDay(date, routines) {
     var routinesP = routines ? Promise.resolve(routines) : getRoutines();
     return Promise.all([S().getAllByIndex('activities', 'date', date), routinesP]).then(function (res) {
-      var stored = res[0].filter(function (a) { return !isDeleted(a); }).map(normalizeActivity);
+      var stored = dedupeOccurrences(res[0].filter(function (a) { return !isDeleted(a); }).map(normalizeActivity));
       var rs = res[1];
       var byRoutine = {};
       stored.forEach(function (a) { if (a.routineId) byRoutine[a.routineId] = a; });
@@ -282,20 +355,42 @@
     });
   }
 
+  /**
+   * Una ocurrencia de repetición por (rutina, fecha): si quedaron dos de antes de los ids deterministas,
+   * se muestra la de id determinista o, si no hay, la más nueva.
+   */
+  function dedupeOccurrences(list) {
+    var keep = {};
+    list.forEach(function (a) {
+      if (!a.routineId) return;
+      var k = a.routineId + '|' + a.date, cur = keep[k];
+      var better = !cur || (a.id === occurrenceId(a.routineId, a.date) && cur.id !== a.id) ||
+        (cur.id !== occurrenceId(cur.routineId, cur.date) && String(a.updatedAt || '') > String(cur.updatedAt || ''));
+      if (better) keep[k] = a;
+    });
+    return list.filter(function (a) { return !a.routineId || keep[a.routineId + '|' + a.date] === a; });
+  }
+
+  /** Id de una ocurrencia materializada (D34): el mismo en todas las pestañas y dispositivos. */
+  function occurrenceId(routineId, date) { return 'act_' + routineId + '_' + date; }
+
   function addActivity(date, title) {
     var t = String(title || '').trim();
     if (!t) return Promise.resolve(null);
-    var a = normalizeActivity({ date: date, title: t, order: Date.now() });
+    var a = stamp(normalizeActivity({ date: date, title: t, order: Date.now() }));
     return S().put('activities', a);
   }
 
   /** Materializa un ítem virtual (ocurrencia de rutina) si hace falta y guarda cambios. */
   function saveItem(item, patch) {
-    var base = item.virtual
-      ? { id: MC.uid('act'), date: item.date, title: item.title, routineId: item.routineId, order: 0, createdAt: MC.nowISO() }
-      : item;
-    var next = normalizeActivity(Object.assign({}, base, patch, { updatedAt: MC.nowISO() }));
-    return S().put('activities', next);
+    if (!item.virtual) return S().put('activities', stamp(normalizeActivity(Object.assign({}, item, patch))));
+    // Si otra pestaña (o un doble toque) ya la materializó, se suma a esa en vez de pisarla.
+    var id = occurrenceId(item.routineId, item.date);
+    return S().get('activities', id).then(function (existing) {
+      var base = existing && !isDeleted(existing) ? existing
+        : { id: id, date: item.date, title: item.title, routineId: item.routineId, order: 0 };
+      return S().put('activities', stamp(normalizeActivity(Object.assign({}, base, patch))));
+    });
   }
 
   function setStatus(item, status) { return saveItem(item, { status: status }); }
@@ -311,27 +406,23 @@
     return S().del('activities', item.id);
   }
 
-  /** “Pasar a mañana”: marca postponed hoy y crea una copia (sin rutina) al día siguiente. */
-  function moveToTomorrow(item) {
-    var next = D.addDays(item.date, 1);
-    return setStatus(item, 'postponed').then(function () {
-      var copy = normalizeActivity({ date: next, title: item.title, order: Date.now(), movedFrom: item.date });
-      return S().put('activities', copy);
-    });
-  }
+  /** “Pasar a mañana”: lo mismo que pasar a otro día, con el día siguiente. */
+  function moveToTomorrow(item) { return moveActivity(item, D.addDays(item.date, 1)); }
 
   /**
-   * Mover a otro día. Una actividad propia cambia de fecha (y recuerda de dónde viene);
-   * una de rutina queda “lo dejé para otro día” en su fecha y se copia suelta al día nuevo.
+   * Mover a otro día (una sola regla para “a mañana” y “a otro día”, D34). Una actividad propia se mueve en el
+   * lugar: mismo id, nueva fecha, y anota el paso en `moves` (así “moviste N cosas” cuenta bien). Una de repetición
+   * queda “lo dejo para otro día” en su fecha y se copia suelta al día nuevo (si no, la ocurrencia reaparecería).
    */
   function moveActivity(item, date) {
     if (!D.isValid(date) || date === item.date) return Promise.resolve(null);
     if (item.routineId || item.virtual) {
       return setStatus(item, 'postponed').then(function () {
-        return S().put('activities', normalizeActivity({ date: date, title: item.title, order: Date.now(), movedFrom: item.date }));
+        return S().put('activities', stamp(normalizeActivity({ date: date, title: item.title, order: Date.now(), movedFrom: item.date })));
       });
     }
-    return saveItem(item, { date: date, movedFrom: item.movedFrom || item.date, order: Date.now() });
+    var moves = (item.moves || []).concat([{ from: item.date, to: date, at: MC.nowISO() }]);
+    return saveItem(item, { date: date, movedFrom: item.movedFrom || item.date, order: Date.now(), moves: moves });
   }
 
   /** Lo que viene: actividades propias desde `from` (rutinas no: aparecen solas en sus días). */
@@ -357,9 +448,12 @@
       endDate: D.isValid(r.endDate) ? r.endDate : null,
       moment: MOMENTS.indexOf(r.moment) !== -1 ? r.moment : null,
       archived: !!r.archived,
+      // v5 (D29): una repetición puede ser una actividad (de siempre) o una hoja que se repite con su plantilla congelada.
+      kind: r.kind === 'sheet' ? 'sheet' : 'activity',
+      templateId: typeof r.templateId === 'string' ? r.templateId.slice(0, 80) : null,
       deletedAt: sanitizeDeletedAt(r.deletedAt),
-      createdAt: r.createdAt || MC.nowISO(),
-      updatedAt: r.updatedAt || MC.nowISO()
+      createdAt: stampOf(r.createdAt),
+      updatedAt: stampOf(r.updatedAt)
     };
   }
 
@@ -374,7 +468,7 @@
   function saveRoutine(r) {
     var n = normalizeRoutine(r);
     if (!n || !n.title) return Promise.reject(new Error('La rutina necesita un nombre y una frecuencia.'));
-    n.updatedAt = MC.nowISO();
+    stamp(n);
     if (n.rule.type === 'once') { n.startDate = n.rule.date < n.startDate ? n.rule.date : n.startDate; }
     return S().put('routines', n);
   }
@@ -403,10 +497,61 @@
       date: D.isValid(p.date) ? p.date : (D.fromISO(p.createdAt) || D.today()),
       stickers: sanitizeStickers(p.stickers),
       privacy: sanitizePrivacy(p.privacy),
+      // v5 (D29): estructura de hoja. Mientras sea null, la hoja sigue con kind/body/items (conviven hasta v6).
+      blocks: sanitizeBlocks(p.blocks),
+      values: sanitizeValues(p.values),
+      templateId: typeof p.templateId === 'string' ? p.templateId.slice(0, 80) : null,
+      routineId: typeof p.routineId === 'string' ? p.routineId.slice(0, 80) : null,
       deletedAt: sanitizeDeletedAt(p.deletedAt),
-      createdAt: p.createdAt || MC.nowISO(),
-      updatedAt: p.updatedAt || MC.nowISO()
+      createdAt: stampOf(p.createdAt),
+      updatedAt: stampOf(p.updatedAt)
     };
+  }
+
+  /* ---------- bloques de hojas y plantillas (v5, D29) ---------- */
+  var BLOCK_TYPES = ['text', 'list', 'checks', 'columns'];
+
+  /** Estructura de una hoja: hasta 24 bloques; columnas de 2 a 4. Devuelve null si no hay bloques. */
+  function sanitizeBlocks(list) {
+    if (!Array.isArray(list)) return null;
+    var seen = {};
+    var out = list.filter(function (b) { return b && BLOCK_TYPES.indexOf(b.type) !== -1; }).slice(0, 24).map(function (b) {
+      var id = typeof b.id === 'string' && /^[\w-]{1,40}$/.test(b.id) && !seen[b.id] ? b.id : MC.uid('blk');
+      seen[id] = true;
+      var block = { id: id, type: b.type, title: str(b.title).slice(0, 80) };
+      if (b.type === 'columns') {
+        var cols = (Array.isArray(b.columns) ? b.columns : []).slice(0, 4).map(function (col) {
+          return { id: typeof (col && col.id) === 'string' && /^[\w-]{1,40}$/.test(col.id) ? col.id : MC.uid('col'), title: str(col && col.title).slice(0, 60) };
+        });
+        while (cols.length < 2) cols.push({ id: MC.uid('col'), title: '' });
+        block.columns = cols;
+      }
+      return block;
+    });
+    return out.length ? out : null;
+  }
+
+  /** Contenido por bloque: texto, lista [{id,text}], casillas [{id,text,done}] o columnas {colId: texto}. */
+  function sanitizeValues(v) {
+    var out = {};
+    if (!v || typeof v !== 'object' || Array.isArray(v)) return out;
+    Object.keys(v).slice(0, 24).forEach(function (k) {
+      if (!/^[\w-]{1,40}$/.test(k)) return;
+      var x = v[k];
+      if (typeof x === 'string') out[k] = str(x);
+      else if (Array.isArray(x)) {
+        out[k] = x.filter(function (it) { return it && typeof it.text === 'string'; }).slice(0, 500).map(function (it) {
+          var item = { id: typeof it.id === 'string' ? it.id.slice(0, 40) : MC.uid('itm'), text: str(it.text).slice(0, 500) };
+          if (typeof it.done === 'boolean') item.done = it.done;
+          return item;
+        });
+      } else if (x && typeof x === 'object') {
+        var cols = {};
+        Object.keys(x).slice(0, 4).forEach(function (c) { if (/^[\w-]{1,40}$/.test(c) && typeof x[c] === 'string') cols[c] = str(x[c]); });
+        out[k] = cols;
+      }
+    });
+    return out;
   }
 
   function getPages() {
@@ -418,9 +563,7 @@
   }
   function getPage(id) { return S().get('pages', id).then(function (p) { return p && !isDeleted(p) ? normalizePage(p) : null; }); }
   function savePage(p) {
-    var n = normalizePage(p);
-    n.updatedAt = MC.nowISO();
-    return S().put('pages', n);
+    return S().put('pages', stamp(normalizePage(p)));
   }
   function deletePage(id) { return sendToTrash('pages', id); }
 
@@ -431,19 +574,30 @@
 
   function num(v, lo, hi, def) { var n = Number(v); return Number.isFinite(n) ? MC.clamp(n, lo, hi) : def; }
 
+  var DRAW_TOOLS = ['technical', 'nib', 'highlighter', 'airbrush', 'graphite'];
+
   /** Trazos y textos de un dibujo, para poder volver a editarlo. Coordenadas 0..1000. */
   function sanitizeDrawing(d) {
     if (!d || typeof d !== 'object') return null;
     var color = function (c) { return typeof c === 'string' && /^#[0-9a-fA-F]{6}$/.test(c) ? c : '#493D3B'; }; // color-ok: color guardado de un trazo
     return {
+      // Trazos y pasos de relleno, en el orden en que se hicieron (v5, D32). Un trazo viejo es “técnico”.
       strokes: (Array.isArray(d.strokes) ? d.strokes : []).slice(0, 2000).map(function (s) {
-        return {
+        if (s && s.tool === 'fill') {
+          return { tool: 'fill', x: num(s.x, 0, 1000, 0), y: num(s.y, 0, 1000, 0), color: color(s.color), tolerance: Math.round(num(s.tolerance, 0, 255, 32)) };
+        }
+        var points = (Array.isArray(s && s.points) ? s.points : []).slice(0, 4000).map(function (p) { return [num(p && p[0], 0, 1000, 0), num(p && p[1], 0, 1000, 0)]; });
+        var out = {
+          tool: DRAW_TOOLS.indexOf(s && s.tool) !== -1 ? s.tool : 'technical',
           color: s && s.erase ? null : color(s && s.color),
           erase: !!(s && s.erase),
           width: num(s && s.width, 1, 80, 6),
-          points: (Array.isArray(s && s.points) ? s.points : []).slice(0, 4000).map(function (p) { return [num(p && p[0], 0, 1000, 0), num(p && p[1], 0, 1000, 0)]; })
+          points: points
         };
-      }).filter(function (s) { return s.points.length; }),
+        if (Array.isArray(s && s.pressure) && s.pressure.length === points.length) out.pressure = s.pressure.map(function (p) { return Math.round(num(p, 0, 1, 0.5) * 1000) / 1000; });
+        if (Number.isFinite(Number(s && s.seed))) out.seed = Math.abs(Math.round(Number(s.seed))) % 2147483647;
+        return out;
+      }).filter(function (s) { return s.tool === 'fill' || s.points.length; }),
       texts: (Array.isArray(d.texts) ? d.texts : []).slice(0, 200).map(function (t) {
         return {
           text: str(t && t.text).slice(0, 300),
@@ -467,8 +621,8 @@
       w: Math.round(num(r.w, 1, 4000, 400)), h: Math.round(num(r.h, 1, 4000, 400)),
       drawing: kind === 'drawing' ? sanitizeDrawing(r.drawing) : null,
       deletedAt: sanitizeDeletedAt(r.deletedAt),
-      createdAt: r.createdAt || MC.nowISO(),
-      updatedAt: r.updatedAt || MC.nowISO()
+      createdAt: stampOf(r.createdAt),
+      updatedAt: stampOf(r.updatedAt)
     };
   }
 
@@ -487,7 +641,7 @@
   function saveImage(r) {
     var n = normalizeImage(r);
     if (!n) return Promise.reject(new Error('Esa imagen no se pudo guardar.'));
-    n.updatedAt = MC.nowISO();
+    stamp(n);
     return S().put('images', n).then(function (v) { imageCache[v.id] = v; MC.emit('images', v); return v; });
   }
   function deleteImage(id) {
@@ -510,7 +664,8 @@
       size: Math.round(num(f.size, 0, 1e9, 0)),
       data: f.data,
       deletedAt: sanitizeDeletedAt(f.deletedAt),
-      createdAt: f.createdAt || MC.nowISO()
+      createdAt: stampOf(f.createdAt),
+      updatedAt: stampOf(f.updatedAt) || stampOf(f.createdAt)   // v5: los viejos no lo tenían
     };
   }
   function filesFor(owner) {
@@ -521,9 +676,59 @@
   function addFile(f) {
     var n = normalizeFile(f);
     if (!n) return Promise.reject(new Error('Ese archivo no se pudo guardar.'));
-    return S().put('files', n);
+    return S().put('files', stamp(n));
   }
   function deleteFile(id) { return sendToTrash('files', id); }
+
+  /* ---------- semanas, plantillas y marcas (v5, D27/D29/D31) ---------- */
+  /** Una semana del planner: “Importante” (casillas) y “Notas”. La clave es el lunes. */
+  function normalizeWeek(w) {
+    if (!w || !D.isValid(w.week)) return null;
+    return {
+      week: D.startOfWeek(w.week),
+      important: (Array.isArray(w.important) ? w.important : []).filter(function (it) { return it && typeof it.text === 'string'; }).slice(0, 40).map(function (it) {
+        return { id: typeof it.id === 'string' ? it.id.slice(0, 40) : MC.uid('imp'), text: str(it.text).slice(0, 200), done: it.done === true };
+      }),
+      notes: str(w.notes),
+      privacy: sanitizePrivacy(w.privacy),
+      deletedAt: sanitizeDeletedAt(w.deletedAt),
+      createdAt: stampOf(w.createdAt),
+      updatedAt: stampOf(w.updatedAt)
+    };
+  }
+
+  /** Plantilla de hoja: estructura (bloques), contenido inicial, papel y stickers. `frozen`: copia de una repetición. */
+  function normalizeTemplate(t) {
+    if (!t || typeof t !== 'object') return null;
+    return {
+      id: typeof t.id === 'string' ? t.id.slice(0, 80) : MC.uid('tpl'),
+      title: str(t.title).trim().slice(0, 120),
+      paper: PAPERS.indexOf(t.paper) !== -1 ? t.paper : 'rayado',
+      blocks: sanitizeBlocks(t.blocks) || [{ id: MC.uid('blk'), type: 'text', title: '' }],
+      values: sanitizeValues(t.values),
+      stickers: sanitizeStickers(t.stickers),
+      frozen: t.frozen === true,
+      deletedAt: sanitizeDeletedAt(t.deletedAt),
+      createdAt: stampOf(t.createdAt),
+      updatedAt: stampOf(t.updatedAt)
+    };
+  }
+
+  var MARK_SOURCES = ['activity', 'day', 'page'];
+  var MARK_KINDS = ['victoria'];
+  /** Referencia a algo del cuaderno (D25.2): hoy, las victorias. Nunca copia el contenido. */
+  function normalizeMark(m) {
+    if (!m || MARK_SOURCES.indexOf(m.sourceType) === -1 || typeof m.sourceId !== 'string' || !m.sourceId) return null;
+    return {
+      id: typeof m.id === 'string' ? m.id.slice(0, 80) : MC.uid('mrk'),
+      sourceType: m.sourceType,
+      sourceId: m.sourceId.slice(0, 120),
+      kind: MARK_KINDS.indexOf(m.kind) !== -1 ? m.kind : 'victoria',
+      deletedAt: sanitizeDeletedAt(m.deletedAt),
+      createdAt: stampOf(m.createdAt),
+      updatedAt: stampOf(m.updatedAt)
+    };
+  }
 
   /* ---------- lectura compartida (calendario, año, impresión, insights) ---------- */
   /** ¿Escribió algo ese día? (notas, intención o alguna reflexión) */
@@ -632,21 +837,24 @@
         routines: all.routines.map(normalizeRoutine).filter(Boolean),
         pages: all.pages.map(normalizePage),
         images: (all.images || []).map(normalizeImage).filter(Boolean),
-        files: (all.files || []).map(normalizeFile).filter(Boolean)
+        files: (all.files || []).map(normalizeFile).filter(Boolean),
+        weeks: (all.weeks || []).map(normalizeWeek).filter(Boolean),
+        templates: (all.templates || []).map(normalizeTemplate).filter(Boolean),
+        marks: (all.marks || []).map(normalizeMark).filter(Boolean)
       };
     });
   }
   function byDate(a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; }
 
-  var TRASH_STORES = ['days', 'activities', 'routines', 'pages', 'images', 'files'];
-  var TRASH_KEYS = { days: 'date', activities: 'id', routines: 'id', pages: 'id', images: 'id', files: 'id' };
+  var TRASH_STORES = ['days', 'activities', 'routines', 'pages', 'images', 'files', 'weeks', 'templates', 'marks'];
+  var TRASH_KEYS = { days: 'date', activities: 'id', routines: 'id', pages: 'id', images: 'id', files: 'id', weeks: 'week', templates: 'id', marks: 'id' };
   function trashStore(store) { if (!TRASH_KEYS[store]) throw new Error('Colección de papelera desconocida.'); }
   function sendToTrash(store, id, now) {
     trashStore(store);
     return S().get(store, id).then(function (row) {
       if (!row || isDeleted(row)) return null;
       row.deletedAt = now || MC.nowISO();
-      if (store !== 'files') row.updatedAt = row.deletedAt;
+      row.updatedAt = row.deletedAt;
       return S().put(store, row);
     });
   }
@@ -655,7 +863,7 @@
     return S().get(store, id).then(function (row) {
       if (!row || !isDeleted(row)) return null;
       row.deletedAt = null;
-      if (store !== 'files') row.updatedAt = MC.nowISO();
+      row.updatedAt = MC.nowISO();
       return S().put(store, row).then(function (saved) {
         if (store === 'images') return loadImages().then(function () { MC.emit('images', saved); return saved; });
         return saved;
@@ -721,9 +929,12 @@
   /** Primer arranque: registra createdAt y cuenta días distintos de apertura. */
   function touchOpen() {
     var today = D.today();
-    return Promise.all([getMeta('createdAt', null), getMeta('lastOpenedDay', null), getMeta('openedDays', 0)]).then(function (r) {
+    return Promise.all([getMeta('createdAt', null), getMeta('lastOpenedDay', null), getMeta('openedDays', 0), getMeta('schemaVersion', null)]).then(function (r) {
       var jobs = [];
       if (!r[0]) jobs.push(setMeta('createdAt', MC.nowISO()));
+      // Marca informativa de la forma de los datos (la autoridad es la versión de IndexedDB, D34).
+      var schema = MC.backup && MC.backup.SCHEMA_VERSION;
+      if (schema && r[3] !== schema) jobs.push(setMeta('schemaVersion', schema));
       if (r[1] !== today) {
         jobs.push(setMeta('lastOpenedDay', today));
         jobs.push(setMeta('openedDays', (r[2] || 0) + 1));
@@ -748,6 +959,10 @@
     activitiesInRange: activitiesInRange,
     normalizeRoutine: normalizeRoutine, getRoutines: getRoutines, saveRoutine: saveRoutine, deleteRoutine: deleteRoutine,
     normalizePage: normalizePage, getPages: getPages, getPage: getPage, savePage: savePage, deletePage: deletePage,
+    sanitizeBlocks: sanitizeBlocks, sanitizeValues: sanitizeValues, BLOCK_TYPES: BLOCK_TYPES,
+    normalizeWeek: normalizeWeek, normalizeTemplate: normalizeTemplate, normalizeMark: normalizeMark,
+    sanitizeFeelings: sanitizeFeelings, sanitizeFeel: sanitizeFeel, sanitizeMoves: sanitizeMoves,
+    sanitizeTheme: sanitizeTheme, sanitizeEmotionColors: sanitizeEmotionColors, occurrenceId: occurrenceId, DRAW_TOOLS: DRAW_TOOLS,
     sanitizeStickers: sanitizeStickers, summarize: summarize, summaryRange: summaryRange, pagesOn: pagesOn, everything: everything,
     hasWriting: hasWriting, countsAsDone: countsAsDone, moodLabel: moodLabel, pageTitle: pageTitle, pageDate: pageDate,
     TRASH_STORES: TRASH_STORES, sendToTrash: sendToTrash, restoreTrash: restoreTrash, trashItems: trashItems,

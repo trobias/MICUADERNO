@@ -4,7 +4,7 @@
   var MC = root.MC || (root.MC = {});
   var D = MC.dates;
 
-  var TYPES = ['daily', 'weekdays', 'interval', 'monthlyDay', 'monthlyNth', 'once'];
+  var TYPES = ['daily', 'weekdays', 'interval', 'monthlyDay', 'monthlyNth', 'yearly', 'once'];
   var NTH_LABEL = { 1: 'Primer', 2: 'Segundo', 3: 'Tercer', 4: 'Cuarto', '-1': 'Último' };
   var WEEKDAY_ORDER = [1, 2, 3, 4, 5, 6, 0]; // lunes primero
 
@@ -31,6 +31,12 @@
         if (D.weekday(key) !== rule.weekday) return false;
         if (rule.nth === -1) return p.d + 7 > D.daysInMonth(p.y, p.m);
         return Math.ceil(p.d / 7) === rule.nth;
+      }
+      case 'yearly': {
+        // Una vez por año (cumpleaños, aniversarios). El 29/02 cae el 28/02 en los años comunes.
+        var month = MC.clamp(rule.month | 0 || 1, 1, 12);
+        var day = MC.clamp(rule.day | 0 || 1, 1, 31);
+        return p.m === month && p.d === Math.min(day, D.daysInMonth(p.y, month));
       }
       case 'once':
         return rule.date === key;
@@ -76,6 +82,7 @@
       case 'interval': base = (r.every | 0) <= 1 ? 'Todos los días' : 'Cada ' + (r.every | 0) + ' días'; break;
       case 'monthlyDay': base = 'Todos los ' + (r.day | 0) + ' del mes'; break;
       case 'monthlyNth': base = (NTH_LABEL[String(r.nth)] || '') + ' ' + D.DAYS[r.weekday] + ' del mes'; break;
+      case 'yearly': base = 'Todos los años, el ' + (r.day | 0) + ' de ' + D.MONTHS[MC.clamp(r.month | 0 || 1, 1, 12) - 1]; break;
       case 'once': base = r.date ? 'Una vez, el ' + D.shortLabel(r.date) : 'Una vez'; break;
       default: base = 'Sin repetición';
     }
@@ -100,6 +107,9 @@
       var nth = parseInt(rule.nth, 10);
       out.nth = [1, 2, 3, 4, -1].indexOf(nth) !== -1 ? nth : 1;
       out.weekday = MC.clamp(parseInt(rule.weekday, 10) || 0, 0, 6);
+    } else if (rule.type === 'yearly') {
+      out.month = MC.clamp(parseInt(rule.month, 10) || 1, 1, 12);
+      out.day = MC.clamp(parseInt(rule.day, 10) || 1, 1, 31);
     } else if (rule.type === 'once') {
       if (!D.isValid(rule.date)) return null;
       out.date = rule.date;

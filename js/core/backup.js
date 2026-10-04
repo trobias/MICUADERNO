@@ -5,7 +5,7 @@
   var D = MC.dates;
   var M = function () { return MC.model; };
 
-  var SCHEMA_VERSION = 4;
+  var SCHEMA_VERSION = 5;
   var APP_ID = 'mi-cuaderno';
 
   /** Migraciones: MIGRATIONS[v] transforma `data` de la versión v-1 a v. */
@@ -30,6 +30,14 @@
       var settings = data.meta && data.meta.settings;
       if (settings && typeof settings === 'object' && settings.trashRetentionDays == null) settings.trashRetentionDays = 30;
       return data;
+    },
+    // v5 (D34, expandir): semanas del planner, plantillas y marcas. Aditiva: los registros viejos conservan su forma
+    // (ánimo 1–5, páginas con kind/body/items) y los normalizadores aceptan las dos. Nada toca updatedAt.
+    5: function (data) {
+      if (data.weeks == null) data.weeks = [];
+      if (data.templates == null) data.templates = [];
+      if (data.marks == null) data.marks = [];
+      return data;
     }
   };
 
@@ -46,7 +54,10 @@
         routines: everything.routines,
         pages: everything.pages,
         images: everything.images || [],
-        files: everything.files || []
+        files: everything.files || [],
+        weeks: everything.weeks || [],
+        templates: everything.templates || [],
+        marks: everything.marks || []
       }
     };
   }
@@ -73,7 +84,7 @@
       if (!MIGRATIONS[step]) return fail('No sé cómo actualizar esta copia (falta la migración ' + step + ').');
       data = MIGRATIONS[step](data);
     }
-    var arrays = ['days', 'activities', 'routines', 'pages', 'images', 'files'];
+    var arrays = ['days', 'activities', 'routines', 'pages', 'images', 'files', 'weeks', 'templates', 'marks'];
     for (var i = 0; i < arrays.length; i++) {
       if (data[arrays[i]] != null && !Array.isArray(data[arrays[i]])) return fail('La sección “' + arrays[i] + '” de la copia está dañada.');
     }
@@ -99,6 +110,14 @@
     var pages = (data.pages || []).filter(function (p) { return p && typeof p === 'object'; }).map(model.normalizePage);
     var images = (data.images || []).map(model.normalizeImage).filter(Boolean);
     var files = (data.files || []).map(model.normalizeFile).filter(Boolean);
+    var seenWeeks = {};
+    var weeks = (data.weeks || []).map(model.normalizeWeek).filter(function (w) {
+      if (!w || seenWeeks[w.week]) return false;
+      seenWeeks[w.week] = true;
+      return true;
+    });
+    var templates = (data.templates || []).map(model.normalizeTemplate).filter(Boolean);
+    var marks = (data.marks || []).map(model.normalizeMark).filter(Boolean);
 
     var meta = data.meta || {};
     var settings = model.mergeSettings(meta.settings);
@@ -112,10 +131,11 @@
     var dates = days.map(function (d) { return d.date; }).concat(activities.map(function (a) { return a.date; })).sort();
     return {
       ok: true,
-      payload: { meta: metaRows, days: days, activities: activities, routines: routines, pages: pages, images: images, files: files },
+      payload: { meta: metaRows, days: days, activities: activities, routines: routines, pages: pages, images: images, files: files, weeks: weeks, templates: templates, marks: marks },
       summary: {
         exportedAt: typeof obj.exportedAt === 'string' ? obj.exportedAt : null,
         days: days.length, activities: activities.length, routines: routines.length, pages: pages.length, images: images.length, files: files.length,
+        weeks: weeks.length, templates: templates.length, marks: marks.length,
         from: dates[0] || null, to: dates[dates.length - 1] || null,
         name: settings.name
       }
@@ -146,7 +166,9 @@
 
   /** Borra todo (mantiene el cuaderno usable, vuelve al onboarding). */
   function wipe() {
-    return MC.store.replaceAll({ meta: [], days: [], activities: [], routines: [], pages: [], images: [], files: [] }).then(function () {
+    var empty = {};
+    MC.store.STORE_NAMES.forEach(function (s) { empty[s] = []; });
+    return MC.store.replaceAll(empty).then(function () {
       return M().loadSettings();
     });
   }

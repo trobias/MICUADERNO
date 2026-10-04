@@ -1,6 +1,6 @@
 # MI CUADERNO — Modelo de datos
 
-`schemaVersion: 4` · Base IndexedDB `mi-cuaderno` (versión IDB 2: stores `images` y `files`).
+`schemaVersion: 5` · Base IndexedDB `mi-cuaderno` (versión IDB 3: stores `weeks`, `templates` y `marks`, índice `pages.date`; ver “Esquema v5”).
 
 ## Principios
 
@@ -227,6 +227,75 @@ En coherencia con DECISIONS D25, la privacidad emocional vive en la fuente de lo
 - **Opcionalidad radical:** ausencia de campo o valores `undefined`/`false` significan inclusión habitual. Un día o página sin privacidad es 100 % válido y no genera deuda técnica ni avisos.
 - **Normalización** (`MC.model.sanitizePrivacy`): solo `true` cuenta como prendido; cualquier otro valor es `false` y los campos desconocidos se descartan. Si no queda ninguna bandera prendida, se guarda `privacy: null`. La privacidad sola no hace que un día vacío exista (`isEmptyDay` no la mira): se guarda junto con lo primero que se anote ese día.
 - **Quién la respeta hoy:** `insights.js` (días con `noInsights` y sus actividades) y *Mi año* → “Lo que guardé” (`noReviews` o `noMemory`). Recuerdos, revisiones y buscador la van a consultar con `MC.model.isPrivate(registro, bandera)` cuando existan.
+
+## Esquema v5 (contrato del 04/10/2026 · DECISIONS D27–D34)
+
+v5 es **aditiva** (D34): los stores y campos nuevos conviven con los viejos hasta el contrato v6 (fin de la etapa A). Los normalizadores aceptan las dos formas, ninguna migración toca `updatedAt` y cada función nueva cambia todos sus consumidores en un mismo commit. Los campos nuevos existen desde v5 aunque su pantalla llegue en un paso posterior (se indica entre paréntesis).
+
+**IndexedDB v3** (`onupgradeneeded`): stores nuevos `weeks`, `templates` y `marks`; índice `pages.date`; `files.updatedAt = createdAt` donde faltaba. La versión de IndexedDB es la autoridad; `meta.schemaVersion` queda como marca informativa.
+
+### `weeks` (keyPath `week`) — la semana-planner (A6)
+```js
+{
+  week: '2026-09-28',             // lunes de la semana (clave)
+  important: [{ id: 'imp_…', text: '', done: false }],   // “Importante” (casillas), máx. 40
+  notes: '',                      // “Notas” de la semana
+  privacy: { … } | null,          // como en días y páginas (PV1)
+  deletedAt: ISO | null,
+  createdAt: ISO | null, updatedAt: ISO | null
+}
+```
+
+### `templates` (keyPath `id`) — plantillas de hojas (A7)
+```js
+{
+  id: 'tpl_…',
+  title: 'Comidas del día',
+  paper: 'rayado' | 'cuadriculado' | 'punteado' | 'liso',
+  blocks: [Block],                // estructura (ver abajo)
+  values: { [blockId]: Value },   // contenido inicial (“con lo escrito”); {} = en blanco
+  stickers: [Placed],
+  frozen: false,                  // true: copia congelada que usa una repetición (no se lista ni se edita)
+  deletedAt: ISO | null,
+  createdAt: ISO | null, updatedAt: ISO | null
+}
+```
+**Block**: `{ id: 'blk_…', type: 'text' | 'list' | 'checks' | 'columns', title: '', columns: [{ id: 'col_…', title: '' }] }` (`columns` solo en `type: 'columns'`, de 2 a 4). Máx. 24 bloques por hoja.
+**Value** según el tipo: `text` → string · `list` → `[{ id, text }]` · `checks` → `[{ id, text, done }]` · `columns` → `{ [colId]: string }`.
+
+### `marks` (keyPath `id`, índice `sourceId`) — referencias (D25.2; victorias en A8)
+```js
+{ id: 'mrk_…', sourceType: 'activity' | 'day' | 'page', sourceId: '…', kind: 'victoria', deletedAt: ISO | null, createdAt: ISO | null }
+```
+
+### Campos nuevos en stores existentes
+| Store | Campo | Forma | Paso |
+|---|---|---|---|
+| `days` | `morning.feelings`, `evening.feelings` | `[string]` (emociones escritas) o `null` si nunca se anotaron; conviven con `mood` hasta v6 | A4 |
+| `activities` | `feel` | `{ before: [string], after: [string] }` o `null` | A4/A6 |
+| `activities` | `moves` | `[{ from: 'AAAA-MM-DD', to: 'AAAA-MM-DD', at: ISO }]`, máx. 50 | A3 |
+| `pages` (hojas) | `blocks`, `values` | como en `templates`; `null` mientras la hoja siga con `kind/body/items` | A7 |
+| `pages` | `templateId`, `routineId` | de qué plantilla nació; de qué repetición es ocurrencia | A7 |
+| `routines` | `kind` | `'activity'` (de siempre) o `'sheet'` (hoja que se repite) | A7 |
+| `routines` | `templateId` | la plantilla congelada que repite (`kind: 'sheet'`) | A7 |
+| `routines.rule` | `type: 'yearly'` | `{ month: 1..12, day: 1..31 }`; el 29/02 cae el 28/02 en años comunes | A3 |
+| `images.drawing.strokes[]` | `tool`, `pressure`, `seed` | `tool`: `'technical'` (los viejos) · `'nib'` · `'highlighter'` · `'airbrush'` · `'graphite'`; `pressure: [0..1]` paralelo a `points`; `seed` entero | A11 |
+| `images.drawing.strokes[]` | paso de relleno | `{ tool: 'fill', x, y, color, tolerance: 0..255 }` (sin `points`), en el mismo orden que los trazos | A11 |
+| `files` | `updatedAt` | ISO (= `createdAt` en los viejos) | A3 |
+| `meta.settings` | `theme` | `null` (tela de la tapa) o `{ preset, cloth, cloth2, angle, paper, ink, accents: [4], finish }` con hex `#RRGGBB` | A9 |
+| `meta.settings` | `emotionColors` | `{ [clave]: '#RRGGBB' }`, máx. 200 | A4 |
+| `meta.settings` | `legacyMoodLabels` | los 5 nombres de ánimo congelados al pasar a emociones (convierte `mood n` → emoción) | A4 |
+
+### Reglas nuevas
+- **Ids deterministas** (D34): una ocurrencia de repetición que se marca se guarda como `act_<idRutina>_<AAAA-MM-DD>` (y una hoja que se repite, `pag_<idRutina>_<AAAA-MM-DD>`): marcarla dos veces, desde dos pestañas o dos dispositivos, escribe el mismo registro. Si quedaron dos de antes, la lista del día muestra uno (el más nuevo).
+- **Pasar a otro día / a mañana**: una actividad propia se mueve en el lugar (mismo id, nueva fecha) y suma un paso a `moves`; una de repetición queda “lo dejo para otro día” en su fecha y se copia suelta al día nuevo (si no, la ocurrencia virtual reaparecería).
+- **Fechas en lectura**: los normalizadores ya no inventan `createdAt`/`updatedAt` al leer un registro sin fecha (quedan `null`); se estampan al escribir.
+- **Día vacío**: un día con emociones (aunque no tenga nada más) no está vacío.
+
+### Migración v4 → v5
+- **En IndexedDB** (`onupgradeneeded` de la versión 3): crea los stores y el índice; completa `files.updatedAt`. Nada más se reescribe.
+- **En una copia `.json`**: `MIGRATIONS[5]` agrega `weeks`, `templates` y `marks` vacíos si faltan. Los registros pasan por los mismos normalizadores. Una copia v6 o más nueva se rechaza (“versión más nueva”).
+- **Contrato v6** (A13): borra `mood`, `kind/body/items`, `cover` y `moodLabels` dentro de `onupgradeneeded`, después de guardar una instantánea y ofrecer “Descargar la copia de antes”.
 
 ## Migraciones
 

@@ -6,15 +6,21 @@
   var MC = root.MC || (root.MC = {});
 
   var DB_NAME = 'mi-cuaderno';
-  var DB_VERSION = 2; // v2: images (stickers propios y dibujos) y files (adjuntos)
+  // v2: images (stickers propios y dibujos) y files (adjuntos).
+  // v3 (esquema v5, D34): weeks (semana-planner), templates (plantillas de hojas), marks (referencias, victorias),
+  // índice pages.date; files.updatedAt completado. Puramente aditiva.
+  var DB_VERSION = 3;
   var STORES = {
     meta: { keyPath: 'key' },
     days: { keyPath: 'date' },
     activities: { keyPath: 'id', indexes: [['date', 'date'], ['routineId', 'routineId']] },
     routines: { keyPath: 'id' },
-    pages: { keyPath: 'id', indexes: [['updatedAt', 'updatedAt']] },
+    pages: { keyPath: 'id', indexes: [['updatedAt', 'updatedAt'], ['date', 'date']] },
     images: { keyPath: 'id' },
-    files: { keyPath: 'id', indexes: [['owner', 'owner']] }
+    files: { keyPath: 'id', indexes: [['owner', 'owner']] },
+    weeks: { keyPath: 'week' },
+    templates: { keyPath: 'id' },
+    marks: { keyPath: 'id', indexes: [['sourceId', 'sourceId']] }
   };
   var STORE_NAMES = Object.keys(STORES);
 
@@ -70,8 +76,9 @@
       var open;
       var blocked = false;
       try { open = root.indexedDB.open(DB_NAME, DB_VERSION); } catch (e) { reject(e); return; }
-      open.onupgradeneeded = function () {
+      open.onupgradeneeded = function (e) {
         var db = open.result;
+        var hadFiles = db.objectStoreNames.contains('files');
         STORE_NAMES.forEach(function (name) {
           var def = STORES[name];
           var os = db.objectStoreNames.contains(name)
@@ -81,6 +88,17 @@
             if (!os.indexNames.contains(ix[0])) os.createIndex(ix[0], ix[1], { unique: false });
           });
         });
+        // v3: los adjuntos viejos no tenían updatedAt (lo necesita “gana el más nuevo” de la etapa B).
+        // Todo pasa dentro de esta misma transacción: si algo falla, la base queda como estaba.
+        if (e.oldVersion < 3 && hadFiles) {
+          open.transaction.objectStore('files').openCursor().onsuccess = function (ev) {
+            var cur = ev.target.result;
+            if (!cur) return;
+            var f = cur.value;
+            if (f && !f.updatedAt && f.createdAt) { f.updatedAt = f.createdAt; cur.update(f); }
+            cur.continue();
+          };
+        }
       };
       open.onsuccess = function () {
         if (blocked) MC.emit('store:unblocked');
