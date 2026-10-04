@@ -352,6 +352,30 @@
     document.body.insertBefore(slip, document.body.firstChild);
   }
 
+  /** Avisos de la base mientras abre (A0): otra pestaña vieja la retiene, o ya es de una versión más nueva. */
+  var storeNotice = null;
+  function showStoreNotice(kind) {
+    hideStoreNotice();
+    var newer = kind === 'newer';
+    storeNotice = h('div.slip.slip--butter.storage-warning.store-notice', { role: newer ? 'alert' : 'status', dataset: { kind: kind } },
+      newer
+        ? [h('p', 'Este cuaderno ya se abrió con una versión más nueva en este navegador.'),
+          h('p.t-soft', 'Recargá para seguir con la versión nueva. Lo que guardaste está a salvo.'),
+          h('div.slip__actions', h('button.label-btn', { type: 'button', on: { click: reloadNewest } }, 'Recargar'))]
+        : [h('p', 'Hay otra pestaña con el cuaderno abierto en una versión anterior.'),
+          h('p.t-soft', 'Cerrala o recargala y este termina de abrirse solo. Mientras tanto no se guarda nada en el aire.')]);
+    document.body.insertBefore(storeNotice, document.body.firstChild);
+  }
+  function hideStoreNotice() { if (storeNotice) { storeNotice.remove(); storeNotice = null; } }
+  /** Si hay una versión nueva esperando en el service worker, se activa antes de recargar. */
+  function reloadNewest() {
+    var sw = navigator.serviceWorker;
+    if (!sw || !sw.getRegistration) { location.reload(); return; }
+    sw.getRegistration().then(function (reg) {
+      if (reg && reg.waiting) reg.waiting.postMessage({ type: 'skipWaiting' });
+    }).catch(function () {}).then(function () { setTimeout(function () { location.reload(); }, 150); });
+  }
+
   function handleShortcut() {
     var params = new URLSearchParams(location.search);
     var go = params.get('go');
@@ -385,6 +409,11 @@
 
     var fellBack = false;
     MC.on('store:fallback', function () { fellBack = true; });
+    MC.on('store:blocked', function () { showStoreNotice('blocked'); });
+    MC.on('store:unblocked', hideStoreNotice);
+    // Otra pestaña actualiza la base: se guarda lo pendiente; cuando la base se cierra, se recarga.
+    MC.on('store:versionchange', flush);
+    MC.on('store:closed', function () { location.reload(); });
     MC.on('store:error', function (err) {
       console.error(err);
       // La hoja abierta ya muestra el fallo y ofrece la copia; fuera de ella, el toast sigue siendo necesario.
@@ -418,7 +447,6 @@
           refreshPanel();
         });
       });
-      MC.on('store:versionchange', function () { location.reload(); });
       handleShortcut();
       var s = MC.model.settings();
       var start = function () {
@@ -439,6 +467,7 @@
         start();
       }
     }).catch(function (err) {
+      if (err && err.name === 'VersionError') { showStoreNotice('newer'); return; }
       console.error(err);
       main.appendChild(h('div.page', h('p.t-text', 'Algo no salió bien al abrir el cuaderno. Probá recargar la página.')));
     });

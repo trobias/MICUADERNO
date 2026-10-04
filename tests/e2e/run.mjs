@@ -1195,6 +1195,69 @@ await test('DA1: editar un día en papelera conserva lo anterior; espacio y rete
   }
 });
 
+/* ---------- A0: la base nunca cae a memoria por una pestaña vieja o una versión más nueva ---------- */
+const BLANK_URL = `http://127.0.0.1:${PORT}/manifest.webmanifest`; // misma origen que el cuaderno, sin la app
+
+await test('base: una pestaña vieja que la retiene avisa y espera; nunca modo memoria (A0)', async () => {
+  const { page, context, errors } = await newPage(browser);
+  const old = await context.newPage();
+  await old.goto(BLANK_URL);
+  // Una “pestaña vieja”: abre la base en una versión anterior y no la suelta.
+  await old.evaluate(() => new Promise((res, rej) => {
+    const r = indexedDB.open('mi-cuaderno', 1);
+    r.onsuccess = () => { window.__db = r.result; res(); };
+    r.onerror = () => rej(r.error);
+  }));
+  await page.goto(HTTP_URL);
+  await page.waitForSelector('.store-notice[data-kind="blocked"]', { timeout: 5000 });
+  assert.equal(await page.locator('.storage-warning:not(.store-notice)').count(), 0);
+  await old.evaluate(() => window.__db.close());
+  await page.locator('.cover__board').waitFor({ timeout: 5000 });
+  assert.equal(await page.locator('.store-notice').count(), 0);
+  assert.equal(await page.evaluate(() => MC.store.kind()), 'indexeddb');
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+await test('base: si ya es de una versión más nueva, pide recargar y no escribe en el aire (A0)', async () => {
+  const { page, context } = await newPage(browser);
+  const other = await context.newPage();
+  await other.goto(BLANK_URL);
+  await other.evaluate(() => new Promise((res, rej) => {
+    const r = indexedDB.open('mi-cuaderno', 99);
+    r.onsuccess = () => { r.result.close(); res(); };
+    r.onerror = () => rej(r.error);
+  }));
+  await page.goto(HTTP_URL);
+  await page.waitForSelector('.store-notice[data-kind="newer"]', { timeout: 5000 });
+  assert.equal(await page.evaluate(() => MC.store.kind()), null);
+  assert.equal(await page.locator('.cover__board').count(), 0);
+  assert.equal(await page.getByRole('button', { name: 'Recargar' }).isVisible(), true);
+  await context.close();
+});
+
+await test('base: si otra pestaña la actualiza, lo que se estaba escribiendo se guarda antes de soltarla (A0)', async () => {
+  const { page, context } = await newPage(browser);
+  await page.goto(HTTP_URL);
+  await onboard(page);
+  await page.fill('#notes', 'justo antes de actualizar');
+  // Sin esperar el guardado, otra pestaña pide una versión nueva de la base.
+  const other = await context.newPage();
+  await other.goto(BLANK_URL);
+  const notes = await other.evaluate((today) => new Promise((res, rej) => {
+    const r = indexedDB.open('mi-cuaderno', 99);
+    r.onsuccess = () => {
+      const db = r.result;
+      const g = db.transaction('days').objectStore('days').get(today);
+      g.onsuccess = () => { db.close(); res(g.result ? g.result.notes : null); };
+      g.onerror = () => rej(g.error);
+    };
+    r.onerror = () => rej(r.error);
+  }), TODAY);
+  assert.equal(notes, 'justo antes de actualizar');
+  await context.close();
+});
+
 await browser.close();
 server.close();
 const failed = results.filter((r) => !r[0]);

@@ -108,6 +108,7 @@ skills/                 colección de skills del proyecto (no es parte de la app
 
 - Datos personales → IndexedDB (`MC.store`). localStorage solo para preferencias de UI (`mc.ui.*`).
 - Si IndexedDB falla, la app entra en **modo memoria** y muestra un papelito pidiendo descargar copia. No perder datos en silencio.
+- Nunca modo memoria por una pestaña vieja (la base queda **bloqueada**: se espera con un papelito “cerrá la otra pestaña”) ni por una base **más nueva** (`VersionError`: se pide recargar). Si otra pestaña actualiza la base, esta guarda lo pendiente, la suelta y recarga (`store:versionchange` → `store:closed`). El service worker nunca retiene la base.
 - Nunca poner contenido escrito por la persona en notificaciones.
 
 ## Cómo probar
@@ -115,7 +116,7 @@ skills/                 colección de skills del proyecto (no es parte de la app
 ```
 npm test          # unit (node:test), sin instalar nada
 npm install       # solo para e2e/íconos: instala playwright-core (no descarga navegadores)
-npm run e2e       # 34 recorridos en file:// y http:// (Chromium en /opt/pw-browsers/chromium o CHROMIUM=/ruta; puerto 4199 o E2E_PORT=…)
+npm run e2e       # recorridos en file:// y http:// (al final informa cuántos pasaron) (Chromium en /opt/pw-browsers/chromium o CHROMIUM=/ruta; puerto 4199 o E2E_PORT=…)
 npm run check     # sintaxis + unit + e2e
 npm run serve     # http://localhost:4173 (probar PWA/SW)
 ```

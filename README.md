@@ -27,7 +27,7 @@ Leé primero [`AGENTS.md`](AGENTS.md) y [`HANDOFF.md`](HANDOFF.md) (traspaso par
 ```
 npm test          # pruebas unitarias (sin dependencias)
 npm install       # solo para e2e e íconos (playwright-core)
-npm run e2e       # 34 recorridos reales en Chromium (file:// y http://)
+npm run e2e       # recorridos reales en Chromium (file:// y http://); al final dice cuántos pasaron
 npm run check     # sintaxis + unit + e2e
 npm run serve     # http://localhost:4173 para probar la PWA
 npm run dist      # arma dist/MI-CUADERNO/ + .zip para regalar

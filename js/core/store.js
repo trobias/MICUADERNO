@@ -68,6 +68,7 @@
     return new Promise(function (resolve, reject) {
       if (!root.indexedDB) { reject(new Error('IndexedDB no disponible')); return; }
       var open;
+      var blocked = false;
       try { open = root.indexedDB.open(DB_NAME, DB_VERSION); } catch (e) { reject(e); return; }
       open.onupgradeneeded = function () {
         var db = open.result;
@@ -81,43 +82,88 @@
           });
         });
       };
-      open.onsuccess = function () { resolve(open.result); };
+      open.onsuccess = function () {
+        if (blocked) MC.emit('store:unblocked');
+        resolve(open.result);
+      };
       open.onerror = function () { reject(open.error); };
-      open.onblocked = function () { reject(new Error('La base está bloqueada por otra pestaña')); };
+      // Otra pestaña con una versión anterior todavía tiene la base abierta. No se cae a memoria
+      // (se escribiría en el aire): se espera a que la suelte y mientras tanto se avisa.
+      open.onblocked = function () { blocked = true; MC.emit('store:blocked'); };
     });
   }
 
   function idbBackend(db) {
-    db.onversionchange = function () { db.close(); MC.emit('store:versionchange'); };
+    var pending = [];     // operaciones en curso (un guardado lee y después escribe)
+    var lastOp = 0;
+    var closed = false;
+
+    function track(p) {
+      lastOp = Date.now();
+      pending.push(p);
+      var done = function () { pending = pending.filter(function (x) { return x !== p; }); };
+      p.then(done, done);
+      return p;
+    }
+    function closedError() { return Promise.reject(new Error('El cuaderno se está actualizando en otra pestaña.')); }
+    /** Espera a que no haya operaciones en curso ni recién empezadas (mín. 200 ms, máx. 2 s). */
+    function settle() {
+      return new Promise(function (resolve) {
+        var t0 = Date.now();
+        (function check() {
+          var now = Date.now();
+          if ((now - t0 > 200 && !pending.length && now - lastOp > 120) || now - t0 > 2000) { resolve(); return; }
+          setTimeout(check, 40);
+        })();
+      });
+    }
+
+    // Otra pestaña necesita actualizar la base: primero se guarda lo pendiente (el app hace flush
+    // al enterarse) y recién después se cierra. Al cerrarse, el app recarga.
+    db.onversionchange = function () {
+      if (closed) return;
+      MC.emit('store:versionchange');
+      setTimeout(function () {
+        settle().then(function () {
+          closed = true;
+          db.close();
+          MC.emit('store:closed');
+        });
+      }, 0);
+    };
     function os(s, mode) { return db.transaction(s, mode || 'readonly').objectStore(s); }
     return {
       kind: 'indexeddb',
-      get: function (s, k) { return req(os(s).get(k)); },
-      getAll: function (s) { return req(os(s).getAll()); },
-      getAllByIndex: function (s, index, value) { return req(os(s).index(index).getAll(value)); },
+      get: function (s, k) { return closed ? closedError() : track(req(os(s).get(k))); },
+      getAll: function (s) { return closed ? closedError() : track(req(os(s).getAll())); },
+      getAllByIndex: function (s, index, value) { return closed ? closedError() : track(req(os(s).index(index).getAll(value))); },
       getRange: function (s, index, lo, hi) {
+        if (closed) return closedError();
         var range = root.IDBKeyRange.bound(lo, hi);
         var store = os(s);
-        return req(index ? store.index(index).getAll(range) : store.getAll(range));
+        return track(req(index ? store.index(index).getAll(range) : store.getAll(range)));
       },
       put: function (s, v) {
+        if (closed) return closedError();
         var tx = db.transaction(s, 'readwrite');
         tx.objectStore(s).put(v);
-        return txDone(tx).then(function () { return v; });
+        return track(txDone(tx).then(function () { return v; }));
       },
       del: function (s, k) {
+        if (closed) return closedError();
         var tx = db.transaction(s, 'readwrite');
         tx.objectStore(s).delete(k);
-        return txDone(tx);
+        return track(txDone(tx));
       },
       replaceAll: function (payload) {
+        if (closed) return closedError();
         var tx = db.transaction(STORE_NAMES, 'readwrite');
         STORE_NAMES.forEach(function (s) {
           var store = tx.objectStore(s);
           store.clear();
           (payload[s] || []).forEach(function (v) { store.put(v); });
         });
-        return txDone(tx);
+        return track(txDone(tx));
       }
     };
   }
@@ -157,6 +203,9 @@
         }
         return backend.kind;
       }).catch(function (err) {
+        // La base es de una versión más nueva del cuaderno (otra pestaña ya se actualizó): este código
+        // no la puede leer. Nunca memoria acá: se perdería lo que se escriba. El app pide recargar.
+        if (err && err.name === 'VersionError') throw err;
         console.warn('[MI CUADERNO] IndexedDB no disponible, uso memoria:', err);
         backend = memoryBackend();
         MC.emit('store:fallback', err);

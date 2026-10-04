@@ -363,7 +363,7 @@ WCAG 2.2 AA como piso: contraste de texto ≥ 4.5:1, foco visible propio, todo o
 
 ## 17. Casos borde que deben funcionar
 
-Sin datos · un día · 30 días · un año (365 días + 1000 actividades) · muchas rutinas (30+) · rutina borrada con historial · fecha pasada y futura · cambio de mes/año · 29 de febrero · regla “día 31” en meses cortos · import del mismo backup dos veces (reemplaza, no duplica) · backup inválido / de otra app / versión futura · almacenamiento lleno o IndexedDB no disponible (aviso + modo de emergencia en memoria con exportación) · dos pestañas abiertas (BroadcastChannel: el calendario de la otra pestaña se redibuja solo; el cuadro abierto se refresca solo si no se está escribiendo) · restauración de elementos desde la papelera · días y páginas con banderas de privacidad activadas.
+Sin datos · un día · 30 días · un año (365 días + 1000 actividades) · muchas rutinas (30+) · rutina borrada con historial · fecha pasada y futura · cambio de mes/año · 29 de febrero · regla “día 31” en meses cortos · import del mismo backup dos veces (reemplaza, no duplica) · backup inválido / de otra app / versión futura · almacenamiento lleno o IndexedDB no disponible (aviso + modo de emergencia en memoria con exportación) · dos pestañas abiertas (BroadcastChannel: el calendario de la otra pestaña se redibuja solo; el cuadro abierto se refresca solo si no se está escribiendo) · una pestaña vieja que retiene la base mientras otra la actualiza (se espera con aviso, nunca modo memoria; la vieja guarda lo pendiente antes de soltarla y recarga) · una base de una versión más nueva que el código (se pide recargar) · restauración de elementos desde la papelera · días y páginas con banderas de privacidad activadas.
 
 ## 18. MVP (criterio de “funciona”)
 

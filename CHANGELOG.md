@@ -2,6 +2,19 @@
 
 Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantiene. El porqué de cada decisión está en `DECISIONS.md` (Dn); lo que falta, en `ROADMAP.md`. Cada entrega que toca archivos de la app sube `CACHE_VERSION` en `sw.js` para que las PWA instaladas se actualicen.
 
+## 2026-10-04 · La base nunca escribe en el aire (cache `v20`)
+
+**Para quien lo usa**
+- Si tenés el cuaderno abierto en otra pestaña con una versión anterior, la nueva ya no arranca “de mentira” (antes caía en un modo que no guardaba nada al cerrar): avisa que hay otra pestaña abierta y termina de abrirse sola cuando la cerrás.
+- Si una pestaña se actualiza mientras escribís en otra, lo que estabas escribiendo se guarda antes de que la otra tome la base, y después recarga.
+- Si el navegador ya tiene una versión más nueva del cuaderno, pide recargar en vez de abrir sin poder guardar.
+
+**Para quien lo mantiene** (paso A0 del plan del 03/10)
+- `js/core/store.js`: `onblocked` emite `store:blocked` y espera (antes rechazaba y caía en memoria); `VersionError` no cae en memoria; ante `versionchange` emite `store:versionchange` (el app hace `flush`), espera a que terminen las operaciones en curso (`settle`, 200 ms–2 s) y recién ahí cierra y emite `store:closed` (el app recarga). Después de cerrar, toda operación devuelve una promesa rechazada.
+- `js/app.js`: papelito `.store-notice` (bloqueada / más nueva con “Recargar”, que activa el SW en espera antes de recargar).
+- `sw.js`: no crea una base vacía si el cuaderno no existe, suelta la conexión en `versionchange` y al terminar cada recordatorio; lee el ánimo viejo y las emociones nuevas.
+- E2E nuevos (37): pestaña vieja que retiene la base, base más nueva, y guardar lo pendiente antes de soltarla.
+
 ## 2026-10-03 · Cerrar el cuadro vuelve siempre al calendario (cache `v19`)
 
 **Para quien lo usa**

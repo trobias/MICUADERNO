@@ -7,3 +7,6 @@ __pycache__/
 node_modules/
 dist/
 .impeccable/review/
+
+# Log que deja Chromium al correr los E2E en Windows
+debug.log

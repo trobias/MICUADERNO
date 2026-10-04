@@ -3,7 +3,7 @@
    NO pasan por acá: viven en IndexedDB. Al cambiar cualquier archivo de SHELL, subir CACHE_VERSION. */
 'use strict';
 
-var CACHE_VERSION = 'mi-cuaderno-v19';
+var CACHE_VERSION = 'mi-cuaderno-v20';
 var SHELL = [
   './', 'index.html', 'manifest.webmanifest',
   'css/fonts.css', 'css/tokens.css', 'css/base.css', 'css/notebook.css', 'css/components.css', 'css/views.css', 'css/print.css',
@@ -78,10 +78,14 @@ self.addEventListener('notificationclick', function (event) {
 function readMeta() {
   return new Promise(function (resolve) {
     var open = indexedDB.open('mi-cuaderno');
+    // Si el cuaderno todavía no existe, no se crea una base vacía desde acá.
+    open.onupgradeneeded = function () { open.transaction.abort(); };
     open.onerror = function () { resolve(null); };
     open.onsuccess = function () {
       var db = open.result;
-      if (!db.objectStoreNames.contains('meta')) { resolve(null); return; }
+      // Nunca retener la base: si el cuaderno se actualiza, la conexión se suelta enseguida.
+      db.onversionchange = function () { db.close(); };
+      if (!db.objectStoreNames.contains('meta')) { db.close(); resolve(null); return; }
       var out = {};
       var tx = db.transaction(['meta', 'days'], 'readonly');
       var meta = tx.objectStore('meta');
@@ -92,10 +96,15 @@ function readMeta() {
       var today = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
       tx.objectStore('days').get(today).onsuccess = function (e) { out.today = e.target.result || null; };
       tx.oncomplete = function () { out.todayKey = today; out.db = db; resolve(out); };
-      tx.onerror = function () { resolve(null); };
+      tx.onerror = function () { db.close(); resolve(null); };
     };
   });
 }
+
+function closeDb(m) { try { if (m && m.db) m.db.close(); } catch (e) { /* ya cerrada */ } }
+
+/** ¿Ya anotó cómo se sintió? Lee la forma vieja (ánimo 1–5) y la nueva (emociones escritas). */
+function felt(part) { return !!(part && (part.mood || (part.feelings && part.feelings.length))); }
 
 function saveLog(db, log) {
   return new Promise(function (resolve) {
@@ -114,7 +123,9 @@ var SW_MESSAGES = {
 
 self.addEventListener('periodicsync', function (event) {
   if (event.tag !== 'mc-reminders') return;
+  var meta = null;
   event.waitUntil(readMeta().then(function (m) {
+    meta = m;
     if (!m || !m.settings || !m.settings.notify || !m.settings.notify.enabled || m.settings.notify.mode === 'silencioso') return;
     var n = m.settings.notify;
     var log = m.notifyLog || {};
@@ -126,13 +137,13 @@ self.addEventListener('periodicsync', function (event) {
       var last = new Date(m.lastOpenedDay + 'T12:00:00');
       if ((now - last) / 864e5 >= 4) kind = 'comeback';
     }
-    if (!kind && n.morning.on && log.morning !== m.todayKey && mins >= toMin(n.morning.time) && mins < toMin(n.morning.time) + 180 && !(m.today && m.today.morning && m.today.morning.mood)) kind = 'morning';
-    if (!kind && n.evening.on && log.evening !== m.todayKey && mins >= toMin(n.evening.time) && mins < toMin(n.evening.time) + 180 && !(m.today && m.today.evening && m.today.evening.mood)) kind = 'evening';
+    if (!kind && n.morning.on && log.morning !== m.todayKey && mins >= toMin(n.morning.time) && mins < toMin(n.morning.time) + 180 && !felt(m.today && m.today.morning)) kind = 'morning';
+    if (!kind && n.evening.on && log.evening !== m.todayKey && mins >= toMin(n.evening.time) && mins < toMin(n.evening.time) + 180 && !felt(m.today && m.today.evening)) kind = 'evening';
     if (!kind) return;
     log[kind] = m.todayKey;
     return self.registration.showNotification(SW_MESSAGES[kind][0], {
       body: SW_MESSAGES[kind][1], icon: 'assets/icons/notification-icon.png', badge: 'assets/icons/notification-badge.png',
       tag: 'mc-' + kind, silent: n.mode !== 'normal', data: { url: './#/hoy' }, lang: 'es-AR'
     }).then(function () { return saveLog(m.db, log); });
-  }));
+  }).then(function () { closeDb(meta); }, function () { closeDb(meta); }));
 });
