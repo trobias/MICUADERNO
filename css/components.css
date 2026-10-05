@@ -131,7 +131,14 @@
 .feelings { display: grid; gap: var(--s-2); min-width: 0; }
 .feelings__list { display: flex; flex-wrap: wrap; gap: var(--s-2); margin: 0; padding: 0; list-style: none; }
 .feeling-chip { display: inline-flex; align-items: center; gap: 5px; min-height: 36px; padding: 2px 4px 2px 9px; border: 1px solid var(--rule-strong); border-radius: var(--radius-label); background: var(--paper); color: var(--ink); }
-.feeling-chip__thread, .feeling-mark__thread { display: inline-block; width: 10px; height: 10px; flex: none; border: 2px solid var(--feeling-color, var(--ink-soft)); border-radius: 50%; }
+/* Parche de una emoción (D49): fondo del color de la emoción, aro de puntadas y el dibujito en papel. */
+.feeling-patch-wrap { display: inline-block; flex: none; width: 18px; height: 18px; line-height: 0; }
+.feeling-patch { display: block; width: 100%; height: 100%; overflow: visible; }
+.feeling-patch__bg { fill: var(--feeling-color, var(--ink-soft)); stroke: color-mix(in srgb, var(--feeling-color, var(--ink-soft)) 72%, var(--ink)); stroke-width: 1; }
+.feeling-patch__ring { fill: none; stroke: var(--paper); stroke-width: 0.9; stroke-dasharray: 1.6 1.5; opacity: 0.75; }
+.feeling-patch__glyph { fill: none; stroke: var(--paper); stroke-width: 2.3; stroke-linecap: round; stroke-linejoin: round; }
+.feeling-patch__glyph .fill, .feeling-patch__glyph.is-star { fill: var(--paper); }
+.feeling-patch__glyph.is-star { stroke-width: 1.2; }
 .feeling-chip__remove { display: grid; place-items: center; width: 30px; height: 30px; padding: 0; border: 0; background: transparent; color: var(--ink-soft); cursor: pointer; }
 .feeling-chip__remove svg { width: 14px; height: 14px; }
 .feeling-chip__remove:focus-visible { outline: 2px solid var(--focus); outline-offset: 0; }
@@ -139,7 +146,8 @@
 .feelings__input { min-width: 0; flex: 1; }
 .feelings__suggestions { display: flex; flex-wrap: wrap; gap: var(--s-1); }
 .feelings__suggestions:empty { display: none; }
-.feelings__suggestion { padding: 3px 7px; border: 1px dashed var(--rule-strong); border-radius: var(--radius-label); color: var(--ink-soft); font-family: var(--font-text); font-style: italic; font-size: var(--fs-xs); }
+.feelings__suggestion { display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px 3px 4px; border: 1px dashed var(--rule-strong); border-radius: var(--radius-label); color: var(--ink-soft); font-family: var(--font-text); font-style: italic; font-size: var(--fs-xs); }
+.feelings__suggestion .feeling-patch-wrap { width: 15px; height: 15px; }
 .feelings__suggestion:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .feeling-mark { display: inline-flex; align-items: center; gap: 5px; min-width: 0; color: var(--ink); font-size: var(--fs-xs); overflow-wrap: anywhere; }
 

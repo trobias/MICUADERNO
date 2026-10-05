@@ -120,13 +120,7 @@
             lineItems.length ? h('span.day-cell__lines', { 'aria-hidden': 'true' },
               lineItems.slice(0, 3).map(function (l) { return h('span.cell-line', { dataset: { kind: l.kind } }, l.title); }),
               lineItems.length > 3 ? h('span.cell-line.cell-line--more', '+' + (lineItems.length - 3) + ' más') : null) : null,
-            h('span.day-cell__marks',
-              info && info.wrote ? h('span.mark-ink', { title: 'escribiste' }) : null,
-              info && info.memory ? h('span.mark-star', { html: '<svg viewBox="0 0 24 24"><use href="#i-star"/></svg>' }) : null,
-              info && info.done ? h('span.mark-x', { 'aria-hidden': 'true' }, '×' + info.done) : null,
-              planned ? h('span.mark-plan', { 'aria-hidden': 'true' }, MC.icon('box'), String(planned)) : null,
-              pages.length ? h('span.mark-page', { 'aria-hidden': 'true' }, MC.icon('paginas')) : null,
-              rMark ? h('span.mark-routine', { 'aria-hidden': 'true' }, MC.icon('rutinas')) : null),
+            dayMarks({ wrote: info && info.wrote, memory: info && info.memory, done: info ? info.done : 0, planned: planned, pages: pages.length, routine: !!rMark }),
             key === marked ? h('span.day-cell__ribbon', { 'aria-hidden': 'true' }) : null);
           // Tocar un día abre su página en el cuadro desplegable.
           btn.addEventListener('click', function () { MC.ui.set('calSelected', key); location.hash = R.day(key); });
@@ -163,19 +157,48 @@
     return { destroy: function () { destroyed = true; }, ready: ready };
   }
 
-  function legend(routine, palette) {
+  /* ---------- Marcas de un día (D49): botoncitos bordados, iguales en el mes y en la semana ----------
+     Cada uno es un círculo con puntadas y su dibujito; el número va al lado. Nunca solo color: dibujito + texto
+     en la leyenda y en el nombre del día. */
+  var MARK_ART = {
+    wrote: '<path d="M12 4.2c2.7 3.6 5 6.3 5 9.1a5 5 0 0 1-10 0c0-2.8 2.3-5.5 5-9.1z"/><path class="mark__shine" d="M10 13.6a2.2 2.2 0 0 0 1.6 2.3"/>',
+    memory: '<path class="mark__fill" d="M12 3.6l2.5 5.1 5.6.8-4 3.9 1 5.6L12 16.4l-5.1 2.6 1-5.6-4-3.9 5.6-.8z"/>',
+    done: '<path d="M6.5 6.5 17.5 17.5M17.5 6.5 6.5 17.5"/>',
+    planned: '<rect x="5" y="5" width="14" height="14" rx="3"/><path class="mark__dash" d="M8.5 12h7"/>',
+    page: '<path d="M7 3.8h7.2L18 7.6v12.6H7z"/><path d="M14 3.8v4h4M9.6 12h5.6M9.6 15.4h4"/>',
+    routine: '<path d="M18.5 9.5A7 7 0 0 0 6 8M5.5 14.5A7 7 0 0 0 18 16"/><path d="M6 4.5V8h3.5M18 19.5V16h-3.5"/>'
+  };
+  function markBadge(kind, n) {
+    return h('span.mark.mark--' + kind, { 'aria-hidden': 'true' },
+      h('span.mark__badge', { html: '<svg viewBox="0 0 24 24" focusable="false">' + MARK_ART[kind] + '</svg>' }),
+      n ? h('span.mark__n', String(n)) : null);
+  }
+  /** Las marcas de un día: { wrote, memory, done, planned, pages, routine }. */
+  function dayMarks(o) {
+    return h('span.day-cell__marks',
+      o.wrote ? markBadge('wrote') : null,
+      o.memory ? markBadge('memory') : null,
+      o.done ? markBadge('done', o.done) : null,
+      o.planned ? markBadge('planned', o.planned) : null,
+      o.pages ? markBadge('page', o.pages > 1 ? o.pages : 0) : null,
+      o.routine ? markBadge('routine') : null);
+  }
+
+  /** Referencias: las emociones con su parche, las marcas y (en el mes) los hilitos. */
+  function legend(routine, palette, opts) {
+    opts = opts || {};
     return h('ul.mood-legend', { 'aria-label': 'Referencias' },
       palette.labels.map(function (label) { return h('li', c.feelingMark(label, palette)); }),
       palette.otherCount ? h('li', 'Otras emociones, con su nombre') : null,
-      h('li', h('span.mark-ink'), 'escribiste'),
-      h('li', h('span.mark-star', { html: '<svg viewBox="0 0 24 24"><use href="#i-star"/></svg>' }), 'recuerdo'),
-      h('li', h('span.mark-x', '×'), 'hecho'),
-      h('li', h('span.mark-plan', MC.icon('box')), 'planeado (también lo que se repite)'),
-      h('li', h('span.mark-page', MC.icon('paginas')), 'hoja'),
-      h('li.legend-line', h('span.cell-line', { dataset: { kind: 'own' } }), 'algo anotado'),
-      h('li.legend-line', h('span.cell-line', { dataset: { kind: 'routine' } }), 'lo que se repite'),
-      h('li.legend-line', h('span.cell-line', { dataset: { kind: 'page' } }), 'título de una hoja'),
-      routine ? h('li', h('span.mark-routine', MC.icon('rutinas')), '«' + routine.title + '»') : null);
+      h('li', markBadge('wrote'), 'escribiste'),
+      h('li', markBadge('memory'), 'recuerdo'),
+      h('li', markBadge('done'), 'hecho'),
+      h('li', markBadge('planned'), opts.week ? 'planeado' : 'planeado (también lo que se repite)'),
+      h('li', markBadge('page'), 'hoja'),
+      opts.week ? null : h('li.legend-line', h('span.cell-line', { dataset: { kind: 'own' } }), 'algo anotado'),
+      opts.week ? null : h('li.legend-line', h('span.cell-line', { dataset: { kind: 'routine' } }), 'lo que se repite'),
+      opts.week ? null : h('li.legend-line', h('span.cell-line', { dataset: { kind: 'page' } }), 'título de una hoja'),
+      routine ? h('li', markBadge('routine'), '«' + routine.title + '»') : null);
   }
 
   /* ---------- SEMANA ---------- */
@@ -185,5 +208,5 @@
   }
 
   MC.views = MC.views || {};
-  MC.views.calendar = { render: render, parts: { modeSwitch: modeSwitch, monthsStrip: monthsStrip } };
+  MC.views.calendar = { render: render, parts: { modeSwitch: modeSwitch, monthsStrip: monthsStrip, dayMarks: dayMarks, legend: legend } };
 })(window);

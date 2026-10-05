@@ -998,6 +998,18 @@
       count: function (value) { return counts[emotionKey(value)] || 0; } };
   }
 
+  /**
+   * Palabras de base para empezar (D49, pedido de la dueña): las de los ánimos de antes. Se ofrecen como sugerencia
+   * después de las que la persona ya usó; nunca se anotan solas ni forman una escala.
+   */
+  var BASE_FEELINGS = moodWordsNow.slice();
+  /** Dibujito del parche de una emoción: 1–5 para las de base (lluvia, nube, sol con nube, flor, sol), 0 = estrellita. */
+  function feelingGlyph(value) {
+    var key = emotionKey(value);
+    for (var i = 0; i < BASE_FEELINGS.length; i++) if (emotionKey(BASE_FEELINGS[i]) === key) return i + 1;
+    return 0;
+  }
+
   function emotionSuggestions() {
     return Promise.all([S().getAll('days'), S().getAll('activities')]).then(function (rows) {
       var counts = {}, labels = {};
@@ -1013,8 +1025,11 @@
       rows[1].filter(function (a) { return !isDeleted(a); }).forEach(function (a) {
         if (a.feel) (a.feel.before || []).concat(a.feel.after || []).forEach(add);
       });
-      return Object.keys(counts).sort(function (a, b) { return counts[b] - counts[a] || a.localeCompare(b, 'es'); })
+      var used = Object.keys(counts).sort(function (a, b) { return counts[b] - counts[a] || a.localeCompare(b, 'es'); })
         .slice(0, 12).map(function (key) { return labels[key]; });
+      // Las de base completan la lista (hasta 12) para tener algo de dónde partir.
+      BASE_FEELINGS.forEach(function (word) { if (used.length < 12 && !counts[emotionKey(word)]) used.push(word); });
+      return used;
     });
   }
 
@@ -1245,6 +1260,7 @@
     getTemplates: getTemplates, getTemplate: getTemplate, getDayTemplates: getDayTemplates, dayTemplateFrom: dayTemplateFrom, applyDayTemplate: applyDayTemplate, repeatDay: repeatDay, saveTemplate: saveTemplate, deleteTemplate: deleteTemplate, templateFrom: templateFrom, repeatSheet: repeatSheet, getWeek: getWeek, saveWeek: saveWeek, isEmptyWeek: isEmptyWeek, normalizeTemplate: normalizeTemplate, normalizeMark: normalizeMark,
     sanitizeFeelings: sanitizeFeelings, sanitizeFeel: sanitizeFeel, sanitizeMoves: sanitizeMoves,
     feelingsOf: feelingsOf, emotionKey: emotionKey, emotionPalette: emotionPalette, emotionSuggestions: emotionSuggestions,
+    BASE_FEELINGS: BASE_FEELINGS, feelingGlyph: feelingGlyph,
     sanitizeTheme: sanitizeTheme, sanitizeEmotionColors: sanitizeEmotionColors, occurrenceId: occurrenceId, DRAW_TOOLS: DRAW_TOOLS,
     sanitizeStickers: sanitizeStickers, summarize: summarize, summaryRange: summaryRange, pagesOn: pagesOn, everything: everything,
     hasWriting: hasWriting, countsAsDone: countsAsDone, pageTitle: pageTitle, pageDate: pageDate,

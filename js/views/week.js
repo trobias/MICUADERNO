@@ -61,6 +61,7 @@
         });
         grid.appendChild(notesCell());
         page.appendChild(grid);
+        page.appendChild(MC.views.calendar.parts.legend(null, palette, { week: true }));
         page.appendChild(h('div.planner__foot', saved));
         scrollToToday(grid);
       });
@@ -148,8 +149,14 @@
       var headLink = h('a.week-day__head', { href: R.day(k), dataset: { date: k, focus: 'head:' + k }, 'aria-label': D.capitalize(D.DAYS[D.weekday(k)]) + ' ' + p.d + ' de ' + D.MONTHS[p.m - 1] + (k === today ? ' (hoy)' : '') },
         h('span.week-day__name', D.capitalize(D.DAYS[D.weekday(k)])),
         h('span.week-day__num.t-display', String(p.d)));
+      // Las mismas marcas que el mes (D49): escribiste, recuerdo, hecho, planeado, hoja.
+      var done = list.filter(function (it) { return M.countsAsDone(it.status); }).length;
+      var planned = k >= today ? list.filter(function (it) { return it.status === 'pending'; }).length : 0;
+      var marks = MC.views.calendar.parts.dayMarks({ wrote: day && M.hasWriting(day), memory: day && day.reflection && day.reflection.keep.trim(), done: done, planned: planned, pages: pages.length });
+      marks.classList.add('week-day__marks');
       cell.appendChild(h('div.week-day__top', headLink,
-        feelings && feelings.length ? h('span.week-day__feelings', feelings.map(function (word) { return c.feelingMark(word, palette); })) : null));
+        feelings && feelings.length ? h('span.week-day__feelings', feelings.map(function (word) { return c.feelingMark(word, palette); })) : null,
+        marks.childNodes.length ? marks : null));
 
       var ul = h('ul.activity-list.activity-list--compact');
       function paint(items) {

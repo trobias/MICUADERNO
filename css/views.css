@@ -104,16 +104,24 @@ a.months__year { text-decoration: none; padding: 4px 6px; border-radius: 6px; }
 .day-cell__num { font-family: var(--font-display); font-size: 1.05rem; line-height: 1; align-self: flex-start; padding-left: 4px; font-variant-numeric: tabular-nums; }
 .day-cell__feelings { display: grid; gap: 1px; min-width: 0; max-width: 100%; justify-items: center; overflow: hidden; }
 .day-cell__feelings .feeling-mark { max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.65rem; }
-.day-cell__feelings .feeling-mark__thread { width: 7px; height: 7px; }
-.day-cell__marks { display: flex; gap: 5px; align-items: center; margin-top: auto; min-height: 14px; font-size: 0.72rem; color: var(--thread-done-text); font-weight: 650; }
-.mark-ink { display: inline-block; width: 7px; height: 7px; border-radius: 50% 40% 55% 45%; background: var(--ink); }
-.mark-star { display: inline-block; width: 13px; height: 13px; color: var(--mood-5); }
-.mark-star svg { width: 13px; height: 13px; fill: var(--mood-5); }
-.mark-x { font-variant-numeric: tabular-nums; }
-.mark-plan { display: inline-flex; align-items: center; gap: 1px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
-.mark-plan .icon, .mark-page .icon { width: 12px; height: 12px; stroke-width: 2; }
-.mark-page { display: inline-flex; color: var(--thread-later); }
-.mood-legend .mark-x { color: var(--thread-done-text); font-weight: 650; }
+.day-cell__feelings .feeling-patch-wrap { width: 11px; height: 11px; }
+.day-cell__marks { display: flex; flex-wrap: wrap; justify-content: center; gap: 3px 5px; align-items: center; margin-top: auto; min-height: 16px; }
+/* Marcas (D49): botoncitos bordados — círculo teñido, aro de puntadas y el dibujito del color de su hilo. */
+.mark { --mark: var(--ink-soft); display: inline-flex; align-items: center; gap: 2px; color: var(--mark); font-size: 0.7rem; font-weight: 650; line-height: 1; font-variant-numeric: tabular-nums; }
+.mark__badge { display: grid; place-items: center; width: 16px; height: 16px; flex: none; border-radius: 50%; background: color-mix(in srgb, var(--mark) 16%, var(--paper)); border: 1px dashed color-mix(in srgb, var(--mark) 65%, transparent); }
+.mark__badge svg { width: 11px; height: 11px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.mark--wrote { --mark: var(--ink); }
+.mark--wrote svg { fill: currentColor; stroke-width: 1.2; }
+.mark--wrote .mark__shine { stroke: var(--paper); stroke-width: 1.6; fill: none; }
+.mark--memory { --mark: var(--mood-5); }
+.mark--memory .mark__fill { fill: currentColor; stroke-width: 1.2; }
+.mark--done { --mark: var(--thread-done-text); }
+.mark--done svg { stroke-width: 3; }
+.mark--planned { --mark: var(--ink-soft); }
+.mark--planned .mark__dash { stroke-dasharray: 2 2; }
+.mark--page { --mark: var(--thread-later); }
+.mark--routine { --mark: var(--thread-done-text); }
+.mark__n { color: var(--mark); }
 .day-cell.is-out { opacity: 0.4; background: transparent; }
 /* Días de una rutina elegida: tinte de salvia (el color del botoncito Rutinas) + su ícono; nunca solo color. */
 .day-cell.is-routine { background: color-mix(in srgb, var(--sage) 50%, var(--paper)); border-color: color-mix(in srgb, var(--thread-done) 40%, transparent); }
@@ -181,6 +189,7 @@ a.months__year { text-decoration: none; padding: 4px 6px; border-radius: 6px; }
 .planner__check:focus-within { border-bottom-color: var(--rule-strong); }
 .planner__cell--notes .write { flex: 1; min-height: 140px; background: transparent; }
 .week-day__top { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 10px; }
+.week-day__marks { margin-top: 0; justify-content: flex-start; }
 .planner .week-day__head { min-height: 44px; }
 .activity-list--compact .activity { min-height: 0; padding-block: 4px; gap: 6px; }
 .activity-list--compact .activity__text { font-size: var(--fs-sm); }
@@ -501,7 +510,10 @@ a.months__year { text-decoration: none; padding: 4px 6px; border-radius: 6px; }
   .page--right > .section:first-of-type, .week-mini__title, .page--margin.settings-page:last-child > .section:first-child { margin-top: var(--s-4); }
   .day-cell { min-height: 58px; padding: 4px 1px; }
   .day-cell__feelings .feeling-mark { max-width: 38px; }
-  .day-cell__marks { font-size: 0.64rem; gap: 3px; }
+  .day-cell__marks { gap: 2px 3px; }
+  .day-cell__marks .mark { font-size: 0.62rem; }
+  .day-cell__marks .mark__badge { width: 12px; height: 12px; }
+  .day-cell__marks .mark__badge svg { width: 9px; height: 9px; }
   .month, .month__row { gap: 2px; }
 }
 
@@ -513,9 +525,10 @@ a.months__year { text-decoration: none; padding: 4px 6px; border-radius: 6px; }
 .cell-line {
   --line: var(--blush);
   display: block; min-width: 0; padding: 1px 4px 1px 6px;
-  border-left: 3px solid var(--line);
-  background: color-mix(in srgb, var(--line) 22%, transparent);
-  border-radius: 0 3px 3px 0;
+  border-left: 3px dashed var(--line); /* el hilo, con puntadas */
+  background: color-mix(in srgb, var(--line) 18%, var(--paper));
+  border-radius: 2px 4px 4px 2px;
+  box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--line) 35%, transparent);
   font-family: var(--font-ui); font-size: 0.68rem; line-height: 1.35; color: var(--ink);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }

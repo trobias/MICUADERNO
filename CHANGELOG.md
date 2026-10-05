@@ -8,6 +8,17 @@ Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantien
 - `.mcp.json` ya está en la rama. La dueña habilitó los dos MCP en su entorno web de Claude Code; el estado de `claude mcp list` en una instalación local distinta no verifica ese entorno.
 - `docs/NUBE.md` registra la verificación de red, los entornos y lo que falta para aplicar la migración SQL existente. Ningún secreto se agregó a Git.
 
+## 2026-10-06 · Emociones con parche y marcas bordadas, también en la semana (cache `v41`)
+
+**Para quien lo usa**
+- Al escribir cómo te sentiste aparecen de entrada *pesado, bajito, normal, bien, muy bien* para tener de dónde partir (después de las palabras que ya usaste).
+- Cada emoción se ve como un parchecito: las de base con su dibujito de antes y las demás con una estrellita. Al cambiarle el color en Ajustes, cambia solo el fondo.
+- Las marcas del calendario (escribiste, recuerdo, hecho, planeado, hoja) son botoncitos bordados, y ahora también aparecen en cada día de la semana, con sus referencias abajo.
+
+**Para quien lo mantiene**
+- `M.BASE_FEELINGS`, `M.feelingGlyph`; `c.feelingPatch`; `MC.stickers.feelingPatchMarkup`; `MC.views.calendar.parts.dayMarks/legend`. D49.
+- Pruebas: 138 unit, 57/57 E2E.
+
 ## 2026-10-06 · El cuaderno compartido con los colores de su dueña (cache `v40`)
 
 **Para quien lo usa**

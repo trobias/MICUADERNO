@@ -419,11 +419,11 @@ await test('el calendario reúne todo: rutinas planeadas, páginas del día y el
   const TOMORROW = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   await goto(page, '#/calendario/mes/' + TOMORROW.slice(0, 7));
   const next = page.locator(`.day-cell[data-date="${TOMORROW}"]`);
-  assert.equal((await next.locator('.mark-plan').textContent()).trim(), '1');
+  assert.equal((await next.locator('.mark--planned').textContent()).trim(), '1');
   assert.match(await next.getAttribute('aria-label'), /una cosa planeada/);
   await goto(page, '#/calendario/mes/' + TODAY.slice(0, 7));
   const cell = page.locator(`.day-cell[data-date="${TODAY}"]`);
-  assert.equal(await cell.locator('.mark-page').count(), 1, 'marca de página en hoy');
+  assert.equal(await cell.locator('.mark--page').count(), 1, 'marca de página en hoy');
   assert.match(await cell.getAttribute('aria-label'), /una página: «Lugares que amo»/);
   await cell.click();
   await page.waitForSelector('#panel[open] #q-pages');
@@ -451,7 +451,7 @@ await test('papelera: borrar una página la saca del mes; restaurarla desde Ajus
   await page.waitForTimeout(500);
   const pageHash = await page.evaluate(() => location.hash);
   const cell = page.locator(`.day-cell[data-date="${TODAY}"]`);
-  const pageMarks = () => page.locator(`.day-cell[data-date="${TODAY}"] .mark-page`).count();
+  const pageMarks = () => page.locator(`.day-cell[data-date="${TODAY}"] .mark--page`).count();
   await goto(page, '#/calendario/mes/' + TODAY.slice(0, 7));
   assert.equal(await pageMarks(), 1, 'la página está en el mes');
   await goto(page, pageHash);
@@ -461,7 +461,7 @@ await test('papelera: borrar una página la saca del mes; restaurarla desde Ajus
   await page.click('dialog[open] button:has-text("Mandar a la papelera")');
   await page.waitForSelector('.toast:has-text("Se fue a la papelera")');
   await goto(page, '#/calendario/mes/' + TODAY.slice(0, 7));
-  await page.waitForFunction((d) => !document.querySelector(`.day-cell[data-date="${d}"] .mark-page`), TODAY, { timeout: 4000 });
+  await page.waitForFunction((d) => !document.querySelector(`.day-cell[data-date="${d}"] .mark--page`), TODAY, { timeout: 4000 });
   assert.doesNotMatch(await cell.getAttribute('aria-label'), /Lugares que amo/, 'lo que está en la papelera no aparece en el mes');
   await goto(page, '#/paginas');
   assert.doesNotMatch(await page.textContent('#panel'), /Lugares que amo/, 'ni en el índice');
@@ -480,7 +480,7 @@ await test('papelera: borrar una página la saca del mes; restaurarla desde Ajus
   assert.equal(await page.locator('#st-trash-panel .slip:has-text("La papelera está limpia")').isVisible(), true);
   assert.equal(await page.evaluate(() => document.activeElement && document.activeElement.textContent.trim()), 'Ver papelera', 'el foco vuelve al botón de la papelera');
   await goto(page, '#/calendario/mes/' + TODAY.slice(0, 7));
-  await page.waitForFunction((d) => !!document.querySelector(`.day-cell[data-date="${d}"] .mark-page`), TODAY, { timeout: 4000 });
+  await page.waitForFunction((d) => !!document.querySelector(`.day-cell[data-date="${d}"] .mark--page`), TODAY, { timeout: 4000 });
   assert.match(await cell.getAttribute('aria-label'), /una página: «Lugares que amo»/, 'restaurada, vuelve al mes');
   await goto(page, '#/paginas');
   assert.match(await page.textContent('.toc'), /Lugares que amo/, 'y al índice');

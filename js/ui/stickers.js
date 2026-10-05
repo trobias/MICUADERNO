@@ -242,6 +242,18 @@
       MOOD_GLYPHS[mood].replace('class="fill"', 'fill="#FFF9ED"') + '</g></svg>'; // color-ok (A4)
   }
 
+  /* Parche de una emoción (D49): el dibujito de los ánimos de antes para las palabras de base y una estrellita
+     para las demás. El fondo es el color de la emoción (`--feeling-color`) y el dibujito queda siempre igual:
+     cambiar el color cambia solo el fondo. Sin colores fijos: los pone el CSS con tokens. */
+  var FEELING_STAR = '<path d="M12 3.4l2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 16.7l-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/>';
+  function feelingPatchMarkup(glyph) {
+    var g = MOOD_GLYPHS[glyph] || FEELING_STAR;
+    return '<svg class="feeling-patch" viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
+      '<circle class="feeling-patch__bg" cx="12" cy="12" r="11"/>' +
+      '<circle class="feeling-patch__ring" cx="12" cy="12" r="9.3"/>' +
+      '<g class="feeling-patch__glyph' + (MOOD_GLYPHS[glyph] ? '' : ' is-star') + '" transform="translate(5 5) scale(0.5833)">' + g + '</g></svg>';
+  }
+
   /** Glifo de ánimo solo en tinta (impresión): toma el color de `color` (currentColor). */
   function inkGlyphMarkup(mood, cls) {
     return '<svg class="' + (cls || 'ink-glyph') + '" viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
@@ -276,7 +288,7 @@
 
   MC.stickers = {
     ART: ART, GROUPS: GROUPS, COLORS: C, markup: markup, names: Object.keys(ART),
-    MOOD_GLYPHS: MOOD_GLYPHS, MOOD_HEX: MOOD_HEX, patchMarkup: patchMarkup, miniPatchMarkup: miniPatchMarkup, inkGlyphMarkup: inkGlyphMarkup,
+    MOOD_GLYPHS: MOOD_GLYPHS, MOOD_HEX: MOOD_HEX, patchMarkup: patchMarkup, miniPatchMarkup: miniPatchMarkup, feelingPatchMarkup: feelingPatchMarkup, inkGlyphMarkup: inkGlyphMarkup,
     STITCH: STITCH, stitchMarkup: stitchMarkup, statusMarkup: statusMarkup
   };
 })(typeof window !== 'undefined' ? window : globalThis);

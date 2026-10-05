@@ -18,7 +18,7 @@
       type: 'text', maxlength: 40, placeholder: 'Escribí cómo te sentiste',
       'aria-label': opts.label || 'Emoción'
     });
-    var suggestions = h('div.feelings__suggestions', { 'aria-label': 'Palabras que ya anotaste' });
+    var suggestions = h('div.feelings__suggestions', { 'aria-label': 'Palabras para elegir' });
     var list = h('ul.feelings__list', { 'aria-label': 'Emociones anotadas' });
     var add = h('button.label-btn.label-btn--soft', { type: 'button' }, MC.icon('plus'), 'Agregar');
     function render() {
@@ -29,7 +29,7 @@
         var chosen = MC.model.settings().emotionColors[MC.model.emotionKey(value)];
         var color = opts.color ? opts.color(value, i) : chosen || 'var(--emotion-' + (i % 8 + 1) + ')';
         list.appendChild(h('li.feeling-chip', { dataset: { feeling: value }, style: { '--feeling-color': color } },
-          h('span.feeling-chip__thread', { 'aria-hidden': 'true' }), h('span', value), remove));
+          c.feelingPatch(value), h('span', value), remove));
       });
     }
     function commit(word) {
@@ -43,7 +43,7 @@
     input.addEventListener('input', function () { MC.emit('typing'); });
     if (opts.suggestions) Promise.resolve(opts.suggestions).then(function (words) {
       (words || []).slice(0, 6).forEach(function (word) {
-        var button = h('button.feelings__suggestion', { type: 'button' }, word);
+        var button = h('button.feelings__suggestion', { type: 'button', style: { '--feeling-color': opts.color ? opts.color(word, 0) : (MC.model.settings().emotionColors[MC.model.emotionKey(word)] || 'var(--ink-soft)') } }, c.feelingPatch(word), word);
         button.addEventListener('click', function () { commit(word); });
         suggestions.appendChild(button);
       });
@@ -53,10 +53,15 @@
       h('div.feelings__entry', input, add), suggestions);
   };
 
-  /** Hilo y palabra; el color es una ayuda visual, nunca el único significado. */
+  /** El parchecito de una emoción (D49): dibujito de base o estrellita; el color va en `--feeling-color`. */
+  c.feelingPatch = function (value) {
+    return h('span.feeling-patch-wrap', { 'aria-hidden': 'true', html: MC.stickers.feelingPatchMarkup(MC.model.feelingGlyph(value)) });
+  };
+
+  /** Parche y palabra; el color es una ayuda visual, nunca el único significado. */
   c.feelingMark = function (value, palette) {
     return h('span.feeling-mark', { style: { '--feeling-color': palette ? palette.color(value) : 'var(--ink-soft)' } },
-      h('span.feeling-mark__thread', { 'aria-hidden': 'true' }), h('span', value));
+      c.feelingPatch(value), h('span', value));
   };
 
   /* ---------- Casilla de punto cruz ---------- */
