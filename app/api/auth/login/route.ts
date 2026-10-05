@@ -1,12 +1,12 @@
 // Entrar con usuario + PIN. El PIN se verifica acá (Argon2id + pimienta) y recién entonces se abre la sesión
 // de Supabase Auth con la contraseña derivada que solo conoce el servidor. D37.
 import { cookies } from 'next/headers';
-import { body, clientIp, json, PERSON_COOKIE, personCookieOptions, problem, sameOrigin } from '../../../../lib/http';
+import { body, clientIp, json, PERSON_COOKIE, personCookieOptions, problem, sameOrigin, VIEW_COOKIE } from '../../../../lib/http';
 import { supabaseAdmin } from '../../../../lib/supabase/admin';
 import { supabaseServer } from '../../../../lib/supabase/server';
 import { authEmail, derivedPassword, dummyHash, normalizeUsername, throttleDelayMs, verifyPin } from '../../../../lib/pin';
 import { env } from '../../../../lib/env';
-import { audit } from '../../../../lib/auth';
+import { audit, defaultView, PROFILE_COLUMNS, type Profile } from '../../../../lib/auth';
 
 const WRONG = 'Ese usuario y PIN no coinciden. Probá de nuevo.';
 
@@ -61,7 +61,11 @@ export async function POST(req: Request) {
   if (error) return problem('No se pudo abrir la sesión. Probá de nuevo en un rato.', 503);
 
   await sb.from('login_throttle').delete().in('key', keys);
-  (await cookies()).set(PERSON_COOKIE, p.id, personCookieOptions);
+  const jar = await cookies();
+  jar.set(PERSON_COOKIE, p.id, personCookieOptions);
+  const { data: full } = await sb.from('profiles').select(PROFILE_COLUMNS).eq('id', p.id).single();
+  const view = full ? await defaultView(full as unknown as Profile) : null;
+  if (view) jar.set(VIEW_COOKIE, view, personCookieOptions); else jar.delete(VIEW_COOKIE);
   await audit(p.id, 'sesion.entra', p.id);
   return json({ ok: true });
 }

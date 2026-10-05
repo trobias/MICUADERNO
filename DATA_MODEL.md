@@ -313,6 +313,8 @@ v5 es **aditiva** (D34): los stores y campos nuevos conviven con los viejos hast
 | `audit_events` | Eventos de seguridad, nunca contenido. |
 | `login_throttle`, `push_subscriptions`, `push_log`, `keepalive` | Demoras de ingreso, dispositivos con aviso, avisos enviados por día, latido diario. |
 
+B5 (D38, migración `20261005090000`): `profiles.has_notebook` (quien tiene cuaderno propio) y `notebook_parts.updated_by` (quién escribió cada parte). La sincronización usa `MC.sections.splitAll` (una parte por cada sección posible del store) y `MC.sections.overlay` (aplica partes sobre el registro local reemplazando solo los campos de cada sección). No viajan `images`, `files` ni las claves de `meta` distintas de `settings`. En el dispositivo, la cola de salida guarda solo claves (`mc.ui.<id>.sync.outbox`), nunca contenido.
+
 `MC.sections.split(store, registro)` decide las partes: los campos de identidad, fechas, papelera y privacidad van en todas; el resto según el mapa (por ejemplo `days.morning/evening/energy/sleep` → `emociones`, lo demás del día → `escritura`; `activities.feel` → `emociones`). Un campo nuevo cae en la sección por defecto de su store.
 
 ## Migraciones

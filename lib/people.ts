@@ -5,7 +5,7 @@ import { env } from './env';
 import { authEmail, derivedPassword, hashPin, normalizeUsername, pinProblem, USERNAME_RE } from './pin';
 import { audit, PROFILE_COLUMNS, type Profile } from './auth';
 
-export type NewPerson = { username: unknown; displayName: unknown; pin: unknown; isAdmin?: unknown };
+export type NewPerson = { username: unknown; displayName: unknown; pin: unknown; isAdmin?: unknown; hasNotebook?: unknown };
 
 export function personProblem(p: NewPerson): string | null {
   const u = normalizeUsername(p.username);
@@ -33,13 +33,13 @@ export async function createPerson(actorId: string | null, p: NewPerson): Promis
 
   const pin_hash = await hashPin(String(p.pin), env.pinPepper());
   const { error } = await sb.from('profiles').insert({
-    id, username, display_name: String(p.displayName).trim(), pin_hash, is_admin: p.isAdmin === true, created_by: actorId
+    id, username, display_name: String(p.displayName).trim(), pin_hash, is_admin: p.isAdmin === true, has_notebook: p.hasNotebook === true, created_by: actorId
   } as never);
   if (error) {
     await sb.auth.admin.deleteUser(id);
     return { error: 'No se pudo guardar a la persona. Probá de nuevo.' };
   }
-  await audit(actorId, 'persona.alta', id, { username, admin: p.isAdmin === true });
+  await audit(actorId, 'persona.alta', id, { username, admin: p.isAdmin === true, cuaderno: p.hasNotebook === true });
   return { id };
 }
 

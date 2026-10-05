@@ -8,6 +8,17 @@ Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantien
 - `.mcp.json` ya está en la rama. La dueña habilitó los dos MCP en su entorno web de Claude Code; el estado de `claude mcp list` en una instalación local distinta no verifica ese entorno.
 - `docs/NUBE.md` registra la verificación de red, los entornos y lo que falta para aplicar la migración SQL existente. Ningún secreto se agregó a Git.
 
+## 2026-10-05 · Cuadernos compartidos: la psicóloga entra al cuaderno de Nicole (cache `v27`)
+
+**Para quien lo usa**
+- Al sumar una persona en Mi cuenta, Nicole elige si **mira su cuaderno** (por defecto) o **tiene uno propio**. Después decide, sección por sección, qué puede ver y qué puede editar.
+- Quien mira entra con su usuario y PIN y ve el cuaderno de Nicole, solo con las secciones permitidas, y arriba un aviso de quién es y qué puede editar. Lo que no puede cambiar no se guarda y se le dice con amabilidad. No queda copia en su dispositivo.
+- El cuaderno de Nicole se guarda solo en la nube cada vez que escribe, y lo que edita alguien con permiso le llega a ella. Fotos y adjuntos todavía no se comparten.
+
+**Para quien lo mantiene**
+- `js/sync.js` (nuevo), `js/cloud.js` (cookie `mc_view`, modos `owner`/`guest`), `MC.sections.splitAll`/`overlay`/`keyOf`/`sectionsOf`, `/api/sync/push`, `/api/sync/pull`, `/api/me` con `hasNotebook` y `shares`. Migración `20261005090000_cuadernos_compartidos.sql`, aplicada en Supabase. D38.
+- Pruebas: 100 unit, 46/46 E2E (Nicole sincroniza y recibe lo editado por la psicóloga; la psicóloga ve, edita solo lo permitido y recibe el aviso), 21 de nube, typecheck, build y humo.
+
 ## 2026-10-04 · Base de la nube: cuentas con PIN, permisos por sección y avisos (cache `v26`, sin desplegar)
 
 **Para quien lo usa**

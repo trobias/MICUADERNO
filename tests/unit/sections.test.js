@@ -49,3 +49,20 @@ test('al juntar queda el updatedAt más nuevo', () => {
   ]);
   assert.strictEqual(r.updatedAt, '2026-10-04T12:00:00Z');
 });
+
+test('splitAll deja un pedazo por cada sección posible; overlay reemplaza solo lo de cada sección', () => {
+  const day = { date: '2026-10-05', notes: 'hola', updatedAt: '2026-10-05T10:00:00Z' };
+  const parts = S.splitAll('days', day);
+  assert.deepStrictEqual(parts.map((p) => p.section).sort(), ['emociones', 'escritura']);
+  assert.deepStrictEqual(parts.find((p) => p.section === 'emociones').data, { date: '2026-10-05', updatedAt: '2026-10-05T10:00:00Z' });
+  // La psicóloga edita emociones: a Nicole le llega solo ese pedazo y sus notas quedan intactas.
+  const local = { date: '2026-10-05', notes: 'hola', morning: { feelings: ['cansada'] }, updatedAt: '2026-10-05T10:00:00Z' };
+  const out = S.overlay('days', local, [{ section: 'emociones', data: { date: '2026-10-05', morning: { feelings: ['tranquila'] }, updatedAt: '2026-10-05T11:00:00Z' } }]);
+  assert.deepStrictEqual(out, { date: '2026-10-05', notes: 'hola', morning: { feelings: ['tranquila'] }, updatedAt: '2026-10-05T11:00:00Z' });
+  // Un pedazo vacío borra los campos de su sección.
+  assert.strictEqual(S.overlay('days', local, [{ section: 'emociones', data: { date: '2026-10-05' } }]).morning, undefined);
+  assert.strictEqual(S.keyOf('days', day), '2026-10-05');
+  assert.strictEqual(S.keyOf('meta', { key: 'settings' }), 'settings');
+  assert.strictEqual(S.keyOf('pages', { id: 'pag_1' }), 'pag_1');
+  assert.deepStrictEqual(S.sectionsOf('activities'), ['actividades', 'emociones']);
+});

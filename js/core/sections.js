@@ -40,6 +40,46 @@
 
   function ids() { return LIST.map(function (s) { return s.id; }); }
 
+  /** Todas las secciones en las que puede caer un registro de este store (la base y las de sus campos). */
+  function sectionsOf(store) {
+    var m = MAP[store];
+    if (!m) return [];
+    var out = [m.base];
+    Object.keys(m.fields || {}).forEach(function (f) { if (out.indexOf(m.fields[f]) === -1) out.push(m.fields[f]); });
+    return out;
+  }
+
+  /** Clave del registro según el store (la misma keyPath que IndexedDB). */
+  var KEYS = { meta: 'key', days: 'date', weeks: 'week' };
+  function keyOf(store, record) { return record ? record[KEYS[store] || 'id'] : undefined; }
+
+  /** Como split, pero con un pedazo por cada sección posible del store, aunque quede solo con los campos
+   *  compartidos: al sincronizar, así un campo borrado no sobrevive en el pedazo viejo de la nube. */
+  function splitAll(store, record) {
+    var parts = split(store, record);
+    var have = parts.map(function (p) { return p.section; });
+    var shared = {};
+    SHARED.forEach(function (k) { if (record && k in record) shared[k] = record[k]; });
+    sectionsOf(store).forEach(function (s) { if (have.indexOf(s) === -1) parts.push({ section: s, data: MCclone(shared) }); });
+    return parts;
+  }
+  function MCclone(o) { return JSON.parse(JSON.stringify(o)); }
+
+  /** Aplica pedazos sobre un registro existente: cada pedazo reemplaza los campos propios de su sección. */
+  function overlay(store, record, parts) {
+    var out = record ? MCclone(record) : {};
+    (parts || []).forEach(function (p) {
+      Object.keys(out).forEach(function (k) {
+        if (SHARED.indexOf(k) === -1 && sectionOf(store, k) === p.section) delete out[k];
+      });
+      Object.keys(p.data || {}).forEach(function (k) {
+        if (k === 'updatedAt' && out.updatedAt && out.updatedAt > p.data.updatedAt) return;
+        out[k] = p.data[k];
+      });
+    });
+    return out;
+  }
+
   function sectionOf(store, field) {
     var m = MAP[store];
     if (!m) return null;
@@ -77,5 +117,6 @@
     return out;
   }
 
-  return { LIST: LIST, ids: ids, STORES: Object.keys(MAP), sectionOf: sectionOf, split: split, merge: merge };
+  return { LIST: LIST, ids: ids, STORES: Object.keys(MAP), sectionOf: sectionOf, sectionsOf: sectionsOf, keyOf: keyOf,
+    split: split, splitAll: splitAll, merge: merge, overlay: overlay };
 });

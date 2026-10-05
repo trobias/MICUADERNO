@@ -345,6 +345,26 @@ dialog.sheet[open] { animation: sheet-in var(--dur-panel) var(--ease-out); }
 .toast button { color: var(--butter); font-weight: 650; text-decoration: underline; text-underline-offset: 3px; min-height: 32px; }
 @media (max-width: 699px) { .toast { bottom: calc(76px + env(safe-area-inset-bottom)); } }
 
+/* ---------- Cuaderno compartido (nube, D38): de quién es y qué se puede hacer ---------- */
+.guest-note {
+  position: fixed;
+  top: calc(8px + env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 300;
+  max-width: min(92vw, 520px);
+  margin: 0;
+  padding: 6px 14px;
+  background: var(--paper);
+  color: var(--ink);
+  border: 1px dashed var(--rule-strong);
+  border-radius: var(--radius-label);
+  font-family: var(--font-ui);
+  font-size: var(--fs-sm);
+  text-align: center;
+  pointer-events: none;
+}
+
 /* ---------- Botones de opción (energía, frecuencia, papel) ---------- */
 .choice-row { display: flex; flex-wrap: wrap; gap: 8px; }
 .choice {

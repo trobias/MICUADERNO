@@ -10,7 +10,7 @@ export async function POST(req: Request) {
   const token = env.setupToken();
   if (!token || !safeEqual(String(b?.token ?? ''), token)) return problem('La clave de preparación no coincide.', 403);
   if ((await countPeople()) > 0) return problem('El cuaderno ya tiene personas. Entrá con tu usuario.', 409);
-  const r = await createPerson(null, { username: b?.username, displayName: b?.displayName, pin: b?.pin, isAdmin: true });
+  const r = await createPerson(null, { username: b?.username, displayName: b?.displayName, pin: b?.pin, isAdmin: true, hasNotebook: true });
   if (r.error) return problem(r.error);
   return json({ ok: true });
 }

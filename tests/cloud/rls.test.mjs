@@ -151,6 +151,19 @@ test('RLS de cuentas y permisos', { skip: !have && 'sin Postgres local' }, async
     sql(`update public.profiles set disabled_at = null where id = '${PSI}';`);
   });
 
+  await t.test('B5: solo la administradora inicial tiene cuaderno propio; updated_by registra quién escribió', () => {
+    // En Supabase la migración B5 corre con la administradora ya creada: se reaplica acá igual.
+    sql(fs.readFileSync(path.join(root, 'supabase/migrations/20261005090000_cuadernos_compartidos.sql'), 'utf8'));
+    assert.strictEqual(as(NICOLE, `select string_agg(username || ':' || has_notebook, ',' order by username) from public.profiles;`).out,
+      'nicole:true,otra:false,psicologa:false');
+    sql(`update public.notebook_grants set level = 'editar' where grantee_id = '${PSI}' and section = 'emociones';`);
+    const q = as(PSI, `insert into public.notebook_parts (owner_id, store, record_id, section, data, updated_at, updated_by)
+      values ('${NICOLE}', 'days', '2026-10-09', 'emociones', '{}', now(), '${PSI}')
+      on conflict (owner_id, store, record_id, section) do update set data = excluded.data, updated_at = excluded.updated_at, updated_by = excluded.updated_by;`);
+    assert.ok(q.ok, q.err);
+    assert.strictEqual(as(NICOLE, `select updated_by from public.notebook_parts where record_id = '2026-10-09';`).out, PSI);
+  });
+
   await t.test('tablas del servidor cerradas para el navegador', () => {
     for (const table of ['login_throttle', 'push_log', 'keepalive']) {
       const q = as(NICOLE, `select count(*) from public.${table};`);

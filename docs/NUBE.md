@@ -159,6 +159,15 @@ Después de que la dueña volvió a autorizar el conector de Vercel para `trobia
 - **Verificado sin escribir nada:** `/entrar` responde 200 en el dominio público. `/preparar` muestra el formulario, lo que prueba que `SUPABASE_SECRET_KEY` funciona (consultó la base y hay 0 personas). La primera persona se crea con el link de invitación (§3.2).
 - **Sin verificar todavía:** el alta real (crear la cuenta en Supabase Auth), entrar, los permisos y los avisos. Es la primera prueba contra Supabase de verdad. Si falla, mirar los logs de Vercel (`/api/setup`) y la configuración de Auth (correo interno `*.invalid`, proveedor Email habilitado).
 
+## 4.6 Cuadernos compartidos y sincronización (05/10/2026 · D38)
+
+- **Quién tiene cuaderno:** `profiles.has_notebook`. La primera administradora sí. Al sumar a alguien en Mi cuenta → Personas, se elige “Mira mi cuaderno, con los permisos que le dé abajo” (por defecto) o “Tiene su propio cuaderno”.
+- **Cómo se comparte:** Mi cuenta → “Quién puede ver mi cuaderno”: por sección, nada / ver / editar. “Ver” deja mirar; “editar” también deja escribir, cambiar y borrar en esa sección.
+- **La invitada (por ejemplo, la psicóloga):** entra con su usuario y PIN y se le abre el cuaderno de Nicole, en memoria y sin copia local, con un aviso arriba (“Cuaderno de Nicole · podés editar: …”). Si nadie le compartió nada, Mi cuenta se lo dice. Si le compartieron varios cuadernos, elige cuál abrir en Mi cuenta → “Cuadernos que podés abrir”.
+- **Sincronización (`js/sync.js`):** el dispositivo de la dueña sube cada cambio (cola de claves en `mc.ui.<id>.sync.outbox`; el contenido se lee de IndexedDB al subir), y la primera vez sube todo el cuaderno. Trae cada 45 s, al volver a la pestaña y al recuperar la red. `POST /api/sync/push` y `GET /api/sync/pull` (paginado por `updated_at`) usan la sesión de la persona, así que la RLS es la segunda llave.
+- **Todavía no viajan:** fotos, dibujos y adjuntos (`images`, `files`) y lo de `meta` que no son ajustes.
+- **Migración remota:** `20261005090000_cuadernos_compartidos.sql` aplicada con el conector de Supabase (`execute_sql`). Verificado: 1 persona, administradora y con cuaderno; columna `updated_by` presente.
+
 ## 5. Desarrollo y pruebas
 
 ```

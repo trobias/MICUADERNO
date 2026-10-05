@@ -1,0 +1,50 @@
+// Sincronización del cuaderno con la nube (B5, D38). El servidor parte cada registro por sección
+// (js/core/sections.js) y escribe solo las partes que quien pide puede escribir; la RLS es la segunda llave.
+import 'server-only';
+import { NOTEBOOK_STORES, sectionsOf, splitAll } from './sections';
+
+// Fotos y adjuntos todavía no viajan (pesan; irán a Storage privado). Lo demás sí.
+export const SYNC_STORES = NOTEBOOK_STORES.filter((s) => s !== 'images' && s !== 'files');
+// De `meta` solo viajan los ajustes; lo demás (última copia, recordatorios vistos…) es del dispositivo.
+export const SYNC_META_KEYS = ['settings'];
+
+export type Change = { store: string; key: string; record: Record<string, unknown> | null };
+
+export function validChange(c: unknown): c is Change {
+  if (!c || typeof c !== 'object') return false;
+  const x = c as Change;
+  if (!SYNC_STORES.includes(x.store)) return false;
+  if (typeof x.key !== 'string' || !x.key || x.key.length > 160) return false;
+  if (x.store === 'meta' && !SYNC_META_KEYS.includes(x.key)) return false;
+  return x.record === null || (typeof x.record === 'object' && !Array.isArray(x.record));
+}
+
+export type Row = {
+  owner_id: string; store: string; record_id: string; section: string; data: Record<string, unknown>;
+  private: boolean; updated_at: string; deleted_at: string | null; updated_by: string;
+};
+
+/** Cambios → filas de notebook_parts, solo de las secciones que se pueden escribir. */
+// Cada fila lleva su propio instante (1 ms de diferencia): así una página de `pull` nunca corta a la mitad
+// de un grupo con la misma hora y no se pierde ninguna parte.
+export function toRows(owner: string, by: string, changes: Change[], canWrite: (section: string) => boolean, nowMs: number) {
+  const rows: Row[] = [];
+  const skipped = new Set<string>();
+  for (const c of changes) {
+    // Borrar un registro entero solo si se pueden editar todas sus secciones: con permiso parcial (por ejemplo,
+    // solo Emociones), borrar un día no puede llevarse lo que la dueña escribió en las otras.
+    if (!c.record && !sectionsOf(c.store).every(canWrite)) { sectionsOf(c.store).forEach((s) => skipped.add(s)); continue; }
+    const parts = c.record
+      ? splitAll(c.store, c.record)
+      : sectionsOf(c.store).map((section) => ({ section, data: {} as Record<string, unknown> }));
+    for (const p of parts) {
+      if (!canWrite(p.section)) { skipped.add(p.section); continue; }
+      const at = new Date(nowMs + rows.length).toISOString();
+      rows.push({
+        owner_id: owner, store: c.store, record_id: c.key, section: p.section, data: p.data,
+        private: false, updated_at: at, deleted_at: c.record ? null : at, updated_by: by
+      });
+    }
+  }
+  return { rows, skipped: [...skipped] };
+}

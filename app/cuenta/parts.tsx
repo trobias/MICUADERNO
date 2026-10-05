@@ -86,14 +86,14 @@ export function Notices({ vapid }: { vapid: string }) {
   );
 }
 
-type Person = { id: string; name: string; username: string; admin: boolean; disabled: boolean };
+type Person = { id: string; name: string; username: string; admin: boolean; disabled: boolean; hasNotebook: boolean };
 
 export function People({ me, people }: { me: string; people: Person[] }) {
   const note = useNote();
   async function create(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = e.currentTarget, f = new FormData(form);
-    const r = await send('/api/people', 'POST', { displayName: f.get('displayName'), username: f.get('username'), pin: f.get('pin'), isAdmin: f.get('isAdmin') === 'on' });
+    const r = await send('/api/people', 'POST', { displayName: f.get('displayName'), username: f.get('username'), pin: f.get('pin'), isAdmin: f.get('isAdmin') === 'on', hasNotebook: f.get('kind') === 'propio' });
     if (r.ok) location.reload(); else note.problem(String(r.data.error || 'No se pudo.'));
   }
   async function resetPin(p: Person) {
@@ -112,7 +112,7 @@ export function People({ me, people }: { me: string; people: Person[] }) {
         {people.map((p) => (
           <li key={p.id}>
             <span className="who">{p.name}</span>
-            <span className="meta">usuario {p.username}{p.admin ? ' · administra' : ''}{p.disabled ? ' · en pausa' : ''}</span>
+            <span className="meta">usuario {p.username} · {p.hasNotebook ? 'su propio cuaderno' : 'mira cuadernos compartidos'}{p.admin ? ' · administra' : ''}{p.disabled ? ' · en pausa' : ''}</span>
             {p.id !== me && (
               <div className="row">
                 <button className="label-btn label-btn--soft" onClick={() => resetPin(p)}>Cambiar su PIN</button>
@@ -127,6 +127,11 @@ export function People({ me, people }: { me: string; people: Person[] }) {
         <label>Cómo se llama<input name="displayName" maxLength={60} required /></label>
         <label>Usuario<input name="username" autoCapitalize="none" spellCheck={false} required /></label>
         <label>PIN inicial<input name="pin" type="password" inputMode="numeric" pattern="\d{6}" maxLength={6} autoComplete="new-password" required /></label>
+        <fieldset className="choice">
+          <legend>Qué cuaderno usa</legend>
+          <label className="check"><input type="radio" name="kind" value="invitada" defaultChecked /> Mira mi cuaderno, con los permisos que le dé abajo</label>
+          <label className="check"><input type="radio" name="kind" value="propio" /> Tiene su propio cuaderno</label>
+        </fieldset>
         <label className="check"><input type="checkbox" name="isAdmin" /> También administra (suma personas y cambia PIN)</label>
         {note.view}
         <div className="row"><button className="label-btn">Sumar persona</button></div>
@@ -150,7 +155,7 @@ export function Sharing({ sections, people, grants }: { sections: { id: string; 
   }
   return (
     <div className="form">
-      <p className="note">Por sección: nada, ver o editar. Lo que marques “solo para mí” nunca lo ve nadie más. Lo que se comparte llega cuando se active la sincronización (después de las hojas, A7).</p>
+      <p className="note">Por sección: nada, ver o editar. Ver deja mirar esa parte de tu cuaderno; editar también deja escribir, cambiar y borrar en ella. Las fotos y los adjuntos todavía no se comparten.</p>
       <div className="table-scroll">
         <table className="grants">
           <thead><tr><th scope="col">Sección</th>{people.map((p) => <th key={p.id} scope="col">{p.name}</th>)}</tr></thead>
@@ -172,5 +177,31 @@ export function Sharing({ sections, people, grants }: { sections: { id: string; 
       </div>
       {note.view}
     </div>
+  );
+}
+
+type Share = { owner: string; name: string; sections: Record<string, string> };
+
+/** Cuadernos que otras personas me compartieron: abrir uno lo deja como el cuaderno de este dispositivo. */
+export function Shared({ shares, current, labels }: { shares: Share[]; current: string | null; labels: Record<string, string> }) {
+  if (!shares.length) return <p className="note">Todavía nadie compartió su cuaderno con vos. Cuando lo hagan, aparece acá.</p>;
+  function open(owner: string) {
+    document.cookie = 'mc_view=' + encodeURIComponent(owner) + '; path=/; max-age=34560000; samesite=lax' + (location.protocol === 'https:' ? '; secure' : '');
+    location.assign('/');
+  }
+  return (
+    <ul className="people">
+      {shares.map((s) => {
+        const edit = Object.keys(s.sections).filter((k) => s.sections[k] === 'editar').map((k) => labels[k] || k);
+        const see = Object.keys(s.sections).filter((k) => s.sections[k] === 'ver').map((k) => labels[k] || k);
+        return (
+          <li key={s.owner}>
+            <span className="who">Cuaderno de {s.name}</span>
+            <span className="meta">{see.length ? 'Podés mirar: ' + see.join(', ') + '. ' : ''}{edit.length ? 'Podés editar: ' + edit.join(', ') + '.' : ''}</span>
+            <div className="row"><button className="label-btn" onClick={() => open(s.owner)}>{current === s.owner ? 'Volver a este cuaderno' : 'Abrir este cuaderno'}</button></div>
+          </li>
+        );
+      })}
+    </ul>
   );
 }

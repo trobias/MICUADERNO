@@ -1509,38 +1509,72 @@ await test('volver al calendario: doble cierre, arranque directo en un cuadro y 
   await second.context.close();
 });
 
-await test('nube: con cuentas cada persona abre su propia base y sus preferencias; sin sesión va al ingreso (D37)', async () => {
+/** Simula la nube sobre el servidor local: la marca <meta name="mc-cloud"> (como tools/copy-notebook.mjs) y la API. */
+async function cloudContext(state) {
   // Sin service worker: las respuestas simuladas no pasan por su caché (en la nube, la caché ya trae la marca).
-  const { page, errors, context } = await newPage(browser, { serviceWorkers: 'block' });
-  const A = '11111111-1111-4111-8111-111111111111', B = '22222222-2222-4222-8222-222222222222';
-  let me = { id: A, username: 'nicole', name: 'Nicole', admin: true }, meStatus = 200;
-  // Lo que agrega tools/copy-notebook.mjs al publicar: <meta name="mc-cloud">. La API se simula.
-  await context.route('**/index.html', async (route) => {
-    const res = await route.fetch();
+  const ctx = await newPage(browser, { serviceWorkers: 'block' });
+  const { context } = ctx;
+  await context.route((url) => /^\/(index\.html)?$/.test(url.pathname), async (route) => {
+    const res = await route.fetch({ url: `http://127.0.0.1:${PORT}/index.html` });
     const html = (await res.text()).replace('<meta name="viewport"', '<meta name="mc-cloud" content="1">\n  <meta name="viewport"');
-    await route.fulfill({ response: res, body: html, headers: { ...res.headers(), 'content-type': 'text/html; charset=utf-8' } });
+    await route.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } });
   });
-  await context.route('**/api/me', (route) => route.fulfill({ status: meStatus, contentType: 'application/json', body: JSON.stringify(meStatus === 200 ? me : { error: 'Sin sesión.' }) }));
+  await context.route('**/api/me', (route) => route.fulfill({ status: state.meStatus || 200, contentType: 'application/json', body: JSON.stringify(state.meStatus === 401 ? { error: 'Sin sesión.' } : state.me) }));
   await context.route('**/api/auth/logout', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":true}' }));
   await context.route('**/entrar', (route) => route.fulfill({ status: 200, contentType: 'text/html', body: '<!doctype html><title>Entrar</title><p id="entrar">entrar</p>' }));
-  const setPerson = (id) => context.addCookies([{ name: 'mc_person', value: id, url: `http://127.0.0.1:${PORT}/` }]);
+  await context.route('**/cuenta', (route) => route.fulfill({ status: 200, contentType: 'text/html', body: '<!doctype html><title>Mi cuenta</title><p id="cuenta">cuenta</p>' }));
+  state.pushes = [];
+  await context.route('**/api/sync/push', async (route) => {
+    const b = JSON.parse(route.request().postData() || '{}');
+    state.pushes.push(b);
+    const skipped = state.onPush ? state.onPush(b) : [];
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, skipped }) });
+  });
+  await context.route('**/api/sync/pull**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ parts: state.parts || [], more: false }) }));
+  ctx.setCookie = (name, value) => context.addCookies([{ name, value, url: `http://127.0.0.1:${PORT}/` }]);
+  return ctx;
+}
+
+const CA = '11111111-1111-4111-8111-111111111111', CB = '22222222-2222-4222-8222-222222222222';
+
+await test('nube: con cuentas cada persona abre su propia base y sus preferencias; sin sesión va al ingreso (D37)', async () => {
+  const state = { me: { id: CA, username: 'nicole', name: 'Nicole', admin: true, hasNotebook: true, shares: [] } };
+  const { page, errors, context, setCookie } = await cloudContext(state);
 
   // Sin persona: al ingreso, sin abrir ninguna base.
   await page.goto(HTTP_URL);
   await page.waitForURL(/\/entrar$/, { timeout: 4000 });
 
-  // Nicole escribe en su cuaderno.
-  await setPerson(A);
+  // Nicole escribe en su cuaderno (su sesión no sabía qué cuaderno abrir: se pregunta una vez).
+  await setCookie('mc_person', CA);
   await page.goto(HTTP_URL);
   await onboard(page);
+  assert.equal(await page.evaluate(() => MC.cloud.mode), 'owner');
   await page.fill('#notes', 'lo de Nicole');
   await page.waitForTimeout(700);
-  assert.equal(await page.evaluate(() => MC.cloud.suffix), '@' + A);
+  assert.equal(await page.evaluate(() => MC.cloud.suffix), '@' + CA);
   const dbs = await page.evaluate(async () => (await indexedDB.databases()).map((d) => d.name));
-  assert.ok(dbs.includes('mi-cuaderno@' + A), JSON.stringify(dbs));
+  assert.ok(dbs.includes('mi-cuaderno@' + CA), JSON.stringify(dbs));
   assert.ok(!dbs.includes('mi-cuaderno'), 'con cuentas no se usa la base sin dueña');
   const keys = await page.evaluate(() => Object.keys(localStorage).filter((k) => k.startsWith('mc.ui.')));
-  assert.ok(keys.every((k) => k.startsWith('mc.ui.' + A + '.')), JSON.stringify(keys));
+  assert.ok(keys.every((k) => k.startsWith('mc.ui.' + CA + '.')), JSON.stringify(keys));
+  // Lo escrito se sube a la nube (B5): el día con sus notas, sin dueña explícita (es el propio).
+  await page.evaluate(() => MC.sync.flush());
+  await page.waitForFunction(() => MC.sync.pending() === 0, null, { timeout: 6000 });
+  const day = state.pushes.flatMap((b) => b.changes).find((c) => c.store === 'days' && c.record && c.record.notes === 'lo de Nicole');
+  assert.ok(day, 'el día se subió: ' + JSON.stringify(state.pushes).slice(0, 300));
+  assert.ok(state.pushes.every((b) => !b.owner));
+  assert.ok(!state.pushes.flatMap((b) => b.changes).some((c) => c.store === 'images' || c.store === 'files' || (c.store === 'meta' && c.key !== 'settings')));
+  // Lo que edita la psicóloga (emociones) le llega a Nicole sin tocar sus notas; lo propio no se vuelve a aplicar.
+  state.parts = [
+    { store: 'days', record_id: TODAY, section: 'emociones', data: { date: TODAY, morning: { feelings: ['acompañada'], at: null }, updatedAt: '2030-01-01T00:00:00.000Z' }, deleted_at: null, updated_at: '2030-01-01T00:00:00.000Z', updated_by: '33333333-3333-4333-8333-333333333333' },
+    { store: 'days', record_id: TODAY, section: 'escritura', data: { date: TODAY, notes: 'versión vieja propia' }, deleted_at: null, updated_at: '2030-01-01T00:00:00.001Z', updated_by: CA }
+  ];
+  assert.equal(await page.evaluate(() => MC.sync.pull()), 1);
+  const merged = await page.evaluate((d) => MC.store.get('days', d), TODAY);
+  assert.deepEqual(merged.morning.feelings, ['acompañada']);
+  assert.equal(merged.notes, 'lo de Nicole');
+  state.parts = [];
   // Ajustes muestra la cuenta, con enlace.
   await goto(page, '#/ajustes');
   const account = 'section[aria-labelledby="st-account"]';
@@ -1548,22 +1582,64 @@ await test('nube: con cuentas cada persona abre su propia base y sus preferencia
   assert.match(await page.textContent(account), /Entraste como Nicole \(nicole\)/);
   assert.equal(await page.getAttribute(account + ' a', 'href'), '/cuenta');
 
-  // Otra persona en el mismo navegador: cuaderno nuevo, sin lo de Nicole.
-  me = { id: B, username: 'otra', name: 'Otra persona', admin: false };
-  await setPerson(B);
+  // Otra persona con cuaderno propio en el mismo navegador: cuaderno nuevo, sin lo de Nicole.
+  state.me = { id: CB, username: 'otra', name: 'Otra persona', admin: false, hasNotebook: true, shares: [] };
+  await setCookie('mc_person', CB);
+  await setCookie('mc_view', CB);
   await page.goto(HTTP_URL);
   await onboard(page, 'Nicole');
   assert.equal(await page.inputValue('#notes'), '');
 
   // Sesión vencida: al ingreso.
-  meStatus = 401;
+  state.meStatus = 401;
   await page.goto(HTTP_URL);
   await page.waitForURL(/\/entrar$/, { timeout: 4000 });
   // Cookie y sesión de personas distintas: se cierra la sesión y al ingreso.
-  meStatus = 200; me = { id: A, username: 'nicole', name: 'Nicole', admin: true };
+  state.meStatus = 200; state.me = { id: CA, username: 'nicole', name: 'Nicole', admin: true, hasNotebook: true, shares: [] };
   await page.goto(HTTP_URL);
   await page.waitForURL(/\/entrar$/, { timeout: 4000 });
-  assert.deepEqual(errors.filter((e) => !/401|Failed to load resource/.test(e)), []);
+  const real = errors.filter((e) => !/401|Failed to load resource/.test(e));
+  assert.deepEqual(real, [], JSON.stringify(real));
+  await context.close();
+});
+
+await test('nube: la psicóloga abre el cuaderno de Nicole, edita lo permitido y lo demás solo lo mira (D38)', async () => {
+  const PSI = '33333333-3333-4333-8333-333333333333';
+  const state = {
+    me: { id: PSI, username: 'psicologa', name: 'Psicóloga', admin: false, hasNotebook: false,
+      shares: [{ owner: CA, name: 'Nicole', sections: { escritura: 'ver', emociones: 'editar', actividades: 'ver' } }] },
+    parts: [
+      { store: 'days', record_id: TODAY, section: 'escritura', data: { date: TODAY, notes: 'lo que escribió Nicole', updatedAt: '2026-10-05T10:00:00.000Z' }, deleted_at: null, updated_at: '2026-10-05T10:00:00.000Z', updated_by: CA },
+      { store: 'days', record_id: TODAY, section: 'emociones', data: { date: TODAY, morning: { feelings: ['tranquila'], at: null }, updatedAt: '2026-10-05T10:00:00.000Z' }, deleted_at: null, updated_at: '2026-10-05T10:00:00.001Z', updated_by: CA }
+    ],
+    // El servidor de verdad descarta lo que no se puede escribir: acá, escritura.
+    onPush: () => ['escritura']
+  };
+  const { page, errors, context, setCookie } = await cloudContext(state);
+  await setCookie('mc_person', PSI);
+  await setCookie('mc_view', CA);
+  await page.goto(HTTP_URL + '#/hoy');
+  await page.waitForSelector('.day-head', { timeout: 6000 });
+  assert.equal(await page.evaluate(() => MC.cloud.mode), 'guest');
+  // Sin tapa ni bienvenida: ve directo el día de Nicole, con sus notas y sus emociones.
+  assert.equal(await page.inputValue('#notes'), 'lo que escribió Nicole');
+  assert.match(await page.textContent('.section--mood'), /tranquila/);
+  assert.match(await page.textContent('.guest-note'), /Cuaderno de Nicole · podés editar: emociones/);
+  // Sin copia local del cuaderno de Nicole.
+  const dbs = await page.evaluate(async () => (await indexedDB.databases()).map((d) => d.name));
+  assert.ok(!dbs.some((n) => /^mi-cuaderno/.test(n)), JSON.stringify(dbs));
+  // Cambiar notas (solo puede mirar escritura): se intenta, el servidor no lo guarda y se le avisa.
+  await page.fill('#notes', 'intento de la psicóloga');
+  await page.waitForTimeout(400);
+  await page.evaluate(() => MC.sync.flush());
+  await page.waitForSelector('.toast:not([hidden])', { timeout: 6000 });
+  assert.match(await page.textContent('.toast'), /Este cuaderno es de Nicole: esta parte la podés mirar, pero no cambiar/);
+  const sent = state.pushes.flatMap((b) => b.changes.map((c) => ({ ...c, owner: b.owner })));
+  assert.ok(sent.length && sent.every((c) => c.owner === CA), 'todo va al cuaderno de Nicole');
+  // Algo de una sección sin ningún permiso de edición (rutinas) ni siquiera se escribe en memoria.
+  const blocked = await page.evaluate(() => MC.store.put('routines', { id: 'rut_x', title: 'x', rule: { type: 'daily' } }).then(() => 'ok', (e) => e.code));
+  assert.equal(blocked, 'MC_READONLY');
+  assert.deepEqual(errors.filter((e) => !/Failed to load resource/.test(e)), []);
   await context.close();
 });
 

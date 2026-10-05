@@ -18,10 +18,10 @@ export function sameOrigin(req: Request): boolean {
   try { return new URL(origin).host === host; } catch { return false; }
 }
 
-export async function body<T = Record<string, unknown>>(req: Request): Promise<T | null> {
+export async function body<T = Record<string, unknown>>(req: Request, maxChars = 20_000): Promise<T | null> {
   try {
     const text = await req.text();
-    if (text.length > 20_000) return null;
+    if (text.length > maxChars) return null;
     const v = JSON.parse(text);
     return v && typeof v === 'object' && !Array.isArray(v) ? (v as T) : null;
   } catch { return null; }
@@ -37,3 +37,6 @@ export const PERSON_COOKIE = 'mc_person';
 export const personCookieOptions = {
   path: '/', sameSite: 'lax' as const, secure: process.env.NODE_ENV === 'production', httpOnly: false, maxAge: 60 * 60 * 24 * 400
 };
+
+/** Cookie no secreta con el cuaderno que se abre en este dispositivo: el propio o el de quien compartió (D38). */
+export const VIEW_COOKIE = 'mc_view';

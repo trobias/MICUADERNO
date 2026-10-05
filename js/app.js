@@ -476,6 +476,8 @@
     MC.on('store:versionchange', flush);
     MC.on('store:closed', function () { location.reload(); });
     MC.on('store:error', function (err) {
+      // Cuaderno compartido (js/sync.js): lo que no se puede cambiar se dice con amabilidad, sin ofrecer copias.
+      if (err && err.code === 'MC_READONLY') { MC.c.toast(err.message); return; }
       console.error(err);
       // La hoja abierta ya muestra el fallo y ofrece la copia; fuera de ella, el toast sigue siendo necesario.
       var layer = MC.c.layer();

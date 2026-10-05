@@ -49,3 +49,5 @@ body.account {
 .back { font-family: var(--font-text); color: var(--ink); }
 .table-scroll { overflow-x: auto; }
 @media (max-width: 480px) { body.account { padding: var(--s-3) var(--s-3); } .sheet { padding: var(--s-5) var(--s-4); } }
+.choice { border: 0; margin: 0; padding: 0; display: grid; gap: var(--s-2); }
+.choice legend { font-size: var(--fs-sm); color: var(--ink-soft); margin-bottom: var(--s-2); }
