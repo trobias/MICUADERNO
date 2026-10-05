@@ -688,6 +688,27 @@
     });
   }
 
+  /* ---------- pequeñas victorias (A8, D25.2): una referencia a algo del cuaderno, nunca una copia ---------- */
+  /** Id fijo por cosa marcada: la misma victoria en todas las pestañas y dispositivos, sin duplicados. */
+  function markId(sourceType, sourceId) { return 'mrk_' + sourceType + '_' + String(sourceId).slice(0, 72); }
+  function getMarks() {
+    return S().getAll('marks').then(function (rows) { return rows.filter(function (m) { return !isDeleted(m); }).map(normalizeMark).filter(Boolean); });
+  }
+  function isVictory(sourceType, sourceId) {
+    return S().get('marks', markId(sourceType, sourceId)).then(function (m) { return !!(m && !isDeleted(m)); });
+  }
+  /** Marcar o desmarcar como pequeña victoria. Desmarcar borra la referencia (no es contenido de la persona). */
+  function setVictory(sourceType, sourceId, on) {
+    var id = markId(sourceType, sourceId);
+    if (!on) return S().del('marks', id).then(function () { return null; });
+    var m = normalizeMark({ id: id, sourceType: sourceType, sourceId: String(sourceId), kind: 'victoria' });
+    if (!m) return Promise.reject(new Error('No se puede marcar esto.'));
+    return S().get('marks', id).then(function (old) {
+      if (old && old.createdAt) m.createdAt = old.createdAt;
+      return S().put('marks', stamp(m));
+    });
+  }
+
   /* ---------- imágenes propias: subidas o dibujadas (se usan como stickers, D24) ---------- */
   var IMAGE_SRC = /^data:image\/(png|webp|jpeg);base64,[A-Za-z0-9+/=]+$/;
   var MAX_IMAGE = 3 * 1024 * 1024;     // largo máximo del data URL (≈2,2 MB de imagen)
@@ -1161,6 +1182,7 @@
     normalizePage: normalizePage, getPages: getPages, getPage: getPage, savePage: savePage, deletePage: deletePage,
     sanitizeBlocks: sanitizeBlocks, sanitizeValues: sanitizeValues, BLOCK_TYPES: BLOCK_TYPES,
     normalizeWeek: normalizeWeek, sheetOccurrenceId: sheetOccurrenceId, sheetOccurrences: sheetOccurrences, sheetBlocks: sheetBlocks, sheetText: sheetText, sheetCount: sheetCount,
+    markId: markId, getMarks: getMarks, isVictory: isVictory, setVictory: setVictory,
     getTemplates: getTemplates, getTemplate: getTemplate, saveTemplate: saveTemplate, deleteTemplate: deleteTemplate, templateFrom: templateFrom, repeatSheet: repeatSheet, getWeek: getWeek, saveWeek: saveWeek, isEmptyWeek: isEmptyWeek, normalizeTemplate: normalizeTemplate, normalizeMark: normalizeMark,
     sanitizeFeelings: sanitizeFeelings, sanitizeFeel: sanitizeFeel, sanitizeMoves: sanitizeMoves,
     feelingsOf: feelingsOf, emotionKey: emotionKey, emotionPalette: emotionPalette, emotionSuggestions: emotionSuggestions,

@@ -147,5 +147,105 @@
     return out.slice(0, MAX_INSIGHTS);
   }
 
-  MC.insights = { compute: compute, MIN_SAMPLE: MIN_SAMPLE };
+  /* ---------- A8: cuentas descriptivas por período, mes a mes y victorias ---------- */
+  function topWords(map, n) {
+    return Object.keys(map).map(function (k) { return map[k]; })
+      .sort(function (a, b) { return b.n - a.n || a.word.localeCompare(b.word, 'es'); }).slice(0, n || 8);
+  }
+  function addWord(map, word) {
+    var k = M.emotionKey(word);
+    (map[k] || (map[k] = { word: word, n: 0 })).n++;
+  }
+
+  /**
+   * Lo que pasó entre `from` y `to` (inclusive), solo como cuentas. Nunca dice si estuvo “bien” o “mal”.
+   * Devuelve { from, to, written, writtenDays, feelingDays, words, done, moved, beforeAfter, before, after, sheets }.
+   */
+  function period(all, from, to) {
+    all = visible(all);
+    var s = all.meta.settings;
+    var inRange = function (k) { return k && k >= from && k <= to; };
+    var writtenDays = [], feelingDays = 0, words = {};
+    all.days.forEach(function (d) {
+      if (!inRange(d.date)) return;
+      if (M.hasWriting(d)) writtenDays.push(d.date);
+      var seen = {};
+      var list = M.feelingsOf(d.morning, s).concat(M.feelingsOf(d.evening, s));
+      if (list.length) feelingDays++;
+      list.forEach(function (w) { var k = M.emotionKey(w); if (seen[k]) return; seen[k] = true; addWord(words, w); });
+    });
+    var done = 0, moved = 0, both = 0, before = {}, after = {};
+    all.activities.forEach(function (a) {
+      if (inRange(a.date) && M.countsAsDone(a.status)) done++;
+      (a.moves || []).forEach(function (mv) { if (inRange(mv.from)) moved++; });
+      // Una de repetición que se pasó a otro día queda como copia suelta con `movedFrom` (sin `moves`).
+      if (!(a.moves && a.moves.length) && a.movedFrom && inRange(a.movedFrom)) moved++;
+      if (!inRange(a.date) || !a.feel) return;
+      var b = a.feel.before || [], f = a.feel.after || [];
+      b.forEach(function (w) { addWord(before, w); });
+      f.forEach(function (w) { addWord(after, w); });
+      if (b.length && f.length) both++;
+    });
+    var sheets = (all.pages || []).filter(function (p) { return !M.isDeleted(p) && !M.isPrivate(p, 'noInsights') && inRange(M.pageDate(p)); }).length;
+    return {
+      from: from, to: to,
+      written: writtenDays.length, writtenDays: writtenDays.sort(), feelingDays: feelingDays,
+      words: topWords(words, 8), done: done, moved: moved,
+      beforeAfter: both, before: topWords(before, 3), after: topWords(after, 3), sheets: sheets
+    };
+  }
+
+  /** Semana, mes y año de `today` (el año, hasta hoy si es el actual). */
+  function periods(all, today) {
+    var y = today.slice(0, 4);
+    return {
+      week: period(all, D.startOfWeek(today), today),
+      month: period(all, today.slice(0, 7) + '-01', today),
+      year: period(all, y + '-01-01', today)
+    };
+  }
+
+  /** Mes a mes de un año: días escritos, días con emoción y cosas hechas (para el gráfico y su tabla). */
+  function byMonth(all, year) {
+    all = visible(all);
+    var s = all.meta.settings;
+    var rows = D.MONTHS.map(function (name, i) { return { month: year + '-' + D.pad(i + 1), name: name, written: 0, feelings: 0, done: 0 }; });
+    all.days.forEach(function (d) {
+      if (d.date.slice(0, 4) !== year) return;
+      var r = rows[+d.date.slice(5, 7) - 1];
+      if (M.hasWriting(d)) r.written++;
+      if (M.feelingsOf(d.morning, s).length || M.feelingsOf(d.evening, s).length) r.feelings++;
+    });
+    all.activities.forEach(function (a) {
+      if (a.date.slice(0, 4) === year && M.countsAsDone(a.status)) rows[+a.date.slice(5, 7) - 1].done++;
+    });
+    return rows;
+  }
+
+  /**
+   * Pequeñas victorias de un año: cada marca resuelta a su día y su texto (el de la cosa, que puede haber cambiado).
+   * Respeta la papelera y los días que no van en repasos ni recuerdos (PV1). Más nuevas primero.
+   */
+  function victories(all, year) {
+    var days = {}, acts = {}, pages = {};
+    all.days.forEach(function (d) { days[d.date] = d; });
+    all.activities.forEach(function (a) { acts[a.id] = a; });
+    (all.pages || []).forEach(function (p) { pages[p.id] = p; });
+    var out = [];
+    (all.marks || []).forEach(function (m) {
+      if (M.isDeleted(m) || m.kind !== 'victoria') return;
+      var date = null, text = '', page = null;
+      if (m.sourceType === 'activity') { var a = acts[m.sourceId]; if (!a || M.isDeleted(a)) return; date = a.date; text = a.title; }
+      else if (m.sourceType === 'page') { var p = pages[m.sourceId]; if (!p || M.isDeleted(p)) return; date = M.pageDate(p); text = M.pageTitle(p); page = p.id; }
+      else if (m.sourceType === 'day') { date = m.sourceId; text = 'Este día'; }
+      if (!date || date.slice(0, 4) !== year) return;
+      var d = days[date];
+      if (d && (M.isDeleted(d) && m.sourceType === 'day')) return;
+      if (d && (M.isPrivate(d, 'noReviews') || M.isPrivate(d, 'noMemory'))) return;
+      out.push({ id: m.id, date: date, text: text, sourceType: m.sourceType, page: page });
+    });
+    return out.sort(function (a, b) { return a.date < b.date ? 1 : a.date > b.date ? -1 : 0; });
+  }
+
+  MC.insights = { compute: compute, period: period, periods: periods, byMonth: byMonth, victories: victories, MIN_SAMPLE: MIN_SAMPLE };
 })(typeof window !== 'undefined' ? window : globalThis);

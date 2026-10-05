@@ -270,6 +270,7 @@ v5 es **aditiva** (D34): los stores y campos nuevos conviven con los viejos hast
 ```js
 { id: 'mrk_…', sourceType: 'activity' | 'day' | 'page', sourceId: '…', kind: 'victoria', deletedAt: ISO | null, createdAt: ISO | null }
 ```
+A8: el id es fijo por cosa marcada (`M.markId(tipo, id)` = `mrk_<tipo>_<id>`), así no hay duplicados entre pestañas o dispositivos. `M.setVictory(tipo, id, false)` borra el registro. Nunca copia el texto: `MC.insights.victories` lo resuelve al mostrar.
 
 ### Campos nuevos en stores existentes
 | Store | Campo | Forma | Paso |

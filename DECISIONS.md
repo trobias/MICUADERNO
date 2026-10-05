@@ -159,7 +159,7 @@ Registro breve de decisiones de arquitectura y producto. Formato: contexto → d
 ## D31 · Mi año con métricas amables (2026-10-04)
 **Contexto:** la dueña pidió que *Mi año* sea “como métricas”: debajo del bastidor, “Lo que fui notando” por semana (lo pospuesto, lo cumplido), **estrellas** como victorias que hagan sentir el cuaderno como un espacio seguro que recompensa, y gráficos lindos y útiles.
 **Decisión:** estrellas bordadas por lo hecho y **victorias** como referencias (`marks`, D25.2); “notando” por semana, mes o año con hechas y **movidas** (pedido explícito; en las celdas del calendario sigue sin mostrarse lo no hecho, D18); gráficos SVG propios con tabla accesible. Esto **anula explícitamente** el anti-pattern “dashboards / gráficos de barras para el ánimo” de AGENTS y DESIGN §17, con reglas: solo conteos, sin totales históricos, sin comparaciones entre períodos, sin récords. Sigue prohibido: rachas, puntajes, “perdiste”, porcentajes de mejora, causalidad.
-**Consecuencias:** se actualizan AGENTS (anti-patterns) y DESIGN §17. Estado: contrato; se implementa en el paso A8.
+**Consecuencias:** se actualizan AGENTS (anti-patterns) y DESIGN §17. Estado: **implementado en A8** (05/10). Las “estrellas” son discretas: un glifo junto a “Hiciste N cosas” y una puntadita dorada en los días con victoria; nunca una por cosa ni acumuladas. Desmarcar una victoria borra la referencia (no pasa por la papelera: no es contenido escrito). Las victorias se marcan desde la actividad o la hoja; el día como fuente queda en el modelo para más adelante.
 
 ## D32 · Dibujo con herramientas (2026-10-04)
 **Contexto:** la dueña pidió balde de pintura y tipos de trazo (pluma con presión, aerógrafo, estabilizador, grafito, técnico…).

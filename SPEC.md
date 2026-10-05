@@ -187,6 +187,9 @@ Mis hojas (`#/hojas`) es un cuadro de dos hojas: a la izquierda el **índice de 
 - Leyenda de las palabras más anotadas en ese año, siempre con texto además de color.
 - Tocar un día → abre su página. La inicial de cada mes lleva a ese mes en el calendario.
 - **Lo que fui notando**: 3-6 observaciones descriptivas (§12), cada una con el camino a sus días. Respeta estrictamente `privacy.noInsights` y omite registros borrados (PV1, DA1).
+- **Mes a mes** (A8, D31), debajo del bastidor: barras SVG propias con tres hilos (días escritos, días con emociones, cosas hechas), leyenda con texto y “Ver los números” (tabla con los mismos datos, encabezados de fila y columna). Nota fija: “Cuentas, no metas: un mes con menos no es peor.”
+- **Lo que fui notando por período** (A8): *Esta semana · Este mes · Este año* (radio, se recuerda la elección; en años pasados, solo *Ese año*). Cuentas en frases: días escritos, días con emociones y las palabras más anotadas (con su hilo y su número), cosas hechas (estrellita), cosas pasadas a otro día (`moves` y copias de repeticiones), antes/después de actividades con lo más anotado antes y después, hojas empezadas. Vacío: “Un período vacío también está bien.” Debajo, las observaciones de §12.
+- **Pequeñas victorias** (A8): se marcan desde el menú de una actividad o de una hoja (“Es una pequeña victoria” / “Ya no es…”). Son referencias (`marks`, id fijo `mrk_<tipo>_<id>`): muestran el texto actual de la cosa, se van si la cosa va a la papelera, y respetan `noReviews`/`noMemory` del día. Cada una lleva a su día (o a su hoja) y su día lleva una puntadita dorada en el bastidor (dicha también en el nombre del día).
 - **Lo que guardé**: lista de recuerdos (“qué quiero guardar”) del año, como papelitos. Respeta `privacy.noReviews` y `privacy.noMemory` (PV1), además de ignorar lo que esté en papelera (DA1).
 
 ### 7.9 Dibujar, Mis stickers y adjuntos (D24)
@@ -312,12 +315,12 @@ Todas aceptan `startDate` (default: fecha de creación) y `endDate` opcional (ru
 Reglas:
 - Solo descriptivo, con conteos (“8 de 11 veces”). Nunca porcentajes de “mejora”, nunca causalidad.
 - Umbral mínimo: al menos 5 observaciones para comparar; si no, no se muestra ese insight.
-- Nunca más de 6 a la vez. Si no hay suficientes datos: “Cuando llenes algunas páginas más, acá voy a ir anotando lo que noto.”
+- Nunca más de 6 a la vez. Desde A8 las cuentas por período van arriba y tienen su propio texto para cuando no hay nada.
 - **Filtro estricto de privacidad y papelera:** cualquier día o entrada marcado con `privacy.noInsights === true` (PV1) o enviado a la papelera (`deletedAt != null`, DA1) queda completamente excluido de todos los cálculos de insights. Las observaciones nunca computan ni mencionan información protegida o descartada.
 
 Cada observación dice de qué días habla (`day`, `days` o `routineId` + `month`), así se puede ir a verlos: “Ir a ese día”, “Ver los días” (lista desplegable de fechas) o “Ver en el calendario” (los días de la rutina). “Hoy empezaste este cuaderno” no lleva a ningún lado.
 
-Catálogo actual: días desde que empezó el cuaderno; veces que escribió esta semana; rutina más acompañada del mes; palabra de emoción repetida esta semana; días con alguna palabra compartida al empezar y terminar; coocurrencia descriptiva entre una actividad hecha y una palabra anotada al cerrar; recuerdos guardados en el año. No clasifica palabras como mejores o peores. A8 ampliará los conteos y agregará gráficos.
+Catálogo actual: días desde que empezó el cuaderno; veces que escribió esta semana; rutina más acompañada del mes; palabra de emoción repetida esta semana; días con alguna palabra compartida al empezar y terminar; coocurrencia descriptiva entre una actividad hecha y una palabra anotada al cerrar; recuerdos guardados en el año. No clasifica palabras como mejores o peores. Las cuentas por período, mes a mes y victorias (A8) están en `MC.insights.period/periods/byMonth/victories`, con los mismos filtros de privacidad y papelera.
 
 ## 13. Datos, backup y exportación
 

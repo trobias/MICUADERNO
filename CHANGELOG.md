@@ -8,6 +8,17 @@ Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantien
 - `.mcp.json` ya está en la rama. La dueña habilitó los dos MCP en su entorno web de Claude Code; el estado de `claude mcp list` en una instalación local distinta no verifica ese entorno.
 - `docs/NUBE.md` registra la verificación de red, los entornos y lo que falta para aplicar la migración SQL existente. Ningún secreto se agregó a Git.
 
+## 2026-10-05 · A8: Mi año con cuentas, mes a mes y pequeñas victorias (cache `v31`)
+
+**Para quien lo usa**
+- **Lo que fui notando** ahora tiene *Esta semana · Este mes · Este año*: cuántos días escribiste, qué palabras anotaste más, cuántas cosas hiciste, cuántas pasaron a otro día, qué anotaste antes y después de algo y cuántas hojas empezaste. Solo cuentas; un período vacío también está bien.
+- **Mes a mes**, debajo del bastidor: un gráfico chiquito con días escritos, días con emociones y cosas hechas, y “Ver los números” para leerlo como tabla.
+- **Pequeñas victorias**: desde el menú de una actividad o de una hoja, “Es una pequeña victoria”. Aparecen en Mi año con su día (y una puntadita dorada en el bastidor). Se sacan igual de fácil.
+
+**Para quien lo mantiene**
+- `MC.insights.period/periods/byMonth/victories`; `M.markId/getMarks/isVictory/setVictory`. Los menús de actividad y hoja consultan la victoria antes de abrirse. Vista: `tallies()` y `monthChart()` en `js/views/year.js`.
+- Pruebas: 111 unit (`year-a8.test.js`), 49/49 E2E (recorrido A8 nuevo).
+
 ## 2026-10-05 · A7: hojas en bloques, plantillas y Guardar (cache `v30`)
 
 **Para quien lo usa**

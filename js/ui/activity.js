@@ -228,6 +228,10 @@
     }
 
     more.addEventListener('click', function () {
+      // Saber si ya es una pequeña victoria (A8) antes de armar el menú; una ocurrencia virtual todavía no puede serlo.
+      (it.virtual ? Promise.resolve(false) : M.isVictory('activity', it.id).catch(function () { return false; })).then(openMenu);
+    });
+    function openMenu(isWin) {
       var items = M.STATUSES.map(function (st) {
         return {
           label: M.STATUS_LABEL[st], role: 'menuitemradio', checked: it.status === st,
@@ -236,6 +240,12 @@
       });
       items.push('sep');
       items.push({ label: 'Cómo me sentí antes y después…', icon: 'edit', onSelect: editFeelings });
+      if (!it.virtual) items.push({ label: isWin ? 'Ya no es una pequeña victoria' : 'Es una pequeña victoria', icon: 'star', onSelect: function () {
+        M.setVictory('activity', it.id, !isWin).then(function () {
+          if (isWin) c.toast('Ya no está entre tus pequeñas victorias.');
+          else c.toast('Quedó entre tus pequeñas victorias.', { action: 'Ver', onAction: function () { location.hash = R.year(it.date.slice(0, 4)); } });
+        });
+      } });
       items.push({ label: 'Pasar a mañana', icon: 'later', onSelect: function () { moveToDate(D.addDays(it.date, 1), 'Quedó anotado para mañana.'); } });
       items.push({ label: 'Pasar a otro día…', icon: 'calendario', onSelect: moveTo });
       items.push({ label: 'Cambiar el nombre', icon: 'edit', onSelect: startRename });
@@ -269,7 +279,7 @@
         } });
       }
       c.menu(more, items, 'Opciones de ' + it.title);
-    });
+    }
 
     li.appendChild(box);
     li.appendChild(text);

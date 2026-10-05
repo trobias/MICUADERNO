@@ -340,6 +340,9 @@ a.months__year { text-decoration: none; padding: 4px 6px; border-radius: 6px; }
 .stitch-cell--key { display: inline-block; width: 14px; height: 14px; max-width: none; }
 .stitch-cell--key::before { inset: 0; left: 0; top: 0; margin: 0; width: 14px; height: 14px; }
 .year-legend { margin-top: var(--s-4); }
+.stitch-cell.is-win { position: relative; }
+.stitch-cell.is-win:not(.is-today)::after { content: ''; position: absolute; top: 1px; right: 1px; width: 5px; height: 5px; border-radius: 50%; background: var(--thread-partial); }
+.stitch-cell--key.is-win::after { top: -1px; right: -1px; }
 .year-legend .mini-patch { display: none; }
 
 .year-notes .notes-title { font-size: var(--fs-xl); margin: 0 0 var(--s-4); }
@@ -358,6 +361,43 @@ a.months__year { text-decoration: none; padding: 4px 6px; border-radius: 6px; }
 .noticed__actions .text-btn { font-size: var(--fs-xs); }
 .noticed__days { margin: 2px 0 var(--s-2); font-size: var(--fs-sm); line-height: 1.9; color: var(--ink-soft); }
 .noticed__days a { white-space: nowrap; }
+
+/* Cuentas por período (A8): una lista quieta, con glifo y texto; nada de puntajes. */
+.tally { display: grid; gap: var(--s-3); margin-bottom: var(--s-5); }
+.tally__switch { margin-bottom: var(--s-1); }
+.tally__list { display: grid; gap: var(--s-2); }
+.tally__item { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 10px; align-items: start; font-family: var(--font-text); font-size: var(--fs-md); line-height: var(--line); }
+.tally__item > svg { width: 16px; height: 16px; margin-top: 0.3em; color: var(--ink-soft); }
+.tally__dot { width: 7px; height: 7px; margin: 0.65em 0 0 5px; border-radius: 50%; border: 1.5px solid var(--rose); }
+.tally__words { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 4px; font-family: var(--font-ui); font-size: var(--fs-sm); color: var(--ink-soft); }
+.tally__word { white-space: nowrap; }
+
+/* Mes a mes: barras planas con tres hilos; la tabla dice lo mismo en números. */
+.chart { margin: var(--s-6) 0 0; display: grid; gap: var(--s-2); }
+.chart__title { font-family: var(--font-display); font-size: var(--fs-lg); }
+.chart__svg { width: 100%; height: auto; max-width: 520px; overflow: visible; }
+.chart__grid { stroke: var(--rule); stroke-width: 1; stroke-dasharray: 2 3; }
+.chart__axis { stroke: var(--rule-strong); stroke-width: 1; }
+.chart__label { font-family: var(--font-ui); font-size: 10px; fill: var(--ink-soft); }
+.chart__bar--written { fill: var(--emotion-1); background: var(--emotion-1); }
+.chart__bar--feelings { fill: var(--rose); background: var(--rose); }
+.chart__bar--done { fill: var(--thread-done); background: var(--thread-done); }
+.chart__legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: var(--fs-xs); color: var(--ink-soft); }
+.chart__legend li { display: inline-flex; align-items: center; gap: 6px; }
+.chart__key { display: inline-block; width: 10px; height: 10px; border-radius: 2px; }
+.chart__table { width: 100%; max-width: 520px; border-collapse: collapse; font-size: var(--fs-sm); font-variant-numeric: tabular-nums; }
+.chart__table th, .chart__table td { padding: 4px 8px; border-bottom: 1px solid var(--rule); text-align: end; }
+.chart__table th[scope="row"], .chart__table thead th:first-child { text-align: start; font-weight: normal; }
+.chart__table thead th { font-weight: 600; color: var(--ink-soft); }
+
+/* Pequeñas victorias: una estrellita bordada y su día. */
+.wins { display: grid; gap: var(--s-2); }
+.win { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 10px; align-items: baseline; }
+.win > svg { width: 16px; height: 16px; color: var(--thread-partial); align-self: center; }
+.win a { display: flex; gap: 10px; flex-wrap: wrap; text-decoration: none; color: var(--ink); }
+.win__date { font-size: var(--fs-xs); color: var(--ink-soft); min-width: 5.5em; }
+.win__text { font-family: var(--font-text); }
+@media (hover: hover) and (pointer: fine) { .win a:hover .win__text { text-decoration: underline dashed var(--rose); text-underline-offset: 4px; } }
 .memories { display: grid; gap: var(--s-4); }
 .memory { transform: rotate(var(--tilt, 0deg)); }
 .memory__link {

@@ -149,16 +149,22 @@
       title.addEventListener('input', function () { page.title = title.value; persist(); MC.emit('typing'); });
       var more = h('button.icon-btn', { type: 'button', 'aria-label': 'Opciones de la página', 'aria-haspopup': 'menu', 'aria-expanded': 'false' }, MC.icon('more'));
       more.addEventListener('click', function () {
+        (page.virtual ? Promise.resolve(false) : M.isVictory('page', page.id).catch(function () { return false; })).then(pageMenu);
+      });
+      function pageMenu(isWin) {
         var items = M.PAPERS.map(function (paper) {
           return { label: 'Papel ' + PAPER_LABEL[paper].toLowerCase(), role: 'menuitemradio', checked: page.paper === paper, onSelect: function () { page.paper = paper; persist(); persist.flush(); sheet.className = 'page page--margin free-page paper-' + paper; } };
         });
         items.push('sep');
         items.push({ label: 'Cambiar el día…', icon: 'calendario', onSelect: changeDay });
         items.push({ label: page.pinned ? 'Desfijar del índice' : 'Fijar arriba en el índice', icon: 'pin', onSelect: function () { page.pinned = !page.pinned; persist(); persist.flush(); } });
+        if (!page.virtual) items.push({ label: isWin ? 'Ya no es una pequeña victoria' : 'Es una pequeña victoria', icon: 'star', onSelect: function () {
+          M.setVictory('page', page.id, !isWin).then(function () { c.toast(isWin ? 'Ya no está entre tus pequeñas victorias.' : 'Quedó entre tus pequeñas victorias, en Mi año.'); });
+        } });
         items.push({ label: 'Privacidad de esta página…', icon: 'lock', onSelect: openPrivacy });
         items.push({ label: 'Borrar la página', icon: 'trash', onSelect: remove });
         c.menu(more, items, 'Opciones de la página');
-      });
+      }
       moreBtn = more;
       var keepBtn = h('button.text-btn', { type: 'button', 'aria-haspopup': 'menu' }, 'Guardar');
       keepBtn.addEventListener('click', function () { persist.flush(); keep(keepBtn, page, { date: M.pageDate(page) }); });

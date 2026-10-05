@@ -849,6 +849,53 @@ await test('A7: hojas en bloques; Guardar como plantilla y que se repita; la hoj
   await context.close();
 });
 
+await test('A8: Mi año cuenta semana/mes/año sin puntajes, gráfico con tabla y pequeñas victorias desde la actividad', async () => {
+  const { page, errors, context } = await newPage(browser);
+  await page.goto(FILE_URL);
+  await onboard(page);
+  await page.evaluate(async (k) => {
+    const M = MC.model;
+    const d = M.emptyDay(k);
+    d.morning.feelings = ['calma']; d.notes = 'Nicole escribió algo.';
+    await M.saveDay(d);
+    const a = await M.addActivity(k, 'Regar las plantas');
+    await M.setStatus(a, 'done');
+  }, TODAY);
+  // Marcar una victoria desde el menú de la actividad del día.
+  await goto(page, '#/anio');
+  await goto(page, '#/hoy');
+  const row = page.locator('#panel li.activity:has-text("Regar las plantas")');
+  await row.locator('button[aria-haspopup="menu"]').click();
+  await page.click('[role="menuitem"]:has-text("Es una pequeña victoria")');
+  await page.waitForSelector('.toast:has-text("pequeñas victorias")');
+  await row.locator('button[aria-haspopup="menu"]').click();
+  await page.waitForSelector('[role="menuitem"]:has-text("Ya no es una pequeña victoria")');
+  await page.keyboard.press('Escape');
+  await goto(page, '#/anio');
+  await page.waitForSelector('.tally__list');
+  const tally = await page.textContent('.tally__panel');
+  assert.match(tally, /Escribiste un día/);
+  assert.match(tally, /Hiciste una cosa/);
+  assert.match(tally, /calma/);
+  assert.doesNotMatch(tally, /racha|puntaje|genial/i);
+  // Elegir el período: el año dice lo mismo (todo pasó hoy) y la elección queda.
+  await page.click('.tally__switch [role="radio"]:has-text("Este año")');
+  assert.equal(await page.getAttribute('.tally__switch [role="radio"]:has-text("Este año")', 'aria-checked'), 'true');
+  // Gráfico mes a mes con su tabla accesible.
+  assert.equal(await page.locator('.chart__svg rect').count() >= 2, true);
+  assert.equal(await page.isVisible('.chart__table'), false);
+  await page.click('.chart button:has-text("Ver los números")');
+  const month = Number(TODAY.slice(5, 7));
+  const cells = await page.locator('.chart__table tbody tr').nth(month - 1).locator('td').allTextContents();
+  assert.deepEqual(cells, ['1', '1', '1']);
+  // La victoria aparece con su día y lleva a él.
+  await page.waitForSelector('.wins .win:has-text("Regar las plantas")');
+  await page.click('.wins a:has-text("Regar las plantas")');
+  await page.waitForSelector('#panel li.activity:has-text("Regar las plantas")');
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
 await test('dibujar, subir imágenes como stickers y adjuntar archivos', async () => {
   const { page, errors, context } = await newPage(browser);
   await page.goto(FILE_URL);
