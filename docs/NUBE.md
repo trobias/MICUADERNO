@@ -144,6 +144,14 @@ La CLI de Vercel y el MCP usan autenticaciones separadas. Aunque las variables e
 3. **Deploy nuevo:** las variables solo valen en deploys posteriores. Vercel → Deployments → el último Preview → ⋯ → **Redeploy**, o empujar un commit a la rama.
 4. **Probar el Preview** (sin crear a nadie): `/entrar` se ve; con un usuario inventado, “Ese usuario y PIN no coinciden”; `/preparar` muestra el formulario (hay 0 personas). Recién con tu ok y tus datos: crear a Nicole en `/preparar` con tu `SETUP_TOKEN`, entrar, cambiar el PIN, activar avisos y probar “Probar”.
 
+### 4.4 Vercel con acceso completo (05/10/2026)
+
+Después de que la dueña volvió a autorizar el conector de Vercel para `trobias-projects`:
+- **Variables (`filter_project_envs`, sin descifrar):** en **Production y Preview** están `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `PIN_PEPPER`, `AUTH_SECRET`, `CRON_SECRET`, `SETUP_TOKEN`, `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` y `NEXT_TELEMETRY_DISABLED`. **Falta `SUPABASE_SECRET_KEY`.**
+- **`SETUP_TOKEN`:** reemplazado el 05/10 por uno nuevo (Sensitive, Production + Preview, con autorización explícita de la dueña). El valor se le entregó a ella como archivo y no está en el repo. `PIN_PEPPER` y `AUTH_SECRET` no se tocaron.
+- **Por qué `SUPABASE_SECRET_KEY` no se pudo cargar sola:** el conector de Supabase solo entrega claves publicables. La integración Supabase instalada en `trobias-projects` (`icfg_iflx…`) no es la dueña del proyecto MICUADERNO: el proyecto está en la organización de Supabase de la otra cuenta de Vercel (`vercel_icfg_uQi3…`, “tarnowskitobiasian-5537's projects”). Por eso no se puede conectar al proyecto de Vercel para que inyecte la clave. Hay que copiarla una vez desde el panel de Supabase al de Vercel (§4.3, paso 1).
+- **Deploys:** cada push a la rama genera un Preview. El último es `micuaderno-csovkcvjw-trobias-projects.vercel.app` (commit `77ca844`, READY). Visto con `web_fetch_vercel_url`: responde 200 con CSP, HSTS, `nosniff`, `no-referrer` y `noindex`, y `/preparar` muestra “Todavía falta conectar la base de datos”, que es lo esperado sin `SUPABASE_SECRET_KEY`. Con la clave cargada, hace falta **un deploy nuevo** para que la tome.
+
 ## 5. Desarrollo y pruebas
 
 ```
