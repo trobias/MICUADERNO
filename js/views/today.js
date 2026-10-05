@@ -104,7 +104,7 @@
           next),
         h('div.day-head__tools',
           !isToday ? h('a.text-btn', { href: R.today() }, MC.icon('hoy'), 'Ir a hoy') : null,
-          privacyEl = MC.views.pages.privacyButton(day.privacy, openPrivacy)),
+          privacyEl = MC.privacy.button(day.privacy, openPrivacy)),
         trashNotice = h('p.slip', { hidden: !M.isDeleted(day) }, 'Este día está en la papelera. Si lo editás, vuelve a tu cuaderno con lo que ya habías guardado.')
       );
     }
@@ -112,7 +112,7 @@
     /* Privacidad de este día (PV1): un acceso discreto en el encabezado; el estado se dice en palabras. */
     var privacyEl = null;
     function openPrivacy() {
-      MC.views.pages.privacyDialog({
+      MC.privacy.dialog({
         kind: 'day', privacy: day.privacy, empty: M.isEmptyDay(day),
         onChange: function (p) {
           day.privacy = p;
@@ -237,9 +237,9 @@
 
     /* Páginas sueltas que se empezaron este día: así el calendario también las encuentra. */
     function pagesSection() {
-      var start = h('button.text-btn', { type: 'button' }, MC.icon('plus'), 'Empezar una página para este día');
+      var start = h('button.text-btn', { type: 'button' }, MC.icon('plus'), 'Empezar una hoja para este día');
       start.addEventListener('click', function () { MC.views.pages.newPage(date); });
-      return c.section(pagesToday.length === 1 ? 'Una página de este día' : 'Páginas de este día',
+      return c.section(pagesToday.length === 1 ? 'Una hoja de este día' : 'Hojas de este día',
         [pagesToday.length ? c.pageLinks(pagesToday) : null, start], { id: 'q-pages' });
     }
 

@@ -48,7 +48,7 @@ La visión de memoria, scrapbook, privacidad y experiencia personal (revisiones,
 Pedido de la dueña del proyecto (DECISIONS D17): **sin secciones separadas**. Todo pasa en una pantalla:
 
 - **Centro: el calendario del mes**, con la **tira de los 12 meses** (y flechas de año) para saltar de mes con un toque. Interruptor chico *Mes / Semana*.
-- **Marcadores de tela al costado del cuaderno** (como las pestañas de antes; en el celular, abajo): *Hoy · Agenda · Rutinas · Páginas · Mi año* y, separado, *Ajustes* (en el celular, solo el carretel). Cada uno abre un **cuadro desplegable** encima del calendario (un `<dialog>`), sin salir de la pantalla. Con un cuadro abierto los marcadores se mudan a su costado: se pasa de uno a otro sin cerrar (DECISIONS D22). Todos giran en torno a **poner cosas en el calendario**.
+- **Marcadores de tela al costado del cuaderno** (en el celular, abajo): *Hoy · Mis hojas · Mi año* y, separado, *Ajustes* (en el celular, solo el carretel) (D27, A5). Cada uno abre un **cuadro desplegable** encima del calendario (un `<dialog>`), sin salir de la pantalla. Con un cuadro abierto los marcadores se mudan a su costado: se pasa de uno a otro sin cerrar (DECISIONS D22). Agenda y Rutinas dejaron de ser marcadores: anotar en cualquier día se hace desde ese día (y desde A6, desde la semana); repetir, desde el menú de una actividad o desde Mis hojas. Las rutas viejas redirigen: `#/agenda` → la semana, `#/rutinas` y `#/paginas` → Mis hojas.
 - **Tocar un día** del calendario abre la página de ese día en el cuadro. Al cerrarlo (botón “Volver al calendario”, `Esc`, tocar afuera o *atrás* del navegador) se vuelve al calendario. El calendario de atrás **se actualiza solo** mientras el cuadro está abierto y cuando otra pestaña cambia algo, sin parpadeo y sin tocar lo que se está escribiendo (DECISIONS D21). Al volver, la cinta y el foco quedan en el último día abierto; si el cuadro se abrió con un marcador, el foco vuelve a ese marcador.
 - **Teclado en el celular (T6):** en pantallas chicas (< 700px), cuando se hace foco en un campo editable para escribir, la barra inferior de marcadores se oculta de forma automática (detectada vía `visualViewport` con fallback de redimensión y foco) para no tapar el texto ni estorbar, y reaparece suavemente al cerrar el teclado o perder el foco.
 
@@ -101,11 +101,11 @@ Abrir → (tapa breve o directo, según ajuste) → calendario → marcador **Ho
 ### 6.3 Revisión
 Calendario → tocar un mes en la tira → tocar un día → se abre su página en el cuadro (editable, pasada o futura) → cerrar y seguir mirando.
 
-### 6.4 Rutinas
-Rutinas → “nueva rutina” → nombre + frecuencia (+ desde/hasta opcional, momento del día opcional) → aparece sola en los días que corresponde, en Hoy y en la Semana.
+### 6.4 Que algo se repita
+En el día, menú de una actividad → **Que se repita…** → el editor empieza con su nombre y con los valores de ese día (su día de la semana, del mes o la fecha anual) → elegir frecuencia (+ desde/hasta, momento del día) → aparece sola en los días que corresponde; la actividad suelta pasa a ser su primera vez. También desde **Mis hojas → Nueva repetición**. En el menú de algo que se repite: *Cambiar cómo se repite…*, *Dejar de repetir* (desde ese día; lo marcado queda), *Ver en el calendario*, *Ver lo que se repite*.
 
-### 6.5 Página libre
-Páginas → “nueva página” → elegir en blanco o una plantilla (lista, carta al futuro, gratitud…) → escribir → abrir el sobre de stickers → pegar una mariposa, rotarla, moverla.
+### 6.5 Hoja libre
+Mis hojas → “Nueva hoja” → elegir en blanco o una plantilla (lista, carta al futuro, gratitud…) → escribir → abrir el sobre de stickers → pegar una mariposa, rotarla, moverla.
 
 ### 6.6 Backup y restauración
 Ajustes → “Mis datos” → **Guardar una copia (.json)**. Para restaurar: “Abrir otra copia” → elegir archivo → se valida → se muestra qué contiene (días, rutinas, páginas, fecha) → advertencia clara → “Reemplazar mi cuaderno” (con opción previa de descargar la copia actual).
@@ -150,23 +150,24 @@ El calendario es donde aparece **todo lo que tiene fecha**: emociones, escritura
   - **×n** cosas hechas (o a medias);
   - **hoy y días que vienen:** cajita vacía **□n** con lo que queda planeado, *contando las rutinas que tocan ese día* aunque todavía no se hayan marcado;
   - **hoja chiquita** si ese día tiene una página libre;
-  - en pantallas anchas, además, **lo que hay ese día escrito en hilitos** del color de su marcador: *Agenda* (rosa), *Rutinas* (salvia), *Páginas* (lavanda); hasta 3 y “+N más”. De hoy en adelante, lo que falta; para atrás, solo lo hecho (D18, D23). En el celular quedan las marcas compactas.
+  - en pantallas anchas, además, **lo que hay ese día escrito en hilitos** con su glifo por tipo (actividad, lo que se repite, hoja); hasta 3 y “+N más”. De hoy en adelante, lo que falta; para atrás, solo lo hecho (D18, D23). En el celular quedan las marcas compactas.
   
   Los días pasados **no** muestran lo que quedó sin marcar (sin cuentas de “pendientes” para atrás: amable, ver D18). Cada marca tiene su texto en el `aria-label` del día (“una cosa planeada”, “empezaste una página”) y su lugar en la leyenda. Todo lo que esté en la papelera (`deletedAt != null`) se ignora por completo (DA1). Hoy con borde a lápiz; el último día abierto lleva una cinta-marcador. Tocar un día → su página en el cuadro desplegable.
 - **Animaciones** (con motion “Completas”/“Suaves”): cambiar de mes desliza la hoja hacia ese lado; pasar de mes a semana (o al revés) la acomoda con una escala apenas; el día nuevo se arma aparte y entra cuando está listo (sin parpadeo).
 - **Semana**: agenda de 7 días (desktop: lun-mié izquierda / jue-dom derecha). Cada día: emociones, actividades (incluye rutinas futuras virtuales), primera línea escrita y enlaces a las páginas empezadas ese día. Tocar → abre el día. La semana planner editable y por defecto corresponde a A6; aún no está hecha.
 - **Mi año** sigue mostrando solo lo registrado: una rutina sin marcar no borda medio punto. Días con `privacy.noReviews` no aportan recuerdos a “Lo que guardé” (PV1), y elementos borrados no se computan (DA1).
-- **Los días de una rutina** (desde Rutinas o *Lo que fui notando*): el mes marca con tinte de salvia + el ícono de rutinas los días que la tocan de hoy en adelante y los días pasados en que se hizo (también “un poquito”). Los días pasados en que no se hizo no se marcan. Arriba, un aviso con “Ver la rutina” y “Dejar de mostrar”.
+- **Los días de algo que se repite** (desde Mis hojas, el menú de la actividad o *Lo que fui notando*): el mes marca con tinte de salvia + el ícono de rutinas los días que la tocan de hoy en adelante y los días pasados en que se hizo (también “un poquito”). Los días pasados en que no se hizo no se marcan. Arriba, un aviso con “Ver lo que se repite” y “Dejar de mostrar”.
 - Navegación anterior/siguiente, “hoy”.
 
-### 7.4 Rutinas
-- Lista agrupada por momento del día (mañana / tarde / noche / cuando sea).
-- Frecuencias soportadas (§11). Descripción humana de la regla (“Lun · Mié · Vie”, “Cada 3 días”, “Primer sábado del mes”).
+### 7.4 Mis hojas · Lo que se repite (A5)
+Mis hojas (`#/hojas`) es un cuadro de dos hojas: a la izquierda el **índice de hojas** (§7.5), a la derecha **Lo que se repite** (las rutinas de siempre, D7; desde A7 también las hojas que se repiten).
+- Lista agrupada por momento del día (mañana / tarde / noche / cuando sea) y, aparte, **En pausa** (que siguen siendo alcanzables para retomarlas).
+- Frecuencias soportadas (§11), incluida **Todos los años** (el 29/02 cae el 28/02 en años comunes). Descripción humana de la regla (“Lun · Mié · Vie”, “Cada 3 días”, “Primer sábado del mes”, “Todos los años, el 14 de marzo”). Un solo editor (`MC.repeat.editor`, `js/ui/repeat.js`) para Mis hojas, el menú de la actividad y, desde A7, Guardar de una hoja.
 - Pausar/reanudar (archivar), editar, borrar (borrado suave a la papelera, DA1; el historial ya marcado se conserva como actividades sueltas).
-- Cada rutina: la próxima vez es un enlace a ese día; el ícono de calendario muestra sus días en el mes. Si se llega desde “Ver la rutina”, aparece resaltada y con el foco.
+- Cada rutina: la próxima vez es un enlace a ese día; el ícono de calendario muestra sus días en el mes. Si se llega desde “Ver lo que se repite” (`#/hojas/repite/:id`), aparece resaltada y con el foco.
 
-### 7.5 Páginas
-- Cada página tiene **su día en el calendario**: se elige al crearla (“Para el día”, por defecto hoy o el día desde donde se empezó) y se cambia con “Cambiar el día” (debajo de la hoja o en su menú). Desde la página de un día: “Empezar una página para este día”.
+### 7.5 Hojas (índice en Mis hojas; editor en `#/pagina/:id`)
+- Cada página tiene **su día en el calendario**: se elige al crearla (“Para el día”, por defecto hoy o el día desde donde se empezó) y se cambia con “Cambiar el día” (debajo de la hoja o en su menú). Desde la página de un día: “Empezar una hoja para este día”.
 - **Índice** con título, fecha y número de página con puntos guía (como un índice real). Fijar páginas arriba. Las páginas en papelera no se muestran en el índice (DA1).
 - **Nueva página**: en blanco o plantillas: *Cosas que me hacen bien, Lugares que amo, Personas importantes, Canciones de este momento, Mis pequeñas victorias, Cosas que quiero probar, Carta para mi yo futuro, Brain dump, Gratitud, Sueños, Lista de deseos, Reflexión del mes*.
 - Tipos: `text` (renglones) o `list` (ítems con viñeta dibujada).
@@ -192,11 +193,8 @@ El calendario es donde aparece **todo lo que tiene fecha**: emociones, escritura
 - **Adjuntos**: cualquier archivo de hasta 10 MB en un día o una página; se descarga/abre con un toque y se saca con confirmación (borrado suave a la papelera, DA1). Sirven para guardar con el día lo que no es texto: la entrada del recital, el PDF de un turno, una foto, un audio. Van en la copia de seguridad.
 - **Guardado visible (DA3):** cada cambio en dibujos, stickers y adjuntos se acompaña del indicador `c.savedNote`.
 
-### 7.8 Agenda (poner cosas en el calendario)
-- **Anotar**: qué + qué día (atajos *Hoy · Mañana · En una semana*; por defecto el día marcado en el calendario si es de hoy en adelante) → “Poner en el calendario”. Aparece en ese día, en su página y en el mes.
-- **También podés poner**: algo que se repite (abre el editor de rutinas) o una página para ese día (elige plantilla con el día ya puesto).
-- **Lo que viene**: lo anotado de hoy en adelante, agrupado por día (el día es un enlace, con “en 2 días”, “en 3 semanas”…), más las páginas de esos días. Cada cosa tiene su menú completo: estados, pasar a mañana, **pasar a otro día**, cambiar el nombre, sacar (borrado definitivo con opción de deshacer). Las rutinas no se listan: aparecen solas en sus días.
-- La fila de cada actividad es la misma que en la página del día (`js/ui/activity.js`), con historial de acciones (`MC.history`, DA2) para deshacer cambios involuntarios.
+### 7.8 Agenda (retirada en A5)
+La Agenda dejó de existir como cuadro (D27): anotar en cualquier día se hace desde ese día (y, desde A6, en la semana-planner); repetir, desde el menú de la actividad o Mis hojas; una hoja para un día, con “Nueva hoja” y su día. `#/agenda` lleva a la semana actual. Los datos no cambiaron.
 
 ### 7.7 Ajustes
 - **Vos**: nombre y qué registrar. **Mis emociones** permite elegir color por palabra, con selector nativo o código `#RRGGBB`; las palabras del registro nunca salen de una lista cerrada.
@@ -214,7 +212,7 @@ Para evitar pérdidas accidentales y dar tranquilidad (filosofía amable), el bo
 
 - **Entidades cubiertas:** páginas libres (`pages`), rutinas recurrentes (`routines`), imágenes y fotos de *Mis stickers* (`images`), dibujos (`images`), archivos adjuntos (`files`), actividades individuales (`activities`) y días completos (`days`).
 - **Mecanismo:** el registro recibe una marca temporal `deletedAt: ISO` (UTC). Ausente o `null` indica que el registro está activo.
-- **Aislamiento:** las listas activas, el resumen del calendario (`MC.model.summarize`), la agenda y las observaciones de `insights.js` filtran los registros con `deletedAt != null`. La única excepción es abrir explícitamente una fecha para revisar su hoja en papelera, con aviso y restauración al editar. Sacar una actividad desde Hoy o Agenda usa borrado definitivo con Deshacer; el esquema admite su marca de papelera, pero esa acción no la utiliza.
+- **Aislamiento:** las listas activas, el resumen del calendario (`MC.model.summarize`), la agenda y las observaciones de `insights.js` filtran los registros con `deletedAt != null`. La única excepción es abrir explícitamente una fecha para revisar su hoja en papelera, con aviso y restauración al editar. Sacar una actividad desde un día usa borrado definitivo con Deshacer; el esquema admite su marca de papelera, pero esa acción no la utiliza.
 - **Retención configurable:** `settings.trashRetentionDays` (default 30 días). En cada inicio del cuaderno, los elementos cuyo `deletedAt` supere el período de retención se eliminan de manera definitiva (`delete` físico en IndexedDB).
 - **Restauración:** cualquier elemento en papelera puede devolverse a la vida (`deletedAt = null`). Una página regresa al índice y al calendario; una rutina retoma sus apariciones; una foto o dibujo reaparece en *Mis stickers*; un adjunto vuelve a su día o página. Abrir la fecha de un día en papelera permite revisar su contenido con un aviso; editarlo lo restaura. Un guardado vacío no lo elimina y un borrador anterior al borrado no lo sobrescribe.
 - **Retención:** al acortar el plazo, Ajustes anuncia cuántos registros vencerían en el próximo arranque (`MC.model.countDueTrash`); no los borra en ese momento.

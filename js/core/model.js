@@ -429,11 +429,7 @@
   }
 
   /** Lo que viene: actividades propias desde `from` (rutinas no: aparecen solas en sus días). */
-  function upcoming(from, days) {
-    return activitiesInRange(from, D.addDays(from, days || 365)).then(function (list) {
-      return list.filter(function (a) { return !a.routineId; }).sort(function (a, b) { return byDate(a, b) || a.order - b.order; });
-    });
-  }
+
 
   function activitiesInRange(from, to) {
     return S().getRange('activities', 'date', from, to).then(function (rows) { return rows.filter(function (a) { return !isDeleted(a); }).map(normalizeActivity); });
@@ -1009,7 +1005,7 @@
     emptyDay: emptyDay, normalizeDay: normalizeDay, isEmptyDay: isEmptyDay, getDay: getDay, saveDay: saveDay, daysInRange: daysInRange,
     normalizeActivity: normalizeActivity, itemsForDay: itemsForDay, addActivity: addActivity, saveItem: saveItem,
     setStatus: setStatus, renameActivity: renameActivity, deleteActivity: deleteActivity, moveToTomorrow: moveToTomorrow,
-    moveActivity: moveActivity, upcoming: upcoming,
+    moveActivity: moveActivity,
     normalizeImage: normalizeImage, sanitizeDrawing: sanitizeDrawing, loadImages: loadImages, images: getImagesSync, imageById: imageById,
     saveImage: saveImage, deleteImage: deleteImage, MAX_IMAGE: MAX_IMAGE,
     normalizeFile: normalizeFile, filesFor: filesFor, addFile: addFile, deleteFile: deleteFile, MAX_FILE: MAX_FILE,

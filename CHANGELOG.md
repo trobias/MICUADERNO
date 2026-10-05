@@ -8,6 +8,18 @@ Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantien
 - `.mcp.json` ya está en la rama. La dueña habilitó los dos MCP en su entorno web de Claude Code; el estado de `claude mcp list` en una instalación local distinta no verifica ese entorno.
 - `docs/NUBE.md` registra la verificación de red, los entornos y lo que falta para aplicar la migración SQL existente. Ningún secreto se agregó a Git.
 
+## 2026-10-05 · A5: cuatro marcadores y Mis hojas (cache `v28`)
+
+**Para quien lo usa**
+- Quedan cuatro marcadores: **Hoy · Mis hojas · Mi año · Ajustes**. Agenda y Rutinas dejaron de ser marcadores; no se perdió nada.
+- **Mis hojas** reúne el índice de hojas y **Lo que se repite** (también lo que está en pausa, para retomarlo).
+- Desde el menú de cualquier actividad: **Que se repita…**, con los valores de ese día y la opción nueva **Todos los años**. La actividad pasa a ser la primera vez de la repetición. En lo que ya se repite: *Cambiar cómo se repite…*, *Dejar de repetir* (desde ese día; lo marcado queda) y *Ver en el calendario*.
+- Las direcciones viejas siguen andando: la Agenda lleva a la semana; Rutinas y Páginas, a Mis hojas.
+
+**Para quien lo mantiene**
+- Nuevos `js/views/sheets.js`, `js/ui/repeat.js` (`MC.repeat.editor`) y `js/ui/privacy.js` (`MC.privacy`, antes en `pages.js`). Fuera `js/views/agenda.js`, `js/views/routines.js`, `model.upcoming` y el CSS de la agenda. Rutas: `MC.routes.sheets()`, `routine(id)` → `#/hojas/repite/:id`; `parse` devuelve `{ redirect }` para `#/agenda`, `#/rutinas[/:id]` y `#/paginas`, y el router los reemplaza sin sumar historial.
+- Pruebas: 100 unit (rutas con redirecciones), 46/46 E2E (recorrido A5 nuevo: cuatro marcadores, redirecciones, repetir desde una actividad con regla anual, pausar, hoja con su día; la prueba de borrar → abrir otra hoja sigue en verde).
+
 ## 2026-10-05 · Cuadernos compartidos: la psicóloga entra al cuaderno de Nicole (cache `v27`)
 
 **Para quien lo usa**

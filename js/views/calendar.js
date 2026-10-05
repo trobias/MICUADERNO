@@ -47,7 +47,7 @@
     return h('div.routine-filter',
       h('span.mark-routine', { 'aria-hidden': 'true' }, MC.icon('rutinas')),
       h('p.routine-filter__text', 'Días de ', h('strong', '«' + routine.title + '»'), ': los que tocan de hoy en adelante y los que ya hiciste.'),
-      h('a.text-btn', { href: R.routine(routine.id) }, 'Ver la rutina'),
+      h('a.text-btn', { href: R.routine(routine.id) }, 'Ver lo que se repite'),
       off);
   }
 
@@ -170,8 +170,8 @@
       h('li', h('span.mark-ink'), 'escribiste'),
       h('li', h('span.mark-star', { html: '<svg viewBox="0 0 24 24"><use href="#i-star"/></svg>' }), 'recuerdo'),
       h('li', h('span.mark-x', '×'), 'hecho'),
-      h('li', h('span.mark-plan', MC.icon('box')), 'planeado (con rutinas)'),
-      h('li', h('span.mark-page', MC.icon('paginas')), 'página'),
+      h('li', h('span.mark-plan', MC.icon('box')), 'planeado (también lo que se repite)'),
+      h('li', h('span.mark-page', MC.icon('paginas')), 'hoja'),
       h('li.legend-line', h('span.cell-line', { dataset: { kind: 'own' } }), 'agenda'),
       h('li.legend-line', h('span.cell-line', { dataset: { kind: 'routine' } }), 'rutina'),
       h('li.legend-line', h('span.cell-line', { dataset: { kind: 'page' } }), 'página'),

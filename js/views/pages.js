@@ -1,4 +1,4 @@
-/* MIS PÁGINAS — índice y editor de páginas libres. Ver SPEC §7.5. */
+/* HOJA SUELTA — editor de una hoja con su día y plantillas de inicio. El índice está en Mis hojas (sheets.js). Ver SPEC §7.5. */
 (function (root) {
   'use strict';
   var MC = root.MC;
@@ -52,89 +52,9 @@
       b.addEventListener('click', function () { dlg.close(); create(t, dayInput.value); });
       grid.appendChild(b);
     });
-    var dlg = c.dialog({ title: 'Nueva página', content: [
+    var dlg = c.dialog({ title: 'Nueva hoja', content: [
       h('div.field.field--inline', h('label', { for: 'tp-day' }, 'Para el día'), dayInput),
       h('p.section__hint', 'Empezá en blanco o con una idea. Todo se puede cambiar, también el día.'), grid] });
-  }
-
-  /* ---------- Privacidad de un día o de una página (PV1) ---------- */
-  /**
-   * Tres casillas que se guardan al tocarlas. La usan la página libre (su menú) y la página del día (su encabezado).
-   * opts: { kind: 'day' | 'page', privacy, empty, onChange(privacy | null) }
-   */
-  function privacyDialog(opts) {
-    var day = opts.kind === 'day';
-    var it = day ? 'lo' : 'la';
-    var current = M.sanitizePrivacy(opts.privacy) || { noMemory: false, noInsights: false, noReviews: false };
-    var OPTIONS = [
-      { key: 'noMemory', label: 'No traer' + it + ' como recuerdo', hint: (day ? 'No aparece en “Lo que guardé” ni en' : 'No aparece en') + ' los recuerdos que el cuaderno te acerque.' },
-      { key: 'noInsights', label: 'No usar' + it + ' en “Lo que fui notando”', hint: day ? 'Sus ánimos y lo que hiciste no entran en esas cuentas.' : 'Lo que escribiste acá no entra en esas cuentas.' },
-      { key: 'noReviews', label: 'No incluir' + it + ' en los repasos', hint: 'Queda afuera de ' + (day ? '“Lo que guardé” y de ' : '') + 'los repasos de la semana o del mes.' }
-    ];
-    var list = h('ul.check-list');
-    OPTIONS.forEach(function (o) {
-      var id = MC.uid('pv');
-      var cb = h('input', { type: 'checkbox', id: id, checked: current[o.key] });
-      cb.addEventListener('change', function () { current[o.key] = cb.checked; opts.onChange(M.sanitizePrivacy(current)); });
-      list.appendChild(h('li', h('label.check', { for: id }, cb, h('span', o.label, h('span.check__hint', o.hint)))));
-    });
-    c.dialog({
-      title: day ? 'Privacidad de este día' : 'Privacidad de esta página',
-      content: [
-        h('p.t-text', (day ? 'Este día sigue' : 'Esta página sigue') + ' en tu cuaderno, en el calendario y en tus copias. Esto solo decide qué te vuelve a mostrar el cuaderno.'),
-        list,
-        opts.empty ? h('p.section__hint', 'Se guarda junto con lo primero que anotes este día.') : null
-      ],
-      actions: [{ label: 'Listo', kind: 'primary' }],
-      onClose: opts.onClose
-    });
-  }
-
-  /**
-   * Acceso a la privacidad con su estado en palabras (nunca solo por color): “Privacidad” o “Con privacidad”.
-   * `compact`: solo el candado a la vista (las palabras quedan para el lector de pantalla y el tooltip).
-   */
-  function privacyButton(privacy, onClick, compact) {
-    var text = h(compact ? 'span.sr-only' : 'span');
-    var b = h('button.text-btn.privacy-btn', { type: 'button', 'aria-haspopup': 'dialog' }, MC.icon('lock'), text);
-    b.paint = function (p) {
-      text.textContent = M.sanitizePrivacy(p) ? 'Con privacidad' : 'Privacidad';
-      if (compact) b.title = text.textContent;
-    };
-    b.paint(privacy);
-    b.addEventListener('click', onClick);
-    return b;
-  }
-
-  /* ---------- Índice ---------- */
-  function renderIndex(main) {
-    var destroyed = false;
-    var page = h('section.page.page--margin.index-page');
-    main.appendChild(h('div.spread.spread--single', page));
-    M.getPages().then(function (pages) {
-      if (destroyed) return;
-      var add = h('button.label-btn', { type: 'button' }, MC.icon('plus'), 'Nueva página');
-      add.addEventListener('click', function () { templatePicker(); });
-      page.appendChild(h('header.page-head', h('h1.t-display', 'Mis páginas'), add));
-      if (!pages.length) {
-        page.appendChild(c.empty('Todavía no hay páginas. Una lista, una carta, lo que quieras: esta parte del cuaderno es libre.', 'libro'));
-        return;
-      }
-      var ol = h('ol.toc', { 'aria-label': 'Índice' });
-      pages.forEach(function (p, i) {
-        var preview = p.kind === 'list' ? p.items.filter(function (it) { return it.text.trim(); }).length + ' cosas' : (p.body.trim() ? p.body.trim().split('\n')[0].slice(0, 70) : 'en blanco');
-        preview += ' · ' + D.shortLabel(M.pageDate(p));
-        ol.appendChild(h('li.toc__item',
-          h('a.toc__link', { href: R.page(p.id) },
-            p.pinned ? h('span.toc__pin', { 'aria-label': 'fijada' }, MC.icon('pin')) : null,
-            h('span.toc__title', M.pageTitle(p)),
-            h('span.toc__dots', { 'aria-hidden': 'true' }),
-            h('span.toc__num', String(i + 1))),
-          h('p.toc__preview', preview)));
-      });
-      page.appendChild(ol);
-    });
-    return { destroy: function () { destroyed = true; } };
   }
 
   /* ---------- Página ---------- */
@@ -167,7 +87,7 @@
       } else if (draft) MC.ui.set(draftKey, null);
       if (!p) {
         sheet.appendChild(c.empty('No encontré esta página. Quizás la borraste.', 'nube'));
-        sheet.appendChild(h('a.label-btn', { href: R.pages() }, 'Volver al índice'));
+        sheet.appendChild(h('a.label-btn', { href: R.sheets() }, 'Volver a Mis hojas'));
         return;
       }
       page = p;
@@ -193,10 +113,10 @@
         c.menu(more, items, 'Opciones de la página');
       });
       moreBtn = more;
-      privacyEl = privacyButton(page.privacy, openPrivacy, true);
+      privacyEl = MC.privacy.button(page.privacy, openPrivacy, true);
       privacyEl.hidden = !M.sanitizePrivacy(page.privacy);
       sheet.appendChild(h('header.free-head',
-        h('a.text-btn', { href: R.pages() }, MC.icon('arrow-left'), 'Índice'),
+        h('a.text-btn', { href: R.sheets() }, MC.icon('arrow-left'), 'Mis hojas'),
         h('span.free-head__right', privacyEl, saved, more)));
       sheet.appendChild(h('h1.sr-only', page.title || 'Página sin título'));
       sheet.appendChild(title);
@@ -218,7 +138,7 @@
     /* Privacidad (PV1): se elige desde el menú; si hay algo prendido, el candado queda a la vista y también la abre. */
     var privacyEl = null, moreBtn = null;
     function openPrivacy() {
-      privacyDialog({
+      MC.privacy.dialog({
         kind: 'page', privacy: page.privacy,
         onChange: function (p) { if (!page) return; page.privacy = p; persist(); persist.flush(); },
         onClose: function () {
@@ -315,7 +235,7 @@
           persist.cancel();
           var id = page.id;
           M.deletePage(id).then(function () {
-            page = null; location.hash = R.pages();
+            page = null; location.hash = R.sheets();
             c.toast('Se fue a la papelera.', { action: 'Deshacer', onAction: function () { M.restoreTrash('pages', id).then(function () { location.hash = R.page(id); }); } });
           });
         });
@@ -329,8 +249,7 @@
 
   MC.views = MC.views || {};
   MC.views.pages = {
-    render: function (main) { return renderIndex(main); }, TEMPLATES: TEMPLATES, templateFor: templateFor, newPage: templatePicker,
-    privacyDialog: privacyDialog, privacyButton: privacyButton
+    TEMPLATES: TEMPLATES, templateFor: templateFor, newPage: templatePicker
   };
   MC.views.page = { render: function (main, params) { return renderPage(main, params.id); } };
 })(window);

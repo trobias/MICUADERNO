@@ -63,13 +63,15 @@ js/core/insights.js     “Lo que fui notando”
 js/ui/icons.js          sprite SVG de íconos
 js/ui/stickers.js       arte SVG de stickers + glifos de ánimo
 js/ui/components.js     editor de emociones libres, casilla de punto cruz, diálogos, toasts, askDate, etc.
-js/ui/activity.js       fila de actividad (casilla + menú: estados, antes/después, pasar a otro día, renombrar, sacar); Hoy y Agenda (hasta A5)
+js/ui/activity.js       fila de actividad (casilla + menú: estados, antes/después, pasar a otro día, que se repita, renombrar, sacar)
+js/ui/privacy.js        privacidad de un día o una hoja (MC.privacy)
+js/ui/repeat.js         editor de repetición (MC.repeat.editor), con regla anual; lo usan Mis hojas, la actividad y Guardar (A7)
 js/ui/motion.js         nivel de motion, helpers WAAPI, transiciones de vista
 js/ui/scenes.js         director de escenas ocasionales
 js/ui/scrapbook.js      capa de stickers (arrastrar, rotar, teclado) + Mis stickers (img:<id>)
 js/ui/draw.js           hojita para dibujar (lápiz, goma, texto, colores, deshacer) → imagen propia
 js/ui/images.js         subir imágenes (rasterizadas) y adjuntos de un día/página
-js/views/*.js           cover, onboarding, today, calendar, agenda, routines, pages, year, settings, print
+js/views/*.js           cover, onboarding, today, calendar, sheets (Mis hojas), pages (hoja suelta), year, settings, print
 js/notify.js            recordatorios locales
 js/pwa.js               registro de SW, instalación, aviso de actualización
 js/app.js               router por hash + arranque: calendario de fondo + cuadro desplegable (dialog #panel) + marcadores

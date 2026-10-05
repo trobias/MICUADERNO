@@ -15,9 +15,7 @@ test('cada ruta armada se lee como la vista que corresponde', () => {
     [R.week('2026-10-05'), 'base', 'calendar', { mode: 'semana', date: '2026-10-05' }],
     [R.today(), 'panel', 'today', { date: '2026-10-01', isToday: true }],
     [R.day('2026-09-12'), 'panel', 'today', { date: '2026-09-12' }],
-    [R.agenda(), 'panel', 'agenda', {}],
-    [R.routines(), 'panel', 'routines', {}],
-    [R.pages(), 'panel', 'pages', {}],
+    [R.sheets(), 'panel', 'sheets', {}],
     [R.page('pag_x1'), 'panel', 'page', { id: 'pag_x1' }],
     [R.year('2025'), 'panel', 'year', { year: '2025' }],
     [R.year(), 'panel', 'year', { year: '2026' }],
@@ -37,7 +35,8 @@ test('cada ruta armada se lee como la vista que corresponde', () => {
 test('el botoncito que se ilumina: hoy sí, otro día no', () => {
   assert.equal(R.parse(R.day('2026-10-01'), ctx).opt, 'hoy');
   assert.equal(R.parse(R.day('2026-09-30'), ctx).opt, null);
-  assert.equal(R.parse(R.page('a'), ctx).opt, 'paginas');
+  assert.equal(R.parse(R.page('a'), ctx).opt, 'hojas');
+  assert.equal(R.parse(R.sheets(), ctx).opt, 'hojas');
   assert.equal(R.parse(R.print(), ctx).opt, 'ajustes');
 });
 
@@ -65,14 +64,22 @@ test('las direcciones escritas en sw.js (que no carga MC.routes) siguen existien
   assert.ok(hashes.every((x) => x === R.today()), 'las notificaciones abren Hoy');
 });
 
-test('rutina: abrirla en su cuadro y ver sus días en el calendario', () => {
+test('repetición: abrirla en Mis hojas y ver sus días en el calendario', () => {
   const r1 = R.parse(R.routine('rut_9'), ctx);
-  assert.equal(r1.name, 'routines');
+  assert.equal(r1.name, 'sheets');
   assert.deepEqual(r1.params, { focus: 'rut_9' });
-  assert.deepEqual(R.parse(R.routines(), ctx).params, {});
+  assert.deepEqual(R.parse(R.sheets(), ctx).params, {});
   const r2 = R.parse(R.month('2026-11', { routine: 'rut_9' }), ctx);
   assert.equal(r2.kind, 'base');
   assert.deepEqual(r2.params, { mode: 'mes', month: '2026-11', routine: 'rut_9' });
   assert.equal(R.month('2026-11', {}), R.month('2026-11'));
   assert.equal(R.parse('#/calendario/mes/2026-11/rutina', ctx).params.routine, undefined);
+});
+
+test('rutas de antes de A5: Agenda va a la semana; Rutinas y Páginas, a Mis hojas (D27)', () => {
+  assert.deepEqual(R.parse('#/agenda', ctx), { redirect: R.week('2026-10-01') });
+  assert.deepEqual(R.parse('#/rutinas', ctx), { redirect: R.sheets() });
+  assert.deepEqual(R.parse('#/rutinas/rut_9', ctx), { redirect: R.routine('rut_9') });
+  assert.deepEqual(R.parse('#/paginas', ctx), { redirect: R.sheets() });
+  for (const name of ['agenda', 'routines', 'pages']) assert.equal(R[name], undefined, 'sin armador para ' + name);
 });

@@ -144,10 +144,10 @@ await test('rutina: se crea y aparece sola en Hoy; marcarla la guarda', async ()
   await page.goto(FILE_URL);
   await onboard(page);
   await goto(page, '#/rutinas');
-  await page.click('button:has-text("Nueva rutina")');
+  await page.click('button:has-text("Nueva repetición")');
   await page.fill('#rt-title', 'Regar las plantas');
   await page.selectOption('#rt-freq', 'daily');
-  await page.click('dialog.sheet button:has-text("Crear rutina")');
+  await page.click('dialog.sheet button:has-text("Que se repita")');
   await page.waitForSelector('.routine__title:has-text("Regar las plantas")');
   await goto(page, '#/hoy');
   await page.waitForSelector('.activity');
@@ -238,7 +238,7 @@ await test('páginas: plantilla, escribir, sticker, persistir', async () => {
   await page.goto(FILE_URL);
   await onboard(page);
   await goto(page, '#/paginas');
-  await page.click('button:has-text("Nueva página")');
+  await page.click('button:has-text("Nueva hoja")');
   await page.click('.template:has-text("Lugares que amo")');
   await page.waitForSelector('.free-list input');
   await page.locator('.free-list input').first().fill('la plaza');
@@ -310,7 +310,7 @@ await test('guardado visible (DA3): “guardando…” → “guardado” en el 
 
   // Página
   await goto(page, '#/paginas');
-  await page.click('button:has-text("Nueva página")');
+  await page.click('button:has-text("Nueva hoja")');
   await page.click('.template:has-text("Vaciar la cabeza")');
   await page.waitForSelector('#page-body');
   await watch('.free-head .saved-note');
@@ -341,7 +341,7 @@ await test('DA3: fallo legible con sticker a 375px, sin toast duplicado, y baja 
   await page.goto(FILE_URL);
   await onboard(page);
   await goto(page, '#/paginas');
-  await page.click('button:has-text("Nueva página")');
+  await page.click('button:has-text("Nueva hoja")');
   await page.click('.template:has-text("Vaciar la cabeza")');
   await page.waitForSelector('#page-body');
   await page.evaluate(() => MC.emit('store:error', new Error('cuota llena')));
@@ -405,13 +405,13 @@ await test('el calendario reúne todo: rutinas planeadas, páginas del día y el
   await page.goto(FILE_URL);
   await onboard(page);
   await goto(page, '#/rutinas');
-  await page.click('button:has-text("Nueva rutina")');
+  await page.click('button:has-text("Nueva repetición")');
   await page.fill('#rt-title', 'Estirar');
   await page.selectOption('#rt-freq', 'daily');
-  await page.click('dialog.sheet button:has-text("Crear rutina")');
+  await page.click('dialog.sheet button:has-text("Que se repita")');
   await page.waitForSelector('.routine__title:has-text("Estirar")');
   await goto(page, '#/paginas');
-  await page.click('button:has-text("Nueva página")');
+  await page.click('button:has-text("Nueva hoja")');
   await page.click('.template:has-text("Lugares que amo")');
   await page.waitForSelector('.free-list input');
   await page.waitForTimeout(500);
@@ -445,7 +445,7 @@ await test('papelera: borrar una página la saca del mes; restaurarla desde Ajus
   await page.goto(FILE_URL);
   await onboard(page);
   await goto(page, '#/paginas');
-  await page.click('button:has-text("Nueva página")');
+  await page.click('button:has-text("Nueva hoja")');
   await page.click('.template:has-text("Lugares que amo")');
   await page.waitForSelector('.free-list input');
   await page.waitForTimeout(500);
@@ -523,10 +523,10 @@ await test('las secciones se conectan: rutina ↔ calendario, página → día, 
     return { routine: r.id, page: p.id };
   }, [TODAY, Y, add(TODAY, -3)]);
 
-  // Día → “Ver la rutina” → la rutina, resaltada y con el foco.
+  // Día → “Ver lo que se repite” → Mis hojas, con la repetición resaltada y con el foco.
   await goto(page, '#/dia/' + TODAY);
   await page.click('button[aria-label="Más opciones para Estirar"]');
-  await page.click('.menu__item:has-text("Ver la rutina")');
+  await page.click('.menu__item:has-text("Ver lo que se repite")');
   await page.waitForSelector('.routine.is-focus[aria-current="true"]');
   assert.match(await page.textContent('.routine.is-focus'), /Estirar/);
   await page.waitForTimeout(100);
@@ -634,49 +634,56 @@ await test('calendario en vivo: se actualiza detrás del cuadro y desde otra pes
   await context.close();
 });
 
-await test('agenda: anotar en cualquier día, verlo en el mes, pasarlo a otro día, sacarlo; páginas con su día', async () => {
+await test('A5: cuatro marcadores; Agenda va a la semana; Mis hojas reúne hojas y repeticiones; repetir una actividad', async () => {
   const { page, errors, context } = await newPage(browser);
   await page.goto(FILE_URL);
   await onboard(page);
+  // Quedan Hoy · Mis hojas · Mi año · Ajustes.
+  assert.deepEqual(await page.$$eval('#tabs .tab, #panel .tab', (els) => [...new Set(els.map((e) => e.dataset.tab))]), ['hoy', 'hojas', 'anio', 'ajustes']);
+  // La Agenda ya no existe: su ruta vieja lleva a la semana, sin sumar un paso al historial.
+  await goto(page, '#/agenda');
+  await page.waitForFunction(() => /#\/calendario\/semana\//.test(location.hash));
+  // Anotar en un día y pedir que se repita todos los años, desde su menú.
+  await goto(page, '#/hoy');
+  await page.fill('#panel input[aria-label="Agregar una actividad"]', 'turno con la dentista');
+  await page.press('#panel input[aria-label="Agregar una actividad"]', 'Enter');
+  await page.waitForSelector('#panel .activity:has-text("turno con la dentista")');
+  await page.click('#panel button[aria-label="Más opciones para turno con la dentista"]');
+  await page.click('.menu__item:has-text("Que se repita")');
+  assert.equal(await page.inputValue('dialog.sheet #rt-title'), 'turno con la dentista');
+  await page.selectOption('dialog.sheet #rt-freq', 'yearly');
+  assert.equal(await page.inputValue('dialog.sheet #rt-month'), String(+TODAY.slice(5, 7)), 'empieza en el mes del día abierto');
+  assert.equal(await page.inputValue('dialog.sheet #rt-yday'), String(+TODAY.slice(8, 10)));
+  assert.match(await page.textContent('dialog.sheet .rt-preview'), /Todos los años/);
+  await page.click('dialog.sheet button:has-text("Que se repita")');
+  // La actividad suelta pasó a ser la primera vez de la repetición: no queda doble.
+  await page.waitForFunction(() => document.querySelectorAll('#panel .activity').length === 1 && !!document.querySelector('#panel .activity[data-routine], #panel .activity'));
+  await page.waitForTimeout(300);
+  assert.equal(await page.locator('#panel .activity:has-text("turno con la dentista")').count(), 1);
+  // Desde su menú: dejar de repetir (pide confirmar; lo ya marcado queda).
+  await page.click('#panel button[aria-label="Más opciones para turno con la dentista"]');
+  assert.ok(await page.locator('.menu__item:has-text("Cambiar cómo se repite")').count());
+  assert.ok(await page.locator('.menu__item:has-text("Ver en el calendario")').count());
+  await page.keyboard.press('Escape');
+  // Mis hojas: lo que se repite, también en pausa, y el índice de hojas.
+  await goto(page, '#/hojas');
+  await page.waitForSelector('#panel .routine__title:has-text("turno con la dentista")');
+  await page.click('#panel button[aria-label="Pausar turno con la dentista"]');
+  await page.waitForSelector('#panel .routine.is-paused:has-text("turno con la dentista")');
+  assert.match(await page.textContent('#panel .routines-page'), /En pausa/);
+  // La ruta vieja de Rutinas también llega acá.
+  await goto(page, '#/rutinas');
+  await page.waitForFunction(() => location.hash === '#/hojas');
+  // Una hoja para un día elegido aparece en ese día.
   const add = (k, n) => { const d = new Date(+k.slice(0, 4), +k.slice(5, 7) - 1, +k.slice(8, 10) + n); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
-  const later = add(TODAY, 3);
-  await page.click('#panel .tab[data-tab="agenda"]');
-  await page.waitForSelector('#panel #ag-what');
-  // Sin nombre: el error aparece junto al campo.
-  await page.click('#panel button:has-text("Poner en el calendario")');
-  assert.match(await page.textContent('#ag-what-err'), /Escribí qué/);
-  await page.fill('#ag-what', 'turno con la dentista');
-  await page.fill('#ag-when', later);
-  await page.click('#panel button:has-text("Poner en el calendario")');
-  await page.waitForSelector(`#panel .agenda-day[data-date="${later}"] .activity`);
-  // Detrás del cuadro, el mes ya lo cuenta como planeado.
-  if (later.slice(0, 7) === TODAY.slice(0, 7)) {
-    await page.waitForFunction((k) => { const c = document.querySelector(`#main .day-cell[data-date="${k}"] .mark-plan`); return c && /1/.test(c.textContent); }, later, { timeout: 4000 });
-  }
-  // Pasar a otro día desde su menú.
-  const moved = add(TODAY, 5);
-  await page.click('#panel button[aria-label="Más opciones para turno con la dentista"]');
-  await page.click('.menu__item:has-text("Pasar a otro día")');
-  await page.fill('dialog.sheet input[type="date"]', moved);
-  await page.click('dialog.sheet button:has-text("Pasar")');
-  await page.waitForSelector(`#panel .agenda-day[data-date="${moved}"] .activity`);
-  assert.equal(await page.locator(`#panel .agenda-day[data-date="${later}"]`).count(), 0);
-  // Sacar y deshacer.
-  await page.click('#panel button[aria-label="Más opciones para turno con la dentista"]');
-  await page.click('.menu__item:has-text("Sacar de la lista")');
-  await page.waitForFunction(() => !document.querySelector('#panel .agenda-day .activity'));
-  await page.click('.toast button:has-text("Deshacer")');
-  await page.waitForSelector(`#panel .agenda-day[data-date="${moved}"] .activity`);
-  // Una página para un día elegido aparece en ese día.
-  await page.click('#panel button:has-text("Una página para ese día")');
-  await page.fill('dialog.sheet #tp-day', moved);
+  const later = add(TODAY, 5);
+  await page.click('#panel button:has-text("Nueva hoja")');
+  await page.fill('dialog.sheet #tp-day', later);
   await page.click('dialog.sheet .template:has-text("En blanco")');
   await page.waitForSelector('#panel .page-meta a');
-  assert.match(page.url(), /#\/pagina\//);
-  assert.match(await page.getAttribute('#panel .page-meta a', 'href'), new RegExp('#/dia/' + moved + '$'));
-  await goto(page, '#/dia/' + moved);
+  assert.match(await page.getAttribute('#panel .page-meta a', 'href'), new RegExp('#/dia/' + later + '$'));
+  await goto(page, '#/dia/' + later);
   await page.waitForSelector('#panel .day-pages a');
-  assert.equal(await page.locator('#panel .activity').count(), 1, 'la actividad está en su día');
   assert.deepEqual(errors, []);
   await context.close();
 });
@@ -739,7 +746,7 @@ await test('dibujar, subir imágenes como stickers y adjuntar archivos', async (
   await page.waitForFunction(() => !document.querySelector('#panel .attachment'));
   // Plantilla “Para dibujar”: la hoja abre con el lápiz listo.
   await goto(page, '#/paginas');
-  await page.click('#panel button:has-text("Nueva página")');
+  await page.click('#panel button:has-text("Nueva hoja")');
   await page.click('.template:has-text("Para dibujar")');
   await page.waitForSelector('dialog.sheet--draw canvas');
   await page.keyboard.press('Escape');
@@ -883,11 +890,11 @@ await test('actividades: no se deshace desde otra vista; estado, nombre y trasla
   await context.close();
 });
 
-await test('mobile 375px: una pantalla, 5 botoncitos, sin scroll horizontal', async () => {
+await test('mobile 375px: una pantalla, 4 marcadores, sin scroll horizontal', async () => {
   const { page, errors, context } = await newPage(browser, { viewport: { width: 375, height: 760 } });
   await page.goto(FILE_URL);
   await onboard(page);
-  for (const h of ['#/hoy', '#/calendario', '#/rutinas', '#/paginas', '#/anio', '#/ajustes']) {
+  for (const h of ['#/hoy', '#/calendario', '#/hojas', '#/anio', '#/ajustes']) {
     await goto(page, h);
     const over = await page.evaluate(() => { const p = document.getElementById('panel'); return Math.max(document.documentElement.scrollWidth - window.innerWidth, p.open ? p.scrollWidth - p.clientWidth : 0); });
     const culprit = over > 0 ? await page.evaluate(() => [...document.querySelectorAll('body *')].filter((e) => e.getBoundingClientRect().right > window.innerWidth + 1).slice(0, 4).map((e) => e.className || e.tagName).join(' | ')) : '';
@@ -895,7 +902,7 @@ await test('mobile 375px: una pantalla, 5 botoncitos, sin scroll horizontal', as
   }
   await goto(page, '#/calendario');
   const tabs = await page.$$eval('#tabs .tab', (els) => els.map((e) => { const r = e.getBoundingClientRect(); return { w: r.width, h: r.height, bottom: r.bottom }; }));
-  assert.equal(tabs.length, 6, 'cinco marcadores + ajustes');
+  assert.equal(tabs.length, 4, "Hoy, Mis hojas, Mi año y Ajustes");
   assert.ok(tabs.every((o) => o.h >= 44 && o.w >= 44), 'marcadores de al menos 44px');
   const vh = await page.evaluate(() => window.innerHeight);
   assert.ok(tabs.every((o) => o.bottom <= vh + 8 && o.bottom > vh - 80), 'marcadores abajo, a la vista (asoman apenas)');
@@ -1010,9 +1017,9 @@ await test('pantalla única: tocar un día abre su cuadro, cerrar vuelve al cale
   assert.match(await page.textContent('.month-chip[aria-current="date"]'), /ene/);
   assert.match(page.url(), /#\/calendario\/mes\/\d{4}-01/);
   // Marcadores: cada uno abre su cuadro, y con el cuadro abierto se pasa de uno a otro sin cerrar.
-  await page.click('.tab[data-tab="agenda"]');
-  await page.waitForSelector('#panel #ag-what');
-  for (const [tab, sel] of [['rutinas', 'button:has-text("Nueva rutina")'], ['paginas', 'button:has-text("Nueva página")'], ['anio', '.hoop'], ['ajustes', '#st-name'], ['hoy', '.day-head']]) {
+  await page.click('.tab[data-tab="hojas"]');
+  await page.waitForSelector('#panel button:has-text("Nueva hoja")');
+  for (const [tab, sel] of [['anio', '.hoop'], ['ajustes', '#st-name'], ['hoy', '.day-head'], ['hojas', 'button:has-text("Nueva repetición")']]) {
     await page.click(`#panel .tab[data-tab="${tab}"]`);
     await page.waitForSelector(`#panel ${sel}`);
     assert.equal(await page.getAttribute(`.tab[data-tab="${tab}"]`, 'aria-current'), 'page');
@@ -1081,8 +1088,8 @@ await test('rutina sin nombre: el error aparece junto al campo', async () => {
   await page.goto(FILE_URL);
   await onboard(page);
   await goto(page, '#/rutinas');
-  await page.click('button:has-text("Nueva rutina")');
-  await page.click('dialog.sheet button:has-text("Crear rutina")');
+  await page.click('button:has-text("Nueva repetición")');
+  await page.click('dialog.sheet button:has-text("Que se repita")');
   assert.equal(await page.getAttribute('#rt-title', 'aria-invalid'), 'true');
   assert.match(await page.textContent('#rt-title-err'), /nombre/);
   assert.equal(await page.evaluate(() => document.activeElement.id), 'rt-title');
@@ -1367,7 +1374,7 @@ await test('páginas: después de borrar, el índice responde siempre (decorando
     await page.goto(url);
     await onboard(page);
     await page.evaluate(async () => { for (const t of ['Uno', 'Dos', 'Tres', 'Cuatro', 'Cinco']) await MC.model.savePage({ title: t, kind: 'text', body: 'x', date: MC.dates.today() }); });
-    await goto(page, await page.evaluate(() => MC.routes.pages()));
+    await goto(page, await page.evaluate(() => MC.routes.sheets()));
     await page.click('.toc__link >> nth=0');
     await page.waitForSelector('.free-page .page-title');
     await deletePageFromMenu(page);
@@ -1401,7 +1408,7 @@ await test('páginas: después de borrar, el índice responde siempre (decorando
   await page.goto(FILE_URL);
   await onboard(page);
   await page.evaluate(async () => { for (const t of ['Uno', 'Dos']) await MC.model.savePage({ title: t, kind: 'text', body: 'x', date: MC.dates.today() }); });
-  await goto(page, await page.evaluate(() => MC.routes.pages()));
+  await goto(page, await page.evaluate(() => MC.routes.sheets()));
   await page.click('.toc__link >> nth=0');
   await page.waitForSelector('.free-page .page-title');
   await deletePageFromMenu(page);
@@ -1432,7 +1439,7 @@ await test('escenas: salir de una hoja mientras se decora no las deja trabadas',
   await page.goto(FILE_URL);
   await onboard(page);
   await page.evaluate(async () => { await MC.model.savePage({ title: 'Para decorar', kind: 'text', body: 'x', date: MC.dates.today() }); });
-  await goto(page, await page.evaluate(() => MC.routes.pages()));
+  await goto(page, await page.evaluate(() => MC.routes.sheets()));
   await page.click('.toc__link >> nth=0');
   await page.click('button:has-text("Pegar un sticker")');
   await page.click('dialog.sheet .sticker-pick >> nth=0');
@@ -1449,7 +1456,7 @@ await test('menú: uno que se cerró enseguida no cierra el próximo', async () 
   await page.goto(FILE_URL);
   await onboard(page);
   await page.evaluate(async () => { await MC.model.savePage({ title: 'Con menú', kind: 'text', body: 'x', date: MC.dates.today() }); });
-  await goto(page, await page.evaluate(() => MC.routes.pages()));
+  await goto(page, await page.evaluate(() => MC.routes.sheets()));
   await page.click('.toc__link >> nth=0');
   await page.waitForSelector('.free-page .page-title');
   // Un menú que se abre y se cierra en el mismo instante (p. ej. al cambiar de vista).

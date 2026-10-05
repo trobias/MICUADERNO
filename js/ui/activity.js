@@ -195,6 +195,38 @@
       ] });
     }
 
+    function withRoutine(fn) {
+      M.getRoutines().then(function (list) {
+        var r = list.filter(function (x) { return x.id === it.routineId; })[0];
+        if (r) fn(r); else c.toast('Eso ya no se repite.');
+      });
+    }
+
+    /** La actividad suelta pasa a ser la primera vez de lo que ahora se repite (si cae ese día): no queda doble. */
+    function adopt(r) {
+      if (!r || !MC.recurrence.occursOn(r, it.date)) return;
+      var status = it.status;
+      M.deleteActivity(it).then(function () { return M.itemsForDay(it.date); }).then(function (list) {
+        var occ = list.filter(function (x) { return x.routineId === r.id; })[0];
+        return occ && status !== 'pending' ? M.setStatus(occ, status) : null;
+      }).then(function () { if (opts.onRestored) opts.onRestored(); });
+    }
+
+    /** Dejar de repetir desde este día: lo que ya se marcó queda en sus días (A5). */
+    function stopRepeating() {
+      withRoutine(function (r) {
+        c.confirm({ title: '¿Dejar de repetir «' + r.title + '»?', text: 'Deja de aparecer desde el ' + D.longLabel(it.date) + '. Lo que ya marcaste queda en tus días, y la podés retomar desde Mis hojas.', confirm: 'Dejar de repetir' })
+          .then(function (ok) {
+            if (!ok) return;
+            var end = D.addDays(it.date, -1);
+            var next = end < r.startDate ? Object.assign({}, r, { archived: true }) : Object.assign({}, r, { endDate: end });
+            return M.saveRoutine(next).then(function () {
+              c.toast('Listo: «' + r.title + '» ya no se repite.', { action: 'Deshacer', onAction: function () { M.saveRoutine(r); } });
+            });
+          });
+      });
+    }
+
     more.addEventListener('click', function () {
       var items = M.STATUSES.map(function (st) {
         return {
@@ -207,7 +239,14 @@
       items.push({ label: 'Pasar a mañana', icon: 'later', onSelect: function () { moveToDate(D.addDays(it.date, 1), 'Quedó anotado para mañana.'); } });
       items.push({ label: 'Pasar a otro día…', icon: 'calendario', onSelect: moveTo });
       items.push({ label: 'Cambiar el nombre', icon: 'edit', onSelect: startRename });
-      if (it.routineId && !it.routineGone) items.push({ label: 'Ver la rutina', icon: 'rutinas', onSelect: function () { location.hash = R.routine(it.routineId); } });
+      if (it.routineId && !it.routineGone) {
+        items.push({ label: 'Cambiar cómo se repite…', icon: 'rutinas', onSelect: function () { withRoutine(function (r) { MC.repeat.editor(r, null, { date: it.date }); }); } });
+        items.push({ label: 'Dejar de repetir', icon: 'pause', onSelect: stopRepeating });
+        items.push({ label: 'Ver en el calendario', icon: 'calendario', onSelect: function () { location.hash = R.month(D.monthKey(it.date), { routine: it.routineId }); } });
+        items.push({ label: 'Ver lo que se repite', icon: 'rutinas', onSelect: function () { location.hash = R.routine(it.routineId); } });
+      }
+      // Repetir una actividad suelta: el editor de repetición empieza con su nombre y su día (A5).
+      else if (!it.routineId) items.push({ label: 'Que se repita…', icon: 'rutinas', onSelect: function () { MC.repeat.editor(null, adopt, { date: it.date, title: it.title }); } });
       if (!it.virtual) {
         items.push({ label: 'Sacar de la lista', icon: 'trash', onSelect: function () {
           var snapshot = MC.clone(it);

@@ -1,4 +1,5 @@
-/* MIS RUTINAS — crear, editar, pausar. Ver SPEC §7.4 y §11. */
+/* Editor de repetición (A5, D27): qué se repite y cuándo. Lo usan Mis hojas, el menú de una actividad y,
+   desde A7, “Guardar” de una hoja. Las repeticiones son las rutinas de siempre (js/core/recurrence.js). */
 (function (root) {
   'use strict';
   var MC = root.MC;
@@ -10,12 +11,19 @@
     ['interval', 'Cada tantos días'],
     ['monthlyDay', 'Un día del mes'],
     ['monthlyNth', 'Un día de la semana del mes'],
+    ['yearly', 'Todos los años'],
     ['once', 'Una sola vez']
   ];
 
-  function editor(existing, onSaved) {
-    var today = D.today();
-    var r = existing ? MC.clone(existing) : { title: '', rule: { type: 'daily' }, startDate: today, endDate: null, moment: null };
+  /**
+   * existing: la repetición a editar, o null para crear una.
+   * opts: { date: día desde el que se abre (semilla de días, mes y fecha; por defecto hoy), title, rule }.
+   */
+  function editor(existing, onSaved, opts) {
+    opts = opts || {};
+    var today = D.isValid(opts.date) ? opts.date : D.today();
+    onSaved = onSaved || function () {};
+    var r = existing ? MC.clone(existing) : { title: opts.title || '', rule: opts.rule || { type: 'weekdays', days: [D.weekday(today)] }, startDate: today, endDate: null, moment: null };
     var rule = r.rule;
     var title = h('input.input', { id: 'rt-title', type: 'text', value: r.title, maxlength: 120, placeholder: 'caminar, leer un rato, regar las plantas…', required: true });
     var freq = h('select.select', { id: 'rt-freq' }, FREQ.map(function (f) { return h('option', { value: f[0], selected: rule.type === f[0] }, f[1]); }));
@@ -78,6 +86,15 @@
         nth.addEventListener('change', function () { rule.nth = +nth.value; paintPreview(); });
         wd.addEventListener('change', function () { rule.weekday = +wd.value; paintPreview(); });
         extra.appendChild(h('div.field.field--inline', nth, wd, h('span', 'del mes')));
+      } else if (t === 'yearly') {
+        var p0 = D.parse(today);
+        rule.month = rule.month || p0.m;
+        rule.day = rule.day || p0.d;
+        var mo = h('select.select', { id: 'rt-month', 'aria-label': 'Mes' }, D.MONTHS.map(function (name, i) { return h('option', { value: i + 1, selected: rule.month === i + 1 }, name); }));
+        var dy = h('input.input.input--num', { id: 'rt-yday', type: 'number', min: 1, max: 31, value: rule.day, inputmode: 'numeric', 'aria-label': 'Día' });
+        mo.addEventListener('change', function () { rule.month = +mo.value; paintPreview(); });
+        dy.addEventListener('input', function () { rule.day = +dy.value || 1; paintPreview(); });
+        extra.appendChild(h('div.field.field--inline', h('span', 'El'), dy, h('span', 'de'), mo, h('span', '(el 29 de febrero cae el 28 en los años comunes)')));
       } else if (t === 'once') {
         var dt = h('input.input', { id: 'rt-date', type: 'date', value: rule.date || today });
         rule.date = rule.date || today;
@@ -110,7 +127,7 @@
     var actions = [];
     if (existing) {
       actions.push({ label: 'Borrar', kind: 'text', icon: 'trash', onClick: function () {
-        return c.confirm({ title: '¿Mandar «' + existing.title + '» a la papelera?', text: 'Lo que ya marcaste queda en tus días. Podés recuperar la rutina desde Ajustes.', confirm: 'Mandar a la papelera' })
+        return c.confirm({ title: '¿Mandar «' + existing.title + '» a la papelera?', text: 'Lo que ya marcaste queda en tus días. Podés recuperarla desde Ajustes.', confirm: 'Mandar a la papelera' })
           .then(function (ok) { if (!ok) return false; return M.deleteRoutine(existing.id).then(function () {
             onSaved(); setTimeout(function () { c.toast('Se fue a la papelera.', { action: 'Deshacer', onAction: function () { M.restoreTrash('routines', existing.id).then(onSaved); } }); }, 0);
           }); });
@@ -118,16 +135,16 @@
       actions.push({ spacer: true });
     }
     actions.push({ label: 'Cancelar', kind: 'text' });
-    actions.push({ label: existing ? 'Guardar' : 'Crear rutina', onClick: function () {
+    actions.push({ label: existing ? 'Guardar' : 'Que se repita', onClick: function () {
       var cur = currentRoutine();
-      if (!cur.title) { titleErr.textContent = 'Poné un nombre para la rutina, por ejemplo “caminar”.'; title.setAttribute('aria-invalid', 'true'); title.focus(); return false; }
+      if (!cur.title) { titleErr.textContent = 'Poné un nombre, por ejemplo “caminar”.'; title.setAttribute('aria-invalid', 'true'); title.focus(); return false; }
       if (!cur.rule) { error.textContent = 'Elegí al menos un día de la semana.'; return false; }
       if (cur.endDate && cur.endDate < cur.startDate) { endErr.textContent = 'La fecha final quedó antes del inicio: movela un poco más adelante.'; end.setAttribute('aria-invalid', 'true'); end.focus(); return false; }
-      return M.saveRoutine(cur).then(function () { onSaved(); c.toast(existing ? 'Rutina guardada.' : 'Rutina creada. Va a aparecer sola en tus días.'); });
+      return M.saveRoutine(cur).then(function (saved) { onSaved(saved); c.toast(existing ? 'Guardado.' : 'Listo: va a aparecer sola en los días que toca.'); });
     } });
 
     c.dialog({
-      title: existing ? 'Editar rutina' : 'Nueva rutina',
+      title: existing ? 'Editar lo que se repite' : 'Que se repita',
       content: [
         h('div.field', h('label', { for: 'rt-title' }, 'Nombre'), title, titleErr),
         h('div.field', h('label', { for: 'rt-freq' }, 'Frecuencia'), freq),
@@ -144,102 +161,5 @@
     setTimeout(function () { if (!existing) title.focus(); }, 30);
   }
 
-  function render(main, params) {
-    var destroyed = false;
-    var today = D.today();
-    var focusId = params && params.focus || null; // llegó desde “Ver la rutina”: mostrarla resaltada
-    var left = h('section.page.page--margin.routines-page');
-    var right = h('section.page.page--margin.routines-week');
-    main.appendChild(h('div.spread', left, h('div.spine', { 'aria-hidden': 'true' }), right));
-
-    function load() {
-      M.getRoutines().then(function (list) {
-        if (destroyed) return;
-        paintList(list);
-        paintWeek(list);
-        showFocus();
-      });
-    }
-
-    function paintList(list) {
-      MC.clear(left);
-      var add = h('button.label-btn', { type: 'button' }, MC.icon('plus'), 'Nueva rutina');
-      add.addEventListener('click', function () { editor(null, load); });
-      left.appendChild(h('header.page-head', h('h1.t-display', 'Mis rutinas'), add));
-      left.appendChild(h('p.page-intro.t-text', 'Cosas que se repiten. Aparecen solas en el día que toca, sin presión: si un día no sale, no pasa nada.'));
-      if (!list.length) {
-        left.appendChild(c.empty('Todavía no hay rutinas. Cuando quieras, armá la primera.', 'ramita'));
-        return;
-      }
-      var groups = {};
-      list.forEach(function (r) { var k = r.archived ? 'pausa' : (r.moment || ''); (groups[k] = groups[k] || []).push(r); });
-      ['manana', 'tarde', 'noche', '', 'pausa'].forEach(function (k) {
-        if (!groups[k]) return;
-        var ul = h('ul.routine-list');
-        groups[k].forEach(function (r) {
-          var next = r.archived ? null : R.nextOccurrence(r, today, 400);
-          var editBtn = h('button.icon-btn.icon-btn--sm', { type: 'button', 'aria-label': 'Editar ' + r.title }, MC.icon('edit'));
-          editBtn.addEventListener('click', function () { editor(r, load); });
-          // Sus días en el calendario: el mes de la próxima vez (o este, si está en pausa).
-          var onCal = h('a.icon-btn.icon-btn--sm', { href: MC.routes.month(D.monthKey(next || today), { routine: r.id }), 'aria-label': 'Ver los días de «' + r.title + '» en el calendario', title: 'Ver sus días en el calendario' }, MC.icon('calendario'));
-          var pause = h('button.icon-btn.icon-btn--sm', { type: 'button', 'aria-label': (r.archived ? 'Retomar ' : 'Pausar ') + r.title }, MC.icon(r.archived ? 'play' : 'pause'));
-          pause.addEventListener('click', function () {
-            M.saveRoutine(Object.assign({}, r, { archived: !r.archived })).then(function () {
-              c.toast(r.archived ? 'Retomaste «' + r.title + '».' : '«' + r.title + '» quedó en pausa.');
-              load();
-            });
-          });
-          ul.appendChild(h('li.routine', { class: r.archived ? 'is-paused' : null, dataset: { id: r.id } },
-            h('div.routine__text',
-              h('p.routine__title', r.title),
-              h('p.routine__rule', R.describe(r)),
-              // La próxima vez es un enlace a ese día.
-              next ? h('p.routine__next', h('a', { href: MC.routes.day(next) }, next === today ? 'hoy' : 'próxima: ' + D.longLabel(next))) : (r.archived ? h('p.routine__next', 'en pausa') : null)),
-            onCal, pause, editBtn));
-        });
-        left.appendChild(h('section.routine-group', h('h2.routine-group__title', k === 'pausa' ? 'En pausa' : M.MOMENT_LABEL[k]), ul));
-      });
-    }
-
-    function paintWeek(list) {
-      MC.clear(right);
-      var start = D.startOfWeek(today);
-      right.appendChild(h('h2.t-display.week-mini__title', 'Así se ve tu semana'));
-      var active = list.filter(function (r) { return !r.archived; });
-      if (!active.length) {
-        right.appendChild(h('p.section__hint', 'Cuando tengas rutinas, acá vas a ver en qué días caen.'));
-        return;
-      }
-      var ul = h('ul.week-mini');
-      D.range(start, D.addDays(start, 6)).forEach(function (k) {
-        var hits = active.filter(function (r) { return R.occursOn(r, k); });
-        ul.appendChild(h('li.week-mini__day', { class: k === today ? 'is-today' : null },
-          h('a.week-mini__name', { href: MC.routes.day(k) }, D.DAYS_SHORT[D.weekday(k)] + ' ' + D.parse(k).d),
-          h('span.week-mini__items', hits.length ? hits.slice(0, 5).map(function (r) { return r.title; }).join(' · ') + (hits.length > 5 ? ' · y ' + (hits.length - 5) + ' más' : '') : '—')));
-      });
-      right.appendChild(ul);
-      right.appendChild(h('p.section__hint.week-mini__hint', 'Tocá un día para abrir su página.'));
-    }
-
-    function showFocus() {
-      if (!focusId) return;
-      var li = MC.$$('.routine', left).filter(function (x) { return x.dataset.id === focusId; })[0];
-      focusId = null; // solo la primera vez: después la lista se comporta como siempre
-      if (!li) return;
-      li.classList.add('is-focus');
-      li.setAttribute('aria-current', 'true');
-      li.tabIndex = -1;
-      setTimeout(function () {
-        if (destroyed || !li.isConnected) return;
-        li.focus({ preventScroll: true });
-        li.scrollIntoView({ block: 'center' });
-      }, 30);
-    }
-
-    load();
-    return { destroy: function () { destroyed = true; }, refresh: load };
-  }
-
-  MC.views = MC.views || {};
-  MC.views.routines = { render: render, editor: editor };
+  MC.repeat = { editor: editor, FREQ: FREQ };
 })(window);

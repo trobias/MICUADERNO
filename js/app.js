@@ -1,5 +1,5 @@
 /* Arranque y router por hash (funciona igual en file:// y en https://).
-   Una sola pantalla: el calendario queda siempre de fondo; Hoy, un día, Rutinas, Páginas,
+   Una sola pantalla: el calendario queda siempre de fondo; Hoy, un día, Mis hojas,
    Mi año y Ajustes se abren como cuadros desplegables encima (DECISIONS D17). */
 (function (root) {
   'use strict';
@@ -11,13 +11,11 @@
   // Marcadores (como las pestañas de un cuaderno): cada uno abre su cuadro sobre el calendario (DECISIONS D22).
   var TABS = [
     { id: 'hoy', label: 'Hoy', icon: 'hoy', href: R.today() },
-    { id: 'agenda', label: 'Agenda', icon: 'calendario', href: R.agenda() },
-    { id: 'rutinas', label: 'Rutinas', icon: 'rutinas', href: R.routines() },
-    { id: 'paginas', label: 'Páginas', icon: 'paginas', href: R.pages() },
+    { id: 'hojas', label: 'Mis hojas', icon: 'paginas', href: R.sheets() },
     { id: 'anio', label: 'Mi año', icon: 'anio', href: R.year() },
     { id: 'ajustes', label: 'Ajustes', icon: 'ajustes', href: R.settings() }
   ];
-  var PANEL_LABEL = { today: 'Página del día', agenda: 'Agenda', routines: 'Mis rutinas', pages: 'Mis páginas', page: 'Página', year: 'Mi año', settings: 'Ajustes', print: 'Imprimir mi cuaderno' };
+  var PANEL_LABEL = { today: 'Página del día', sheets: 'Mis hojas', page: 'Hoja', year: 'Mi año', settings: 'Ajustes', print: 'Imprimir mi cuaderno' };
 
   var main = document.getElementById('main');
   var book = document.getElementById('book');
@@ -333,6 +331,7 @@
     track(hash);
     var route = parse(hash);
     if (!route) { replaceHash(R.calendar()); return; }
+    if (route.redirect) { replaceHash(route.redirect); return; }
     var s = MC.model.settings();
     if (!s.onboarded && route.kind !== 'onboarding') { replaceHash(R.welcome()); return; }
     MC.ui.set('lastRoute', hash);

@@ -207,16 +207,6 @@ test('mover a otro día: propia cambia de fecha; de rutina queda para otro día 
   assert.equal(await M.moveActivity(moved, '2026-10-09'), null, 'mismo día: no hace nada');
 });
 
-test('lo que viene: propias desde hoy, en orden, sin rutinas', async () => {
-  await fresh();
-  await M.saveRoutine({ title: 'Regar', rule: { type: 'daily' }, startDate: '2026-10-01' });
-  await M.addActivity('2026-10-20', 'cumple');
-  await M.addActivity('2026-10-03', 'feria');
-  await M.addActivity('2026-09-20', 'ya pasó');
-  const list = await M.upcoming('2026-10-01', 60);
-  assert.deepEqual(list.map((a) => a.title), ['feria', 'cumple']);
-});
-
 test('páginas: tienen día en el calendario (elegible) y la copia v1 se migra', async () => {
   await fresh();
   const p = await M.savePage({ title: 'Lista del viaje', date: '2026-12-20' });

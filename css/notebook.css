@@ -166,9 +166,7 @@
   .tab[aria-current='page']:hover { transform: translateX(calc(4px * var(--move))); }
 }
 .tab[data-tab='hoy'] { --tab-bg: var(--butter); }
-.tab[data-tab='agenda'] { --tab-bg: var(--blush); }
-.tab[data-tab='rutinas'] { --tab-bg: var(--sage); }
-.tab[data-tab='paginas'] { --tab-bg: var(--lavender); }
+.tab[data-tab='hojas'] { --tab-bg: var(--lavender); }
 .tab[data-tab='anio'] { --tab-bg: var(--peach); }
 .tab[data-tab='ajustes'] { --tab-bg: var(--paper-shade); margin-top: 18px; }
 .tab:focus-visible { outline-color: var(--cloth-ink); }

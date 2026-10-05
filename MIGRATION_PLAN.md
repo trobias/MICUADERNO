@@ -19,7 +19,8 @@ La referencia visual de la segunda imagen era una paleta pastel (`#F2CFD7`, `#D6
 | A4 · Emociones escritas | Hecho | Día, Actividad, Calendario, Año, Ajustes, observaciones, exportación, impresión y recordatorios con lectura de copias viejas. `npm run check`: 94 unit y 43/43 E2E Chromium; ver `CHANGELOG.md`. |
 | Índice de Páginas | Hecho en Chromium | `58ed3c9`: `MC.motion.swap` anima la hoja nueva, no el contenedor; 1/6 → 0/9. Ver [`PAGES_INDEX_INVESTIGATION.md`](PAGES_INDEX_INVESTIGATION.md). |
 | B-base (adelantada) | Hecho en local, sin desplegar | Next.js + Supabase: cuentas con PIN, Nicole admin, permisos con RLS, push y latido. Ver [`docs/NUBE.md`](docs/NUBE.md) y D37. |
-| A5–A13 | Pendiente | Orden y criterios debajo. |
+| A5 · Marcadores y Mis hojas | Hecho | Cuatro marcadores, `#/hojas` con índice y repeticiones (también en pausa), `MC.repeat.editor` (anual), redirecciones de rutas viejas; fuera agenda.js/routines.js. Cache v28. |
+| A6–A13 | Pendiente | Orden y criterios debajo. |
 
 ### A5 · Menos marcadores y Mis hojas inicial
 
