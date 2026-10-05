@@ -151,6 +151,7 @@ language sql stable security definer set search_path = public as $$
 $$;
 
 revoke all on function private.can_read(uuid, text), private.can_write(uuid, text), private.is_admin() from public;
+revoke all on function private.can_read(uuid, text), private.can_write(uuid, text), private.is_admin() from anon;
 grant execute on function private.can_read(uuid, text), private.can_write(uuid, text), private.is_admin() to authenticated;
 
 -- ---------- RLS ----------

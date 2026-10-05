@@ -1,6 +1,6 @@
 # MI CUADERNO en la nube: Vercel + Supabase (etapa B, base)
 
-Estado al 04/10/2026: **la base de la nube está hecha y probada en local; existe una Preview `Ready`, pero falta conectarla y verificarla con Supabase.** Hay cuentas con usuario y PIN, Nicole administra, permisos por sección con RLS, avisos push y el latido que evita que Supabase pause el proyecto. **Todavía no hay sincronización**: el cuaderno de cada persona vive en su dispositivo (IndexedDB) hasta el paso B5, que viene después de A7 porque la forma de las hojas cambia en A6–A7. Decisiones: `DECISIONS.md` D35 (etapas), D36 (personas, roles y permisos) y D37 (cómo quedó armada la base).
+Estado al 05/10/2026: **la base de la nube está hecha y probada en local, y el esquema ya está aplicado en Supabase** (§4.2). Faltan `SUPABASE_SECRET_KEY` en Vercel, un deploy nuevo y probar la Preview: **no está verificado que entrar, los permisos o los avisos funcionen en la nube.** Hay cuentas con usuario y PIN, Nicole administra, permisos por sección con RLS, avisos push y el latido que evita que Supabase pause el proyecto. **Todavía no hay sincronización**: el cuaderno de cada persona vive en su dispositivo (IndexedDB) hasta el paso B5, que viene después de A7 porque la forma de las hojas cambia en A6–A7. Decisiones: `DECISIONS.md` D35 (etapas), D36 (personas, roles y permisos) y D37 (cómo quedó armada la base).
 
 ## 1. Cómo está armado
 
@@ -120,6 +120,29 @@ Cadena de conexión directa (para psql o herramientas): `postgresql://postgres:<
 - **Pruebas locales del HEAD con base nueva:** `npm run check` pasó con sintaxis de 36 archivos, 99 unitarias y 45/45 E2E Chromium. `test:cloud`, `typecheck` y `build` no se repitieron en este worktree; el commit `c5c705f` documenta sus resultados propios. Ninguna de esas pruebas sustituye la verificación remota con Supabase.
 
 La CLI de Vercel y el MCP usan autenticaciones separadas. Aunque las variables estén configuradas, un deploy anterior no recibe automáticamente la nueva configuración: hay que desplegar y verificar el entorno objetivo.
+
+### 4.2 Verificación desde claude.ai/code (05/10/2026)
+
+**Conectores de la cuenta vs. `.mcp.json`.** Los servidores HTTP de `.mcp.json` (`supabase`, `vercel`) **no conectan** desde este contenedor: el proxy de red responde 403 a `mcp.supabase.com`, `mcp.vercel.com`, `api.supabase.com`, `*.supabase.co`, `vercel.com` y `*.vercel.app`. Los **conectores de claude.ai** (Supabase y Vercel) sí funcionan, porque pasan por el proxy de MCP de Anthropic:
+- **Supabase:** llamadas reales a `list_projects` (ve `MICUADERNO`, `lrwfkbuhmgtckjmswrzp`, sa-east-1, `ACTIVE_HEALTHY`), `get_publishable_keys` (la publicable coincide con la de §3.2), `list_tables`, `list_migrations`, `execute_sql` y `get_advisors`.
+- **Vercel:** `get_auth_user` responde (usuario `trobias`, plan Hobby, equipo por defecto `trobias-projects`) y `list_projects` lista `micuaderno`. Pero `get_project`, `list_deployments` y `filter_project_envs` del equipo dan **403 “Trying to access resource under scope trobias-projects. You must re-authenticate to this scope”**. Por eso, desde acá **no se pudieron verificar las variables ni los deploys**. Para arreglarlo: claude.ai → Configuración → Conectores → Vercel → Desconectar → Conectar, y en la pantalla de autorización de Vercel elegir el alcance **trobias-projects** (no solo la cuenta personal). Después, abrir una sesión nueva.
+
+**Migración remota (aplicada el 05/10/2026 con el conector de Supabase).**
+- Antes: `list_migrations` vacío, `list_tables` vacío, sin esquema `private`.
+- `apply_migration` se cortó a los 60 s tres veces sin dejar nada (verificado después de cada intento). El mismo SQL corrió en 0,13 s dentro de `begin … rollback` con `execute_sql`, así que el corte es de la herramienta, no del SQL.
+- Se aplicó con `execute_sql`, por partes e idempotente: (1) `sections`, `profiles`, `login_throttle`, `notebook_grants` y `notebook_parts` con RLS y sin permisos para el navegador; (2) `audit_events`, `push_subscriptions`, `push_log` y `keepalive`; (3) esquema `private` con `can_read`, `can_write` e `is_admin`; (4) las 12 políticas y sus permisos, de a pocas sentencias por llamada (los lotes largos también se cortaban, y no quedó nada a medias).
+- Comprobado con SQL: 9 tablas con RLS; políticas `sections` 1, `profiles` 1, `notebook_grants` 4, `notebook_parts` 4, `push_subscriptions` 1, `audit_events` 1; `anon` con 0 permisos en tablas y sin uso de `private`; `authenticated` no puede leer `profiles.pin_hash`; 9 secciones; fila de `keepalive`. En remoto también se hizo `revoke … from anon` sobre las funciones `private.*`; ese renglón quedó sumado a la migración del repo.
+- **Historial:** como se usó `execute_sql`, `supabase_migrations.schema_migrations` no existe y `list_migrations` sigue vacío. **No hay un equivalente de `supabase migration list` que lo registre**, y no se corrió la CLI. Si más adelante se usa la CLI, registrarla sin volver a correrla: `npx supabase migration repair --status applied 20261004120000`. Correrla de nuevo igual sería inofensivo, porque es idempotente.
+- **Asesor de seguridad después:** nuestras funciones ya no aparecen. Quedan (a) INFO “RLS sin políticas” en `keepalive`, `login_throttle` y `push_log`, que es intencional porque solo las usa el servidor con la clave secreta; y (b) WARN por `public.rls_auto_enable()`, una función que **no es de este repo** (venía en el proyecto) y que `anon` y `authenticated` pueden llamar por RPC. Pendiente de la dueña: decidir si se le revoca `EXECUTE` a `anon` y `authenticated`.
+
+**Preview:** la última observada por otra sesión es `https://micuaderno-b4rbk7x3p-trobias-projects.vercel.app` (Ready). Desde este contenedor no se puede abrir (`*.vercel.app` da 403) y con el conector de Vercel sin alcance de equipo tampoco se puede inspeccionar. **No está verificado que entrar, los permisos ni los avisos funcionen ahí.**
+
+### 4.3 Lo que falta hacer a mano (en Vercel, sin pegar nada en un chat)
+
+1. **`SUPABASE_SECRET_KEY`.** En Supabase: Project Settings → API Keys → *Secret keys* → copiar una `sb_secret_…` (o crear una nueva llamada `vercel`). En Vercel: proyecto `micuaderno` → Settings → Environment Variables → Add → Key `SUPABASE_SECRET_KEY`, pegar el valor, marcar **Sensitive** y elegir **Production** y **Preview** → Save. Por CLI, lee el valor por entrada estándar y no lo deja en el historial: `vercel env add SUPABASE_SECRET_KEY production --sensitive` y lo mismo con `preview`.
+2. **`SETUP_TOKEN` propio.** Generalo en tu computadora (`openssl rand -base64 24`, o el generador de tu gestor de contraseñas con 32 caracteres) y guardalo en el gestor. En Vercel → Environment Variables → `SETUP_TOKEN` → ⋯ → Edit (o borralo y crealo de nuevo) → pegá el nuevo, Sensitive, Production y Preview. Por CLI: `vercel env rm SETUP_TOKEN production` y `vercel env add SETUP_TOKEN production --sensitive` (lo mismo para `preview`). **No toques `PIN_PEPPER` ni `AUTH_SECRET`.**
+3. **Deploy nuevo:** las variables solo valen en deploys posteriores. Vercel → Deployments → el último Preview → ⋯ → **Redeploy**, o empujar un commit a la rama.
+4. **Probar el Preview** (sin crear a nadie): `/entrar` se ve; con un usuario inventado, “Ese usuario y PIN no coinciden”; `/preparar` muestra el formulario (hay 0 personas). Recién con tu ok y tus datos: crear a Nicole en `/preparar` con tu `SETUP_TOKEN`, entrar, cambiar el PIN, activar avisos y probar “Probar”.
 
 ## 5. Desarrollo y pruebas
 
