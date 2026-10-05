@@ -944,6 +944,41 @@ await test('A9: colores propios; preset, mis colores con aviso de contraste, vol
   await context.close();
 });
 
+await test('A10: escenas más seguido, todas en el margen, se cortan al escribir y nunca en Reducidas', async () => {
+  const { page, errors, context } = await newPage(browser);
+  await page.goto(FILE_URL);
+  await onboard(page);
+  // Frecuencia del contrato D33.
+  const d = await page.evaluate(() => [MC.scenes.delay(true, 'completas', 0), MC.scenes.delay(true, 'completas', 1), MC.scenes.delay(false, 'completas', 0), MC.scenes.delay(false, 'completas', 1), MC.scenes.delay(false, 'suaves', 0), MC.scenes.delay(false, 'suaves', 1)]);
+  assert.deepEqual(d, [12000, 25000, 60000, 150000, 180000, 300000]);
+  const names = await page.evaluate(() => MC.scenes.NAMES);
+  for (const n of ['flor', 'esquina', 'bordado', 'lluvia']) assert.ok(names.includes(n), n);
+  // Cada escena se dibuja en la capa de escenas, solo con transform/opacity, y se va sin dejar nada.
+  await page.evaluate(() => document.activeElement && document.activeElement.blur());
+  for (const n of names) {
+    const ok = await page.evaluate((n) => {
+      MC.scenes.play(n);
+      const el = document.querySelector('#panel-scene-layer .scene, #scene-layer .scene');
+      if (!el) return 'sin escena';
+      const props = el.getAnimations({ subtree: true }).flatMap((a) => a.effect.getKeyframes().flatMap((k) => Object.keys(k))).filter((k) => !['offset', 'easing', 'composite', 'computedOffset'].includes(k));
+      const bad = props.filter((k) => !['transform', 'opacity', 'strokeDashoffset', 'strokeDasharray'].includes(k));
+      MC.scenes.stop();
+      return bad.length ? 'anima ' + bad.join(',') : (document.querySelector('.scene') ? 'quedó' : 'ok');
+    }, n);
+    assert.equal(ok, 'ok', n);
+  }
+  // Escribir la corta al instante.
+  await page.evaluate(() => MC.scenes.play('mariposa'));
+  assert.equal(await page.evaluate(() => MC.scenes.state().running), true);
+  await page.evaluate(() => MC.emit('typing'));
+  assert.equal(await page.evaluate(() => MC.scenes.state().running), false);
+  // En Reducidas no se programan.
+  await page.evaluate(() => MC.model.saveSettings({ motion: 'reducidas' }));
+  assert.equal(await page.evaluate(() => MC.scenes.canPlay()), false);
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
 await test('dibujar, subir imágenes como stickers y adjuntar archivos', async () => {
   const { page, errors, context } = await newPage(browser);
   await page.goto(FILE_URL);

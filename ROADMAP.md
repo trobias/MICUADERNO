@@ -13,7 +13,8 @@ Estado al 04/10/2026: **etapa A del plan nuevo en curso**. A0–A4 están termin
 | A7 · hojas/plantillas | Hecho (05/10, cache v30) | Bloques, plantillas propias, Guardar y hojas que se repiten. |
 | A8 · Mi año | Hecho (05/10, cache v31) | Cuentas por período, mes a mes con tabla, pequeñas victorias. |
 | A9 · Colores propios | Hecho (05/10, cache v32) | Presets, editor, AA, Noche (PE5). |
-| A10–A11 · escenas, dibujo | Siguiente: A10 | Métricas amables, colores propios, más escenas, balde/trazos. |
+| A10 · Escenas | Hecho (05/10, cache v33) | Más seguido (D33) y cuatro escenas nuevas. |
+| A11 · dibujo | Siguiente | Métricas amables, colores propios, más escenas, balde/trazos. |
 | A12–A13 · QA y contrato v6 | Pendiente | Navegación completa, accesibilidad, revisión de redundancia, migración segura. |
 | B-base · cuentas en la nube (adelantada) | Hecho en local, sin desplegar | Next.js + Supabase: PIN, Nicole admin, permisos con RLS, push, latido anti-pausa. `docs/NUBE.md`. |
 | B5–B8 · sincronización, Storage, deploy y dispositivos | Pendiente (después de A7) | Copia offline sincronizada por persona, solo lectura para quien recibe permiso. |

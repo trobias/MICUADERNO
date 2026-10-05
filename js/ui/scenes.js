@@ -1,4 +1,6 @@
-/* Escenas ocasionales: una a la vez, muy de vez en cuando, nunca mientras se escribe. Ver DESIGN §13. */
+/* Escenas ocasionales (D33, A10): frecuentes pero nunca mientras se escribe, una a la vez, ≤ 8 s, en el margen
+   y nunca sobre el texto. Primera entre 12 y 25 s; después cada 1–2,5 min (Completas) o 3–5 min (Suaves).
+   Solo transform, opacity y stroke-dashoffset. Ver DESIGN §13. */
 (function (root) {
   'use strict';
   var MC = root.MC;
@@ -25,29 +27,34 @@
     if (typeof document.hasFocus === 'function' && !document.hasFocus()) return false;
     var a = document.activeElement;
     if (a && (a.tagName === 'TEXTAREA' || (a.tagName === 'INPUT' && /text|search|number|date|time/.test(a.type)))) return false;
-    if (Date.now() - lastTyping < 20000) return false;
+    if (Date.now() - lastTyping < 12000) return false;
     if (document.querySelector('.cover, .onboard, .print-page')) return false;
     return true;
+  }
+
+  /** Cuánto esperar (ms): la primera, 12–25 s; después 1–2,5 min en Completas y 3–5 min en Suaves (D33). */
+  function delay(first, level, r) {
+    if (first) return (12 + r * 13) * 1000;
+    return level === 'completas' ? (60 + r * 90) * 1000 : (180 + r * 120) * 1000;
   }
 
   function schedule(first) {
     clearTimeout(timer);
     if (!enabled()) return;
-    var ms;
-    if (first) ms = rand(40, 90) * 1000;
-    else if (MC.motion.level() === 'completas') ms = rand(4, 9) * 60000;
-    else ms = rand(8, 15) * 60000;
-    timer = setTimeout(tick, ms);
+    timer = setTimeout(tick, delay(first, MC.motion.level(), Math.random()));
   }
 
   function tick() {
-    if (!canPlay()) { clearTimeout(timer); timer = setTimeout(tick, rand(30, 60) * 1000); return; }
+    if (!canPlay()) { clearTimeout(timer); timer = setTimeout(tick, rand(15, 30) * 1000); return; }
     play(pick());
   }
 
   function pick() {
     var hr = new Date().getHours();
-    var pool = hr >= 5 && hr < 12 ? ['mariposa', 'hojas', 'nubes'] : hr < 19 && hr >= 12 ? ['mariposa', 'nubes', 'hojas'] : ['te', 'lampara', 'mariposa'];
+    // Por hora del día: de mañana luz y hojas; de tarde viento y lluvia; de noche té, lámpara y bordado.
+    var pool = hr >= 5 && hr < 12 ? ['mariposa', 'hojas', 'nubes', 'flor', 'bordado', 'esquina']
+      : hr >= 12 && hr < 19 ? ['mariposa', 'nubes', 'flor', 'esquina', 'lluvia', 'bordado']
+        : ['te', 'lampara', 'mariposa', 'bordado', 'esquina', 'lluvia'];
     pool = pool.filter(function (s) { return s !== lastScene; });
     return pool[Math.floor(Math.random() * pool.length)];
   }
@@ -151,6 +158,74 @@
     }
   };
 
+  /** Lo visible de la hoja (si es más alta que la ventana, su parte de abajo es el borde de la ventana). */
+  function visibleBottom(r) { return Math.min(r.bottom, window.innerHeight); }
+
+  /* Escenas nuevas (A10): papel, bordado y paso del tiempo, todas en el margen. */
+  SCENES.flor = function (r) {
+    // Una margarita asoma en la esquina de abajo y se mece con el viento.
+    var el = h('div.scene.scene-flower', { html: MC.stickers.markup('margarita') });
+    // En el borde de afuera de la primera hoja (sobre la tela si hay lugar), nunca sobre lo escrito.
+    var panel = document.getElementById('panel');
+    var first = MC.$$(panel && panel.open ? '#panel .page' : '#main .page')[0];
+    var fr = first ? first.getBoundingClientRect() : r;
+    var x = fr.left > 70 ? fr.left - 52 : fr.left + 2, y = visibleBottom(fr) - 74;
+    el.style.transform = 'translate(' + x + 'px,' + y + 'px)';
+    layer.appendChild(el);
+    var inner = el.firstElementChild || el;
+    var fade = el.animate([{ opacity: 0 }, { opacity: 1, offset: 0.15 }, { opacity: 1, offset: 0.85 }, { opacity: 0 }], { duration: 6500, fill: 'both' });
+    var sway = inner.animate([{ transform: 'rotate(-6deg)' }, { transform: 'rotate(7deg)' }, { transform: 'rotate(-6deg)' }], { duration: 2100, iterations: 3, easing: 'ease-in-out' });
+    return { el: el, anims: [fade, sway], done: fade };
+  };
+  SCENES.esquina = function (r) {
+    // La esquina de abajo de la hoja se levanta un poquito con la brisa y vuelve.
+    var size = 46;
+    var el = h('div.scene.scene-corner', { html: '<svg viewBox="0 0 46 46"><path class="scene-corner__fold" d="M46 0 L46 46 L0 46 Z"/><path class="scene-corner__back" d="M46 0 L0 46 L46 46 Z" opacity=".0"/></svg>' });
+    var x = r.right - size, y = visibleBottom(r) - size;
+    el.style.transform = 'translate(' + x + 'px,' + y + 'px)';
+    layer.appendChild(el);
+    var fold = el.querySelector('.scene-corner__fold');
+    var a = fold.animate([
+      { transform: 'scale(0.2)', opacity: 0 },
+      { transform: 'scale(1)', opacity: 1, offset: 0.3 },
+      { transform: 'scale(0.7)', opacity: 1, offset: 0.55 },
+      { transform: 'scale(1)', opacity: 1, offset: 0.75 },
+      { transform: 'scale(0.2)', opacity: 0 }
+    ], { duration: 4200, easing: 'cubic-bezier(0.45, 0, 0.35, 1)', fill: 'both' });
+    return { el: el, anims: [a], done: a };
+  };
+  SCENES.bordado = function (r) {
+    // Una aguja borda una fila de puntadas en el margen izquierdo y se va: el cuaderno se cose solo un ratito.
+    var len = Math.min(160, Math.max(80, visibleBottom(r) - r.top - 120));
+    var x = r.left + 10, y = Math.max(r.top, 0) + 90;
+    var el = h('div.scene.scene-stitch', { html: '<svg viewBox="0 0 16 ' + len + '" width="16" height="' + len + '"><path class="scene-stitch__line" pathLength="1" d="M8 2 V' + (len - 2) + '"/></svg>' });
+    el.style.transform = 'translate(' + x + 'px,' + y + 'px)';
+    layer.appendChild(el);
+    var line = el.querySelector('path');
+    // Las puntadas aparecen de arriba hacia abajo (la línea crece; el punteado queda quieto).
+    var sew = line.animate([{ transform: 'scaleY(0)' }, { transform: 'scaleY(1)' }], { duration: 3200, easing: 'ease-out', fill: 'both' });
+    var fade = el.animate([{ opacity: 0 }, { opacity: 1, offset: 0.08 }, { opacity: 1, offset: 0.8 }, { opacity: 0 }], { duration: 6200, fill: 'both' });
+    return { el: el, anims: [sew, fade], done: fade };
+  };
+  SCENES.lluvia = function (r) {
+    // Unas gotas resbalan por la tela, al costado de la hoja (como lluvia en la ventana).
+    var el = h('div.scene.scene-rain');
+    var side = r.right + 14 < window.innerWidth - 20 ? r.right + 14 : Math.max(4, r.left - 30);
+    layer.appendChild(el);
+    var anims = [];
+    for (var i = 0; i < 5; i++) {
+      var d = h('span.scene-rain__drop');
+      el.appendChild(d);
+      var x0 = side + (i % 3) * 7, y0 = Math.max(0, r.top) + 30 + i * 40;
+      anims.push(d.animate([
+        { transform: 'translate(' + x0 + 'px,' + y0 + 'px)', opacity: 0 },
+        { opacity: 0.7, offset: 0.2 },
+        { transform: 'translate(' + (x0 + 2) + 'px,' + (y0 + 160) + 'px)', opacity: 0 }
+      ], { duration: 2600, delay: i * 700, easing: 'cubic-bezier(0.5, 0, 1, 1)', fill: 'both' }));
+    }
+    return { el: el, anims: anims, done: anims[anims.length - 1] };
+  };
+
   function play(name) {
     layer = currentLayer();
     var r = pageRect();
@@ -177,7 +252,7 @@
   }
 
   MC.scenes = {
-    start: start, play: function (n) { stop(); play(n || pick()); }, stop: stop, canPlay: canPlay, NAMES: Object.keys(SCENES),
+    start: start, play: function (n) { stop(); play(n || pick()); }, stop: stop, canPlay: canPlay, NAMES: Object.keys(SCENES), delay: delay,
     /** Para diagnosticar (y para las pruebas): qué está frenando las escenas. */
     state: function () { return { decorating: decorating, dialogs: dialogs, running: !!running }; }
   };

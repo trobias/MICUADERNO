@@ -169,7 +169,7 @@ Registro breve de decisiones de arquitectura y producto. Formato: contexto → d
 ## D33 · Escenas más seguido (2026-10-04)
 **Contexto:** la dueña pidió que las escenas ocasionales aparezcan “bastante más” (y, más adelante, más ricas con Motion/Three.js).
 **Decisión:** se **enmienda** “escenas raras” (AGENTS, DESIGN §12–13, §17) a “frecuentes, pero nunca mientras se escribe, una a la vez, ≤ 8 s y nunca sobre el texto”. Primera aparición entre 12 y 25 s; separación entre 1 y 2,5 min en *Completas* y entre 3 y 5 min en *Suaves*. Suman las escenas que faltaban (B4).
-**Consecuencias:** el modo calma (ES2), cuando exista, las apaga. Estado: contrato; se implementa en el paso A10 (frecuencia y escenas nuevas) y en la etapa C (escenas ricas).
+**Consecuencias:** el modo calma (ES2), cuando exista, las apaga. Estado: **frecuencia y cuatro escenas nuevas implementadas en A10** (05/10: flor, esquina, bordado, lluvia; `MC.scenes.delay`); las escenas ricas siguen para la etapa C.
 
 ## D34 · Migraciones: expandir y después contraer (2026-10-04)
 **Contexto:** el pedido del 03/10 cambia la forma de días, actividades, páginas, rutinas, dibujos y ajustes. Reescribir todo de golpe perdía datos: borradores locales viejos (D13), copias viejas, la última escritura de una pestaña vieja y, más adelante, lo que baje de la nube.

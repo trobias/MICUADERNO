@@ -8,6 +8,16 @@ Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantien
 - `.mcp.json` ya está en la rama. La dueña habilitó los dos MCP en su entorno web de Claude Code; el estado de `claude mcp list` en una instalación local distinta no verifica ese entorno.
 - `docs/NUBE.md` registra la verificación de red, los entornos y lo que falta para aplicar la migración SQL existente. Ningún secreto se agregó a Git.
 
+## 2026-10-05 · A10: escenas más seguido (cache `v33`)
+
+**Para quien lo usa**
+- Las escenitas aparecen bastante más: la primera a los pocos segundos y después cada uno o dos minutos (en *Suaves*, cada tres a cinco). Nunca mientras escribís, de a una y en el margen.
+- Cuatro escenas nuevas: una **margarita** que se mece en el borde, la **esquina** de la hoja que se levanta con la brisa, una fila de **puntadas** que se cose sola y **gotas de lluvia** que resbalan por la tela.
+
+**Para quien lo mantiene**
+- `MC.scenes.delay(first, nivel, r)` concentra la frecuencia de D33; las escenas nuevas usan solo `transform` y `opacity`. Tecleo reciente: 12 s.
+- Pruebas: 116 unit, 51/51 E2E (recorrido A10: frecuencia, propiedades animadas, se corta al escribir, nada en Reducidas).
+
 ## 2026-10-05 · A9: colores propios (cache `v32`)
 
 **Para quien lo usa**

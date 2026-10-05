@@ -30,8 +30,8 @@ Cada idea pendiente, con su estado. **Nada se pierde por estar fuera de la fase 
 | Hojas del día, plantillas propias, Guardar y repetir | A7 | Hecho (v30) | Bloques renglones/lista/casillas/columnas, Mis plantillas, hojas que se repiten con plantilla congelada. |
 | Año con métricas, victorias y gráficos | A8 | Hecho (v31) | Cuentas por período, mes a mes SVG + tabla, victorias con `marks`. |
 | Colores infinitos y código hex | A9 | Hecho (v32) | Diez presets, editor propio, degradado/acabado elegidos, AA con aviso, el sistema gana. |
-| Escenas más frecuentes | A10 | NOW siguiente | Motion con propósito, silencio al escribir y control de rendimiento. |
-| Balde y tipos de trazo | A11 | NEXT | Editables al reabrir, presión/semilla y deshacer. |
+| Escenas más frecuentes | A10 | Hecho (v33) | Motion con propósito, silencio al escribir y control de rendimiento. |
+| Balde y tipos de trazo | A11 | NOW siguiente | Editables al reabrir, presión/semilla y deshacer. |
 | Cruces, redundancia, QA y contrato v6 | A12–A13 | NEXT | Matriz de navegación, accesibilidad, migración de datos y tests. |
 | Nube: base de cuentas (Next.js + Supabase), PIN, Nicole admin, permisos por sección con RLS, push y latido anti-pausa | B-base | Hecho en local, sin desplegar | `docs/NUBE.md`, D37. Falta el deploy con las cuentas de la dueña (§3) y probar en un celular real. |
 | Nube: sincronización offline por persona, vista de solo lectura para quien recibe permiso, Storage privado | B5–B8 | LATER tras A7 | Outbox, `notebook_parts` partido con `MC.sections`, lápidas, importar la copia `.json`, E2E de dos dispositivos. |
@@ -162,7 +162,7 @@ Al empezar un ítem: pasarlo a NOW, leer `VISION.md` §0 y la decisión que lo c
 
 | # | Qué | Estado | Notas |
 |---|---|---|---|
-| B4 | Escenas que faltan (lluvia en la ventana, cortina, flor con viento, esquina de hoja con brisa). | LATER | Hay 5 de 9. Se apagan con el modo calma (ES2). |
+| B4 | Escenas que faltan (cortina). | LATER | Hay 9 (A10 sumó flor, esquina, bordado y lluvia). Se apagan con el modo calma (ES2). |
 | B9 | Empaquetado portable (Tauri) para quien no quiera navegador. | EXPERIMENTAL | Solo si hace falta. |
 | I2 | Sacar una ocurrencia de rutina de un día puntual (“hoy no toca”). | NEXT | |
 | I5 | *Mi año* alternando ánimo al empezar / al terminar. | LATER | |

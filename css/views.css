@@ -479,6 +479,14 @@ a.months__year { text-decoration: none; padding: 4px 6px; border-radius: 6px; }
 .scene-leaves svg { width: 100%; }
 .scene-clouds .cloud { position: absolute; top: 0; left: 0; width: 64px; height: 64px; }
 .scene-lamp { background: radial-gradient(ellipse at 20% 10%, rgb(246 217 120 / 0.28), transparent 60%); border-radius: 8px; }
+.scene-flower { width: 64px; height: 64px; }
+.scene-flower > svg { width: 64px; height: 64px; transform-origin: 50% 100%; }
+.scene-corner { width: 46px; height: 46px; }
+.scene-corner svg { width: 46px; height: 46px; overflow: visible; }
+.scene-corner__fold { fill: var(--paper-shade); stroke: var(--paper-edge); stroke-width: 1; transform-box: view-box; transform-origin: 46px 46px; }
+.scene-stitch svg { overflow: visible; }
+.scene-stitch__line { fill: none; stroke: var(--rose); stroke-width: 2; stroke-linecap: round; stroke-dasharray: 0.04 0.03; transform-box: fill-box; transform-origin: 50% 0; }
+.scene-rain__drop { position: absolute; top: 0; left: 0; width: 3px; height: 9px; border-radius: 50% 50% 50% 50% / 30% 30% 70% 70%; background: color-mix(in srgb, var(--cloth-ink) 55%, transparent); }
 
 /* ---------- Mobile: ajustes finos ---------- */
 @media (max-width: 699px) {

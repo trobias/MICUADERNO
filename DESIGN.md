@@ -223,13 +223,13 @@ Se aplica con `html[data-motion]` y las variables `--motion-scale` (1 / 0.85 / 0
 
 Pequeñas escenas SVG animadas con Web Animations API (`js/ui/scenes.js`), en el margen de la hoja, **nunca** sobre texto.
 
-Escenas: **mariposa** (cruza el margen y se posa en una esquina, luego se va), **vapor de té** (tres hilos de vapor sobre una taza, de noche), **sombra de hojas** (una sombra de ramita se desliza sobre el papel, de mañana), **nubes** (dos nubecitas cruzan el encabezado), **lámpara** (un halo cálido que respira una vez, de noche). Pendientes (ROADMAP B4): lluvia en la ventana, cortina, flor con viento, esquina de hoja con brisa.
+Escenas: **mariposa** (cruza el margen y se posa en una esquina, luego se va), **vapor de té** (tres hilos de vapor sobre una taza, de noche), **sombra de hojas** (una sombra de ramita se desliza sobre el papel, de mañana), **nubes** (dos nubecitas cruzan el encabezado), **lámpara** (un halo cálido que respira una vez, de noche) y, desde A10, **flor** (una margarita asoma en el borde de afuera y se mece), **esquina** (la esquina de abajo de la hoja se levanta con la brisa), **bordado** (una fila de puntadas se cose sola en el margen) y **lluvia** (unas gotas resbalan por la tela al costado de la hoja). Pendiente: cortina.
 
 Reglas del director de escenas:
 - **Una** escena a la vez, como máximo.
-- Primera aparición: no antes de 40–90s de haber llegado a una vista.
-- Separación: 4–9 min aleatorio (Completas); 8–15 min (Suaves); nunca en Reducidas/Ninguna.
-- No se dispara si: hay foco en un campo de texto, hubo tecleo en los últimos 20s, hay un diálogo abierto, la pestaña está oculta (`document.hidden`), o la ventana no tiene foco.
+- Primera aparición: entre 12 y 25 s de haber llegado a una vista (D33).
+- Separación: 1–2,5 min aleatorio (Completas); 3–5 min (Suaves); nunca en Reducidas/Ninguna. Si en ese momento no se puede, vuelve a probar en 15–30 s.
+- No se dispara si: hay foco en un campo de texto, hubo tecleo en los últimos 12 s, hay un diálogo abierto, la pestaña está oculta (`document.hidden`), o la ventana no tiene foco.
 - Duración 4–8s; después, silencio.
 - No repite la misma escena dos veces seguidas. Elige por hora del día.
 - Se cancela al instante si la persona empieza a escribir.
