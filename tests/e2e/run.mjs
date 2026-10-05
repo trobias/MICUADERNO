@@ -1037,6 +1037,85 @@ await test('A11: balde acotado, plumilla con presión, aerógrafo con semilla; d
   await context.close();
 });
 
+await test('A12: matriz — de cada sección se vuelve al calendario con ✕, Esc, tocando afuera y Atrás; ruta directa y recarga (1366 y 375 px)', async () => {
+  for (const viewport of [{ width: 1366, height: 900 }, { width: 375, height: 812 }]) {
+    const { page, errors, context } = await newPage(browser, { viewport });
+    await page.goto(FILE_URL);
+    await onboard(page);
+    const ids = await page.evaluate(async () => {
+      const M = MC.model;
+      const p = await M.savePage({ title: 'Hoja de Nicole', blocks: [{ type: 'text' }], values: {} });
+      const t = await M.saveTemplate({ title: 'Plantilla de Nicole', blocks: [{ type: 'list' }] });
+      const r = await M.saveRoutine({ title: 'Estirar', rule: { type: 'daily' } });
+      return { page: p.id, template: t.id, routine: r.id };
+    });
+    const R = await page.evaluate((ids) => {
+      const R = MC.routes, D = MC.dates;
+      return [['hoy', R.today()], ['otro día', R.day(D.addDays(D.today(), -3))], ['mis hojas', R.sheets()], ['lo que se repite', R.routine(ids.routine)],
+        ['una hoja', R.page(ids.page)], ['una plantilla', R.template(ids.template)], ['mi año', R.year()], ['ajustes', R.settings()], ['imprimir', R.print()]];
+    }, ids);
+    const closed = async (why) => {
+      await page.waitForFunction(() => !document.getElementById('panel').open, null, { timeout: 3000 }).catch(() => {});
+      assert.equal(await page.evaluate(() => document.getElementById('panel').open), false, why + ': el cuadro quedó abierto');
+      assert.match(page.url(), /#\/calendario/, why + ': no volvió al calendario');
+      await page.waitForSelector('#main .planner, #main .month-grid, #main .cal-page', { timeout: 3000 });
+    };
+    // Empezar desde el calendario.
+    await page.click('#panel-close');
+    await closed('inicio');
+    for (const [name, hash] of R) {
+      for (const how of ['✕', 'Esc', 'afuera', 'Atrás']) {
+        const why = viewport.width + 'px · ' + name + ' · ' + how;
+        await page.evaluate((h) => { location.hash = h; }, hash);
+        await page.waitForFunction(() => document.getElementById('panel').open && document.querySelector('#panel-body').children.length, null, { timeout: 3000 });
+        await page.waitForTimeout(150);
+        if (how === '✕') await page.click('#panel-close');
+        else if (how === 'Esc') { await page.evaluate(() => document.activeElement && document.activeElement.blur()); await page.keyboard.press('Escape'); }
+        else if (how === 'afuera') {
+          // En el celular el cuadro ocupa toda la pantalla: no hay “afuera” y se cierra con ✕ o Atrás.
+          const full = await page.evaluate(() => { const r = document.getElementById('panel').getBoundingClientRect(); return r.left <= 3 && r.top <= 3; });
+          if (full) { await page.click('#panel-close'); } else await page.mouse.click(3, 3);
+        }
+        else await page.goBack();
+        await closed(why);
+      }
+    }
+    // Ruta directa y recarga: el calendario queda detrás y se vuelve a él.
+    for (const [name, hash] of R) {
+      await page.goto(FILE_URL + hash);
+      await page.waitForFunction(() => document.getElementById('panel').open, null, { timeout: 4000 }).catch(async () => { await openCover(page).catch(() => {}); });
+      await page.waitForFunction(() => document.getElementById('panel').open, null, { timeout: 4000 });
+      await page.reload();
+      await page.waitForFunction(() => document.getElementById('panel').open, null, { timeout: 4000 }).catch(async () => { await openCover(page).catch(() => {}); });
+      await page.waitForFunction(() => document.getElementById('panel').open, null, { timeout: 4000 });
+      await page.click('#panel-close');
+      await closed(viewport.width + 'px · directo y recarga · ' + name);
+    }
+    // Sin scroll horizontal en ninguna sección, y todo control con nombre accesible y tamaño tocable.
+    for (const [name, hash] of R) {
+      await page.evaluate((h) => { location.hash = h; }, hash);
+      await page.waitForTimeout(350);
+      const over = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+      assert.ok(over <= 1, viewport.width + 'px · ' + name + ': scroll horizontal de ' + over + 'px');
+      const nameless = await page.evaluate(() => {
+        const named = (el) => {
+          if (el.getAttribute('aria-label') || el.getAttribute('title')) return true;
+          const by = el.getAttribute('aria-labelledby');
+          if (by && by.split(' ').some((id) => (document.getElementById(id) || {}).textContent)) return true;
+          if (el.labels && el.labels.length && Array.from(el.labels).some((l) => l.textContent.trim())) return true;
+          return /^(BUTTON|A|SUMMARY)$/.test(el.tagName) && el.textContent.trim().length > 0;
+        };
+        return Array.from(document.querySelectorAll('#panel button, #panel a[href], #panel input:not([type=hidden]), #panel select, #panel textarea, #main button, #main a[href], #main input, #main select, #main textarea'))
+          .filter((el) => el.offsetParent !== null && !el.closest('[hidden], [aria-hidden="true"]') && !named(el))
+          .map((el) => el.outerHTML.slice(0, 120));
+      });
+      assert.deepEqual(nameless, [], viewport.width + 'px · ' + name + ': controles sin nombre');
+    }
+    assert.deepEqual(errors, []);
+    await context.close();
+  }
+});
+
 await test('dibujar, subir imágenes como stickers y adjuntar archivos', async () => {
   const { page, errors, context } = await newPage(browser);
   await page.goto(FILE_URL);

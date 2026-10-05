@@ -67,7 +67,7 @@
     });
     if (all.pages.length) {
       lines.push('════════════════════════════════════════');
-      lines.push('MIS PÁGINAS');
+      lines.push('MIS HOJAS');
       lines.push('');
       all.pages.forEach(function (p) {
         lines.push('— ' + (p.title || 'Sin título') + ' —');
@@ -76,11 +76,24 @@
         lines.push('');
       });
     }
+    // Semanas (A6): Importante y Notas, de la más vieja a la más nueva.
+    var weeks = (all.weeks || []).filter(function (w) { return !MC.model.isEmptyWeek(w); }).sort(function (a, b) { return a.week < b.week ? -1 : 1; });
+    if (weeks.length) {
+      lines.push('════════════════════════════════════════');
+      lines.push('MIS SEMANAS');
+      lines.push('');
+      weeks.forEach(function (w) {
+        lines.push('— Semana del ' + D.longLabel(w.week) + ' de ' + w.week.slice(0, 4) + ' —');
+        (w.important || []).forEach(function (it) { if (it.text.trim()) lines.push('  ' + (it.done ? '[x] ' : '[ ] ') + it.text.trim()); });
+        if (w.notes && w.notes.trim()) lines.push(w.notes.trim());
+        lines.push('');
+      });
+    }
     if (all.routines.length) {
       lines.push('════════════════════════════════════════');
-      lines.push('MIS RUTINAS');
+      lines.push('LO QUE SE REPITE');
       all.routines.forEach(function (r) {
-        lines.push('  ' + r.title + ' — ' + MC.recurrence.describe(r) + (r.archived ? ' (en pausa)' : ''));
+        lines.push('  ' + (r.kind === 'sheet' ? '(hoja) ' : '') + r.title + ' — ' + MC.recurrence.describe(r) + (r.archived ? ' (en pausa)' : ''));
       });
     }
     return lines.join('\n') + '\n';

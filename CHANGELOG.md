@@ -8,6 +8,16 @@ Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantien
 - `.mcp.json` ya está en la rama. La dueña habilitó los dos MCP en su entorno web de Claude Code; el estado de `claude mcp list` en una instalación local distinta no verifica ese entorno.
 - `docs/NUBE.md` registra la verificación de red, los entornos y lo que falta para aplicar la migración SQL existente. Ningún secreto se agregó a Git.
 
+## 2026-10-05 · A12: QA cruzada (cache `v35`)
+
+**Para quien lo usa**
+- La leyenda del mes usa las palabras de hoy (*algo anotado, lo que se repite, título de una hoja*).
+- La exportación de texto suma tus **semanas** (Importante y Notas) y dice *Mis hojas* y *Lo que se repite*.
+
+**Para quien lo mantiene**
+- `docs/QA.md`: matriz de navegación (9 secciones × ✕/Esc/afuera/Atrás + ruta directa y recarga, en 1366 y 375 px), revisión por capturas, auditorías (lógica duplicada, privacidad, exportación, impresión, PWA, accesibilidad, rendimiento) y lo que **no** se probó (Firefox/WebKit, dispositivos, lectores de pantalla, nube con dos cuentas reales).
+- Pruebas: 122 unit (`export-a12`), 53/53 E2E (matriz A12 con nombres accesibles y sin scroll horizontal).
+
 ## 2026-10-05 · A11: balde y tipos de trazo (cache `v34`)
 
 **Para quien lo usa**

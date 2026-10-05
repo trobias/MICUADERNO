@@ -172,9 +172,9 @@
       h('li', h('span.mark-x', '×'), 'hecho'),
       h('li', h('span.mark-plan', MC.icon('box')), 'planeado (también lo que se repite)'),
       h('li', h('span.mark-page', MC.icon('paginas')), 'hoja'),
-      h('li.legend-line', h('span.cell-line', { dataset: { kind: 'own' } }), 'agenda'),
-      h('li.legend-line', h('span.cell-line', { dataset: { kind: 'routine' } }), 'rutina'),
-      h('li.legend-line', h('span.cell-line', { dataset: { kind: 'page' } }), 'página'),
+      h('li.legend-line', h('span.cell-line', { dataset: { kind: 'own' } }), 'algo anotado'),
+      h('li.legend-line', h('span.cell-line', { dataset: { kind: 'routine' } }), 'lo que se repite'),
+      h('li.legend-line', h('span.cell-line', { dataset: { kind: 'page' } }), 'título de una hoja'),
       routine ? h('li', h('span.mark-routine', MC.icon('rutinas')), '«' + routine.title + '»') : null);
   }
 
