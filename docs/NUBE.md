@@ -66,7 +66,7 @@ Proyecto `https://vercel.com/trobias-projects/micuaderno`, conectado a este repo
 | `NEXT_TELEMETRY_DISABLED` | `1` (sin telemetría de Next en el build) | no |
 | `AUTH_EMAIL_DOMAIN` | opcional (por defecto `personas.mi-cuaderno.invalid`) | no |
 
-Después: Deploy. Abrí `https://<tu-dominio>/preparar`, escribí el `SETUP_TOKEN` y creá a **Nicole** (administradora). `/preparar` deja de funcionar cuando ya hay una persona.
+Después: Deploy. La primera persona entra con el **link de invitación** `https://<tu-dominio>/preparar?clave=<SETUP_TOKEN>`: elige nombre, usuario y PIN, y entra directo a su cuaderno como administradora. La clave sale de la barra de direcciones apenas abre la página. Sin `?clave=`, el formulario la pide. `/preparar` deja de funcionar cuando ya hay una persona; desde ahí la clave no sirve más y se puede borrar.
 
 **Antes de `/preparar`:** el `SETUP_TOKEN` que se cargó automáticamente durante la preparación quedó como Secret de Vercel y su valor no se conservó fuera de Vercel. Los Secrets no se pueden leer después de guardarlos. La dueña debe **reemplazarlo** en Vercel → proyecto `micuaderno` → Settings → Environment Variables por un token nuevo que genere y guarde en su gestor de contraseñas, para **Production y Preview** según el entorno donde hará el alta. Luego crear un nuevo deployment de ese entorno; las variables nuevas no llegan a deploys anteriores. No pegar el token en un chat ni en Git. [Vercel: Secret no recuperable](https://vercel.com/docs/environment-variables/sensitive-environment-variables).
 
