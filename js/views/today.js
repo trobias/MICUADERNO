@@ -71,6 +71,8 @@
     function recoverDraft(stored) {
       var draft = MC.ui.get(draftKey, null);
       if (!draft || !draft.day) return stored;
+      // Quien mira el cuaderno de otra persona sin poder editar el día: un borrador viejo no se intenta guardar (D51).
+      if (MC.access && MC.access.guest() && MC.access.level(['escritura', 'emociones']) !== 'editar') { MC.ui.set(draftKey, null); return stored; }
       var storedAt = stored.updatedAt ? Date.parse(stored.updatedAt) : 0;
       if (draft.at <= storedAt) { MC.ui.set(draftKey, null); return stored; }
       var recovered = M.normalizeDay(draft.day, date);

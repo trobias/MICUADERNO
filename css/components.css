@@ -513,8 +513,21 @@ dialog.sheet.sheet--draw { width: min(760px, calc(100vw - 16px)); max-height: ca
 .sf-wax { fill: var(--st-wax); } .ss-wax { stroke: var(--st-wax); }
 
 /* ---------- Cuaderno de otra persona: solo para mirar y lo no compartido (D51) ---------- */
-.is-lookonly button:disabled, .is-lookonly input:disabled, .is-lookonly select:disabled, button.is-lookonly:disabled { opacity: 0.55; cursor: default; }
+.is-lookonly button:disabled, .is-lookonly input:disabled, .is-lookonly select:disabled { opacity: 1; cursor: default; }
 .is-lookonly textarea[readonly], .is-lookonly input[readonly] { cursor: default; }
 .is-lookonly .sticker { pointer-events: none; }
+/* Solo para mirar (D51): sin nada que invite a escribir o tocar. Queda lo anotado. */
+.is-lookonly .feelings__entry, .is-lookonly .feelings__suggestions, .is-lookonly .feeling-chip__remove,
+.is-lookonly .add-activity, .is-lookonly .activity__more, .is-lookonly .activity button[aria-haspopup="menu"],
+.is-lookonly .sheet-add, .is-lookonly .sheet-block__more, .is-lookonly .text-btn, .is-lookonly .label-btn,
+.is-lookonly .stepper .icon-btn, .is-lookonly .choice[aria-pressed="false"], .is-lookonly .activities-empty,
+button.is-lookonly, .sticker-tools.is-lookonly, .is-lookonly button.icon-btn { display: none; }
+.is-lookonly .feeling-chip { padding-right: 9px; }
+.is-lookonly .choice[aria-pressed="true"] { opacity: 1; }
+.is-lookonly textarea[readonly], .is-lookonly input[readonly] { background-color: transparent; }
+.is-lookonly input[readonly] { border-color: transparent; box-shadow: none; padding-left: 0; }
+.is-lookonly a.text-btn, .is-lookonly .page-link { display: inline-flex; }
+.is-lookonly #st-account .label-btn, .is-lookonly #st-account .text-btn { display: inline-flex; }
+.lookonly-empty { font-family: var(--font-text); font-style: italic; color: var(--ink-soft); font-size: var(--fs-sm); }
 .lookonly-tag { font-family: var(--font-ui); font-size: var(--fs-xs); font-style: normal; font-weight: 400; color: var(--ink-soft); }
 .access-blocked { display: grid; gap: var(--s-3); align-content: start; }

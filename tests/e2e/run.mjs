@@ -130,6 +130,8 @@ await test('emociones libres en una actividad y colores propios en Ajustes', asy
   await page.locator('.emotion-colors__add input[type="color"]').fill('#865faf');
   await page.click('.emotion-colors__add button:has-text("Elegir color")');
   await page.waitForFunction(() => MC.model.settings().emotionColors['con ansiedad'] === '#865FAF');
+  // Esperar a que quede guardado de verdad (no solo en memoria) antes de recargar.
+  await page.waitForFunction(() => MC.store.get('meta', 'settings').then((r) => !!r && r.value.emotionColors['con ansiedad'] === '#865FAF'));
   await page.reload(); await openCover(page);
   await goto(page, '#/hoy');
   assert.equal(await page.locator('.section--mood .feeling-chip').evaluate((el) => el.style.getPropertyValue('--feeling-color')), '#865FAF');
@@ -2350,6 +2352,94 @@ await test('nube: la psicóloga abre el cuaderno de Nicole, edita lo permitido y
   assert.ok(loggedOut, 'se cerró la sesión en el servidor');
   assert.deepEqual(errors.filter((e) => !/Failed to load resource/.test(e)), []);
   await context.close();
+});
+
+await test('nube (D51): matriz de permisos — en cada cuadro, nada editable fuera de lo que se puede editar', async () => {
+  const PSI = '33333333-3333-4333-8333-333333333333';
+  const T0 = '2026-10-05T10:00:00.000Z';
+  const part = (store, id, section, data, n) => ({ store, record_id: id, section, data: { ...data, updatedAt: T0 }, deleted_at: null, updated_at: '2026-10-05T10:00:00.0' + String(n).padStart(2, '0') + 'Z', updated_by: CA });
+  const WK = await (async () => { const d = new Date(TODAY + 'T12:00:00'); const wd = (d.getDay() + 6) % 7; d.setDate(d.getDate() - wd); return d.toISOString().slice(0, 10); })();
+  const parts = [
+    part('days', TODAY, 'escritura', { date: TODAY, notes: 'lo que escribió Nicole', intention: 'ir despacio', reflection: { good: 'el mate', hard: '', nice: '', keep: '', free: '' } }, 1),
+    part('days', TODAY, 'emociones', { date: TODAY, morning: { feelings: ['tranquila'], at: null }, evening: { feelings: ['cansada'], at: null }, energy: 2 }, 2),
+    part('activities', 'act_x', 'actividades', { id: 'act_x', date: TODAY, title: 'caminar', status: 'done', order: 0 }, 3),
+    part('activities', 'act_x', 'emociones', { id: 'act_x', date: TODAY, feel: { before: ['inquieta'], after: ['tranquila'] } }, 4),
+    part('pages', 'pg_n', 'hojas', { id: 'pg_n', title: 'Ideas', date: TODAY, blocks: [{ id: 'b1', type: 'text', title: '' }], values: { b1: 'algo' } }, 5),
+    part('routines', 'rut_n', 'repeticiones', { id: 'rut_n', title: 'Regar', rule: { type: 'daily' }, startDate: TODAY }, 6),
+    part('weeks', WK, 'semana', { week: WK, important: [{ id: 'i1', text: 'turno', done: false }], notes: 'semana tranquila' }, 7)
+  ];
+  const ALL = ['semana', 'actividades', 'emociones', 'escritura', 'hojas', 'repeticiones', 'fotos', 'anio', 'ajustes'];
+  const COMBOS = [
+    { escritura: 'ver' },
+    { emociones: 'ver', actividades: 'ver' },
+    { emociones: 'editar', escritura: 'ver', actividades: 'ver' },
+    { hojas: 'ver' },
+    { hojas: 'editar', repeticiones: 'ver' },
+    { semana: 'editar', actividades: 'ver' },
+    { anio: 'ver', ajustes: 'ver', fotos: 'ver' },
+    Object.fromEntries(ALL.map((x) => [x, 'ver'])),
+    Object.fromEntries(ALL.map((x) => [x, 'editar']))
+  ];
+  const VIEWS = { today: ['actividades', 'emociones', 'escritura', 'fotos', 'hojas'], sheets: ['hojas', 'repeticiones'], page: ['hojas'], year: ['anio', 'emociones', 'actividades', 'escritura'], settings: ['ajustes'] };
+  const problems = [];
+  for (const sections of COMBOS) {
+    const state = { me: { id: PSI, username: 'psicologa', name: 'Psicóloga', admin: false, hasNotebook: false, shares: [{ owner: CA, name: 'Nicole', sections }] }, parts, onPush: () => [] };
+    const { page, errors, context, setCookie } = await cloudContext(state);
+    await setCookie('mc_person', PSI);
+    await setCookie('mc_view', CA);
+    await page.goto(HTTP_URL + '#/semana/' + TODAY);
+    await page.waitForSelector('.planner', { timeout: 8000 });
+    const label = JSON.stringify(sections);
+    const scan = (where) => page.evaluate(([where]) => {
+      const root = where === 'base' ? document.getElementById('main') : document.getElementById('panel-body');
+      const out = [];
+      const visible = (el) => !!(el.offsetWidth || el.offsetHeight || el.getClientRects().length) && getComputedStyle(el).visibility !== 'hidden';
+      root.querySelectorAll('input, textarea, select, button').forEach((c) => {
+        if (!visible(c)) return;
+        const editable = (c.tagName === 'BUTTON' || c.tagName === 'SELECT' || ['checkbox', 'radio', 'file', 'date', 'color'].includes(c.type)) ? !c.disabled : !(c.readOnly || c.disabled);
+        if (!editable) return;
+        // Moverse no cambia nada: flechas, mes/semana, días del año, meses, pestañas de período.
+        if (c.closest('.cal-head, .day-head__row, .months, .access-blocked, #st-account')) return;
+        // Mirar más (desplegar) y elegir qué período ver tampoco cambian nada; Mi año solo lee.
+        if (c.hasAttribute('aria-expanded') && !c.hasAttribute('aria-haspopup')) return;
+        if (c.matches('.stitch-cell, .year-page .choice, .year-notes .choice')) return;
+        const zone = c.closest('[data-access]');
+        const lv = zone ? zone.dataset.access : 'sin-parte';
+        if (lv === 'editar') return;
+        out.push(lv + ': ' + (c.getAttribute('aria-label') || c.textContent.trim().slice(0, 30) || c.placeholder || c.tagName) + ' [' + (c.className || c.tagName) + ']');
+      });
+      return out;
+    }, [where]);
+    // La semana del fondo.
+    await page.waitForTimeout(500);
+    for (const p of await scan('base')) problems.push(label + ' semana · ' + p);
+    for (const [view, need] of Object.entries(VIEWS)) {
+      await page.evaluate((v) => {
+        const R = MC.routes;
+        location.hash = v === 'today' ? R.today() : v === 'sheets' ? R.sheets() : v === 'page' ? R.page('pg_n') : v === 'year' ? R.year ? R.year() : '#/anio' : R.settings();
+      }, view);
+      await page.waitForFunction(() => document.getElementById('panel').open);
+      await page.waitForTimeout(700);
+      const allowed = need.some((x) => sections[x]);
+      const blocked = await page.locator('#panel-body .access-blocked').count();
+      if (allowed && blocked) problems.push(label + ' ' + view + ' · se bloqueó aunque tiene permiso');
+      if (!allowed && !blocked) problems.push(label + ' ' + view + ' · se abrió sin permiso');
+      if (allowed && !blocked) for (const p of await scan('panel')) problems.push(label + ' ' + view + ' · ' + p);
+      // Y al revés: lo que se puede editar no queda trabado.
+      if (view === 'today' && !blocked) {
+        const st = await page.evaluate(() => ({ notes: !!document.getElementById('notes') && !document.getElementById('notes').readOnly && !!document.getElementById('notes').offsetParent, mood: !!document.querySelector('.section--mood .feelings__input') && !document.querySelector('.section--mood .feelings__input').readOnly && !!document.querySelector('.section--mood .feelings__input').offsetParent, add: !!document.querySelector('#q-list ~ * .add-activity input, .add-activity input') && !!document.querySelector('.add-activity input').offsetParent }));
+        if (sections.escritura === 'editar' && !st.notes) problems.push(label + ' today · notas trabadas con permiso de editar');
+        if (sections.emociones === 'editar' && !st.mood) problems.push(label + ' today · emociones trabadas con permiso de editar');
+        if (sections.actividades === 'editar' && !st.add) problems.push(label + ' today · no deja anotar actividades con permiso de editar');
+        if (sections.escritura !== 'editar' && st.notes) problems.push(label + ' today · notas editables sin permiso');
+      }
+    }
+    const errs = errors.filter((e) => !/Failed to load resource/.test(e));
+    if (errs.length) problems.push(label + ' errores: ' + errs.join(' | '));
+    await context.close();
+  }
+  if (problems.length) console.log([...new Set(problems.map((x) => x.replace(/^(\{[^}]*\}) (\w+) · (\S+): .*\[(.*)\]$/, '$2 · $3 · [$4]')))].join('\n'));
+  assert.deepEqual(problems, []);
 });
 
 await test('nube: sin la marca de cuentas (file:// o servidor simple) no cambia nada', async () => {
