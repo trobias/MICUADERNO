@@ -152,6 +152,13 @@ Después de que la dueña volvió a autorizar el conector de Vercel para `trobia
 - **Por qué `SUPABASE_SECRET_KEY` no se pudo cargar sola:** el conector de Supabase solo entrega claves publicables. La integración Supabase instalada en `trobias-projects` (`icfg_iflx…`) no es la dueña del proyecto MICUADERNO: el proyecto está en la organización de Supabase de la otra cuenta de Vercel (`vercel_icfg_uQi3…`, “tarnowskitobiasian-5537's projects”). Por eso no se puede conectar al proyecto de Vercel para que inyecte la clave. Hay que copiarla una vez desde el panel de Supabase al de Vercel (§4.3, paso 1).
 - **Deploys:** cada push a la rama genera un Preview. El último es `micuaderno-csovkcvjw-trobias-projects.vercel.app` (commit `77ca844`, READY). Visto con `web_fetch_vercel_url`: responde 200 con CSP, HSTS, `nosniff`, `no-referrer` y `noindex`, y `/preparar` muestra “Todavía falta conectar la base de datos”, que es lo esperado sin `SUPABASE_SECRET_KEY`. Con la clave cargada, hace falta **un deploy nuevo** para que la tome.
 
+### 4.5 Publicado (05/10/2026)
+
+- `main` avanzó hasta `30d9732` (fast-forward desde la rama de trabajo, con el ok explícito de la dueña). Production `micuaderno-c95u1nuei…`, READY; dominio público **https://micuaderno-five.vercel.app**.
+- **Protección de deploys:** el proyecto tenía Vercel Authentication en “todo menos dominios propios”, así que hasta `micuaderno-five.vercel.app` pedía iniciar sesión en Vercel. Se pasó a **estándar** (`prod_deployment_urls_and_all_previews`): el dominio de producción queda abierto para Nicole y los Preview y las URL internas de cada deploy siguen protegidos.
+- **Verificado sin escribir nada:** `/entrar` responde 200 en el dominio público. `/preparar` muestra el formulario, lo que prueba que `SUPABASE_SECRET_KEY` funciona (consultó la base y hay 0 personas). La primera persona se crea con el link de invitación (§3.2).
+- **Sin verificar todavía:** el alta real (crear la cuenta en Supabase Auth), entrar, los permisos y los avisos. Es la primera prueba contra Supabase de verdad. Si falla, mirar los logs de Vercel (`/api/setup`) y la configuración de Auth (correo interno `*.invalid`, proveedor Email habilitado).
+
 ## 5. Desarrollo y pruebas
 
 ```
