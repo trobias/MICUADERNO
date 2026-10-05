@@ -299,18 +299,27 @@
    */
   function pullLook() {
     return api('/api/look?owner=' + encodeURIComponent(owner)).then(function (look) {
+      // Partes de Mi año que la dueña no muestra (D53): se aplican en pantalla (MC.access).
+      var yh = Array.isArray(look.yearHide) ? look.yearHide : [];
+      var yearChanged = JSON.stringify(yh) !== JSON.stringify(status.look ? status.look.yearHide : []);
+      status.look = { yearHide: yh };
       return store.get('meta', 'settings').then(function (row) {
         var value = Object.assign({}, row ? row.value : {});
         var cover = look.cover || value.cover, theme = look.theme === undefined ? value.theme : look.theme;
-        if (cover === value.cover && JSON.stringify(theme || null) === JSON.stringify(value.theme || null)) return 0;
+        if (cover === value.cover && JSON.stringify(theme || null) === JSON.stringify(value.theme || null)) return yearChanged ? 1 : 0;
         value.cover = cover; value.theme = theme || null;
         return quietly(function () { return put0.call(store, 'meta', { key: 'settings', value: value }); }).then(function () { return 1; });
       });
     }, function () { return 0; });
   }
   function apply(parts) {
-    var groups = {}, order = [];
+    var groups = {}, order = [], hiddenOf = {};
     parts.forEach(function (p) {
+      // Lo que la dueña ocultó (D53) llega aparte, solo a sus dispositivos: se junta con su registro.
+      if (S.canHide(p.store) && String(p.record_id).slice(-S.HIDDEN_SUFFIX.length) === S.HIDDEN_SUFFIX) {
+        if (!guest) hiddenOf[p.store + SEP + p.record_id.slice(0, -S.HIDDEN_SUFFIX.length)] = p;
+        return;
+      }
       if (!syncs(p.store, p.record_id)) return;
       var id = p.store + SEP + p.record_id;
       if (!groups[id]) { groups[id] = []; order.push(id); }
@@ -325,6 +334,7 @@
           if (!alive.length) return quietly(function () { setWait(id, false); return local ? store.del(s, key) : null; }).then(function () { n++; });
           var rec = S.overlay(s, local, alive.map(function (p) { return { section: p.section, data: p.data }; }));
           if (S.keyOf(s, rec) === undefined) return null; // parte suelta sin su identidad (permiso parcial): no se inventa
+          rec = withHidden(s, id, rec, local);
           return (MD.isMedia(s) ? withMedia(s, key, rec, local) : Promise.resolve(rec)).then(function (full) {
             // Sin el contenido todavía: se guarda nada y se reintenta (nunca una foto rota).
             if (!full) { setWait(id, true); return; }
@@ -333,7 +343,25 @@
           });
         });
       });
-    }, Promise.resolve()).then(function () { return n; });
+    }, Promise.resolve()).then(function () {
+      // Lo oculto que cambió solo (sin el resto del registro): se aplica sobre lo que hay.
+      return Object.keys(hiddenOf).filter(function (id) { return order.indexOf(id) === -1; }).reduce(function (chain, id) {
+        return chain.then(function () {
+          var i = id.indexOf(SEP), s = id.slice(0, i), key = id.slice(i + 1);
+          return store.get(s, key).then(function (local) {
+            if (!local) return;
+            return quietly(function () { return store.put(s, withHidden(s, id, S.conceal(s, local).open, local)); }).then(function () { n++; });
+          });
+        });
+      }, Promise.resolve());
+    }).then(function () { return n; });
+    /** En los dispositivos de la dueña, lo que llega de otra persona nunca se lleva lo oculto: se vuelve a juntar. */
+    function withHidden(s, id, rec, local) {
+      if (guest || !S.canHide(s)) return rec;
+      var part = hiddenOf[id];
+      var hidden = part ? (part.deleted_at ? null : part.data) : (local ? S.conceal(s, local).hidden : null);
+      return S.reveal(s, S.conceal(s, rec).open, hidden);
+    }
   }
 
   /* ---------- arranque ---------- */

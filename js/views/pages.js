@@ -191,8 +191,8 @@
       moreBtn = more;
       var keepBtn = h('button.text-btn', { type: 'button', 'aria-haspopup': 'menu' }, 'Guardar');
       keepBtn.addEventListener('click', function () { persist.flush(); keep(keepBtn, page, { date: M.pageDate(page) }); });
-      privacyEl = MC.privacy.button(page.privacy, openPrivacy, true);
-      privacyEl.hidden = !M.sanitizePrivacy(page.privacy);
+      privacyEl = MC.privacy.button(page.privacy, openPrivacy, true, page.hide);
+      privacyEl.hidden = !M.sanitizePrivacy(page.privacy) && !page.hide;
       sheet.appendChild(h('header.free-head',
         h('a.text-btn', { href: R.sheets() }, MC.icon('arrow-left'), 'Mis hojas'),
         h('span.free-head__right', privacyEl, saved, keepBtn, more)));
@@ -217,11 +217,17 @@
       MC.privacy.dialog({
         kind: 'page', privacy: page.privacy,
         onChange: function (p) { if (!page) return; page.privacy = p; persist(); persist.flush(); },
+        // Qué ven quienes miran (D53): cada bloque, el papel y los stickers.
+        share: MC.privacy.canShare() ? { store: 'pages', parts: MC.privacy.pageParts(page), hide: page.hide, onChange: function (hd) {
+          if (!page) return;
+          if (hd) page.hide = hd; else delete page.hide;
+          persist(); persist.flush();
+        } } : null,
         onClose: function () {
           if (!page || !privacyEl) return;
           var hadFocus = document.activeElement === privacyEl;
-          privacyEl.paint(page.privacy);
-          privacyEl.hidden = !M.sanitizePrivacy(page.privacy);
+          privacyEl.paint(page.privacy, page.hide);
+          privacyEl.hidden = !M.sanitizePrivacy(page.privacy) && !page.hide;
           // Si se apagó todo, el candado se va: el foco vuelve al menú de la página.
           if (hadFocus && privacyEl.hidden) moreBtn.focus();
         }

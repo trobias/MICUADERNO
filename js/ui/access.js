@@ -95,6 +95,7 @@
   /** Aplica los permisos a lo que hay dentro de `rootEl` (se vuelve a llamar cuando el cuadro dibuja más). */
   function apply(rootEl) {
     if (!guest()) return;
+    applyYear(rootEl);
     PARTS.forEach(function (p) {
       var l = level(p[1]);
       MC.$$(p[0], rootEl).forEach(function (el) {
@@ -105,6 +106,15 @@
         if (l === 'ver') { lookOnly(el); return; }
         el.hidden = true; // no compartido: ni se muestra
       });
+    });
+  }
+
+  /** Partes de Mi año que la dueña no muestra (D53, llegan con su apariencia). */
+  function applyYear(rootEl) {
+    var hide = (MC.sync && MC.sync.look && MC.sync.look.yearHide) || [];
+    MC.$$('[data-year-part]', rootEl).forEach(function (el) { el.hidden = hide.indexOf(el.dataset.yearPart) !== -1; });
+    MC.$$('[data-year-title]', rootEl).forEach(function (el) {
+      el.hidden = el.dataset.yearTitle.split(' ').every(function (k) { return hide.indexOf(k) !== -1; });
     });
   }
 

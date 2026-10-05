@@ -16,7 +16,7 @@
     "build": "node tools/copy-notebook.mjs && next build",
     "start": "next start",
     "typecheck": "node tools/copy-notebook.mjs && next typegen && tsc --noEmit",
-    "test:cloud": "node --test tests/cloud/*.test.mjs",
+    "test:cloud": "node --conditions=react-server --import ./tests/cloud/ts-resolve.mjs --test tests/cloud/*.test.mjs",
     "e2e:cloud": "node tests/cloud/smoke.mjs"
   },
   "devDependencies": {

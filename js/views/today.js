@@ -95,6 +95,8 @@
 
       return h('header.day-head',
         h('div.day-head__top',
+          // Quien mira el cuaderno de otra persona no es saludada con el nombre de la dueña (D53).
+          isToday && MC.sync && MC.sync.mode === 'guest' ? h('p.day-head__greet', 'Cuaderno de ' + ((MC.sync.share && MC.sync.share.name) || 'otra persona')) :
           isToday ? h('p.day-head__greet', greeting(s.name), h('span.t-hand', ' ♡')) :
             h('p.day-head__greet', rel ? D.capitalize(rel) : (isFuture ? 'Un día que todavía no llegó' : 'Un día de tu cuaderno')),
           saved),
@@ -106,7 +108,7 @@
           next),
         h('div.day-head__tools',
           !isToday ? h('a.text-btn', { href: R.today() }, MC.icon('hoy'), 'Ir a hoy') : null,
-          privacyEl = MC.privacy.button(day.privacy, openPrivacy),
+          privacyEl = MC.privacy.button(day.privacy, openPrivacy, false, day.hide),
           keepButton()),
         trashNotice = h('p.slip', { hidden: !M.isDeleted(day) }, 'Este día está en la papelera. Si lo editás, vuelve a tu cuaderno con lo que ya habías guardado.')
       );
@@ -183,8 +185,14 @@
         onChange: function (p) {
           day.privacy = p;
           persist(); persist.flush();
-          privacyEl.paint(p);
-        }
+          privacyEl.paint(p, day.hide);
+        },
+        // Qué ven quienes miran (D53).
+        share: MC.privacy.canShare() ? { store: 'days', parts: MC.privacy.DAY_PARTS, hide: day.hide, onChange: function (hd) {
+          if (hd) day.hide = hd; else delete day.hide;
+          persist(); persist.flush();
+          privacyEl.paint(day.privacy, day.hide);
+        } } : null
       });
     }
 

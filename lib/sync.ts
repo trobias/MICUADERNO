@@ -1,7 +1,7 @@
 // Sincronización del cuaderno con la nube (B5, D38). El servidor parte cada registro por sección
 // (js/core/sections.js) y escribe solo las partes que quien pide puede escribir; la RLS es la segunda llave.
 import 'server-only';
-import { NOTEBOOK_STORES, sectionsOf, splitAll } from './sections';
+import { NOTEBOOK_STORES, baseOf, canHide, conceal, HIDDEN_SUFFIX, sectionsOf, splitAll } from './sections';
 
 // Todo viaja. De fotos y adjuntos (NB1, D43) viaja la ficha; el contenido va aparte a Storage (lib/media.ts).
 export const SYNC_STORES = NOTEBOOK_STORES;
@@ -40,19 +40,34 @@ export type Row = {
 export function toRows(owner: string, by: string, changes: Change[], canWrite: (section: string) => boolean, nowMs: number) {
   const rows: Row[] = [];
   const skipped = new Set<string>();
+  const isOwner = by === owner;
+  const stamp = () => new Date(nowMs + rows.length).toISOString();
   for (const c of changes) {
     // Borrar un registro entero solo si se pueden editar todas sus secciones: con permiso parcial (por ejemplo,
     // solo Emociones), borrar un día no puede llevarse lo que la dueña escribió en las otras.
     if (!c.record && !sectionsOf(c.store).every(canWrite)) { sectionsOf(c.store).forEach((s) => skipped.add(s)); continue; }
-    const parts = c.record
-      ? splitAll(c.store, c.record)
+    // Lo que la dueña ocultó (D53) va aparte, en un pedazo privado; quien edita un cuaderno ajeno nunca lo toca.
+    let record = c.record, hidden: Record<string, unknown> | null = null, all = false;
+    if (record && canHide(c.store)) {
+      if (isOwner) ({ open: record, hidden, all } = conceal(c.store, record));
+      else { record = { ...record }; delete record.hide; }
+    }
+    const parts = record
+      ? splitAll(c.store, record)
       : sectionsOf(c.store).map((section) => ({ section, data: {} as Record<string, unknown> }));
     for (const p of parts) {
       if (!canWrite(p.section)) { skipped.add(p.section); continue; }
-      const at = new Date(nowMs + rows.length).toISOString();
+      const at = stamp();
       rows.push({
         owner_id: owner, store: c.store, record_id: c.key, section: p.section, data: p.data,
-        private: false, updated_at: at, deleted_at: c.record ? null : at, updated_by: by
+        private: all, updated_at: at, deleted_at: record ? null : at, updated_by: by
+      });
+    }
+    if (isOwner && canHide(c.store)) {
+      const at = stamp();
+      rows.push({
+        owner_id: owner, store: c.store, record_id: c.key + HIDDEN_SUFFIX, section: baseOf(c.store) as string, data: hidden ?? {},
+        private: true, updated_at: at, deleted_at: hidden ? null : at, updated_by: by
       });
     }
   }

@@ -8,6 +8,16 @@ Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantien
 - `.mcp.json` ya está en la rama. La dueña habilitó los dos MCP en su entorno web de Claude Code; el estado de `claude mcp list` en una instalación local distinta no verifica ese entorno.
 - `docs/NUBE.md` registra la verificación de red, los entornos y lo que falta para aplicar la migración SQL existente. Ningún secreto se agregó a Git.
 
+## 2026-10-06 · Qué ven quienes miran tu cuaderno (cache `v47`)
+
+**Para quien lo usa**
+- En **Privacidad** de cada día y cada hoja (con cuenta) aparece “Qué ven quienes miran tu cuaderno”: podés esconder el día o la hoja entera, o partes: cómo arrancó, cómo terminó, el cuerpo, algo que quiero cuidar, durante el día, las reflexiones, los stickers; en una hoja, cada bloque, el papel y los stickers. En **Mi año**, “Qué ven” esconde el bastidor, las cuentas, el gráfico, lo que fui notando, los recuerdos o las victorias.
+- Lo que escondés no les llega: queda solo para vos en la nube. Quien mira ya no es saludada con tu nombre: dice “Cuaderno de Nicole”.
+
+**Para quien lo mantiene**
+- `hide` en días y hojas, `hideYear` en ajustes (copia v9). `MC.sections.conceal/reveal`; pedazo `<id>~oculto` privado en `notebook_parts`; `toRows` y el push saltean lo privado para quien edita; `pullLook` trae `yearHide`. D53.
+- Pruebas: 142 unit, `test:cloud` 28/28, 61/61 E2E, `e2e:cloud` 3/3.
+
 ## 2026-10-06 · QA de emociones (cache `v46`)
 
 - Una emoción tiene el mismo color en el día, la semana, el mes y Mi año (antes podía cambiar de una vista a otra). En Ajustes, el cuadradito muestra ese color real (antes todos salían azules).

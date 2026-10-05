@@ -531,3 +531,9 @@ button.is-lookonly, .sticker-tools.is-lookonly, .is-lookonly button.icon-btn { d
 .lookonly-empty { font-family: var(--font-text); font-style: italic; color: var(--ink-soft); font-size: var(--fs-sm); }
 .lookonly-tag { font-family: var(--font-ui); font-size: var(--fs-xs); font-style: normal; font-weight: 400; color: var(--ink-soft); }
 .access-blocked { display: grid; gap: var(--s-3); align-content: start; }
+
+/* Qué ven quienes miran (D53), dentro de Privacidad */
+.share-block { margin-top: var(--s-5); padding-top: var(--s-4); border-top: 1px dashed var(--rule-strong); display: grid; gap: var(--s-2); }
+.share-block__title { font-family: var(--font-display); font-size: var(--fs-md); }
+.share-block__all { font-weight: 650; }
+.share-parts { margin-left: var(--s-4); }

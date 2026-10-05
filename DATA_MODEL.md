@@ -316,6 +316,9 @@ Cola de cambios para subir a la nube: `{ id: '<store>\u0001<clave>', at }`. Se e
 - **En IndexedDB** (versión **4**, `onupgradeneeded`, atómico y exclusivo entre pestañas): lee los ajustes, guarda en `meta.preV6` una instantánea `{ at, days, pages, settings }` con la forma vieja de lo que cambia y reescribe. Si algo falla, la transacción se aborta, la base queda en la versión 3 tal como estaba, el cuaderno la abre igual (los normalizadores siguen leyendo `mood` y `kind/body/items`) y avisa que lo vuelve a intentar.
 - **En una copia `.json`**: `MIGRATIONS[6]` hace lo mismo con los nombres de ánimo de esa copia. `SCHEMA_VERSION` = 6; una copia 7 o más nueva se rechaza.
 
+### Esquema v9 (D53, aditivo)
+Días y hojas pueden traer `hide: { all: boolean, fields: [campo], blocks: [id de bloque] }` (qué no ven quienes miran el cuaderno; solo si oculta algo). Campos ocultables: días `morning, evening, energy, sleep, intention, notes, reflection, stickers`; hojas `paper, stickers` y bloques. Los ajustes traen `hideYear: ['mapa' | 'cuentas' | 'grafico' | 'notando' | 'recuerdos' | 'victorias']`. En la nube lo oculto va en un pedazo aparte `<id>~oculto` con `private = true` (sección base del store). `MIGRATIONS[9]` es la identidad.
+
 ### Esquema v8 (D52, aditivo)
 Los ajustes pueden traer `hiddenDefaults: { feelings: [clave], templates: [id de fábrica] }`: lo de fábrica que la persona sacó. `MIGRATIONS[8]` es la identidad.
 

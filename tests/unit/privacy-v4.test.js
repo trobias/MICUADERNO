@@ -56,8 +56,8 @@ function v3Backup() {
 }
 
 test('esquema: la versión actual es la v7 (plantillas de día, D45) y conserva las migraciones anteriores', () => {
-  assert.equal(MC.backup.SCHEMA_VERSION, 8);
-  [4, 5, 6, 7, 8].forEach((n) => assert.equal(typeof MC.backup.MIGRATIONS[n], 'function', 'migración ' + n));
+  assert.equal(MC.backup.SCHEMA_VERSION, 9);
+  [4, 5, 6, 7, 8, 9].forEach((n) => assert.equal(typeof MC.backup.MIGRATIONS[n], 'function', 'migración ' + n));
 });
 
 test('migración v3 → … → v6: una copia v3 real abre igual y sale con la versión actual', async () => {

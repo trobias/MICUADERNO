@@ -2206,6 +2206,77 @@ await test('nube (NB2): la cola de salida vive en IndexedDB junto al cambio, sob
   await page.context().close();
 });
 
+await test('nube (D53): qué ven — Nicole oculta partes de un día, de una hoja y de Mi año; lo que llega no se las borra', async () => {
+  const PSI = '33333333-3333-4333-8333-333333333333';
+  const state = { me: { id: CA, username: 'nicole', name: 'Nicole', admin: true, hasNotebook: true, shares: [] } };
+  const { page, errors, setCookie, context } = await cloudContext(state);
+  await setCookie('mc_person', CA);
+  await page.goto(HTTP_URL);
+  await onboard(page);
+  await page.evaluate((d) => MC.model.saveDay(Object.assign(MC.model.emptyDay(d), { notes: 'solo para mí', intention: 'ir despacio' })), TODAY);
+  await goto(page, '#/anio');
+  await goto(page, '#/hoy');
+  // Privacidad → Qué ven: destildar “Durante el día”.
+  await page.click('.day-head__tools .privacy-btn');
+  await page.waitForSelector('dialog.sheet .share-block');
+  await page.click('dialog.sheet .share-parts label:has-text("Durante el día")');
+  await page.waitForFunction((d) => MC.store.get('days', d).then((r) => r && r.hide && r.hide.fields.includes('notes')), TODAY);
+  assert.match(await page.textContent('.day-head__tools .privacy-btn'), /Con privacidad/);
+  await page.keyboard.press('Escape');
+  await page.evaluate(() => MC.sync.flush());
+  await page.waitForFunction(() => MC.sync.pending() === 0, null, { timeout: 6000 });
+  const sent = state.pushes.flatMap((b) => b.changes).filter((c) => c.store === 'days' && c.key === TODAY && c.record).pop();
+  assert.deepEqual(sent.record.hide, { all: false, fields: ['notes'], blocks: [] }, 'la dueña manda el registro entero con lo que oculta (el servidor lo separa)');
+  // Llega un cambio de la psico (emociones) sin las notas: a Nicole no se le borran ni las notas ni lo que oculta.
+  state.parts = [{ store: 'days', record_id: TODAY, section: 'emociones', data: { date: TODAY, morning: { feelings: ['tranquila'], at: null }, updatedAt: '2026-10-05T23:00:00.000Z' }, deleted_at: null, updated_at: '2026-10-05T23:00:00.000Z', updated_by: PSI },
+    { store: 'days', record_id: TODAY, section: 'escritura', data: { date: TODAY, intention: 'ir despacio', updatedAt: '2026-10-05T23:00:00.000Z' }, deleted_at: null, updated_at: '2026-10-05T23:00:00.001Z', updated_by: PSI }];
+  await page.evaluate(() => MC.sync.pull(true));
+  const day = await page.evaluate((d) => MC.store.get('days', d), TODAY);
+  assert.deepEqual(day.morning.feelings, ['tranquila']);
+  assert.equal(day.notes, 'solo para mí', 'lo oculto sigue en el dispositivo de la dueña');
+  assert.deepEqual(day.hide.fields, ['notes']);
+  // Mi año: destildar “Lo que guardé”.
+  await goto(page, '#/anio');
+  await page.click('.cal-head button:has-text("Qué ven")');
+  await page.click('dialog.sheet label:has-text("Lo que guardé")');
+  await page.waitForFunction(() => MC.model.settings().hideYear.includes('recuerdos'));
+  await page.keyboard.press('Escape');
+  // Una hoja: ocultar un bloque.
+  await page.evaluate(() => MC.model.savePage({ id: 'pg_q', title: 'Ideas', blocks: [{ id: 'b1', type: 'text', title: 'Lo público' }, { id: 'b2', type: 'text', title: 'Lo mío' }], values: { b1: 'hola', b2: 'secreto' } }));
+  await page.evaluate(() => { location.hash = MC.routes.page('pg_q'); });
+  await page.waitForSelector('.free-head');
+  await page.evaluate(() => MC.views.pages && document.querySelector('.free-head .icon-btn[aria-haspopup="menu"]').click());
+  await page.click('[role="menuitem"]:has-text("Privacidad")');
+  await page.click('dialog.sheet .share-parts label:has-text("«Lo mío»")');
+  await page.waitForFunction(() => MC.store.get('pages', 'pg_q').then((p) => p.hide && p.hide.blocks.includes('b2')));
+  await page.keyboard.press('Escape');
+  assert.deepEqual(errors.filter((e) => !/Failed to load resource/.test(e)), []);
+  await context.close();
+});
+
+await test('nube (D53): quien mira no ve lo oculto de Mi año y no la saluda con el nombre de Nicole', async () => {
+  const PSI = '33333333-3333-4333-8333-333333333333';
+  const state = { me: { id: PSI, username: 'psicologa', name: 'Psicóloga', admin: false, hasNotebook: false, shares: [{ owner: CA, name: 'Nicole', sections: { emociones: 'ver', escritura: 'ver', anio: 'ver' } }] },
+    parts: [{ store: 'days', record_id: TODAY, section: 'escritura', data: { date: TODAY, intention: 'ir despacio', reflection: { good: '', hard: '', nice: '', keep: 'un recuerdo', free: '' }, updatedAt: '2026-10-05T10:00:00.000Z' }, deleted_at: null, updated_at: '2026-10-05T10:00:00.000Z', updated_by: CA }],
+    look: { cover: 'lavanda', theme: null, yearHide: ['recuerdos', 'grafico'] } };
+  const { page, errors, setCookie, context } = await cloudContext(state);
+  await setCookie('mc_person', PSI);
+  await setCookie('mc_view', CA);
+  await page.goto(HTTP_URL + '#/hoy');
+  await page.waitForSelector('.day-head', { timeout: 8000 });
+  assert.match(await page.textContent('.day-head__greet'), /Cuaderno de Nicole/);
+  await page.evaluate(() => { location.hash = MC.routes.year(); });
+  await page.waitForSelector('[data-year-part="mapa"]');
+  await page.waitForTimeout(300);
+  const vis = await page.evaluate(() => Object.fromEntries([...document.querySelectorAll('[data-year-part]')].map((el) => [el.dataset.yearPart, !el.hidden])));
+  assert.equal(vis.recuerdos, false);
+  assert.equal(vis.grafico, false);
+  assert.equal(vis.mapa, true);
+  assert.equal(await page.locator('.cal-head button:has-text("Qué ven")').count(), 0, 'la invitada no elige qué ven');
+  assert.deepEqual(errors.filter((e) => !/Failed to load resource/.test(e)), []);
+  await context.close();
+});
+
 await test('nube (NB1): una foto sube su contenido en pedazos y la ficha sin él; una que llega se baja y se ve; si falta, se reintenta', async () => {
   const PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
   const state = { me: { id: CA, username: 'nicole', name: 'Nicole', admin: true, hasNotebook: true, shares: [] } };

@@ -45,11 +45,14 @@
       notifyAsked: false,
       theme: null,                // v5 (D30): colores propios; null = la tela de la tapa (paso A9)
       emotionColors: {},          // v5 (D28): color elegido por emoción, { clave: '#RRGGBB' } (paso A4)
-      hiddenDefaults: { feelings: [], templates: [] } // v8 (D52): emociones de base y plantillas de fábrica que la persona sacó
+      hiddenDefaults: { feelings: [], templates: [] }, // v8 (D52): emociones de base y plantillas de fábrica que la persona sacó
+      hideYear: []                // v9 (D53): partes de Mi año que no ven quienes miran el cuaderno
     };
   }
 
   var HEX6 = /^#[0-9a-fA-F]{6}$/;
+  // Partes de Mi año que la dueña puede ocultarle a quien mira (D53).
+  var YEAR_PARTS = ['mapa', 'cuentas', 'grafico', 'notando', 'recuerdos', 'victorias'];
   var THEME_COLORS = ['cloth', 'cloth2', 'paper', 'ink'];
   var THEME_FINISHES = ['mate', 'satinado', 'brillante'];
 
@@ -122,6 +125,7 @@
     out.theme = sanitizeTheme(saved.theme);
     out.emotionColors = sanitizeEmotionColors(saved.emotionColors);
     out.hiddenDefaults = sanitizeHiddenDefaults(saved.hiddenDefaults);
+    out.hideYear = (Array.isArray(saved.hideYear) ? saved.hideYear : []).filter(function (k, i, a) { return YEAR_PARTS.indexOf(k) !== -1 && a.indexOf(k) === i; });
     return out;
   }
 
@@ -253,6 +257,9 @@
     Object.keys(d.reflection).forEach(function (k) { d.reflection[k] = str(r[k]); });
     d.stickers = sanitizeStickers(raw.stickers);
     d.privacy = sanitizePrivacy(raw.privacy);
+    // Qué ven quienes miran (D53): solo si oculta algo; si no, el campo no está.
+    var hd = MC.sections.sanitizeHide(raw.hide, 'days');
+    if (hd) d.hide = hd;
     d.deletedAt = sanitizeDeletedAt(raw.deletedAt);
     d.createdAt = typeof raw.createdAt === 'string' ? raw.createdAt : null;
     d.updatedAt = typeof raw.updatedAt === 'string' ? raw.updatedAt : null;
@@ -540,7 +547,7 @@
   function normalizePage(p) {
     var blocks = sanitizeBlocks(p.blocks);
     var legacy = blocks ? null : sheetBlocks(p);
-    return {
+    var out = {
       id: typeof p.id === 'string' ? p.id : MC.uid('pag'),
       title: str(p.title).slice(0, 120),
       template: typeof p.template === 'string' ? p.template.slice(0, 40) : 'blank',
@@ -559,6 +566,9 @@
       createdAt: stampOf(p.createdAt),
       updatedAt: stampOf(p.updatedAt)
     };
+    var hd = MC.sections.sanitizeHide(p.hide, 'pages'); // D53
+    if (hd) out.hide = hd;
+    return out;
   }
 
   /* ---------- bloques de hojas y plantillas (v5, D29) ---------- */
@@ -1308,7 +1318,7 @@
     getTemplates: getTemplates, getTemplate: getTemplate, getDayTemplates: getDayTemplates, dayTemplateFrom: dayTemplateFrom, applyDayTemplate: applyDayTemplate, repeatDay: repeatDay, saveTemplate: saveTemplate, deleteTemplate: deleteTemplate, templateFrom: templateFrom, repeatSheet: repeatSheet, getWeek: getWeek, saveWeek: saveWeek, isEmptyWeek: isEmptyWeek, normalizeTemplate: normalizeTemplate, normalizeMark: normalizeMark,
     sanitizeFeelings: sanitizeFeelings, sanitizeFeel: sanitizeFeel, sanitizeMoves: sanitizeMoves,
     feelingsOf: feelingsOf, emotionKey: emotionKey, emotionPalette: emotionPalette, emotionSuggestions: emotionSuggestions,
-    BASE_FEELINGS: BASE_FEELINGS, feelingGlyph: feelingGlyph, feelingColor: feelingColor, refreshPalette: refreshPalette, sanitizeHiddenDefaults: sanitizeHiddenDefaults,
+    BASE_FEELINGS: BASE_FEELINGS, YEAR_PARTS: YEAR_PARTS, feelingGlyph: feelingGlyph, feelingColor: feelingColor, refreshPalette: refreshPalette, sanitizeHiddenDefaults: sanitizeHiddenDefaults,
     sanitizeTheme: sanitizeTheme, sanitizeEmotionColors: sanitizeEmotionColors, occurrenceId: occurrenceId, DRAW_TOOLS: DRAW_TOOLS,
     sanitizeStickers: sanitizeStickers, summarize: summarize, summaryRange: summaryRange, pagesOn: pagesOn, everything: everything,
     hasWriting: hasWriting, countsAsDone: countsAsDone, pageTitle: pageTitle, pageDate: pageDate,

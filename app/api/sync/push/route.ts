@@ -2,6 +2,7 @@
 import { body, json, problem, sameOrigin } from '../../../../lib/http';
 import { me } from '../../../../lib/auth';
 import { supabaseServer } from '../../../../lib/supabase/server';
+import { supabaseAdmin } from '../../../../lib/supabase/admin';
 import { toRows, validChange, withoutMedia, type Change } from '../../../../lib/sync';
 import { dropMedia, media } from '../../../../lib/media';
 
@@ -27,7 +28,21 @@ export async function POST(req: Request) {
     canWrite = (s) => editable.has(s);
   }
 
-  const { rows, skipped } = toRows(owner, who.id, changes, canWrite, Date.now());
+  const out = toRows(owner, who.id, changes, canWrite, Date.now());
+  let rows = out.rows;
+  const skipped = out.skipped;
+  // Quien edita un cuaderno ajeno nunca pisa una parte que la dueña ocultó (D53): la RLS la rechazaría y la cola
+  // de esa persona se trabaría. Se saltea y se avisa como lo que no se puede escribir.
+  if (owner !== who.id && rows.length) {
+    const keys = [...new Set(rows.map((r) => r.record_id))];
+    const { data: priv } = await supabaseAdmin().from('notebook_parts').select('store, record_id, section').eq('owner_id', owner).eq('private', true).in('record_id', keys);
+    const blocked = new Set(((priv as { store: string; record_id: string; section: string }[] | null) ?? []).map((p) => p.store + '|' + p.record_id + '|' + p.section));
+    rows = rows.filter((r) => {
+      if (!blocked.has(r.store + '|' + r.record_id + '|' + r.section)) return true;
+      if (!skipped.includes(r.section)) skipped.push(r.section);
+      return false;
+    });
+  }
   for (let i = 0; i < rows.length; i += 200) {
     const { error } = await sb.from('notebook_parts').upsert(rows.slice(i, i + 200) as never, { onConflict: 'owner_id,store,record_id,section' });
     if (error) return problem('No se pudo guardar en la nube. Se reintenta solo.', 503);

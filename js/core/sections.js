@@ -117,6 +117,70 @@
     return out;
   }
 
+  /* ---------- Qué ven quienes miran (D53) ----------
+     La dueña puede ocultar partes de un día o de una hoja (o todo) a las personas con las que comparte. Lo oculto
+     no viaja en los pedazos de siempre: va en un pedazo aparte, `<id>~oculto`, marcado privado, que la RLS nunca
+     le da a otra persona. Así ni siquiera llega a su navegador. Con `all`, todos los pedazos del registro son privados. */
+  var HIDE_FIELDS = {
+    days: ['morning', 'evening', 'energy', 'sleep', 'intention', 'notes', 'reflection', 'stickers'],
+    pages: ['paper', 'stickers']
+  };
+  var HIDDEN_SUFFIX = '~oculto';
+  function canHide(store) { return !!HIDE_FIELDS[store]; }
+  function baseOf(store) { return MAP[store] ? MAP[store].base : null; }
+  /** { all, fields, blocks } saneado, o null si no oculta nada. */
+  function sanitizeHide(h, store) {
+    if (!h || typeof h !== 'object' || !HIDE_FIELDS[store]) return null;
+    var out = { all: h.all === true, fields: [], blocks: [] };
+    (Array.isArray(h.fields) ? h.fields : []).forEach(function (f) {
+      if (HIDE_FIELDS[store].indexOf(f) !== -1 && out.fields.indexOf(f) === -1) out.fields.push(f);
+    });
+    if (store === 'pages') (Array.isArray(h.blocks) ? h.blocks : []).slice(0, 24).forEach(function (id) {
+      if (typeof id === 'string' && /^[\w-]{1,40}$/.test(id) && out.blocks.indexOf(id) === -1) out.blocks.push(id);
+    });
+    return out.all || out.fields.length || out.blocks.length ? out : null;
+  }
+  /** Registro → { open (lo que se comparte), hidden (lo oculto + la configuración) | null, all }. */
+  function conceal(store, record) {
+    if (!record || !HIDE_FIELDS[store]) return { open: record, hidden: null, all: false };
+    var hide = sanitizeHide(record.hide, store);
+    var open = MCclone(record);
+    delete open.hide;
+    if (!hide) return { open: open, hidden: null, all: false };
+    var hidden = { hide: hide, fields: {}, blocks: [], values: {} };
+    if (!hide.all) {
+      hide.fields.forEach(function (f) { if (f in open) { hidden.fields[f] = open[f]; delete open[f]; } });
+      if (store === 'pages' && hide.blocks.length && Array.isArray(open.blocks)) {
+        open.blocks = open.blocks.filter(function (b, i) {
+          if (b && hide.blocks.indexOf(b.id) !== -1) { hidden.blocks.push({ index: i, block: b }); return false; }
+          return true;
+        });
+        if (open.values && typeof open.values === 'object') hide.blocks.forEach(function (id) {
+          if (id in open.values) { hidden.values[id] = open.values[id]; delete open.values[id]; }
+        });
+      }
+    }
+    return { open: open, hidden: hidden, all: hide.all };
+  }
+  /** Lo compartido + lo oculto → el registro entero (en los dispositivos de la dueña). */
+  function reveal(store, open, hidden) {
+    if (!open || !hidden || !HIDE_FIELDS[store]) return open;
+    var out = MCclone(open);
+    out.hide = hidden.hide;
+    Object.keys(hidden.fields || {}).forEach(function (f) { out[f] = hidden.fields[f]; });
+    if (store === 'pages' && (hidden.blocks || []).length) {
+      var ids = hidden.blocks.map(function (x) { return x.block && x.block.id; });
+      var blocks = (Array.isArray(out.blocks) ? out.blocks : []).filter(function (b) { return ids.indexOf(b && b.id) === -1; });
+      hidden.blocks.slice().sort(function (a, b) { return a.index - b.index; }).forEach(function (x) {
+        blocks.splice(Math.min(x.index, blocks.length), 0, x.block);
+      });
+      out.blocks = blocks;
+      out.values = Object.assign({}, out.values || {}, hidden.values || {});
+    }
+    return out;
+  }
+
   return { LIST: LIST, ids: ids, STORES: Object.keys(MAP), sectionOf: sectionOf, sectionsOf: sectionsOf, keyOf: keyOf,
-    split: split, splitAll: splitAll, merge: merge, overlay: overlay };
+    split: split, splitAll: splitAll, merge: merge, overlay: overlay,
+    HIDE_FIELDS: HIDE_FIELDS, HIDDEN_SUFFIX: HIDDEN_SUFFIX, canHide: canHide, baseOf: baseOf, sanitizeHide: sanitizeHide, conceal: conceal, reveal: reveal };
 });

@@ -359,6 +359,8 @@ a.months__year { text-decoration: none; padding: 4px 6px; border-radius: 6px; }
 .year-notes .notes-title { font-size: var(--fs-xl); margin: 0 0 var(--s-4); }
 .year-notes .notes-title + .section__hint { margin-bottom: var(--s-4); }
 .year-notes .notes-title:not(:first-child) { margin-top: var(--s-7); }
+/* Partes de Mi año (D53): el título de cada parte separa igual que antes, aunque esté dentro de su caja. */
+.year-notes .year-part:not(:first-child) > .notes-title:first-child { margin-top: var(--s-7); }
 .noticed { display: grid; gap: var(--s-3); }
 .noticed li { position: relative; padding-left: 26px; font-family: var(--font-text); font-size: var(--fs-md); line-height: var(--line); }
 .noticed li::before {

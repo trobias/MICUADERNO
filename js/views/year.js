@@ -24,10 +24,14 @@
         h('div.cal-head__title',
           h('a.icon-btn', { href: R.year(y - 1), 'aria-label': 'Año anterior' }, MC.icon('arrow-left')),
           h('h1.t-display', 'Mi año ', h('span.cal-head__year', year)),
-          h('a.icon-btn', { href: R.year(y + 1), 'aria-label': 'Año siguiente' }, MC.icon('arrow-right')))));
+          h('a.icon-btn', { href: R.year(y + 1), 'aria-label': 'Año siguiente' }, MC.icon('arrow-right'))),
+        MC.cloud && MC.cloud.mode === 'owner' ? shareButton() : null));
 
+      // Partes de Mi año (D53): la dueña elige cuáles no ve quien mira su cuaderno.
+      function part(name, parent) { var el = h('div.year-part', { dataset: { yearPart: name } }); parent.appendChild(el); return el; }
+      var pMapa = part('mapa', left);
       var filled = Object.keys(sum).filter(function (k) { return sum[k].feelings.length; }).length;
-      left.appendChild(h('p.year-intro.t-text', filled
+      pMapa.appendChild(h('p.year-intro.t-text', filled
         ? 'Cada punto cruz es un día con una emoción anotada. ' + (filled === 1 ? 'Ya hay uno bordado.' : 'Ya hay ' + filled + ' bordados.')
         : 'Un bastidor listo para bordar: cada día que anotes una emoción aparece un punto cruz.'));
 
@@ -65,18 +69,18 @@
         }
         hoop.appendChild(row);
       }
-      left.appendChild(h('div.hoop-frame', hoop));
+      pMapa.appendChild(h('div.hoop-frame', hoop));
       var focusKey = today.slice(0, 4) === year ? today : year + '-01-01';
       cells.forEach(function (x) { if (x.dataset.date === focusKey) x.tabIndex = 0; });
 
-      left.appendChild(h('ul.mood-legend.year-legend', { 'aria-label': 'Referencias' },
+      pMapa.appendChild(h('ul.mood-legend.year-legend', { 'aria-label': 'Referencias' },
         palette.labels.map(function (value) { return h('li', h('span.stitch-cell.stitch-cell--key', { dataset: { feeling: value }, style: { '--c': palette.color(value) }, 'aria-hidden': 'true' }), value); }),
         palette.otherCount ? h('li', 'Otras emociones, con su nombre') : null,
         h('li', h('span.stitch-cell.stitch-cell--key.is-half', { 'aria-hidden': 'true' }), 'algo anotado, sin emoción'),
         Object.keys(winDays).length ? h('li', h('span.stitch-cell.stitch-cell--key.is-win', { 'aria-hidden': 'true' }), 'una pequeña victoria') : null));
 
       // Mes a mes (A8, D31): un gráfico propio y la misma información en una tabla.
-      left.appendChild(monthChart(MC.insights.byMonth(all, year), year));
+      part('grafico', left).appendChild(monthChart(MC.insights.byMonth(all, year), year));
 
       function go(e) { location.hash = R.day(e.currentTarget.dataset.date); }
       function onKey(e) {
@@ -98,18 +102,20 @@
       // Hoja derecha: lo que fui notando (cuentas por período + observaciones), pequeñas victorias y lo que guardé
       var current = today.slice(0, 4) === year;
       var insights = MC.insights.compute(all, current ? today : year + '-12-31');
-      right.appendChild(h('h2.t-display.notes-title', 'Lo que fui notando'));
-      right.appendChild(tallies(all, current ? today : year + '-12-31', current, palette));
-      right.appendChild(h('ul.noticed', insights.map(insightItem)));
-      right.appendChild(h('p.noticed__foot.t-meta', 'Son solo cuentas de lo que registraste, no conclusiones.'));
+      right.appendChild(h('h2.t-display.notes-title', { dataset: { yearTitle: 'cuentas notando' } }, 'Lo que fui notando'));
+      part('cuentas', right).appendChild(tallies(all, current ? today : year + '-12-31', current, palette));
+      var pNot = part('notando', right);
+      pNot.appendChild(h('ul.noticed', insights.map(insightItem)));
+      pNot.appendChild(h('p.noticed__foot.t-meta', 'Son solo cuentas de lo que registraste, no conclusiones.'));
 
       // Pequeñas victorias: referencias (marks) a lo que la persona eligió; cada una lleva a su día.
       var wins = MC.insights.victories(all, year);
-      right.appendChild(h('h2.t-display.notes-title', 'Pequeñas victorias'));
+      var pWins = part('victorias', right);
+      pWins.appendChild(h('h2.t-display.notes-title', 'Pequeñas victorias'));
       if (!wins.length) {
-        right.appendChild(h('p.section__hint', 'Cuando algo te parezca una pequeña victoria, marcalo desde el menú de esa actividad o esa hoja: aparece acá, con su día.'));
+        pWins.appendChild(h('p.section__hint', 'Cuando algo te parezca una pequeña victoria, marcalo desde el menú de esa actividad o esa hoja: aparece acá, con su día.'));
       } else {
-        right.appendChild(h('ul.wins', wins.map(function (w) {
+        pWins.appendChild(h('ul.wins', wins.map(function (w) {
           return h('li.win', MC.icon('star'),
             h('a', { href: w.page ? R.page(w.page) : R.day(w.date) }, h('span.win__date', D.shortLabel(w.date)), h('span.win__text', w.text)));
         })));
@@ -120,9 +126,10 @@
         return dd.date.slice(0, 4) === year && dd.reflection.keep.trim() &&
           !M.isPrivate(dd, 'noReviews') && !M.isPrivate(dd, 'noMemory') && !M.isDeleted(dd);
       }).reverse();
-      right.appendChild(h('h2.t-display.notes-title', 'Lo que guardé'));
+      var pMem = part('recuerdos', right);
+      pMem.appendChild(h('h2.t-display.notes-title', 'Lo que guardé'));
       if (!memories.length) {
-        right.appendChild(h('p.section__hint', 'Todavía no guardaste ningún recuerdo este año. Aparecen acá cuando completás “Qué quiero guardar” al cerrar un día.'));
+        pMem.appendChild(h('p.section__hint', 'Todavía no guardaste ningún recuerdo este año. Aparecen acá cuando completás “Qué quiero guardar” al cerrar un día.'));
       } else {
         var list = h('ul.memories');
         var SHOWN = 6;
@@ -133,7 +140,7 @@
               h('span.memory__text', dd.reflection.keep.trim()))));
           if (i >= SHOWN) list.lastChild.hidden = true;
         });
-        right.appendChild(list);
+        pMem.appendChild(list);
         if (memories.length > SHOWN) {
           var more = h('button.text-btn', { type: 'button', 'aria-expanded': 'false' }, 'Ver los ' + memories.length + ' recuerdos');
           more.addEventListener('click', function () {
@@ -141,10 +148,34 @@
             more.remove();
             list.children[SHOWN].querySelector('a').focus();
           });
-          right.appendChild(more);
+          pMem.appendChild(more);
         }
       }
     });
+
+    /** “Qué ven” de Mi año (D53): casillas por parte; lo destildado no lo ve quien mira el cuaderno. */
+    function shareButton() {
+      var b = h('button.text-btn', { type: 'button', 'aria-haspopup': 'dialog' }, MC.icon('lock'), 'Qué ven');
+      b.addEventListener('click', function () {
+        var LABELS = { mapa: 'El bastidor del año', cuentas: 'Las cuentas por semana, mes y año', grafico: 'El gráfico por mes', notando: 'Lo que fui notando', recuerdos: 'Lo que guardé (recuerdos)', victorias: 'Pequeñas victorias' };
+        var hidden = M.settings().hideYear.slice();
+        var list = h('ul.check-list');
+        M.YEAR_PARTS.forEach(function (k) {
+          var id = MC.uid('yr');
+          var cb = h('input', { type: 'checkbox', id: id, checked: hidden.indexOf(k) === -1 });
+          cb.addEventListener('change', function () {
+            hidden = hidden.filter(function (x) { return x !== k; });
+            if (!cb.checked) hidden.push(k);
+            M.saveSettings({ hideYear: hidden });
+          });
+          list.appendChild(h('li', h('label.check', { for: id }, cb, h('span', LABELS[k]))));
+        });
+        c.dialog({ title: 'Qué ven de Mi año', content: [
+          h('p.t-text', 'Quienes miran tu cuaderno ven en Mi año solo lo tildado (y siempre dentro de lo que les compartiste).'), list],
+          actions: [{ label: 'Listo', kind: 'primary' }] });
+      });
+      return b;
+    }
 
     return { destroy: function () { destroyed = true; } };
   }
