@@ -8,6 +8,15 @@ Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantien
 - `.mcp.json` ya está en la rama. La dueña habilitó los dos MCP en su entorno web de Claude Code; el estado de `claude mcp list` en una instalación local distinta no verifica ese entorno.
 - `docs/NUBE.md` registra la verificación de red, los entornos y lo que falta para aplicar la migración SQL existente. Ningún secreto se agregó a Git.
 
+## 2026-10-06 · Cuentas sin PIN
+
+**Para quien lo usa**
+- Al sumar una persona (Mi cuenta → Personas) hay una casilla **Sin PIN**: esa cuenta entra con solo elegir su nombre en `/entrar`. Quien administra siempre tiene PIN. Desde Personas se le puede sacar o poner el PIN a alguien, y una cuenta sin PIN se puede poner uno en Mi cuenta.
+
+**Para quien lo mantiene**
+- `profiles.pin_hash = 'sin-pin'` (`NO_PIN`), sin migración; `removePin`, `noPinIds`; `/api/auth/login` sin PIN para esas cuentas; `/api/people` con `noPin: true` explícito. D47.
+- Pruebas: `test:cloud` 23/23; `/entrar` revisado con Supabase simulada.
+
 ## 2026-10-06 · Guardar del día, plantillas en Nueva hoja y entrada por `/` (cache `v39`)
 
 **Para quien lo usa**

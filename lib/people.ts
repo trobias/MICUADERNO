@@ -2,16 +2,18 @@
 import 'server-only';
 import { supabaseAdmin } from './supabase/admin';
 import { env } from './env';
-import { authEmail, derivedPassword, hashPin, normalizeUsername, pinProblem, USERNAME_RE } from './pin';
+import { authEmail, derivedPassword, hashPin, NO_PIN, normalizeUsername, pinProblem, USERNAME_RE } from './pin';
 import { audit, PROFILE_COLUMNS, type Profile } from './auth';
 
-export type NewPerson = { username: unknown; displayName: unknown; pin: unknown; isAdmin?: unknown; hasNotebook?: unknown };
+export type NewPerson = { username: unknown; displayName: unknown; pin: unknown; noPin?: unknown; isAdmin?: unknown; hasNotebook?: unknown };
 
 export function personProblem(p: NewPerson): string | null {
   const u = normalizeUsername(p.username);
   if (!USERNAME_RE.test(u)) return 'El usuario va en minúsculas, de 3 a 32 letras o números (también . _ -).';
   const n = String(p.displayName ?? '').trim();
   if (!n || n.length > 60) return 'Escribí cómo se llama (hasta 60 letras).';
+  // Sin PIN solo si se pidió así (la casilla “Sin PIN”, D47): entra con solo elegirla. Quien administra, siempre con PIN.
+  if (p.noPin === true) return p.isAdmin === true ? 'Quien administra necesita un PIN (puede ver y cambiar todo).' : null;
   return pinProblem(p.pin);
 }
 
@@ -31,7 +33,8 @@ export async function createPerson(actorId: string | null, p: NewPerson): Promis
   } as never);
   if (created.error) return { error: 'No se pudo crear la cuenta. Probá de nuevo en un rato.' };
 
-  const pin_hash = await hashPin(String(p.pin), env.pinPepper());
+  const withPin = p.noPin !== true;
+  const pin_hash = withPin ? await hashPin(String(p.pin), env.pinPepper()) : NO_PIN;
   const { error } = await sb.from('profiles').insert({
     id, username, display_name: String(p.displayName).trim(), pin_hash, is_admin: p.isAdmin === true, has_notebook: p.hasNotebook === true, created_by: actorId
   } as never);
@@ -39,7 +42,7 @@ export async function createPerson(actorId: string | null, p: NewPerson): Promis
     await sb.auth.admin.deleteUser(id);
     return { error: 'No se pudo guardar a la persona. Probá de nuevo.' };
   }
-  await audit(actorId, 'persona.alta', id, { username, admin: p.isAdmin === true, cuaderno: p.hasNotebook === true });
+  await audit(actorId, 'persona.alta', id, { username, admin: p.isAdmin === true, cuaderno: p.hasNotebook === true, pin: withPin });
   return { id };
 }
 
@@ -52,6 +55,25 @@ export async function setPin(actorId: string, targetId: string, pin: unknown): P
   if (error) return 'No se pudo cambiar el PIN. Probá de nuevo.';
   await audit(actorId, actorId === targetId ? 'pin.propio' : 'pin.admin', targetId);
   return null;
+}
+
+/** Dejar a otra persona sin PIN (D47): entra con solo elegirla. Nunca a quien administra ni a una misma. */
+export async function removePin(actorId: string, targetId: string): Promise<string | null> {
+  if (actorId === targetId) return 'Tu cuenta administra: necesita un PIN.';
+  const sb = supabaseAdmin();
+  const { data: t } = await sb.from('profiles').select('is_admin').eq('id', targetId).maybeSingle();
+  if (!t) return 'Persona desconocida.';
+  if ((t as { is_admin?: boolean }).is_admin) return 'Quien administra necesita un PIN.';
+  const { error } = await sb.from('profiles').update({ pin_hash: NO_PIN, pin_changed_at: new Date().toISOString() } as never).eq('id', targetId);
+  if (error) return 'No se pudo cambiar. Probá de nuevo.';
+  await audit(actorId, 'pin.sin', targetId);
+  return null;
+}
+
+/** Ids de las cuentas sin PIN (para mostrarlo en Mi cuenta; el hash nunca sale del servidor). */
+export async function noPinIds(): Promise<Set<string>> {
+  const { data } = await supabaseAdmin().from('profiles').select('id').eq('pin_hash', NO_PIN);
+  return new Set(((data as { id: string }[] | null) ?? []).map((r) => r.id));
 }
 
 export async function listPeople(): Promise<Profile[]> {

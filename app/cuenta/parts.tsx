@@ -2,22 +2,26 @@
 import { useState } from 'react';
 import { b64ToBytes, send, useNote } from '../form';
 
-export function ChangePin() {
+export function ChangePin({ noPin = false }: { noPin?: boolean }) {
   const note = useNote();
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = e.currentTarget, f = new FormData(form);
     if (f.get('next') !== f.get('next2')) { note.problem('Los dos PIN nuevos no coinciden.'); return; }
-    const r = await send('/api/pin', 'POST', { current: f.get('current'), next: f.get('next') });
-    if (r.ok) { form.reset(); note.ok('Listo: tu PIN nuevo ya vale.'); } else note.problem(String(r.data.error || 'No se pudo cambiar.'));
+    const r = await send('/api/pin', 'POST', { current: f.get('current') || '', next: f.get('next') });
+    if (!r.ok) { note.problem(String(r.data.error || 'No se pudo cambiar.')); return; }
+    if (noPin) { location.reload(); return; }
+    form.reset(); note.ok('Listo: tu PIN nuevo ya vale.');
   }
   return (
     <form className="form" onSubmit={submit}>
-      <label>PIN actual<input name="current" type="password" inputMode="numeric" autoComplete="current-password" required /></label>
+      {noPin
+        ? <p className="note">Tu cuenta entra sin PIN: cualquiera que elija tu nombre puede abrirla. Si querés, ponele uno.</p>
+        : <label>PIN actual<input name="current" type="password" inputMode="numeric" autoComplete="current-password" required /></label>}
       <label>PIN nuevo<input name="next" type="password" inputMode="numeric" pattern="\d{6}" maxLength={6} autoComplete="new-password" required /></label>
       <label>Repetí el PIN nuevo<input name="next2" type="password" inputMode="numeric" pattern="\d{6}" maxLength={6} autoComplete="new-password" required /></label>
       {note.view}
-      <div className="row"><button className="label-btn label-btn--soft">Cambiar PIN</button></div>
+      <div className="row"><button className="label-btn label-btn--soft">{noPin ? 'Poner PIN' : 'Cambiar PIN'}</button></div>
     </form>
   );
 }
@@ -79,21 +83,27 @@ export function Notices({ vapid }: { vapid: string }) {
   );
 }
 
-type Person = { id: string; name: string; username: string; admin: boolean; disabled: boolean; hasNotebook: boolean };
+type Person = { id: string; name: string; username: string; admin: boolean; disabled: boolean; hasNotebook: boolean; noPin: boolean };
 
 export function People({ me, people }: { me: string; people: Person[] }) {
   const note = useNote();
+  const [noPin, setNoPin] = useState(false);
   async function create(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = e.currentTarget, f = new FormData(form);
-    const r = await send('/api/people', 'POST', { displayName: f.get('displayName'), username: f.get('username'), pin: f.get('pin'), isAdmin: f.get('isAdmin') === 'on', hasNotebook: f.get('kind') === 'propio' });
+    const r = await send('/api/people', 'POST', { displayName: f.get('displayName'), username: f.get('username'), pin: noPin ? '' : f.get('pin'), noPin, isAdmin: !noPin && f.get('isAdmin') === 'on', hasNotebook: f.get('kind') === 'propio' });
     if (r.ok) location.reload(); else note.problem(String(r.data.error || 'No se pudo.'));
   }
   async function resetPin(p: Person) {
     const pin = prompt(`PIN nuevo para ${p.name} (6 números):`);
     if (!pin) return;
     const r = await send(`/api/people/${p.id}`, 'PATCH', { pin });
-    if (r.ok) note.ok(`Listo: ${p.name} ya puede entrar con su PIN nuevo.`); else note.problem(String(r.data.error || 'No se pudo.'));
+    if (r.ok) { if (p.noPin) location.reload(); else note.ok(`Listo: ${p.name} ya puede entrar con su PIN nuevo.`); } else note.problem(String(r.data.error || 'No se pudo.'));
+  }
+  async function dropPin(p: Person) {
+    if (!confirm(`¿Dejar a ${p.name} sin PIN? Va a entrar con solo elegir su nombre, y cualquiera que abra la página también podría.`)) return;
+    const r = await send(`/api/people/${p.id}`, 'PATCH', { noPin: true });
+    if (r.ok) location.reload(); else note.problem(String(r.data.error || 'No se pudo.'));
   }
   async function toggle(p: Person) {
     const r = await send(`/api/people/${p.id}`, 'PATCH', { disabled: !p.disabled });
@@ -105,10 +115,11 @@ export function People({ me, people }: { me: string; people: Person[] }) {
         {people.map((p) => (
           <li key={p.id}>
             <span className="who">{p.name}</span>
-            <span className="meta">usuario {p.username} · {p.hasNotebook ? 'su propio cuaderno' : 'mira cuadernos compartidos'}{p.admin ? ' · administra' : ''}{p.disabled ? ' · en pausa' : ''}</span>
+            <span className="meta">usuario {p.username} · {p.hasNotebook ? 'su propio cuaderno' : 'mira cuadernos compartidos'}{p.admin ? ' · administra' : ''}{p.noPin ? ' · sin PIN' : ''}{p.disabled ? ' · en pausa' : ''}</span>
             {p.id !== me && (
               <div className="row">
-                <button className="label-btn label-btn--soft" onClick={() => resetPin(p)}>Cambiar su PIN</button>
+                <button className="label-btn label-btn--soft" onClick={() => resetPin(p)}>{p.noPin ? 'Ponerle PIN' : 'Cambiar su PIN'}</button>
+                {!p.noPin && !p.admin && <button className="label-btn label-btn--soft" onClick={() => dropPin(p)}>Dejarla sin PIN</button>}
                 <button className="label-btn label-btn--soft" onClick={() => toggle(p)}>{p.disabled ? 'Reactivar' : 'Poner en pausa'}</button>
               </div>
             )}
@@ -119,13 +130,16 @@ export function People({ me, people }: { me: string; people: Person[] }) {
         <h2>Sumar una persona</h2>
         <label>Cómo se llama<input name="displayName" maxLength={60} required /></label>
         <label>Usuario<input name="username" autoCapitalize="none" spellCheck={false} required /></label>
-        <label>PIN inicial<input name="pin" type="password" inputMode="numeric" pattern="\d{6}" maxLength={6} autoComplete="new-password" required /></label>
+        <label className="check"><input type="checkbox" name="noPin" checked={noPin} onChange={(e) => setNoPin(e.target.checked)} /> Sin PIN (entra con solo elegir su nombre)</label>
+        {noPin
+          ? <p className="note">Ojo: cualquiera que abra la página puede entrar como esta persona y ver lo que le compartas. Después le podés poner un PIN.</p>
+          : <label>PIN inicial<input name="pin" type="password" inputMode="numeric" pattern="\d{6}" maxLength={6} autoComplete="new-password" required /></label>}
         <fieldset className="choice">
           <legend>Qué cuaderno usa</legend>
           <label className="check"><input type="radio" name="kind" value="invitada" defaultChecked /> Mira mi cuaderno, con los permisos que le dé abajo</label>
           <label className="check"><input type="radio" name="kind" value="propio" /> Tiene su propio cuaderno</label>
         </fieldset>
-        <label className="check"><input type="checkbox" name="isAdmin" /> También administra (suma personas y cambia PIN)</label>
+        {!noPin && <label className="check"><input type="checkbox" name="isAdmin" /> También administra (suma personas y cambia PIN)</label>}
         {note.view}
         <div className="row"><button className="label-btn">Sumar persona</button></div>
       </form>
@@ -135,7 +149,7 @@ export function People({ me, people }: { me: string; people: Person[] }) {
 
 type Grant = { grantee_id: string; section: string; level: string };
 
-export function Sharing({ sections, people, grants }: { sections: { id: string; label: string }[]; people: { id: string; name: string; username: string }[]; grants: Grant[] }) {
+export function Sharing({ sections, people, grants }: { sections: { id: string; label: string }[]; people: { id: string; name: string; username: string; noPin?: boolean }[]; grants: Grant[] }) {
   const note = useNote();
   const [rows, setRows] = useState(grants);
   if (!people.length) return <p className="note">Todavía no hay otras personas con quien compartir. Quien administra las puede sumar.</p>;
@@ -151,7 +165,7 @@ export function Sharing({ sections, people, grants }: { sections: { id: string; 
       <p className="note">Por sección: nada, ver o editar. Ver deja mirar esa parte de tu cuaderno; editar también deja escribir, cambiar y borrar en ella. “Fotos y adjuntos” incluye las imágenes, los dibujos y los archivos adjuntos.</p>
       <div className="table-scroll">
         <table className="grants">
-          <thead><tr><th scope="col">Sección</th>{people.map((p) => <th key={p.id} scope="col">{p.name}</th>)}</tr></thead>
+          <thead><tr><th scope="col">Sección</th>{people.map((p) => <th key={p.id} scope="col">{p.name}{p.noPin ? ' (sin PIN)' : ''}</th>)}</tr></thead>
           <tbody>
             {sections.map((s) => (
               <tr key={s.id}>
@@ -168,6 +182,7 @@ export function Sharing({ sections, people, grants }: { sections: { id: string; 
           </tbody>
         </table>
       </div>
+      {people.some((p) => p.noPin) && <p className="note">Lo que compartas con una cuenta sin PIN lo puede ver cualquiera que abra la página y elija ese nombre.</p>}
       {note.view}
     </div>
   );

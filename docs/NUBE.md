@@ -25,6 +25,7 @@ navegador ──► Vercel (Next.js 16)
 | Tema | Cómo |
 |---|---|
 | PIN | 6 números (D36). Se guarda como **Argon2id** (19 MiB, 2 pasadas) con **pimienta** (`PIN_PEPPER`) como secreto del algoritmo. La columna `profiles.pin_hash` no la puede leer ningún rol del navegador (permiso por columna). Sin escaleras (123456) ni repetidos (000000). |
+| Cuenta sin PIN | Si al crearla se marca **Sin PIN** (D47), `pin_hash` guarda la marca `sin-pin` y la cuenta entra con solo elegirla. Nunca para quien administra. Cualquiera que abra la página puede entrar como ella: Mi cuenta lo advierte. |
 | Supabase Auth | El PIN **nunca** es la contraseña de Supabase. La contraseña es `HMAC-SHA256(AUTH_SECRET, id)` y el correo es interno (`<id>@personas.mi-cuaderno.invalid`, se cambia con `AUTH_EMAIL_DOMAIN`). Nadie recibe correos. |
 | Fuerza bruta | 3 intentos libres; después la espera se duplica (30 s, 1, 2, 4 min… hasta 1 hora), por usuario y por IP (`login_throttle`). Si el usuario no existe, la respuesta y el tiempo son los mismos. |
 | CSRF | Las rutas que cambian algo exigen `Origin` del mismo sitio. Las cookies de sesión las maneja `@supabase/ssr` (`SameSite=Lax`, `Secure` en producción). |

@@ -15,7 +15,7 @@ export async function POST(req: Request) {
   const who = await me();
   if (!who) return problem('Tu sesión terminó. Entrá de nuevo.', 401);
   if (!who.is_admin) return problem('Solo quien administra puede sumar personas.', 403);
-  const b = await body<{ username?: string; displayName?: string; pin?: string; isAdmin?: boolean; hasNotebook?: boolean }>(req);
-  const r = await createPerson(who.id, { username: b?.username, displayName: b?.displayName, pin: b?.pin, isAdmin: b?.isAdmin === true, hasNotebook: b?.hasNotebook === true });
+  const b = await body<{ username?: string; displayName?: string; pin?: string; noPin?: boolean; isAdmin?: boolean; hasNotebook?: boolean }>(req);
+  const r = await createPerson(who.id, { username: b?.username, displayName: b?.displayName, pin: b?.pin, noPin: b?.noPin === true, isAdmin: b?.isAdmin === true, hasNotebook: b?.hasNotebook === true });
   return r.error ? problem(r.error) : json({ id: r.id }, 201);
 }

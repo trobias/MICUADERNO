@@ -1,10 +1,10 @@
-// Entrar con usuario + PIN. El PIN se verifica acá (Argon2id + pimienta) y recién entonces se abre la sesión
+// Entrar con usuario + PIN (o solo el usuario, si la cuenta es sin PIN: D47). El PIN se verifica acá (Argon2id + pimienta) y recién entonces se abre la sesión
 // de Supabase Auth con la contraseña derivada que solo conoce el servidor. D37.
 import { cookies } from 'next/headers';
 import { body, clientIp, json, PERSON_COOKIE, personCookieOptions, problem, sameOrigin, VIEW_COOKIE } from '../../../../lib/http';
 import { supabaseAdmin } from '../../../../lib/supabase/admin';
 import { supabaseServer } from '../../../../lib/supabase/server';
-import { authEmail, derivedPassword, dummyHash, normalizeUsername, throttleDelayMs, verifyPin } from '../../../../lib/pin';
+import { authEmail, derivedPassword, dummyHash, NO_PIN, normalizeUsername, throttleDelayMs, verifyPin } from '../../../../lib/pin';
 import { env } from '../../../../lib/env';
 import { audit, defaultView, PROFILE_COLUMNS, type Profile } from '../../../../lib/auth';
 
@@ -35,7 +35,7 @@ export async function POST(req: Request) {
   const b = await body<{ username?: string; pin?: string }>(req);
   const username = normalizeUsername(b?.username);
   const pin = String(b?.pin ?? '');
-  if (!username || !pin) return problem('Escribí tu usuario y tu PIN.');
+  if (!username) return problem('Escribí tu usuario.');
 
   const keys = ['u:' + username, 'ip:' + clientIp(req)];
   const wait = await waitFor(keys);
@@ -47,12 +47,18 @@ export async function POST(req: Request) {
   const sb = supabaseAdmin();
   const { data: row } = await sb.from('profiles').select('id, pin_hash, disabled_at').eq('username', username).maybeSingle();
   const p = row as { id: string; pin_hash: string; disabled_at: string | null } | null;
-  // Mismo trabajo exista o no el usuario: no se puede adivinar quién tiene cuenta por el tiempo de respuesta.
-  const ok = await verifyPin(pin, p?.pin_hash ?? (await dummyHash(env.pinPepper())), env.pinPepper());
-  if (!p || !ok || p.disabled_at) {
-    await fail(keys);
-    return problem(WRONG, 401);
+  // Cuenta sin PIN (D47): entra con solo elegirla. Las demás, con su PIN como siempre.
+  const open = !!p && !p.disabled_at && p.pin_hash === NO_PIN;
+  if (!open) {
+    if (!pin) return problem('Escribí tu PIN.');
+    // Mismo trabajo exista o no el usuario: no se puede adivinar quién tiene cuenta por el tiempo de respuesta.
+    const ok = await verifyPin(pin, p?.pin_hash ?? (await dummyHash(env.pinPepper())), env.pinPepper());
+    if (!p || !ok || p.disabled_at) {
+      await fail(keys);
+      return problem(WRONG, 401);
+    }
   }
+  if (!p) return problem(WRONG, 401);
 
   const auth = await supabaseServer();
   const { error } = await auth.auth.signInWithPassword({

@@ -7,6 +7,13 @@ const ARGON = { iterations: 2, parallelism: 1, memorySize: 19456, hashLength: 32
 
 export const USERNAME_RE = /^[a-z0-9][a-z0-9._-]{2,31}$/;
 
+/**
+ * Marca de “cuenta sin PIN” en `profiles.pin_hash` (D47, pedido de la dueña): se elige a la persona y entra,
+ * sin PIN. No es un hash: `verifyPin` contra esta marca siempre da falso. Quien administra siempre tiene PIN.
+ */
+export const NO_PIN = 'sin-pin';
+export function hasPin(hash: string | null | undefined): boolean { return !!hash && hash !== NO_PIN; }
+
 export function normalizeUsername(raw: unknown): string {
   return String(raw ?? '').trim().toLowerCase();
 }

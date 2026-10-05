@@ -50,3 +50,10 @@ test('demoras progresivas', () => {
   assert.ok(!P.safeEqual('abc', 'abd'));
   assert.ok(!P.safeEqual('abc', 'abcd'));
 });
+
+test('cuenta sin PIN (D47): la marca nunca vale como PIN', async () => {
+  assert.strictEqual(P.hasPin(P.NO_PIN), false);
+  assert.strictEqual(P.hasPin(await P.hashPin('258031', 'pimienta')), true);
+  for (const pin of ['', P.NO_PIN, '258031', '000000']) assert.strictEqual(await P.verifyPin(pin, P.NO_PIN, 'pimienta'), false);
+  assert.ok(!/^\$argon2/.test(P.NO_PIN), 'no se confunde con un hash');
+});

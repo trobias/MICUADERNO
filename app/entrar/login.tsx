@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { b64ToBytes, send, useNote } from '../form';
 
-export type Chooser = { username: string; name: string; admin: boolean };
+export type Chooser = { username: string; name: string; admin: boolean; noPin?: boolean };
 
 type InstallEvent = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> };
 
@@ -18,6 +18,8 @@ export default function Login({ people, vapid }: { people: Chooser[] | null; vap
   const note = useNote();
   const pinRef = useRef<HTMLInputElement>(null);
   const choose = !!(people && people.length);
+  // Una cuenta sin PIN (D47) entra con solo elegirla.
+  const open = choose && !!people!.find((p) => p.username === user)?.noPin;
 
   // Preseleccionar a quien entró la última vez en este dispositivo.
   useEffect(() => {
@@ -28,7 +30,7 @@ export default function Login({ people, vapid }: { people: Chooser[] | null; vap
   function pick(username: string) {
     setUser(username);
     note.clear();
-    setTimeout(() => pinRef.current?.focus(), 0);
+    if (!people?.find((p) => p.username === username)?.noPin) setTimeout(() => pinRef.current?.focus(), 0);
   }
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
@@ -37,7 +39,7 @@ export default function Login({ people, vapid }: { people: Chooser[] | null; vap
     const username = choose ? user : String(f.get('username') || '');
     if (!username) { note.problem('Elegí quién sos.'); return; }
     setBusy(true); note.clear();
-    const r = await send('/api/auth/login', 'POST', { username, pin: f.get('pin') });
+    const r = await send('/api/auth/login', 'POST', { username, pin: open ? '' : f.get('pin') });
     if (!r.ok) { setBusy(false); note.problem(String(r.data.error || 'No se pudo entrar.')); return; }
     write(LAST, username);
     // Si pidió avisos antes de entrar, ahora que hay sesión se guardan para esta persona.
@@ -75,6 +77,7 @@ export default function Login({ people, vapid }: { people: Chooser[] | null; vap
                     <span className="who__name">{p.name}</span>
                     <span className="who__user">{p.username}</span>
                     {p.admin && <span className="who__tag">administra</span>}
+                    {p.noPin && <span className="who__tag">sin PIN</span>}
                   </button>
                 );
               })}
@@ -83,7 +86,7 @@ export default function Login({ people, vapid }: { people: Chooser[] | null; vap
         ) : (
           <label>Usuario<input name="username" autoComplete="username" autoCapitalize="none" spellCheck={false} required /></label>
         )}
-        <label>PIN<input ref={pinRef} name="pin" type="password" inputMode="numeric" autoComplete="current-password" pattern="\d{6}" maxLength={6} required /></label>
+        {!open && <label>PIN<input ref={pinRef} name="pin" type="password" inputMode="numeric" autoComplete="current-password" pattern="\d{6}" maxLength={6} required /></label>}
         {note.view}
         <div className="row"><button className="label-btn entrar-btn" disabled={busy}>{busy ? 'Abriendo…' : 'Abrir mi cuaderno'}</button></div>
       </form>
