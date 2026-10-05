@@ -25,6 +25,131 @@
     return h('li', h('label.check', { for: id }, cb, h('span', label, hint ? h('span.check__hint', hint) : null)));
   }
 
+  /* ---------- Colores propios (A9) ---------- */
+  var THEME_FIELDS = [['cloth', 'Tela'], ['paper', 'Hojas'], ['ink', 'Tinta']];
+  var FINISH_LABEL = { mate: 'Mate', satinado: 'Satinado', brillante: 'Brillante' };
+
+  function themeSection(s) {
+    var T = MC.theme;
+    var theme = s.theme ? MC.clone(s.theme) : null;
+    var saveLater = MC.debounce(function () { save({ theme: theme }); }, 400);
+    var status = h('p.theme-status.t-meta', { 'aria-live': 'polite' });
+    var notes = h('p.theme-notes.t-meta', { 'aria-live': 'polite' });
+    var presets = h('div.theme-presets');
+    var custom = h('div.theme-custom', { id: 'st-theme-custom', hidden: true });
+    var reset = h('button.text-btn', { type: 'button' }, 'Volver a la tela de la tapa');
+
+    function label() {
+      if (!theme) return 'Ahora: la tela de tu tapa (de fábrica).';
+      var p = T.byId(theme.preset);
+      return 'Ahora: ' + (p ? p.label : 'mis colores') + '.';
+    }
+    function paintState() {
+      status.textContent = label();
+      reset.hidden = !theme;
+      MC.$$('.theme-choice', presets).forEach(function (b) { b.setAttribute('aria-pressed', String(!!theme && theme.preset === b.dataset.preset)); });
+      var d = theme ? T.derive(theme) : null;
+      notes.textContent = MC.themeUI.systemWins() && theme ? 'Tu sistema pide alto contraste: mientras siga así, el cuaderno usa sus colores de fábrica.'
+        : d ? (d.fixes.length ? d.fixes.join(' ') : 'Todo se lee bien (contraste AA o más).') : '';
+    }
+    function changed(now) {
+      MC.themeUI.apply(theme);
+      paintState();
+      if (now) { saveLater.cancel(); save({ theme: theme }); } else saveLater();
+    }
+
+    // Presets por familia: cada uno es una muestra de tela con su hoja y sus acentos.
+    var families = [];
+    T.PRESETS.forEach(function (p) { if (families.indexOf(p.family) === -1) families.push(p.family); });
+    families.forEach(function (fam) {
+      var row = h('div.theme-row', { role: 'group', 'aria-label': fam });
+      T.PRESETS.filter(function (p) { return p.family === fam; }).forEach(function (p) {
+        var sw = h('span.theme-choice__swatch', { 'aria-hidden': 'true', style: { background: p.cloth2 ? 'linear-gradient(' + (p.angle || 135) + 'deg, ' + p.cloth + ', ' + p.cloth2 + ')' : p.cloth } },
+          h('span.theme-choice__paper', { style: { background: p.paper, color: p.ink } }, 'Aa',
+            h('span.theme-choice__dots', p.accents.map(function (a) { return h('i', { style: { background: a } }); }))));
+        var b = h('button.theme-choice', { type: 'button', 'aria-pressed': 'false', dataset: { preset: p.id } }, sw, h('span', p.label));
+        b.addEventListener('click', function () { theme = T.fromPreset(p.id); paintCustom(); changed(true); });
+        row.appendChild(b);
+      });
+      presets.appendChild(h('div.theme-family', h('h3.theme-family__title', fam), row));
+    });
+
+    // Mis colores: cada superficie con selector y código; degradado, ángulo y acabado solo si se eligen.
+    function colorField(key, text, value, onSet) {
+      var id = 'st-th-' + key;
+      var swatch = h('input', { type: 'color', id: id, value: value || '#FFFFFF' }); // color-ok: valor inicial del selector nativo
+      var code = h('input.input.theme-code', { type: 'text', value: value || '', maxlength: 7, placeholder: '#RRGGBB', 'aria-label': 'Código de ' + text.toLowerCase() });
+      swatch.addEventListener('input', function () { code.value = swatch.value.toUpperCase(); code.removeAttribute('aria-invalid'); onSet(code.value); });
+      code.addEventListener('change', function () {
+        var v = code.value.trim();
+        if (!/^#[0-9a-fA-F]{6}$/.test(v)) { code.setAttribute('aria-invalid', 'true'); return; }
+        code.removeAttribute('aria-invalid');
+        code.value = v.toUpperCase(); swatch.value = v; onSet(code.value);
+      });
+      return h('div.theme-field', h('label', { for: id }, text), swatch, code);
+    }
+    function base() {
+      if (theme) { theme.preset = 'propio'; return theme; }
+      var cs = getComputedStyle(document.body);
+      var read = function (k) { var v = cs.getPropertyValue(k).trim().toUpperCase(); return /^#[0-9A-F]{6}$/.test(v) ? v : null; };
+      theme = { preset: 'propio', cloth: read('--cloth'), cloth2: null, paper: read('--paper'), ink: read('--ink'), angle: 135,
+        accents: ['--butter', '--rose', '--sage', '--lavender'].map(read).filter(Boolean), finish: 'mate' };
+      return theme;
+    }
+    function paintCustom() {
+      MC.clear(custom);
+      var t = theme || {};
+      THEME_FIELDS.forEach(function (f) { custom.appendChild(colorField(f[0], f[1], t[f[0]], function (v) { base()[f[0]] = v; changed(); })); });
+      [0, 1, 2, 3].forEach(function (i) {
+        custom.appendChild(colorField('acc' + i, 'Acento ' + (i + 1), t.accents && t.accents[i], function (v) { var th = base(); th.accents = (th.accents || []).slice(0, 4); th.accents[i] = v; changed(); }));
+      });
+      var grad = h('input', { type: 'checkbox', id: 'st-th-grad', checked: !!t.cloth2 });
+      var second = colorField('cloth2', 'Segundo color de la tela', t.cloth2 || t.cloth, function (v) { base().cloth2 = v; changed(); });
+      var angle = h('input', { type: 'range', id: 'st-th-angle', min: 0, max: 360, step: 15, value: t.angle || 135 });
+      var gradExtra = h('div.theme-grad', second, h('div.theme-field', h('label', { for: 'st-th-angle' }, 'Dirección'), angle));
+      gradExtra.hidden = !t.cloth2;
+      grad.addEventListener('change', function () {
+        var th = base();
+        th.cloth2 = grad.checked ? (th.cloth2 || th.cloth) : null;
+        gradExtra.hidden = !grad.checked;
+        changed(true);
+      });
+      angle.addEventListener('input', function () { base().angle = +angle.value; changed(); });
+      custom.appendChild(h('label.check', { for: 'st-th-grad' }, grad, h('span', 'Degradado en la tela', h('span.check__hint', 'Solo si te gusta: de fábrica la tela es lisa.'))));
+      custom.appendChild(gradExtra);
+      var finish = h('div.choice-row', { role: 'radiogroup', 'aria-label': 'Acabado de la tela' });
+      T.FINISHES.forEach(function (f) {
+        var b = h('button.choice', { type: 'button', role: 'radio', 'aria-checked': String((t.finish || 'mate') === f) }, FINISH_LABEL[f]);
+        b.addEventListener('click', function () {
+          base().finish = f;
+          MC.$$('.choice', finish).forEach(function (x) { x.setAttribute('aria-checked', String(x === b)); });
+          changed(true);
+        });
+        finish.appendChild(b);
+      });
+      custom.appendChild(h('div.field', h('span', 'Acabado'), finish));
+    }
+    var openCustom = h('button.label-btn.label-btn--soft', { type: 'button', 'aria-expanded': 'false', 'aria-controls': custom.id }, MC.icon('edit'), 'Elegir mis colores');
+    openCustom.addEventListener('click', function () {
+      var open = custom.hidden;
+      if (open) paintCustom();
+      custom.hidden = !open;
+      openCustom.setAttribute('aria-expanded', String(open));
+    });
+    reset.addEventListener('click', function () { theme = null; paintCustom(); changed(true); });
+
+    // Una hojita de muestra (todo el cuaderno ya cambió, pero acá se ve junto).
+    var preview = h('div.theme-preview', { 'aria-hidden': 'true' },
+      h('span.theme-preview__tab', 'Hoy'),
+      h('span.theme-preview__page', h('span.theme-preview__title', 'Lunes'), h('span.theme-preview__text', 'Nicole escribió una línea.'), h('span.theme-preview__soft', 'guardado')));
+
+    paintState();
+    return c.section('Colores propios', [
+      h('p.section__hint', 'De fábrica, el cuaderno es de la tela de tu tapa. Si querés, elegí otros colores: todo cambia al momento y siempre se puede volver.'),
+      status, preview, presets, h('div.theme-actions', openCustom, reset), custom, notes
+    ], { id: 'st-theme' });
+  }
+
   /* ---------- Exportaciones ---------- */
   function exportFile(kind) {
     return M.activeEverything().then(function (all) {
@@ -182,6 +307,9 @@
       covers.appendChild(b);
     });
     left.appendChild(c.section('Tu tapa', covers, { id: 'st-cover' }));
+
+    // Colores propios (A9, D30): de fábrica, la tela de la tapa. Todo cambia al momento; se guarda con un respiro.
+    left.appendChild(themeSection(s));
 
     // Qué registrar
     var track = h('ul.check-list');

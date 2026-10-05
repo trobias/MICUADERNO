@@ -896,6 +896,54 @@ await test('A8: Mi año cuenta semana/mes/año sin puntajes, gráfico con tabla 
   await context.close();
 });
 
+await test('A9: colores propios; preset, mis colores con aviso de contraste, volver a la tela; el sistema y la impresión ganan', async () => {
+  const { page, errors, context } = await newPage(browser);
+  await page.goto(FILE_URL);
+  await onboard(page);
+  const bodyVar = (k) => page.evaluate((k) => document.body.style.getPropertyValue(k), k);
+  assert.equal(await bodyVar('--paper'), '', 'de fábrica: sin tema');
+  await goto(page, '#/ajustes');
+  await page.waitForSelector('#st-theme');
+  assert.match(await page.textContent('.theme-status'), /tela de tu tapa/);
+  await page.click('.theme-choice[data-preset="cosmos"]');
+  assert.equal(await page.getAttribute('.theme-choice[data-preset="cosmos"]', 'aria-pressed'), 'true');
+  assert.equal(await bodyVar('--cloth'), '#D6E6E5'); // color-ok: test
+  assert.match(await bodyVar('--cloth-image'), /linear-gradient/);
+  assert.equal(await page.evaluate(() => document.body.dataset.theme), 'cosmos');
+  await page.waitForFunction(() => MC.model.settings().theme && MC.model.settings().theme.preset === 'cosmos');
+  // Mis colores: una tinta clarita se corrige y se dice con palabras.
+  await page.click('section[aria-labelledby="st-theme"] button:has-text("Elegir mis colores")');
+  await page.fill('section[aria-labelledby="st-theme"] .theme-code[aria-label="Código de tinta"]', '#F0F0F0'); // color-ok: test
+  await page.press('section[aria-labelledby="st-theme"] .theme-code[aria-label="Código de tinta"]', 'Enter');
+  await page.locator('section[aria-labelledby="st-theme"] .theme-code[aria-label="Código de tinta"]').blur();
+  await page.waitForFunction(() => /tinta/.test(document.querySelector('.theme-notes').textContent));
+  assert.match(await page.textContent('.theme-status'), /mis colores/);
+  const ink = await bodyVar('--ink');
+  assert.ok(await page.evaluate(([a, b]) => MC.theme.contrast(a, b) >= 7, [ink, await bodyVar('--paper')]));
+  // Queda guardado al recargar.
+  await page.waitForFunction(() => MC.model.settings().theme && MC.model.settings().theme.preset === 'propio', null, { timeout: 3000 });
+  await page.reload();
+  await openCover(page);
+  await page.waitForFunction(() => document.body.dataset.theme === 'propio');
+  // Colores forzados del sistema: el tema se hace a un lado (y vuelve cuando se apagan).
+  await page.emulateMedia({ forcedColors: 'active' });
+  await page.waitForFunction(() => !document.body.dataset.theme);
+  await page.emulateMedia({ forcedColors: 'none' });
+  await page.waitForFunction(() => document.body.dataset.theme === 'propio');
+  // La impresión usa sus tokens propios, no los del tema.
+  await page.emulateMedia({ media: 'print' });
+  const printPaper = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--print-paper').trim());
+  assert.equal(printPaper.toUpperCase(), '#FFFFFF'); // color-ok: test
+  await page.emulateMedia({ media: 'screen' });
+  // Volver a la tela de la tapa.
+  await goto(page, '#/ajustes');
+  await page.click('section[aria-labelledby="st-theme"] button:has-text("Volver a la tela de la tapa")');
+  await page.waitForFunction(() => !document.body.dataset.theme && MC.model.settings().theme === null);
+  assert.equal(await bodyVar('--paper'), '');
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
 await test('dibujar, subir imágenes como stickers y adjuntar archivos', async () => {
   const { page, errors, context } = await newPage(browser);
   await page.goto(FILE_URL);

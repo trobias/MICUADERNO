@@ -17,7 +17,7 @@ body {
   line-height: 1.5;
   color: var(--ink);
   background-color: var(--cloth);
-  background-image: var(--tex-cloth);
+  background-image: var(--cloth-layers);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   overflow-x: hidden;
@@ -34,7 +34,7 @@ svg { overflow: visible; }
 a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 3px; }
 [hidden] { display: none !important; }
 
-::selection { background: var(--butter); color: var(--ink); }
+::selection { background: var(--butter); color: var(--on-accent); }
 input, textarea { caret-color: var(--mood-3); }
 html { scrollbar-color: color-mix(in srgb, var(--cloth-deep) 70%, var(--paper-edge)) transparent; scrollbar-width: thin; }
 
@@ -116,7 +116,7 @@ input.write { min-height: var(--line); height: var(--line); border-bottom: 1px s
   border: 1px solid var(--paper-edge);
   border-bottom: 2px solid var(--rule-strong);
   border-radius: var(--radius-label);
-  background: color-mix(in srgb, var(--paper) 70%, white);
+  background: var(--field);
   font-family: var(--font-ui);
   font-size: var(--fs-md);
 }

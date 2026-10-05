@@ -142,7 +142,7 @@
   min-width: 132px;
   padding: 8px 14px 8px 22px;
   background: var(--tab-bg);
-  color: var(--ink);
+  color: var(--on-accent);
   border-radius: 0 8px 8px 0;
   box-shadow: var(--shadow-tab);
   font-size: var(--fs-sm);
@@ -169,7 +169,7 @@
 .tab[data-tab='hoy'] { --tab-bg: var(--butter); }
 .tab[data-tab='hojas'] { --tab-bg: var(--lavender); }
 .tab[data-tab='anio'] { --tab-bg: var(--peach); }
-.tab[data-tab='ajustes'] { --tab-bg: var(--paper-shade); margin-top: 18px; }
+.tab[data-tab='ajustes'] { --tab-bg: var(--paper-shade); color: var(--ink); margin-top: 18px; }
 .tab:focus-visible { outline-color: var(--cloth-ink); }
 
 /* ---------- Cuadro desplegable (dialog) ---------- */
@@ -182,7 +182,7 @@
   border: 0;
   border-radius: 12px;
   background-color: var(--cloth);
-  background-image: var(--tex-cloth);
+  background-image: var(--cloth-layers);
   color: var(--ink);
   box-shadow: 0 30px 70px -30px rgb(20 14 12 / 0.75);
   overflow: auto;
@@ -197,7 +197,7 @@
   justify-content: flex-end;
   padding: 10px 0 8px;
   background-color: var(--cloth);
-  background-image: var(--tex-cloth);
+  background-image: var(--cloth-layers);
 }
 .panel__close {
   display: inline-flex;
@@ -253,7 +253,7 @@
     padding: 0 6px env(safe-area-inset-bottom);
     margin: 0;
     background: var(--cloth);
-    background-image: var(--tex-cloth);
+    background-image: var(--cloth-layers);
     box-shadow: 0 -6px 16px -10px rgb(40 30 28 / 0.5);
   }
   .tab {
@@ -375,7 +375,7 @@
 .onboard__actions { display: flex; gap: var(--s-3); align-items: center; flex-wrap: wrap; }
 .cover-choices { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--s-3); }
 .cover-choice { display: grid; gap: 8px; justify-items: center; font-size: var(--fs-sm); padding: 6px; border-radius: 8px; }
-.cover-choice__swatch { width: 100%; aspect-ratio: 3 / 4; border-radius: 3px 8px 8px 3px; background-color: var(--cloth); background-image: var(--tex-cloth); box-shadow: 0 6px 12px -8px rgb(20 14 12 / 0.7); position: relative; }
+.cover-choice__swatch { width: 100%; aspect-ratio: 3 / 4; border-radius: 3px 8px 8px 3px; background-color: var(--cloth); background-image: var(--cloth-layers); box-shadow: 0 6px 12px -8px rgb(20 14 12 / 0.7); position: relative; }
 .cover-choice__swatch::after { content: ''; position: absolute; inset: 30% 18%; background: var(--paper); border-radius: 2px; height: 18%; }
 .cover-choice[aria-pressed='true'] { outline: 2px solid var(--ink); outline-offset: 2px; }
 @media (max-width: 480px) { .cover-choices { grid-template-columns: repeat(2, 1fr); } }

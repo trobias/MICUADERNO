@@ -102,6 +102,10 @@
   --cloth-deep: #5F7A5A;
   --cloth-light: #86A081;
   --cloth-ink: #FFF9ED;
+  /* Capas de la tela: de fábrica, solo la trama. Un tema propio (A9) suma su degradado y su acabado. */
+  --cloth-image: none;
+  --cloth-sheen: none;
+  --cloth-layers: var(--tex-cloth);
 
   /* Tipografía */
   --font-display: 'Young Serif', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
@@ -155,6 +159,10 @@
 
   /* Foco */
   --focus: var(--ink);
+  /* Texto sobre un acento lleno (marcadores, nota adhesiva): la tinta; un tema de hojas oscuras lo oscurece (A9) */
+  --on-accent: var(--ink);
+  /* Fondo de un campo de formulario. Ojo: los tokens que usan var() se resuelven en :root; el tema los fija aparte. */
+  --field: color-mix(in srgb, var(--paper) 70%, white);
 
   /* Texturas (SVG en data-URI, muy sutiles) */
   --tex-paper: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .29 0 0 0 0 .24 0 0 0 0 .23 0 0 0 .5 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.07'/%3E%3C/svg%3E");

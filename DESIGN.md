@@ -70,6 +70,9 @@ Texto sobre tela: solo el de la tapa y el de las pestañas (sobre papel de color
 ### 3.4b Colores que no cambian con el tema
 Viven en `css/tokens.css` como cualquier otro, pero un tema propio no los toca: el arte de los stickers y de la mariposa de la tapa (`--st-*`, pintado con clases `sf-*`/`ss-*`), el elástico de la tapa (`--elastic*`), el bastidor de madera del año (`--wood*`, `--hoop-cloth`, `--hole`) y la impresión (`--print-*`: siempre tinta sobre blanco). Un test guardián falla si aparece un color en hex fuera de `tokens.css` (en JS solo se admite con la marca `color-ok` y una razón).
 
+### 3.4c Colores propios (A9, D30)
+`MC.theme.derive` arma los tokens desde tela, hojas, tinta y 4 acentos (acentos → `--butter`, `--rose`, `--sage`, `--lavender`; `--blush`, `--peach`, `--margin`, `--rule*`, `--paper-*`, `--ink-*`, `--cloth-*` salen de mezclas) y los pone en `<body>` (así ganan sobre `[data-cover]`). Tokens nuevos: `--cloth-layers` (de fábrica, solo la trama; con tema, brillo + trama + degradado), `--on-accent` (texto sobre un acento lleno: marcadores, nota adhesiva) y `--field` (fondo de los campos). En hojas oscuras (*Noche*) los hilos de estado se aclaran para leerse; los hilos de las emociones no cambian. Ojo: un token definido con `var()` en `:root` se resuelve ahí; si depende de un color del tema, el motor lo fija aparte.
+
 ### 3.5 Superficies del navegador
 `::selection` fondo `--butter`, texto `--ink`. `caret-color: --mood-3` (hilo de tinta del lápiz, no codifica emoción). Scrollbar: `scrollbar-color: var(--paper-edge) transparent; scrollbar-width: thin`. Foco: ver §11.
 

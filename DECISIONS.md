@@ -154,7 +154,7 @@ Registro breve de decisiones de arquitectura y producto. Formato: contexto → d
 ## D30 · Colores propios (2026-10-04)
 **Contexto:** la dueña pidió “infinitas posibilidades” de color en Ajustes: pasteles, degradados, quebrados, neutros, neón, mates, brillantes, con código de color.
 **Decisión:** un motor de temas deriva todos los tokens desde pocos colores (tela, hojas, tinta, 4 acentos) más un fondo liso o degradado y un acabado (mate, satinado, brillante). Los degradados, el neón y los brillos son **solo elección de la persona**: de fábrica sigue la tela lisa (DESIGN §1). El contraste AA es obligatorio (el motor corrige y avisa). La impresión y el alto contraste del sistema siempre ganan (capas CSS). No siguen al tema: el arte de los stickers, el elástico, el bastidor ni la impresión (DESIGN §3.4b).
-**Consecuencias:** se actualizan DESIGN §3 y §17 (“gradientes” pasa de prohibido a “solo elegidos, nunca de fábrica”). El preset **Noche** cierra PE5. Estado: contrato; se implementa en el paso A9.
+**Consecuencias:** se actualizan DESIGN §3 y §17 (“gradientes” pasa de prohibido a “solo elegidos, nunca de fábrica”). El preset **Noche** cierra PE5. Estado: **implementado en A9** (05/10): diez presets en cinco familias (incluido *Cosmos pastel* pedido por la dueña), editor propio, aviso de contraste con palabras, alto contraste/colores forzados del sistema desactivan el tema.
 
 ## D31 · Mi año con métricas amables (2026-10-04)
 **Contexto:** la dueña pidió que *Mi año* sea “como métricas”: debajo del bastidor, “Lo que fui notando” por semana (lo pospuesto, lo cumplido), **estrellas** como victorias que hagan sentir el cuaderno como un espacio seguro que recompensa, y gráficos lindos y útiles.

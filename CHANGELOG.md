@@ -8,6 +8,17 @@ Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantien
 - `.mcp.json` ya está en la rama. La dueña habilitó los dos MCP en su entorno web de Claude Code; el estado de `claude mcp list` en una instalación local distinta no verifica ese entorno.
 - `docs/NUBE.md` registra la verificación de red, los entornos y lo que falta para aplicar la migración SQL existente. Ningún secreto se agregó a Git.
 
+## 2026-10-05 · A9: colores propios (cache `v32`)
+
+**Para quien lo usa**
+- En Ajustes, **Colores propios**: diez combinaciones listas (pasteles como *Cosmos pastel*, quebrados, neutros, un neón suave y *Noche* para escribir a oscuras) o **Elegir mis colores**: tela, hojas, tinta y cuatro acentos, con código `#RRGGBB` si querés. Degradado en la tela y acabado mate, satinado o brillante, solo si los elegís.
+- Todo cambia al momento y el cuaderno cuida que se lea: si una tinta quedaba muy clarita, la ajusta y te lo dice. “Volver a la tela de la tapa” deja todo como venía.
+- Si tu sistema pide alto contraste, el cuaderno lo respeta por encima de tus colores. La impresión sigue siendo tinta sobre blanco.
+
+**Para quien lo mantiene**
+- `js/core/theme.js` (`MC.theme`: presets, `derive`, `report`, contraste WCAG) y `js/ui/theme.js` (`MC.themeUI.apply`, en `<body>`; lo llama `applySettings`). Tokens nuevos `--cloth-layers`, `--on-accent`, `--field`.
+- Pruebas: 116 unit (`theme-a9.test.js`: AA de cada preset, corrección, degradado, copia), 50/50 E2E (recorrido A9 con colores forzados e impresión).
+
 ## 2026-10-05 · A8: Mi año con cuentas, mes a mes y pequeñas victorias (cache `v31`)
 
 **Para quien lo usa**

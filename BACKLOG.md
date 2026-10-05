@@ -29,8 +29,8 @@ Cada idea pendiente, con su estado. **Nada se pierde por estar fuera de la fase 
 | Semana planner por defecto | A6 | Hecho (v29) | Grilla Importante/días/Notas, edición, pasado amable, foco y cierre. |
 | Hojas del día, plantillas propias, Guardar y repetir | A7 | Hecho (v30) | Bloques renglones/lista/casillas/columnas, Mis plantillas, hojas que se repiten con plantilla congelada. |
 | Año con métricas, victorias y gráficos | A8 | Hecho (v31) | Cuentas por período, mes a mes SVG + tabla, victorias con `marks`. |
-| Colores infinitos y código hex | A9 | NOW siguiente | Temas, degradados/acabados, contraste, preview y copia. Color por emoción individual ya entra en A4. |
-| Escenas más frecuentes | A10 | NEXT | Motion con propósito, silencio al escribir y control de rendimiento. |
+| Colores infinitos y código hex | A9 | Hecho (v32) | Diez presets, editor propio, degradado/acabado elegidos, AA con aviso, el sistema gana. |
+| Escenas más frecuentes | A10 | NOW siguiente | Motion con propósito, silencio al escribir y control de rendimiento. |
 | Balde y tipos de trazo | A11 | NEXT | Editables al reabrir, presión/semilla y deshacer. |
 | Cruces, redundancia, QA y contrato v6 | A12–A13 | NEXT | Matriz de navegación, accesibilidad, migración de datos y tests. |
 | Nube: base de cuentas (Next.js + Supabase), PIN, Nicole admin, permisos por sección con RLS, push y latido anti-pausa | B-base | Hecho en local, sin desplegar | `docs/NUBE.md`, D37. Falta el deploy con las cuentas de la dueña (§3) y probar en un celular real. |
@@ -127,7 +127,7 @@ Al empezar un ítem: pasarlo a NOW, leer `VISION.md` §0 y la decisión que lo c
 | PE2 | **Portadas guardadas** (y base para varios cuadernos). [36] | LATER | PE1 | |
 | PE3 | **Separadores propios** (nombre, color, ícono, dibujito, sticker) y **orden** de los marcadores. [37–38] | NEEDS DESIGN | OR4 | Un separador propio ≈ una colección con pestaña (D22). |
 | PE4 | Papel del día (rayado/cuadriculado), densidad, más tapas. | LATER | PE1 | Antes B7. |
-| PE5 | **Papel de noche** (tema oscuro) para escribir a oscuras. | NEXT | — | Antes B1. |
+| PE5 | **Papel de noche** (tema oscuro) para escribir a oscuras. | Hecho (A9) | — | Preset *Noche* de Colores propios. |
 
 ## ES · Escritura, calma y bloques
 

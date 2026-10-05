@@ -23,7 +23,8 @@ La referencia visual de la segunda imagen era una paleta pastel (`#F2CFD7`, `#D6
 | A6 · Semana-planner | Hecho | `js/views/week.js` por defecto, Importante/Notas en `weeks`, anotar y marcar en el fondo con `busy/flush`, D18 en el pasado. Cache v29. |
 | A7 · Hojas, plantillas y Guardar | Hecho | `MC.sheet.editor` (renglones/lista/casillas/columnas), `js/core/templates.js`, Mis plantillas y `#/plantilla/:id`, Guardar (plantilla / que se repita, en blanco o con lo escrito), ocurrencias `pag_<rep>_<fecha>` virtuales. Cache v30. |
 | A8 · Mi año | Hecho | `MC.insights.period/byMonth/victories`, victorias con `marks` de id fijo desde actividad y hoja, gráfico SVG + tabla. Cache v31. |
-| A9–A13 | Pendiente | Orden y criterios debajo. |
+| A9 · Colores propios | Hecho | `MC.theme` + `MC.themeUI`, presets por familia, editor con contraste AA, alto contraste/colores forzados ganan. Cache v32. |
+| A10–A13 | Pendiente | Orden y criterios debajo. |
 
 ### A5 · Menos marcadores y Mis hojas inicial
 

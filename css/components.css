@@ -266,9 +266,11 @@
   max-width: 440px;
 }
 .sticky .washi { position: absolute; top: -9px; left: 50%; transform: translateX(-50%) rotate(2deg); }
-.sticky label { display: block; font-family: var(--font-text); font-style: italic; font-size: var(--fs-md); margin-bottom: 4px; color: var(--ink); }
+.sticky { color: var(--on-accent); }
+.sticky label { display: block; font-family: var(--font-text); font-style: italic; font-size: var(--fs-md); margin-bottom: 4px; color: var(--on-accent); }
+.sticky textarea.write { color: var(--on-accent); }
 .sticky textarea.write { background-image: none; min-height: calc(var(--line) * 1.6); }
-.sticky textarea.write::placeholder { color: color-mix(in srgb, var(--ink) 72%, var(--butter)); }
+.sticky textarea.write::placeholder { color: color-mix(in srgb, var(--on-accent) 72%, var(--butter)); }
 
 /* ---------- Washi ---------- */
 .washi {
