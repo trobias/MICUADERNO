@@ -136,8 +136,6 @@
         sheet.appendChild(h('a.label-btn', { href: R.sheets() }, 'Volver a Mis hojas'));
         return;
       }
-      // Hojas de antes de A7 (texto o lista): pasan a bloques al abrirlas; al guardar conservan kind/body/items.
-      if (!p.blocks) { var sb = M.sheetBlocks(p); p.blocks = MC.clone(sb.blocks); p.values = MC.clone(sb.values); }
       page = p;
       build();
     });

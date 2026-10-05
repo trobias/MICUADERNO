@@ -327,9 +327,9 @@ Catálogo actual: días desde que empezó el cuaderno; veces que escribió esta 
 
 Ver `DATA_MODEL.md` para esquema. Resumen:
 
-- **IndexedDB** (`mi-cuaderno`): `meta`, `days`, `activities`, `routines`, `pages`, `images`, `files`, `weeks`, `templates`, `marks`. Versión IDB 3; los tres últimos ya tienen contrato pero todavía no toda su interfaz.
+- **IndexedDB** (`mi-cuaderno`): `meta`, `days`, `activities`, `routines`, `pages`, `images`, `files`, `weeks`, `templates`, `marks`. Versión IDB 4 (contrato v6, A13: días sin `mood`, hojas siempre en bloques; ver DATA_MODEL).
 - **localStorage**: solo preferencias livianas de UI (última ruta, cantidad de aperturas de tapa, borrador transitorio). Nada importante vive solo ahí.
-- **Backup JSON**: `{ app: "mi-cuaderno", kind: "backup", schemaVersion: 5, exportedAt, data: {...} }`. Import valida estructura, aplica migraciones automáticas (`MIGRATIONS[v]`), rechaza archivos de otra app o versiones futuras (> 5) con mensaje claro. Incluye elementos en papelera, marcas de `privacy`, emociones libres y nuevos stores v5.
+- **Backup JSON**: `{ app: "mi-cuaderno", kind: "backup", schemaVersion: 6, exportedAt, data: {...} }`. Import valida estructura, aplica migraciones automáticas (`MIGRATIONS[v]`, hasta el contrato v6), rechaza archivos de otra app o versiones futuras (> 6) con mensaje claro. Incluye elementos en papelera, marcas de `privacy`, emociones libres, semanas, plantillas y marcas. Después del contrato, Ajustes ofrece “Descargar la copia de antes”.
 - **Restaurar = reemplazar** (con advertencia y opción de descargar la copia actual antes). No hay “merge” en v1 para evitar duplicados ambiguos.
 - **Papelera y retención (DA1):** borrado suave universal con purga automática según `settings.trashRetentionDays` (default 30 días) y vaciado manual.
 - **TXT**: diario legible, día por día.

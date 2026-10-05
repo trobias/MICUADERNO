@@ -55,13 +55,12 @@ function v3Backup() {
   };
 }
 
-test('esquema: la versión actual es la del contrato v5 (D34) y conserva la migración v4', () => {
-  assert.equal(MC.backup.SCHEMA_VERSION, 5);
-  assert.equal(typeof MC.backup.MIGRATIONS[4], 'function');
-  assert.equal(typeof MC.backup.MIGRATIONS[5], 'function');
+test('esquema: la versión actual es la del contrato v6 (A13, D34) y conserva las migraciones anteriores', () => {
+  assert.equal(MC.backup.SCHEMA_VERSION, 6);
+  [4, 5, 6].forEach((n) => assert.equal(typeof MC.backup.MIGRATIONS[n], 'function', 'migración ' + n));
 });
 
-test('migración v3 → v4 → v5: una copia v3 real abre igual y sale con la versión actual', async () => {
+test('migración v3 → … → v6: una copia v3 real abre igual y sale con la versión actual', async () => {
   await fresh();
   const original = v3Backup();
   const v = MC.backup.validate(JSON.stringify(original));
@@ -78,7 +77,9 @@ test('migración v3 → v4 → v5: una copia v3 real abre igual y sale con la ve
   const day = all.days.find((d) => d.date === '2026-09-30');
   assert.equal(day.notes, 'hoy llovió');
   assert.equal(day.reflection.keep, 'la tarde con libros');
-  assert.deepEqual([day.morning.mood, day.evening.mood, day.energy, day.sleep], [2, 4, 2, 7.5]);
+  // v6: los ánimos 1–5 llegan como sus palabras (los nombres de fábrica: la copia no traía otros).
+  assert.deepEqual([day.morning.feelings, day.evening.feelings, day.energy, day.sleep], [['bajito'], ['bien'], 2, 7.5]);
+  assert.equal('mood' in day.morning, false);
   assert.deepEqual(day.stickers, src.days[0].stickers);
   assert.equal(day.createdAt, src.days[0].createdAt);
   assert.equal(day.updatedAt, src.days[0].updatedAt);
@@ -93,8 +94,10 @@ test('migración v3 → v4 → v5: una copia v3 real abre igual y sale con la ve
   assert.deepEqual(all.routines[0].rule, src.routines[0].rule);
   assert.equal(all.routines[0].deletedAt, null);
   const list = all.pages.find((p) => p.id === 'pag_1');
-  assert.deepEqual([list.title, list.pinned, list.date, list.items[0].text, list.privacy, list.deletedAt], ['Lugares que amo', true, '2026-09-30', 'la plaza', null, null]);
-  assert.equal(all.pages.find((p) => p.id === 'pag_2').body, 'Querida persona del futuro:');
+  // v6: las páginas de texto o lista llegan como un bloque, con el mismo contenido.
+  assert.deepEqual([list.title, list.pinned, list.date, list.blocks[0].type, list.values.blk_items[0].text, list.privacy, list.deletedAt], ['Lugares que amo', true, '2026-09-30', 'list', 'la plaza', null, null]);
+  assert.equal(M.sheetText(all.pages.find((p) => p.id === 'pag_2')), 'Querida persona del futuro:');
+  assert.ok(!('kind' in list) && !('items' in list) && !('body' in list));
   assert.deepEqual([all.images[0].name, all.images[0].deletedAt], ['flor', null]);
   assert.deepEqual([all.files[0].name, all.files[0].deletedAt], ['a.txt', null]);
   // Los ajustes ganan la retención de la papelera y conservan lo elegido.

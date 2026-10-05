@@ -16,7 +16,7 @@ Estado al 04/10/2026: **etapa A del plan nuevo en curso**. A0–A4 están termin
 | A10 · Escenas | Hecho (05/10, cache v33) | Más seguido (D33) y cuatro escenas nuevas. |
 | A11 · Dibujo | Hecho (05/10, cache v34) | Balde, plumilla, grafito, resaltador, aerógrafo. |
 | A12 · QA cruzada | Hecho (05/10, cache v35) | Matriz de navegación, auditorías, `docs/QA.md`. Solo Chromium. |
-| A13 · contrato v6 | Siguiente | Métricas amables, colores propios, más escenas, balde/trazos. |
+| A13 · Contrato v6 | Hecho (05/10, cache v36) | IndexedDB 4, `SCHEMA_VERSION` 6, instantánea y vuelta atrás; `cover` queda (D39). **Etapa A completa.** | Métricas amables, colores propios, más escenas, balde/trazos. |
 | A12–A13 · QA y contrato v6 | Pendiente | Navegación completa, accesibilidad, revisión de redundancia, migración segura. |
 | B-base · cuentas en la nube (adelantada) | Hecho en local, sin desplegar | Next.js + Supabase: PIN, Nicole admin, permisos con RLS, push, latido anti-pausa. `docs/NUBE.md`. |
 | B5–B8 · sincronización, Storage, deploy y dispositivos | Pendiente (después de A7) | Copia offline sincronizada por persona, solo lectura para quien recibe permiso. |

@@ -63,16 +63,15 @@ test('sheetBlocks/sheetText/sheetCount: hojas viejas (texto o lista) y hojas en 
   assert.equal(M.sheetCount(p), 2);
 });
 
-test('savePage con bloques escribe kind/body/items derivados (conviven hasta v6)', async () => {
+test('savePage (v6): solo bloques; una hoja con la forma vieja se guarda como bloque', async () => {
   await fresh();
   await M.savePage({ id: 'pg1', blocks: [{ id: 'b1', type: 'list', title: '' }], values: { b1: [{ id: 'x', text: 'mate' }] } });
-  let p = await M.getPage('pg1');
-  assert.equal(p.kind, 'list');
-  assert.deepEqual(p.items, [{ id: 'x', text: 'mate' }]);
-  await M.savePage({ id: 'pg2', blocks: [{ id: 'b1', type: 'text', title: 'Hoy' }, { id: 'b2', type: 'list', title: '' }], values: { b1: 'sol', b2: [{ id: 'y', text: 'pan' }] } });
-  p = await M.getPage('pg2');
-  assert.equal(p.kind, 'text');
-  assert.equal(p.body, 'Hoy\nsol\n\n• pan');
+  const raw = await MC.store.get('pages', 'pg1');
+  assert.ok(!('kind' in raw) && !('body' in raw) && !('items' in raw));
+  await M.savePage({ id: 'pg2', title: 'vieja', kind: 'list', items: [{ id: 'y', text: 'pan' }] });
+  const p = await M.getPage('pg2');
+  assert.equal(M.sheetText(p), '• pan');
+  assert.equal(p.blocks[0].type, 'list');
 });
 
 test('plantillas propias: se guardan, se listan sin las congeladas y van a la papelera', async () => {

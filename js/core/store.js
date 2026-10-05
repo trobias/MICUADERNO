@@ -9,7 +9,10 @@
   // v2: images (stickers propios y dibujos) y files (adjuntos).
   // v3 (esquema v5, D34): weeks (semana-planner), templates (plantillas de hojas), marks (referencias, victorias),
   // índice pages.date; files.updatedAt completado. Puramente aditiva.
-  var DB_VERSION = 3;
+  // v4 (esquema v6, A13, D34 contraer): días sin `mood`, hojas sin `kind/body/items`, ajustes sin nombres de ánimo.
+  // Antes de reescribir se guarda una instantánea de lo que cambia (`meta.preV6`) para “Descargar la copia de antes”.
+  var DB_VERSION = 4;
+  var PREV_VERSION = 3;   // si el contrato falla, se abre la base como estaba (v5 se sigue leyendo entera)
   // Con cuentas (js/cloud.js, etapa B) cada persona tiene su base: `mi-cuaderno@<id>`. Sin cuentas, la de siempre.
   function dbName() { return DB_NAME + ((MC.cloud && MC.cloud.suffix) || ''); }
   var STORES = {
@@ -72,12 +75,46 @@
     });
   }
 
-  function openIDB() {
+  /**
+   * Contrato v6 dentro de la transacción de actualización (atómico y exclusivo entre pestañas): lee los ajustes
+   * (para los nombres de ánimo), guarda la instantánea y reescribe días, hojas y ajustes. Cualquier error aborta
+   * la transacción entera y la base queda como estaba.
+   */
+  function contractV6(tx) {
+    var B = MC.backup;
+    if (!B || !B.contractRecord) throw new Error('Falta el contrato v6');
+    var meta = tx.objectStore('meta');
+    var snapshot = { at: new Date().toISOString(), days: [], pages: [], settings: null };
+    var guard = function (fn) { return function (ev) { try { fn(ev); } catch (err) { try { tx.abort(); } catch (e) { /* noop */ } } }; };
+    meta.get('settings').onsuccess = guard(function (ev) {
+      var row = ev.target.result;
+      var words = B.moodWords(row && row.value);
+      if (row) {
+        snapshot.settings = row.value;
+        var next = B.contractRecord('meta', row, words);
+        if (next) meta.put(next);
+      }
+      var left = 2;
+      function done() { if (--left === 0) meta.put({ key: 'preV6', value: snapshot }); }
+      ['days', 'pages'].forEach(function (name) {
+        tx.objectStore(name).openCursor().onsuccess = guard(function (e2) {
+          var cur = e2.target.result;
+          if (!cur) { done(); return; }
+          var next = B.contractRecord(name, cur.value, words);
+          if (next) { snapshot[name].push(cur.value); cur.update(next); }
+          cur.continue();
+        });
+      });
+    });
+  }
+
+  function openIDB(version) {
+    version = version || DB_VERSION;
     return new Promise(function (resolve, reject) {
       if (!root.indexedDB) { reject(new Error('IndexedDB no disponible')); return; }
       var open;
       var blocked = false;
-      try { open = root.indexedDB.open(dbName(), DB_VERSION); } catch (e) { reject(e); return; }
+      try { open = root.indexedDB.open(dbName(), version); } catch (e) { reject(e); return; }
       open.onupgradeneeded = function (e) {
         var db = open.result;
         var hadFiles = db.objectStoreNames.contains('files');
@@ -100,6 +137,14 @@
             if (f && !f.updatedAt && f.createdAt) { f.updatedAt = f.createdAt; cur.update(f); }
             cur.continue();
           };
+        }
+        // v4: contraer a la forma v6 (solo si había datos de antes; una base nueva ya nace así).
+        if (e.oldVersion >= 1 && e.oldVersion < 4 && version >= 4) {
+          // Un error acá aborta la transacción (sin excepción suelta): la base queda en la versión anterior.
+          try {
+            if (root.__mcFailContract) throw new Error('contrato v6 simulado como fallido'); // solo para la prueba de vuelta atrás
+            contractV6(open.transaction);
+          } catch (err) { open.transaction.abort(); }
         }
       };
       open.onsuccess = function () {
@@ -205,7 +250,7 @@
   }
 
   MC.store = {
-    STORE_NAMES: STORE_NAMES,
+    STORE_NAMES: STORE_NAMES, DB_VERSION: DB_VERSION,
     // Stores que no van en la copia de seguridad (p. ej. la cola de sincronización de la etapa B). Hoy: ninguno.
     INTERNAL_STORES: [],
     init: function (opts) {
@@ -217,7 +262,15 @@
         } catch (e) { channel = null; }
       }
       if (opts.memory) { backend = memoryBackend(); return Promise.resolve(backend.kind); }
-      return openIDB().then(function (db) {
+      return openIDB().catch(function (err) {
+        // El contrato v6 no pudo terminar (la transacción se abortó y la base quedó como estaba): se abre la
+        // versión anterior, que este código sigue leyendo entera, y se avisa. Se vuelve a intentar la próxima vez.
+        if (err && (err.name === 'AbortError' || /contrato/.test(String(err.message)))) {
+          MC.emit('store:contract-failed', err);
+          return openIDB(PREV_VERSION);
+        }
+        throw err;
+      }).then(function (db) {
         backend = idbBackend(db);
         // Pedimos almacenamiento persistente (el navegador puede decir que no; está bien).
         if (root.navigator && navigator.storage && navigator.storage.persist) {

@@ -438,6 +438,21 @@
       cleanups.push(offMe);
     }
 
+    // Después del contrato v6 (A13): la copia de cómo estaba todo antes de reordenarlo, hasta que la persona diga.
+    var preV6 = h('div.prev6', { hidden: true });
+    M.getMeta('preV6', null).then(function (snap) {
+      if (!snap || !alive) return;
+      var dl = action('download', 'Descargar la copia de antes', function () { MC.backup.downloadPreV6().then(function (ok) { if (ok) c.toast('Copia de antes guardada en tus descargas.'); }); }, 'label-btn.label-btn--soft');
+      var drop = action('trash', 'Ya no la necesito', function () {
+        c.confirm({ title: '¿Borrar la copia de antes?', text: 'Tu cuaderno no cambia: solo se va la copia de cómo estaba antes de la actualización.', confirm: 'Borrar la copia' })
+          .then(function (ok) { if (!ok) return; MC.store.del('meta', 'preV6').then(function () { preV6.hidden = true; c.toast('Listo.'); }); });
+      }, 'text-btn');
+      preV6.appendChild(h('h3.subhead', 'Antes de la actualización'));
+      preV6.appendChild(h('p.t-meta', 'El cuaderno se ordenó por dentro (los ánimos viejos ahora son palabras y las páginas, hojas en bloques) el ' + D.longLabel(D.fromISO(snap.at) || D.today()) + '. Si querés, guardá cómo estaba antes.'));
+      preV6.appendChild(h('div.data-actions', dl, drop));
+      preV6.hidden = false;
+    });
+
     right.appendChild(c.section('Mis datos', [
       h('p.privacy.t-text', MC.icon('lock'), 'Tus páginas viven en este dispositivo. No se mandan a ningún lado. Por eso conviene hacer una copia de vez en cuando ♡'),
       h('h3.subhead', 'Copia de seguridad'),
@@ -454,6 +469,7 @@
         action('download', 'Planilla (.xlsx)', function () { exportFile('xlsx'); }),
         action('download', 'Días (.csv)', function () { exportFile('csv-dias'); }),
         action('download', 'Actividades (.csv)', function () { exportFile('csv-act'); })),
+      preV6,
       h('h3.subhead', 'Papelera'), trashToggle, trashPanel,
       h('div.danger-zone', action('trash', 'Borrar todo el cuaderno', wipeFlow, 'text-btn'))
     ], { id: 'st-data' }));

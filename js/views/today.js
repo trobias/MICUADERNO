@@ -141,7 +141,7 @@
         left.appendChild(c.section(isToday ? '¿Cómo arrancaste hoy?' : '¿Cómo arrancó ese día?',
           c.feelingEditor({
             value: M.feelingsOf(day.morning, s), label: 'Cómo te sentiste al empezar el día', suggestions: suggestions,
-            onChange: function (v) { day.morning = { mood: null, feelings: v, at: v.length ? MC.nowISO() : null }; persist(); persist.flush(); }
+            onChange: function (v) { day.morning = { feelings: v, at: v.length ? MC.nowISO() : null }; persist(); persist.flush(); }
           }), { id: 'q-morning', className: 'section--mood' }));
       }
 
@@ -296,7 +296,7 @@
           value: M.feelingsOf(day.evening, s), label: 'Cómo te sentiste al terminar el día', suggestions: suggestions,
           onChange: function (v) {
             var first = !M.feelingsOf(day.evening, s).length && v.length;
-            day.evening = { mood: null, feelings: v, at: v.length ? MC.nowISO() : null };
+            day.evening = { feelings: v, at: v.length ? MC.nowISO() : null };
             persist(); persist.flush();
             if (first) closingFlourish(content);
           }

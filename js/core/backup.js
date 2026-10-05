@@ -5,8 +5,60 @@
   var D = MC.dates;
   var M = function () { return MC.model; };
 
-  var SCHEMA_VERSION = 5;
+  var SCHEMA_VERSION = 6;
   var APP_ID = 'mi-cuaderno';
+
+  /* ---------- contrato v6 (A13, D34): retirar las formas viejas sin perder nada ---------- */
+  var DEFAULT_MOOD_WORDS = ['pesado', 'bajito', 'normal', 'bien', 'muy bien'];
+
+  /** Los nombres con los que se leían los ánimos 1–5 de esta persona (los congelados, los elegidos o los de fábrica). */
+  function moodWords(settings) {
+    var ok = function (l) { return Array.isArray(l) && l.length === 5 && l.every(function (x) { return typeof x === 'string' && x.trim(); }); };
+    if (settings && ok(settings.legacyMoodLabels)) return settings.legacyMoodLabels.map(function (x) { return x.trim(); });
+    if (settings && ok(settings.moodLabels)) return settings.moodLabels.map(function (x) { return x.trim(); });
+    return DEFAULT_MOOD_WORDS.slice();
+  }
+
+  /**
+   * Un registro con la forma v6. Devuelve el registro nuevo o null si no había nada que cambiar.
+   * - días: `mood` 1–5 pasa a ser una emoción escrita (si ese momento no tenía emociones) y se va;
+   * - hojas: `kind/body/items` pasan a ser bloques (si no tenía) y se van;
+   * - ajustes: se van `moodLabels` y `legacyMoodLabels` (ya convertidos). `cover` queda (D39).
+   * Nunca toca `updatedAt`.
+   */
+  function contractRecord(store, rec, words) {
+    if (!rec || typeof rec !== 'object') return null;
+    var out = null;
+    function copy() { if (!out) out = JSON.parse(JSON.stringify(rec)); return out; }
+    if (store === 'days') {
+      ['morning', 'evening'].forEach(function (k) {
+        var m = rec[k];
+        if (!m || typeof m !== 'object' || !('mood' in m)) return;
+        var c = copy()[k];
+        var n = Number(m.mood);
+        if (!Array.isArray(m.feelings) && n >= 1 && n <= 5) c.feelings = [words[n - 1]];
+        delete c.mood;
+      });
+    } else if (store === 'pages') {
+      if (!('kind' in rec) && !('body' in rec) && !('items' in rec)) return null;
+      var c = copy();
+      if (!Array.isArray(rec.blocks) || !rec.blocks.length) {
+        if (rec.kind === 'list') {
+          c.blocks = [{ id: 'blk_items', type: 'list', title: '' }];
+          c.values = { blk_items: (Array.isArray(rec.items) ? rec.items : []).filter(function (it) { return it && typeof it.text === 'string'; }).map(function (it, i) { return { id: typeof it.id === 'string' ? it.id : 'itm_' + i, text: it.text }; }) };
+        } else {
+          c.blocks = [{ id: 'blk_body', type: 'text', title: '' }];
+          c.values = { blk_body: typeof rec.body === 'string' ? rec.body : '' };
+        }
+      }
+      delete c.kind; delete c.body; delete c.items;
+    } else if (store === 'meta' && rec.key === 'settings' && rec.value && typeof rec.value === 'object') {
+      if (!('moodLabels' in rec.value) && !('legacyMoodLabels' in rec.value)) return null;
+      var v = copy().value;
+      delete v.moodLabels; delete v.legacyMoodLabels;
+    }
+    return out;
+  }
 
   /** Migraciones: MIGRATIONS[v] transforma `data` de la versión v-1 a v. */
   var MIGRATIONS = {
@@ -37,6 +89,16 @@
       if (data.weeks == null) data.weeks = [];
       if (data.templates == null) data.templates = [];
       if (data.marks == null) data.marks = [];
+      return data;
+    },
+    // v6 (A13, D34, contraer): ánimos 1–5 → emociones escritas, páginas → bloques, fuera los nombres de ánimo.
+    6: function (data) {
+      var settings = data.meta && data.meta.settings;
+      var words = moodWords(settings);
+      // Una sección dañada (no lista) se deja como está: la validación de abajo la rechaza con su mensaje.
+      if (Array.isArray(data.days)) data.days = data.days.map(function (d) { return contractRecord('days', d, words) || d; });
+      if (Array.isArray(data.pages)) data.pages = data.pages.map(function (p) { return contractRecord('pages', p, words) || p; });
+      if (settings && typeof settings === 'object') { delete settings.moodLabels; delete settings.legacyMoodLabels; }
       return data;
     }
   };
@@ -155,6 +217,31 @@
     });
   }
 
+  /**
+   * “Descargar la copia de antes” (A13): el cuaderno de hoy con los días, hojas y ajustes como eran antes del
+   * contrato v6 (lo que guardó la instantánea `meta.preV6`). Es una copia v5 válida: se puede volver a abrir.
+   */
+  function buildPreV6(everything, snap) {
+    var out = build(everything);
+    out.schemaVersion = 5;
+    var swap = function (list, old, key) {
+      var byKey = {};
+      (old || []).forEach(function (r) { byKey[r[key]] = r; });
+      return list.map(function (r) { return byKey[r[key]] || r; });
+    };
+    out.data.days = swap(out.data.days, snap.days, 'date');
+    out.data.pages = swap(out.data.pages, snap.pages, 'id');
+    if (snap.settings) out.data.meta.settings = snap.settings;
+    return out;
+  }
+  function downloadPreV6() {
+    return Promise.all([M().everything(), M().getMeta('preV6', null)]).then(function (r) {
+      if (!r[1]) return false;
+      MC.download(filename('mi-cuaderno-copia-de-antes', 'json'), JSON.stringify(buildPreV6(r[0], r[1]), null, 2), 'application/json');
+      return true;
+    });
+  }
+
   /** Reemplaza todo el cuaderno con el payload validado. */
   function restore(payload) {
     return MC.store.replaceAll(payload).then(function () {
@@ -174,7 +261,8 @@
   }
 
   MC.backup = {
-    SCHEMA_VERSION: SCHEMA_VERSION, APP_ID: APP_ID, MIGRATIONS: MIGRATIONS,
-    build: build, validate: validate, download: download, restore: restore, wipe: wipe, filename: filename
+    SCHEMA_VERSION: SCHEMA_VERSION, APP_ID: APP_ID, MIGRATIONS: MIGRATIONS, contractRecord: contractRecord, moodWords: moodWords, DEFAULT_MOOD_WORDS: DEFAULT_MOOD_WORDS,
+    build: build, validate: validate, download: download, restore: restore, wipe: wipe, filename: filename,
+    buildPreV6: buildPreV6, downloadPreV6: downloadPreV6
   };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -488,6 +488,9 @@
 
     var fellBack = false;
     MC.on('store:fallback', function () { fellBack = true; });
+    // El contrato v6 (A13) no pudo terminar: la base quedó como estaba y se lee igual. Se dice una vez, sin alarma.
+    var contractFailed = false;
+    MC.on('store:contract-failed', function () { contractFailed = true; });
     MC.on('store:blocked', function () { showStoreNotice('blocked'); });
     MC.on('store:unblocked', hideStoreNotice);
     // Otra pestaña actualiza la base: se guarda lo pendiente; cuando la base se cierra, se recarga.
@@ -514,6 +517,7 @@
     }).then(function (s) {
       applySettings(s);
       if (fellBack) storageWarning();
+      if (contractFailed) setTimeout(function () { MC.c.toast('No pude terminar de ordenar el cuaderno por dentro; quedó como estaba y no se perdió nada. Lo vuelvo a intentar la próxima vez.', { ms: 8000 }); }, 600);
       return MC.model.touchOpen();
     }).then(function (openInfo) {
       MC.on('settings', applySettings);

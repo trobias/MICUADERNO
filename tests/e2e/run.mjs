@@ -788,10 +788,10 @@ await test('A7: hojas en bloques; Guardar como plantilla y que se repita; la hoj
   await page.locator('.free-list--checks .stitch-box').first().click();
   await page.waitForFunction(() => document.querySelector('.free-head .saved-note').dataset.state === 'saved', null, { timeout: 3000 });
   const pageId = decodeURIComponent(page.url().split('#/pagina/')[1]);
-  const stored = await page.evaluate((id) => MC.model.getPage(id), pageId);
+  const stored = await page.evaluate((id) => MC.model.getPage(id).then((p) => Object.assign(p, { text: MC.model.sheetText(p) })), pageId);
   assert.equal(stored.blocks.length, 3);
-  assert.match(stored.body, /A favor: más luz/);
-  assert.match(stored.body, /☑ preguntar precios/);
+  assert.match(stored.text, /A favor: más luz/);
+  assert.match(stored.text, /☑ preguntar precios/);
   // Guardar → como plantilla con lo escrito.
   await page.click('.free-head button:has-text("Guardar")');
   await page.click('[role="menuitem"]:has-text("Como plantilla, con lo escrito")');
@@ -835,7 +835,7 @@ await test('A7: hojas en bloques; Guardar como plantilla y que se repita; la hoj
   assert.equal(await page.evaluate((id) => MC.store.get('pages', id), occId), undefined, 'virtual hasta que se escribe');
   await page.fill('#page-body', 'Hoy pensé en el balcón.');
   await page.waitForFunction(() => document.querySelector('.free-head .saved-note').dataset.state === 'saved', null, { timeout: 3000 });
-  assert.match((await page.evaluate((id) => MC.store.get('pages', id), occId)).body, /Hoy pensé en el balcón\.$/);
+  assert.match(await page.evaluate((id) => MC.store.get('pages', id).then((p) => MC.model.sheetText(p)), occId), /Hoy pensé en el balcón\.$/);
   // Mis hojas la lista en “Lo que se repite” con enlace a la hoja.
   await goto(page, '#/hojas');
   await page.waitForSelector('.routine:has-text("Pensar en voz alta") a:has-text("(la hoja)")');
@@ -1694,7 +1694,7 @@ await test('base: si otra pestaña la actualiza, lo que se estaba escribiendo se
   await context.close();
 });
 
-await test('base: una base vieja (IDB v2, datos y borrador v4) se actualiza a v3 sin perder nada, y de nuevo es idempotente (A3)', async () => {
+await test('base: una base vieja (IDB v2, datos y borrador v4) se actualiza a v4 con el contrato v6 sin perder nada, y de nuevo es idempotente (A3, A13)', async () => {
   const { page, context, errors } = await newPage(browser);
   const seed = await context.newPage();
   await seed.goto(BLANK_URL);
@@ -1735,23 +1735,28 @@ await test('base: una base vieja (IDB v2, datos y borrador v4) se actualiza a v3
       const r = indexedDB.open('mi-cuaderno');
       r.onsuccess = () => {
         const d = r.result;
-        const tx = d.transaction(['files', 'pages', 'days'], 'readonly');
+        const tx = d.transaction(['files', 'pages', 'days', 'meta'], 'readonly');
         const out = { version: d.version, stores: Array.from(d.objectStoreNames).sort(), pageIdx: Array.from(tx.objectStore('pages').indexNames).sort() };
         tx.objectStore('files').get('fil_1').onsuccess = (e) => { out.fileUpdatedAt = e.target.result.updatedAt; };
-        tx.objectStore('pages').get('pag_1').onsuccess = (e) => { out.pageItems = e.target.result.items.map((i) => i.text); };
-        tx.objectStore('days').get(today).onsuccess = (e) => { out.mood = e.target.result.morning.mood; };
+        tx.objectStore('pages').get('pag_1').onsuccess = (e) => { const p = e.target.result; out.page = { old: 'kind' in p || 'items' in p || 'body' in p, items: (p.values.blk_items || []).map((i) => i.text), updatedAt: p.updatedAt }; };
+        tx.objectStore('days').get(today).onsuccess = (e) => { const m = e.target.result.morning; out.mood = 'mood' in m ? m.mood : 'sin mood'; out.feelings = m.feelings; };
+        tx.objectStore('meta').get('preV6').onsuccess = (e) => { const v = e.target.result && e.target.result.value; out.snap = v ? { days: v.days.map((x) => x.morning.mood), pages: v.pages.map((x) => x.kind), labels: !!v.settings.moodLabels } : null; };
+        tx.objectStore('meta').get('settings').onsuccess = (e) => { out.settingsOld = 'moodLabels' in e.target.result.value; };
         tx.oncomplete = () => { d.close(); res(out); };
       };
     }), TODAY);
     // El borrador recuperado se escribe un instante después de mostrarse.
     let db = await readDb();
-    for (let i = 0; i < 20 && db.mood !== 2; i++) { await page.waitForTimeout(100); db = await readDb(); }
-    assert.equal(db.version, 3);
+    for (let i = 0; i < 20 && !(db.feelings && db.feelings[0] === 'bajito'); i++) { await page.waitForTimeout(100); db = await readDb(); }
+    assert.equal(db.version, 4);
     assert.deepEqual(db.stores, ['activities', 'days', 'files', 'images', 'marks', 'meta', 'pages', 'routines', 'templates', 'weeks']);
     assert.deepEqual(db.pageIdx, ['date', 'updatedAt']);
     assert.equal(db.fileUpdatedAt, '2026-10-01T09:00:00.000Z');
-    assert.deepEqual(db.pageItems, ['la plaza']);
-    assert.equal(db.mood, 2, 'el borrador (forma vieja) se guardó con su ánimo');
+    assert.deepEqual(db.page, { old: false, items: ['la plaza'], updatedAt: '2026-10-01T09:00:00.000Z' }, 'la página pasó a bloque sin tocar updatedAt');
+    assert.equal(db.mood, 'sin mood');
+    assert.deepEqual(db.feelings, ['bajito'], 'el borrador (forma vieja, ánimo 2) se guardó como su palabra');
+    assert.deepEqual(db.snap, { days: [4], pages: ['list'], labels: true }, 'la instantánea guarda cómo estaba antes');
+    assert.equal(db.settingsOld, false);
     assert.equal(await page.locator('#panel .activity:has-text("Regar")').count(), 1);
   };
   await page.goto(HTTP_URL + '#/hoy');
@@ -1760,6 +1765,102 @@ await test('base: una base vieja (IDB v2, datos y borrador v4) se actualiza a v3
   await check();
   assert.deepEqual(errors, []);
   await context.close();
+});
+
+await test('A13: base v5 (IDB v3) → v6; si el contrato falla queda como estaba y se lee igual; la copia de antes se descarga y se vuelve a abrir', async () => {
+  const seedV3 = async (context) => {
+    const seed = await context.newPage();
+    await seed.goto(BLANK_URL);
+    await seed.evaluate((today) => new Promise((res, rej) => {
+      const r = indexedDB.open('mi-cuaderno', 3);
+      r.onupgradeneeded = () => {
+        const db = r.result;
+        db.createObjectStore('meta', { keyPath: 'key' });
+        db.createObjectStore('days', { keyPath: 'date' });
+        const a = db.createObjectStore('activities', { keyPath: 'id' }); a.createIndex('date', 'date'); a.createIndex('routineId', 'routineId');
+        db.createObjectStore('routines', { keyPath: 'id' });
+        const p = db.createObjectStore('pages', { keyPath: 'id' }); p.createIndex('updatedAt', 'updatedAt'); p.createIndex('date', 'date');
+        db.createObjectStore('images', { keyPath: 'id' });
+        const f = db.createObjectStore('files', { keyPath: 'id' }); f.createIndex('owner', 'owner');
+        db.createObjectStore('weeks', { keyPath: 'week' });
+        db.createObjectStore('templates', { keyPath: 'id' });
+        const m = db.createObjectStore('marks', { keyPath: 'id' }); m.createIndex('sourceId', 'sourceId');
+      };
+      r.onsuccess = () => {
+        const db = r.result;
+        const tx = db.transaction(['meta', 'days', 'pages'], 'readwrite');
+        const at = '2026-10-01T09:00:00.000Z';
+        tx.objectStore('meta').put({ key: 'settings', value: { name: 'Nicole', onboarded: true, showCover: false, cover: 'rosa', moodLabels: ['mal', 'flojo', 'más o menos', 'lindo', 're lindo'], legacyMoodLabels: ['mal', 'flojo', 'más o menos', 'lindo', 're lindo'], motion: 'ninguna', motionChosen: true } });
+        tx.objectStore('days').put({ date: today, morning: { mood: 4, feelings: null, at }, evening: { mood: null, feelings: null, at: null }, intention: '', notes: 'escrito en v5', energy: null, sleep: null, reflection: { good: '', hard: '', lovely: '', keep: '', free: '' }, stickers: [], createdAt: at, updatedAt: at });
+        tx.objectStore('pages').put({ id: 'pag_v', title: 'Carta', template: 'letter', kind: 'text', paper: 'rayado', body: 'Querida persona del futuro:', items: [], blocks: null, values: {}, pinned: false, date: today, stickers: [], createdAt: at, updatedAt: at });
+        tx.oncomplete = () => { db.close(); res(); };
+        tx.onerror = () => rej(tx.error);
+      };
+      r.onerror = () => rej(r.error);
+    }), TODAY);
+    await seed.close();
+  };
+  const dbInfo = (page) => page.evaluate((today) => new Promise((res) => {
+    const r = indexedDB.open('mi-cuaderno');
+    r.onsuccess = () => {
+      const d = r.result, out = { version: d.version };
+      const tx = d.transaction(['days', 'pages', 'meta'], 'readonly');
+      tx.objectStore('days').get(today).onsuccess = (e) => { out.morning = e.target.result.morning; };
+      tx.objectStore('pages').get('pag_v').onsuccess = (e) => { out.kind = e.target.result.kind; };
+      tx.objectStore('meta').get('preV6').onsuccess = (e) => { out.snap = !!e.target.result; };
+      tx.oncomplete = () => { d.close(); res(out); };
+    };
+  }), TODAY);
+
+  // 1. El contrato falla: la base sigue en v3, intacta, y el cuaderno la lee con sus palabras.
+  {
+    const { page, context, errors } = await newPage(browser);
+    await seedV3(context);
+    await page.addInitScript(() => { window.__mcFailContract = true; });
+    await page.goto(HTTP_URL + '#/hoy');
+    await page.waitForSelector('.day-head');
+    await page.waitForSelector('.toast:has-text("quedó como estaba")');
+    const info = await dbInfo(page);
+    assert.equal(info.version, 3);
+    assert.equal(info.morning.mood, 4, 'nada se reescribió');
+    assert.equal(info.kind, 'text');
+    assert.equal(info.snap, false);
+    assert.match(await page.textContent('#panel'), /lindo/, 'el ánimo 4 se lee con el nombre de esa persona');
+    assert.equal(await page.inputValue('#notes'), 'escrito en v5');
+    assert.deepEqual(errors, []);
+    await context.close();
+  }
+  // 2. El contrato anda: v4, con instantánea; “Descargar la copia de antes” da una copia v5 que se vuelve a abrir.
+  {
+    const { page, context, errors } = await newPage(browser);
+    await seedV3(context);
+    await page.goto(HTTP_URL + '#/hoy');
+    await page.waitForSelector('.day-head');
+    const info = await dbInfo(page);
+    assert.equal(info.version, 4);
+    assert.deepEqual(info.morning.feelings, ['lindo'], 'con los nombres de esa persona');
+    assert.equal('mood' in info.morning, false);
+    assert.equal(info.kind, undefined);
+    assert.equal(info.snap, true);
+    await goto(page, '#/ajustes');
+    await page.waitForSelector('.prev6:not([hidden])');
+    const [download] = await Promise.all([page.waitForEvent('download'), page.click('.prev6 button:has-text("Descargar la copia de antes")')]);
+    const text = fs.readFileSync(await download.path(), 'utf8');
+    const copy = JSON.parse(text);
+    assert.equal(copy.schemaVersion, 5);
+    assert.equal(copy.data.days.find((d) => d.date === TODAY).morning.mood, 4);
+    assert.equal(copy.data.pages.find((p) => p.id === 'pag_v').kind, 'text');
+    assert.deepEqual(copy.data.meta.settings.moodLabels, ['mal', 'flojo', 'más o menos', 'lindo', 're lindo']);
+    const v = await page.evaluate((t) => { const r = MC.backup.validate(t); return { ok: r.ok, feelings: r.ok && r.payload.days[0].morning.feelings }; }, text);
+    assert.deepEqual(v, { ok: true, feelings: ['lindo'] }, 'la copia de antes se vuelve a abrir (y se contrae igual)');
+    // “Ya no la necesito”.
+    await page.click('.prev6 button:has-text("Ya no la necesito")');
+    await page.click('dialog.sheet button:has-text("Borrar la copia")');
+    await page.waitForSelector('.prev6[hidden]', { state: 'attached' });
+    assert.equal((await dbInfo(page)).snap, false);
+    assert.deepEqual(errors, []);
+    await context.close();
+  }
 });
 
 /* ---------- A1: arreglos de base ---------- */

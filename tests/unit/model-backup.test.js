@@ -9,16 +9,18 @@ async function fresh() {
   await M.loadSettings();
 }
 
-test('día vacío no se guarda; día con ánimo sí', async () => {
+test('día vacío no se guarda; día con emoción sí (v6: un ánimo viejo se lee como palabra)', async () => {
   await fresh();
   const d = await M.getDay('2026-09-30');
   await M.saveDay(d);
   assert.equal(await MC.store.get('days', '2026-09-30'), undefined);
-  d.morning.mood = 4;
+  d.morning.mood = 4; // forma vieja: se guarda como su palabra
   await M.saveDay(d);
   const back = await M.getDay('2026-09-30');
-  assert.equal(back.morning.mood, 4);
-  back.morning.mood = null;
+  assert.deepEqual(back.morning.feelings, ['bien']);
+  assert.equal('mood' in back.morning, false);
+  assert.equal('mood' in (await MC.store.get('days', '2026-09-30')).morning, false);
+  back.morning.feelings = null;
   await M.saveDay(back);
   assert.equal(await MC.store.get('days', '2026-09-30'), undefined);
 });
@@ -71,7 +73,7 @@ test('settings viejos o raros se mezclan con defaults', () => {
   const s = M.mergeSettings({ cover: 'violeta', motion: 'ninguna', moodLabels: ['a', '', 'c'], notify: { morning: { time: '25h' } } });
   assert.equal(s.cover, 'salvia');
   assert.equal(s.motion, 'ninguna');
-  assert.equal(s.moodLabels.length, 5);
+  assert.equal('moodLabels' in s, false, 'v6: los nombres de ánimo ya no se guardan');
   assert.equal(s.notify.morning.time, '08:30');
 });
 
@@ -182,8 +184,8 @@ test('lecturas compartidas: escritura, nombre de ánimo, título y fecha de pág
   assert.equal(M.hasWriting(M.normalizeDay({ reflection: { lovely: 'el mate' } }, '2026-10-01')), true);
   assert.equal(M.hasWriting(M.normalizeDay({ morning: { mood: 3 } }, '2026-10-01')), false);
   assert.equal(M.hasWriting(null), false);
-  assert.equal(M.moodLabel(5, ['a', 'b', 'c', 'd', 'e']), 'e');
-  assert.equal(M.moodLabel(null), null);
+  assert.deepEqual(M.feelingsOf({ mood: 5 }), ['muy bien'], 'un ánimo viejo se lee con su palabra');
+  assert.deepEqual(M.feelingsOf({ mood: 5, feelings: [] }), [], '[] es una elección');
   assert.equal(M.pageTitle({ title: '   ' }), 'Sin título');
   assert.equal(M.pageTitle({ title: 'Ideas' }), 'Ideas');
   assert.equal(M.pageDate({ createdAt: new Date(2026, 9, 2, 23, 30).toISOString() }), '2026-10-02');

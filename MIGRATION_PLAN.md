@@ -27,7 +27,7 @@ La referencia visual de la segunda imagen era una paleta pastel (`#F2CFD7`, `#D6
 | A10 · Escenas | Hecho | `MC.scenes.delay` (12–25 s; 1–2,5 min; 3–5 min), flor/esquina/bordado/lluvia. Cache v33. |
 | A11 · Dibujo | Hecho | `MC.brush` + `draw.js`: balde con tolerancia, presión, semilla, estabilizador, recorte por alfa. Cache v34. |
 | A12 · QA cruzada | Hecho (solo Chromium) | Matriz E2E en 1366 y 375 px, auditoría de nombres accesibles, capturas, rendimiento con un año de datos: [`docs/QA.md`](docs/QA.md). Firefox/WebKit y dispositivos quedan pendientes. Cache v35. |
-| A13 | Pendiente | Criterio debajo. |
+| A13 · Contrato v6 | Hecho | IndexedDB 4 + `MIGRATIONS[6]` con `MC.backup.contractRecord`, instantánea `meta.preV6`, “Descargar la copia de antes”, vuelta atrás a v3 si se aborta; `cover` queda (D39). Cache v36. **Etapa A completa.** |
 
 ### A5 · Menos marcadores y Mis hojas inicial
 

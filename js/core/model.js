@@ -24,8 +24,7 @@
   function defaultSettings() {
     return {
       name: '',
-      cover: 'salvia',
-      moodLabels: ['pesado', 'bajito', 'normal', 'bien', 'muy bien'],
+      cover: 'salvia',              // la tela de la tapa: la de fábrica cuando no hay tema propio (D39)
       track: { morning: true, evening: true, activities: true, reflection: true, energy: false, sleep: false },
       // Pedido de la dueña del proyecto (D23): todas las personas empiezan con “Completas”; se baja en Ajustes.
       motion: 'completas',
@@ -81,12 +80,6 @@
     var out = MC.clone(def);
     if (typeof saved.name === 'string') out.name = saved.name.slice(0, 40);
     if (COVERS.indexOf(saved.cover) !== -1) out.cover = saved.cover;
-    if (Array.isArray(saved.moodLabels) && saved.moodLabels.length === 5) {
-      out.moodLabels = saved.moodLabels.map(function (l, i) {
-        l = typeof l === 'string' ? l.trim().slice(0, 24) : '';
-        return l || def.moodLabels[i];
-      });
-    }
     if (saved.track && typeof saved.track === 'object') {
       Object.keys(out.track).forEach(function (k) { if (typeof saved.track[k] === 'boolean') out.track[k] = saved.track[k]; });
     }
@@ -113,10 +106,6 @@
     }
     out.theme = sanitizeTheme(saved.theme);
     out.emotionColors = sanitizeEmotionColors(saved.emotionColors);
-    // Los 5 nombres de ánimo congelados al pasar a emociones escritas (D28): convierten `mood n` viejos.
-    if (Array.isArray(saved.legacyMoodLabels) && saved.legacyMoodLabels.length === 5 && saved.legacyMoodLabels.every(function (l) { return typeof l === 'string' && l.trim(); })) {
-      out.legacyMoodLabels = saved.legacyMoodLabels.map(function (l) { return l.trim().slice(0, 24); });
-    }
     return out;
   }
 
@@ -128,12 +117,15 @@
   }
   function setMeta(key, value) { return S().put('meta', { key: key, value: value }); }
 
+  /* Contrato v6 (A13): los ánimos 1–5 ya son emociones escritas y los ajustes no guardan sus nombres. Si igual
+     aparece un `mood` (una pestaña vieja, un borrador, la nube o una base que no pudo actualizarse), se lee con
+     los nombres que tenía esta persona; nunca se vuelve a escribir. */
+  var moodWordsNow = ['pesado', 'bajito', 'normal', 'bien', 'muy bien'];
+
   function loadSettings() {
     return getMeta('settings', null).then(function (s) {
       settingsCache = mergeSettings(s);
-      // Congelamos los nombres elegidos antes de retirar el selector de cinco ánimos.
-      // Las copias viejas siguen trayendo su propio settings.moodLabels.
-      if (!settingsCache.legacyMoodLabels) settingsCache.legacyMoodLabels = settingsCache.moodLabels.slice();
+      if (MC.backup && MC.backup.moodWords) moodWordsNow = MC.backup.moodWords(s);
       return settingsCache;
     });
   }
@@ -148,12 +140,12 @@
   function emptyDay(date) {
     return {
       date: date,
-      morning: { mood: null, feelings: null, at: null },
+      morning: { feelings: null, at: null },
       intention: '',
       notes: '',
       energy: null,
       sleep: null,
-      evening: { mood: null, feelings: null, at: null },
+      evening: { feelings: null, at: null },
       reflection: { good: '', hard: '', lovely: '', keep: '', free: '' },
       stickers: [],
       privacy: null,
@@ -203,7 +195,10 @@
     ['morning', 'evening'].forEach(function (k) {
       var m = raw[k] || {};
       var mood = Number(m.mood);
-      d[k] = { mood: mood >= 1 && mood <= 5 ? mood : null, feelings: sanitizeFeelings(m.feelings), at: typeof m.at === 'string' ? m.at : null };
+      var feelings = sanitizeFeelings(m.feelings);
+      // Un ánimo viejo (1–5) se lee como su palabra; `[]` (sacadas a propósito) se respeta.
+      if (feelings === null && mood >= 1 && mood <= 5) feelings = [moodWordsNow[mood - 1]];
+      d[k] = { feelings: feelings, at: typeof m.at === 'string' ? m.at : null };
     });
     d.intention = str(raw.intention);
     d.notes = str(raw.notes);
@@ -237,7 +232,7 @@
 
   function isEmptyDay(d) {
     if (!d) return true;
-    if (d.morning.mood || d.evening.mood || d.energy || d.sleep != null) return false;
+    if (d.energy || d.sleep != null) return false;
     // Un día con emociones anotadas (aunque no tenga nada más) existe: no se borra al guardar ni al restaurar.
     if ((d.morning.feelings && d.morning.feelings.length) || (d.evening.feelings && d.evening.feelings.length)) return false;
     if (d.intention.trim() || d.notes.trim()) return false;
@@ -498,24 +493,21 @@
   var PAPERS = ['rayado', 'cuadriculado', 'punteado', 'liso'];
 
   function normalizePage(p) {
+    var blocks = sanitizeBlocks(p.blocks);
+    var legacy = blocks ? null : sheetBlocks(p);
     return {
       id: typeof p.id === 'string' ? p.id : MC.uid('pag'),
       title: str(p.title).slice(0, 120),
       template: typeof p.template === 'string' ? p.template.slice(0, 40) : 'blank',
-      kind: p.kind === 'list' ? 'list' : 'text',
       paper: PAPERS.indexOf(p.paper) !== -1 ? p.paper : 'rayado',
-      body: str(p.body),
-      items: (Array.isArray(p.items) ? p.items : []).slice(0, 500).map(function (it) {
-        return { id: typeof it.id === 'string' ? it.id : MC.uid('itm'), text: str(it.text).slice(0, 500) };
-      }),
       pinned: !!p.pinned,
       // Día en el calendario (elegible). Si no hay, el día en que se empezó.
       date: D.isValid(p.date) ? p.date : (D.fromISO(p.createdAt) || D.today()),
       stickers: sanitizeStickers(p.stickers),
       privacy: sanitizePrivacy(p.privacy),
-      // v5 (D29): estructura de hoja. Mientras sea null, la hoja sigue con kind/body/items (conviven hasta v6).
-      blocks: sanitizeBlocks(p.blocks),
-      values: sanitizeValues(p.values),
+      // v6 (A13): una hoja siempre tiene bloques. Una de antes (texto o lista) se lee como un bloque.
+      blocks: blocks || legacy.blocks,
+      values: sanitizeValues(blocks ? p.values : legacy.values),
       templateId: typeof p.templateId === 'string' ? p.templateId.slice(0, 80) : null,
       routineId: typeof p.routineId === 'string' ? p.routineId.slice(0, 80) : null,
       deletedAt: sanitizeDeletedAt(p.deletedAt),
@@ -603,11 +595,11 @@
     });
   }
 
-  /** Bloques de una hoja: los suyos o, si es de antes de A7 (texto o lista), su contenido como un bloque. */
+  /** Bloques de una hoja: los suyos o, si llega con la forma de antes (texto o lista), su contenido como un bloque. */
   function sheetBlocks(p) {
     if (p && p.blocks && p.blocks.length) return { blocks: p.blocks, values: p.values || {} };
-    if (p && p.kind === 'list') return { blocks: [{ id: 'blk_items', type: 'list', title: '' }], values: { blk_items: (p.items || []).map(function (it) { return { id: it.id, text: it.text }; }) } };
-    return { blocks: [{ id: 'blk_body', type: 'text', title: '' }], values: { blk_body: p ? p.body || '' : '' } };
+    if (p && p.kind === 'list') return { blocks: [{ id: 'blk_items', type: 'list', title: '' }], values: { blk_items: (Array.isArray(p.items) ? p.items : []).filter(function (it) { return it && typeof it.text === 'string'; }).map(function (it) { return { id: typeof it.id === 'string' ? it.id : MC.uid('itm'), text: it.text }; }) } };
+    return { blocks: [{ id: 'blk_body', type: 'text', title: '' }], values: { blk_body: p && typeof p.body === 'string' ? p.body : '' } };
   }
 
   /** El contenido de una hoja como texto (exportar, imprimir, la vista previa del índice). `bare`: sin títulos de bloque. */
@@ -635,18 +627,9 @@
     return n;
   }
 
-  /**
-   * Guarda una hoja. Con bloques, también escribe `kind/body/items` derivados (D34: conviven hasta v6) para que
-   * la copia y quien lea la forma vieja sigan viendo el contenido.
-   */
+  /** Guarda una hoja (siempre en bloques desde v6). */
   function savePage(p) {
-    var n = normalizePage(p);
-    if (n.blocks && n.blocks.length) {
-      var only = n.blocks.length === 1 ? n.blocks[0] : null;
-      if (only && only.type === 'list') { n.kind = 'list'; n.items = (n.values[only.id] || []).map(function (it) { return { id: it.id, text: it.text }; }); n.body = ''; }
-      else { n.kind = 'text'; n.body = sheetText(n); n.items = []; }
-    }
-    return S().put('pages', stamp(n));
+    return S().put('pages', stamp(normalizePage(p)));
   }
   function deletePage(id) { return sendToTrash('pages', id); }
 
@@ -900,19 +883,13 @@
   /** En calendario, impresión e insights, “hecho” incluye “un poquito”. Las exportaciones guardan el estado exacto. */
   function countsAsDone(status) { return status === 'done' || status === 'partial'; }
 
-  function moodLabel(n, labels) {
-    var l = labels || settings().moodLabels;
-    return n ? l[n - 1] : null;
-  }
-
-  /** Lee ambas formas durante v5: [] significa que la persona quitó las emociones. */
-  function feelingsOf(slot, setting) {
+  /** Emociones de un momento del día: [] significa que la persona las quitó. Un `mood` viejo se lee como palabra. */
+  function feelingsOf(slot) {
     if (!slot) return [];
     if (Array.isArray(slot)) return sanitizeFeelings(slot) || [];
     if (Array.isArray(slot.feelings)) return sanitizeFeelings(slot.feelings) || [];
-    var labels = (setting || settings()).legacyMoodLabels || (setting || settings()).moodLabels;
-    var old = slot.mood && labels && labels[slot.mood - 1];
-    return old ? [old] : [];
+    var n = Number(slot.mood);
+    return n >= 1 && n <= 5 ? [moodWordsNow[n - 1]] : [];
   }
 
   function emotionKey(value) {
@@ -1188,7 +1165,7 @@
     feelingsOf: feelingsOf, emotionKey: emotionKey, emotionPalette: emotionPalette, emotionSuggestions: emotionSuggestions,
     sanitizeTheme: sanitizeTheme, sanitizeEmotionColors: sanitizeEmotionColors, occurrenceId: occurrenceId, DRAW_TOOLS: DRAW_TOOLS,
     sanitizeStickers: sanitizeStickers, summarize: summarize, summaryRange: summaryRange, pagesOn: pagesOn, everything: everything,
-    hasWriting: hasWriting, countsAsDone: countsAsDone, moodLabel: moodLabel, pageTitle: pageTitle, pageDate: pageDate,
+    hasWriting: hasWriting, countsAsDone: countsAsDone, pageTitle: pageTitle, pageDate: pageDate,
     TRASH_STORES: TRASH_STORES, sendToTrash: sendToTrash, restoreTrash: restoreTrash, trashItems: trashItems,
     purgeTrash: purgeTrash, deleteForever: deleteForever, emptyTrash: emptyTrash, activeOnly: activeOnly, activeEverything: activeEverything,
     touchOpen: touchOpen

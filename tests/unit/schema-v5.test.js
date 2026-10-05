@@ -11,10 +11,11 @@ async function fresh() {
   await M.loadSettings();
 }
 
-test('días: emociones escritas conviven con el ánimo viejo; null (nunca) ≠ [] (sacadas)', () => {
-  const d = M.normalizeDay({ date: '2026-10-04', morning: { mood: 4, feelings: [' calma ', 'Calma', 'cansancio', '', 7] }, evening: { feelings: [] } });
-  assert.deepEqual(d.morning, { mood: 4, feelings: ['calma', 'cansancio'], at: null });
-  assert.deepEqual(d.evening.feelings, []);
+test('días (v6): emociones escritas; un ánimo viejo se lee como palabra solo si no había emociones; null ≠ []', () => {
+  const d = M.normalizeDay({ date: '2026-10-04', morning: { mood: 4, feelings: [' calma ', 'Calma', 'cansancio', '', 7] }, evening: { mood: 2, feelings: [] } });
+  assert.deepEqual(d.morning, { feelings: ['calma', 'cansancio'], at: null });
+  assert.deepEqual(d.evening.feelings, [], 'sacadas a propósito: el ánimo viejo no vuelve');
+  assert.deepEqual(M.normalizeDay({ date: '2026-10-04', morning: { mood: 1 } }).morning.feelings, ['pesado']);
   assert.equal(M.normalizeDay({ date: '2026-10-04' }).morning.feelings, null);
   // Sin repetir aunque cambien tildes o mayúsculas.
   assert.deepEqual(M.sanitizeFeelings(['Alegría', 'alegria', 'ALEGRÍA']), ['Alegría']);
@@ -89,7 +90,7 @@ test('rutinas: pueden ser hojas que se repiten con su plantilla congelada', () =
   assert.equal(M.normalizeRoutine({ title: 'Regar', rule: { type: 'daily' } }).kind, 'activity');
 });
 
-test('hojas: bloques y contenido se sanean; kind/body/items siguen intactos', () => {
+test('hojas (v6): bloques y contenido se sanean; kind/body/items no se escriben y una hoja vieja pasa a bloque', () => {
   const p = M.normalizePage({
     id: 'pag_1', title: 'Comidas', kind: 'list', items: [{ id: 'i1', text: 'pan' }], body: 'algo',
     blocks: [{ id: 'b1', type: 'columns', title: 'Hoy', columns: [{ id: 'c1', title: 'Desayuno' }] }, { type: 'raro' }, { id: 'b2', type: 'checks' }],
@@ -101,8 +102,10 @@ test('hojas: bloques y contenido se sanean; kind/body/items siguen intactos', ()
   assert.deepEqual(p.values.b1, { c1: 'mate' });
   assert.deepEqual(p.values.b2, [{ id: 'k1', text: 'agua', done: true }]);
   assert.equal(p.values['<x>'], undefined);
-  assert.deepEqual([p.kind, p.items[0].text, p.body, p.templateId], ['list', 'pan', 'algo', 'tpl_9']);
-  assert.equal(M.normalizePage({ title: 'vieja' }).blocks, null, 'una hoja vieja sigue con kind/body/items');
+  assert.deepEqual([p.kind, p.items, p.body, p.templateId], [undefined, undefined, undefined, 'tpl_9']);
+  const old = M.normalizePage({ title: 'vieja', kind: 'list', items: [{ id: 'i', text: 'pan' }] });
+  assert.deepEqual([old.blocks[0].type, old.values.blk_items[0].text], ['list', 'pan']);
+  assert.deepEqual(M.normalizePage({ title: 'texto', body: 'hola' }).values, { blk_body: 'hola' });
 });
 
 test('dibujos: pasos de relleno y herramientas nuevas; los trazos viejos son técnicos', () => {
@@ -118,7 +121,7 @@ test('dibujos: pasos de relleno y herramientas nuevas; los trazos viejos son té
   assert.deepEqual(d.strokes[2], { tool: 'fill', x: 500, y: 1000, color: '#AABBCC', tolerance: 255 });
 });
 
-test('ajustes: tema y colores de emociones se sanean; los nombres de ánimo viejos se congelan solo si vienen', () => {
+test('ajustes (v6): tema y colores de emociones se sanean; los nombres de ánimo ya no se guardan', () => {
   const s = M.mergeSettings({
     theme: { preset: 'cosmos', cloth: '#d6e6e5', cloth2: 'rojo', paper: '#FFF9ED', ink: '#493D3B', accents: ['#F2CFD7', 'x', '#FEE088'], finish: 'neón', angle: 999 },
     emotionColors: { calma: '#9bc4c2', mal: 'rojo' },
@@ -127,7 +130,11 @@ test('ajustes: tema y colores de emociones se sanean; los nombres de ánimo viej
   assert.deepEqual(s.theme, { preset: 'cosmos', cloth: '#D6E6E5', cloth2: null, paper: '#FFF9ED', ink: '#493D3B', angle: 360, accents: ['#F2CFD7', '#FEE088'], finish: 'mate' });
   assert.deepEqual(s.emotionColors, { calma: '#9BC4C2' });
   assert.equal(s.legacyMoodLabels, undefined);
-  assert.deepEqual(M.mergeSettings({ legacyMoodLabels: ['p', 'b', 'n', 'bi', 'mb'] }).legacyMoodLabels, ['p', 'b', 'n', 'bi', 'mb']);
+  assert.equal(s.moodLabels, undefined);
+  assert.equal(M.mergeSettings({ legacyMoodLabels: ['p', 'b', 'n', 'bi', 'mb'] }).legacyMoodLabels, undefined);
+  // Pero sirven para leer: los nombres de esa persona, si los tenía.
+  assert.deepEqual(MC.backup.moodWords({ moodLabels: ['a', 'b', 'c', 'd', 'e'] }), ['a', 'b', 'c', 'd', 'e']);
+  assert.deepEqual(MC.backup.moodWords({ legacyMoodLabels: ['p', 'b', 'n', 'bi', 'mb'], moodLabels: ['a', 'b', 'c', 'd', 'e'] })[0], 'p');
   assert.equal(M.mergeSettings({ theme: { cloth: 'nada' } }).theme, null);
 });
 
@@ -150,7 +157,7 @@ test('semanas, plantillas y marcas: van y vuelven en la copia y pasan por la pap
   assert.equal(M.normalizeMark({ sourceType: 'otra', sourceId: 'x' }), null);
 });
 
-test('una copia v4 real se migra a v5 sin tocar registros ni fechas', () => {
+test('una copia v4 real: v5 no toca registros; v6 los contrae con sus nombres, sin tocar fechas', () => {
   const data = {
     meta: { createdAt: '2026-09-01T10:00:00.000Z', settings: { moodLabels: ['pesado', 'bajito', 'normal', 'bien', 'muy bien'], trashRetentionDays: 30 } },
     days: [{ date: '2026-10-01', morning: { mood: 4, at: '2026-10-01T09:00:00.000Z' }, notes: 'hola', createdAt: '2026-10-01T09:00:00.000Z', updatedAt: '2026-10-01T21:00:00.000Z' }],
@@ -161,8 +168,12 @@ test('una copia v4 real se migra a v5 sin tocar registros ni fechas', () => {
   const migrated = MC.backup.MIGRATIONS[5](data);
   assert.equal(JSON.stringify([migrated.days, migrated.pages]), before);
   assert.deepEqual([migrated.weeks, migrated.templates, migrated.marks], [[], [], []]);
+  data.meta.settings.moodLabels = ['mal', 'flojo', 'más o menos', 'lindo', 're lindo'];
   const v = MC.backup.validate({ app: 'mi-cuaderno', kind: 'backup', schemaVersion: 4, data });
   assert.equal(v.ok, true, v.error);
-  assert.deepEqual([v.payload.days[0].morning.mood, v.payload.days[0].updatedAt], [4, '2026-10-01T21:00:00.000Z']);
+  assert.deepEqual([v.payload.days[0].morning.feelings, v.payload.days[0].updatedAt], [['lindo'], '2026-10-01T21:00:00.000Z']);
+  assert.equal('mood' in v.payload.days[0].morning, false);
+  assert.deepEqual([v.payload.pages[0].values.blk_body, v.payload.pages[0].updatedAt], ['x', '2026-10-01T09:00:00.000Z']);
+  assert.equal('moodLabels' in v.payload.meta.find((r) => r.key === 'settings').value, false);
   assert.equal(v.payload.files[0].updatedAt, '2026-10-01T09:00:00.000Z', 'un adjunto viejo toma su createdAt');
 });

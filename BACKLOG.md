@@ -32,7 +32,7 @@ Cada idea pendiente, con su estado. **Nada se pierde por estar fuera de la fase 
 | Colores infinitos y código hex | A9 | Hecho (v32) | Diez presets, editor propio, degradado/acabado elegidos, AA con aviso, el sistema gana. |
 | Escenas más frecuentes | A10 | Hecho (v33) | Motion con propósito, silencio al escribir y control de rendimiento. |
 | Balde y tipos de trazo | A11 | Hecho (v34) | Editables al reabrir, presión/semilla y deshacer. |
-| Cruces, redundancia, QA y contrato v6 | A12–A13 | NOW siguiente | Matriz de navegación, accesibilidad, migración de datos y tests. |
+| Cruces, redundancia, QA y contrato v6 | A12–A13 | Hecho (v35–v36) | Matriz de navegación, accesibilidad, migración de datos y tests. |
 | Nube: base de cuentas (Next.js + Supabase), PIN, Nicole admin, permisos por sección con RLS, push y latido anti-pausa | B-base | Hecho en local, sin desplegar | `docs/NUBE.md`, D37. Falta el deploy con las cuentas de la dueña (§3) y probar en un celular real. |
 | Nube: sincronización offline por persona, vista de solo lectura para quien recibe permiso, Storage privado | B5–B8 | LATER tras A7 | Outbox, `notebook_parts` partido con `MC.sections`, lápidas, importar la copia `.json`, E2E de dos dispositivos. |
 | React/TypeScript y escenas especiales/Three.js si sirve | C | LATER tras B | Paridad vista por vista; fallback y motion reducido. |

@@ -8,6 +8,17 @@ Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantien
 - `.mcp.json` ya está en la rama. La dueña habilitó los dos MCP en su entorno web de Claude Code; el estado de `claude mcp list` en una instalación local distinta no verifica ese entorno.
 - `docs/NUBE.md` registra la verificación de red, los entornos y lo que falta para aplicar la migración SQL existente. Ningún secreto se agregó a Git.
 
+## 2026-10-05 · A13: contrato v6 (cache `v36`)
+
+**Para quien lo usa**
+- El cuaderno se ordenó por dentro: los ánimos viejos (del 1 al 5) ahora son palabras, con los nombres que vos les habías puesto, y las páginas de antes son hojas en bloques. No se ve distinto y no se pierde nada.
+- En Ajustes → Mis datos aparece **“Descargar la copia de antes”**, por si querés guardar cómo estaba todo antes de ordenarlo. Cuando ya no la necesites, “Ya no la necesito”.
+- Si algo no saliera bien al ordenar, el cuaderno queda como estaba, te avisa y lo vuelve a intentar la próxima vez.
+
+**Para quien lo mantiene**
+- IndexedDB 4 y `SCHEMA_VERSION` 6 (D39). `MC.backup.contractRecord/moodWords/buildPreV6/downloadPreV6`, `MIGRATIONS[6]`; `store.js` contrae en `onupgradeneeded` con instantánea `meta.preV6` y, si se aborta, abre la v3 (`store:contract-failed`). Normalizadores sin `mood`/`kind/body/items`/`moodLabels` (los leen si llegan); fuera `M.moodLabel` y los campos derivados de `savePage`. `cover` queda.
+- Pruebas: 126 unit (`contract-v6.test.js`; esquema v6 en las de copia), 54/54 E2E (v2 → v4 con borrador viejo; v3 → v4 con vuelta atrás y copia de antes que se vuelve a abrir). `npm run test:cloud` sigue verde.
+
 ## 2026-10-05 · A12: QA cruzada (cache `v35`)
 
 **Para quien lo usa**
