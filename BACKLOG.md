@@ -14,7 +14,7 @@ Cada idea pendiente, con su estado. **Nada se pierde por estar fuera de la fase 
 | **EXPERIMENTAL** | probar en chico; si no suma, se descarta |
 | **BLOCKED** | espera otra cosa (dice cuál) |
 
-**Dónde estamos (05/10/2026):** la etapa **A está completa** (A0–A13) y la nube está publicada con cuadernos compartidos. **Lo próximo es NB1: fotos, dibujos y adjuntos en la nube** (D40). La etapa C está abajo, ítem por ítem, esperando que la dueña elija. Las tablas de ideas de `VISION.md` siguen valiendo como reserva: su NEXT/LATER no salta a NB1.
+**Dónde estamos (05/10/2026):** la etapa **A está completa** (A0–A13) y la nube está publicada con cuadernos compartidos. **Lo próximo es NB1: fotos, dibujos y adjuntos en la nube** (D40), y después NB2–NB5. La etapa C (React) quedó **descartada para siempre** (D42). Las tablas de ideas de `VISION.md` siguen valiendo como reserva: su NEXT/LATER no salta a NB1.
 
 ## Pedido del 03/10, rastreo por entrega
 
@@ -36,7 +36,8 @@ Cada idea pendiente, con su estado. **Nada se pierde por estar fuera de la fase 
 | Nube: base de cuentas (Next.js + Supabase), PIN, Nicole admin, permisos por sección con RLS, push y latido anti-pausa | B-base | Hecho, publicado | `docs/NUBE.md`, D37. |
 | Nube: sincronización y cuadernos compartidos (quien recibe permiso mira el cuaderno de Nicole) | B5 | Hecho en su forma simple | D38. Lo que falta, en la sección NB. |
 | Nube: fotos, dibujos y adjuntos | B2 (Storage) | **NOW** | NB1. |
-| React/TypeScript y escenas especiales | C | Esperando a la dueña | Sección C. |
+| React/TypeScript y escenas especiales | C | Descartado (D42) | “Nunca React.” |
+| Entrar eligiendo a la persona, instalar la app y activar avisos desde la entrada | Nube | Hecho (D41) | Como la entrada de Mamayucca. |
 
 Otros ítems históricos que coinciden parcialmente (ME1/ME4/EL9/PE5, etc.) se cierran **solo** cuando la capacidad completa está entregada; no borrar ideas de estas tablas por tener ya un campo v5.
 
@@ -55,17 +56,17 @@ Al empezar un ítem: pasarlo a NOW, leer `VISION.md` §0 y la decisión que lo c
 | NB5 | Avisos más de una vez por día (hoy un cron diario por el plan Hobby de Vercel). | LATER | — | Con `pg_cron` + `pg_net` en Supabase, o Vercel Pro (pago: no sin su ok). |
 | — | Prueba guiada con la psicóloga, prueba en el celular, segundo proyecto de Supabase para las Preview. | **Descartado por la dueña** | — | D40: no volver a proponerlos. |
 
-## C · Etapa C: React y escenas 2.0 (esperando a la dueña)
+## C · Etapa C (descartada por la dueña, D42)
 
-Qué hay en la etapa C, en criollo. La recomendación (`docs/EVALUACION_BC.md` §2) es hacer, como mucho, C1 y C5 cuando hagan falta, y **no** reescribir todo (C2–C3): cuesta mucho, Nicole no notaría nada y se perdería el abrir el cuaderno con doble clic sin internet.
+“Nunca pasemos a React, está bien como está.” Quedan acá solo como registro de lo que se descartó:
 
-| # | Qué | Estado | Qué gana / qué cuesta |
-|---|---|---|---|
-| C1 | **Compartir `js/core` con el servidor**: que la nube valide lo que recibe con los mismos normalizadores que el cuaderno. | LATER (recomendado cuando se toque la nube) | Una capa más de cuidado de los datos. Chico/mediano; el cuaderno no cambia. |
-| C2 | **Pasar las vistas a React, una por una** (Ajustes → Mi año → Mis hojas → Semana/Mes → Día → stickers/dibujo), cada una con sus recorridos antes de borrar la vieja. | Esperando decisión (no recomendado ahora) | Más fácil de mantener si entra más gente a programar. Muy grande; no cambia nada visible. |
-| C3 | **Migrar el armazón** (router, cuadro, marcadores) a React cuando todas las vistas lo sean. | Esperando decisión (no recomendado ahora) | Termina C2. Rompe el doble clic en `index.html` sin internet (necesita servidor). |
-| C4 | **Escenas 2.0** con Motion o Three.js (por ejemplo la tapa que se abre en 3D). | EXPERIMENTAL | Más espectáculo. Pesa cientos de KB, necesita WebGL con respaldo; hacer una sola, a demanda, si alguna vez suma al cuaderno. |
-| C5 | **Islas React** solo para pantallas nuevas con mucho estado (buscador, “Volver a mí”). | LATER | Permite usar React donde rinde sin reescribir lo que anda. |
+| # | Qué era | Estado |
+|---|---|---|
+| C1 | Que la nube valide lo que recibe con los mismos normalizadores del cuaderno (`js/core` compartido). | Descartado (D42) |
+| C2 | Pasar las vistas a React una por una. | Descartado (D42) |
+| C3 | Migrar el armazón (router, cuadro, marcadores) a React. | Descartado (D42) |
+| C4 | Escenas 2.0 con Motion o Three.js. | Descartado (D42) |
+| C5 | Islas React para pantallas nuevas. | Descartado (D42) |
 
 ---
 
@@ -215,6 +216,7 @@ Qué hay en la etapa C, en criollo. La recomendación (`docs/EVALUACION_BC.md` �
 | — | Rachas, puntajes, badges, XP, monedas, niveles, rankings, confeti. | Descartado | Filosofía (brief §4, §42; VISION [39]). |
 | — | “Wrapped” hiperestimulante, dashboards de ánimo. | Descartado | VISION [3]. |
 | — | Reproducir música dentro de la app. | Descartado | VISION [53]: recordar qué sonaba, no ser un reproductor. |
+| — | React, islas React, Three.js, “escenas 2.0” (toda la etapa C). | Descartado | D42: “nunca pasemos a React”. |
 | — | Push remoto con servidor; sonido ambiente por defecto. | Descartado | D11; brief §44. |
 | — | Sugerencias del `--design-system` de `ui-ux-pro-max` (índigo, manuscrita principal, landing). | Descartado | D16. |
 

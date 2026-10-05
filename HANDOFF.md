@@ -40,6 +40,8 @@ Para retomar el desarrollo **sin haber estado en las conversaciones anteriores**
 | 19 | Que las personas que suma Nicole (su psicóloga) entren a **su** cuaderno con permisos, y que ella elija si cada una tiene cuaderno propio o mira el suyo. | Cuadernos compartidos y sincronización por sección. | D38 |
 | 20 | “Seguí con A5…A13 y los docs finales.” | Etapa A completa, un commit por paso, todo pusheado a la rama y a `main` (Production se despliega sola). | `CHANGELOG.md` 05/10, D39 |
 | 21 | Respuestas: nunca pruebas con la psicóloga/celular ni segundo Supabase; fotos en la nube como lo próximo; documentar qué hay en C. | NB1 en NOW; secciones NB y C en el backlog. | D40, `BACKLOG.md` |
+| 22 | Entrar como en Mamayucca: elegir el usuario de una lista, PIN, instalar app y activar avisos. | Hecho. | D41 |
+| 23 | “No me gusta ninguna de la etapa C, nunca pasemos a React; sigamos con los NB.” | Etapa C descartada; se sigue con NB. | D42 |
 
 ## 3. Estado actual
 
@@ -47,8 +49,9 @@ Para retomar el desarrollo **sin haber estado en las conversaciones anteriores**
 - **Datos:** `schemaVersion` **6**, IndexedDB **4** (contrato v6, D39). Las formas viejas (`mood`, `kind/body/items`, `moodLabels`) ya no se escriben, pero se leen si llegan. `cover` queda. Después de actualizar, Ajustes ofrece “Descargar la copia de antes”.
 - **Pruebas:** `npm run check` → 126 unitarias y 54/54 recorridos E2E en Chromium (`file://` y HTTP); `npm run test:cloud` verde. Solo Chromium: Firefox, Safari, dispositivos reales y lectores de pantalla **no** se probaron (`docs/QA.md` §4).
 - **Nube (D37, D38):** publicada en `https://micuaderno-five.vercel.app` (Vercel `trobias-projects/micuaderno`, Production se despliega en cada push a `main`; el último despliegue, A13, quedó `READY`). Supabase `lrwfkbuhmgtckjmswrzp` con esquema y RLS aplicados por SQL (el historial de migraciones está vacío: `docs/NUBE.md`). Nicole creó su cuenta. Cuadernos compartidos implementados y probados con la API simulada. La dueña decidió no hacer pruebas guiadas con personas o teléfonos ni un segundo proyecto de Supabase (D40): las Preview usan la base real.
-- **Qué queda en orden:** **NB1 (fotos, dibujos y adjuntos en la nube)**, después NB2–NB5; la etapa C espera la elección de la dueña (`BACKLOG.md`, secciones NB y C).
-- **C (React/escenas 2.0):** en evaluación; la recomendación es no reescribir ahora (`docs/EVALUACION_BC.md` §2).
+- **Qué queda en orden:** **NB1 (fotos, dibujos y adjuntos en la nube)**, después NB2–NB5; nunca React (D42).
+- **C (React/escenas 2.0): descartada para siempre** (D42, “nunca pasemos a React”). No proponerla.
+- **Entrar (D41):** `/entrar` muestra la lista de personas para elegir con un toque, el PIN, “Instalar app” y “Activar notificaciones”.
 - **Accesos:** desde claude.ai/code, `.mcp.json` no conecta (403 de red); los conectores de la cuenta (Vercel y Supabase) sí. Los secretos viven solo en las variables de Vercel; nunca en el repo ni en el chat.
 - **Ramas y worktrees viejos**: quedaron ramas `trobias/*` locales y worktrees de Orca de la Fase 1, ya integrados en `main`. No borrarlos sin su ok.
 
@@ -60,7 +63,7 @@ Para retomar el desarrollo **sin haber estado en las conversaciones anteriores**
 4. **Historial de git**: versiones viejas de los tests en el historial todavía tienen el nombre de ejemplo anterior. Reescribir historia exige force-push a `main`; se le ofreció y no respondió. No hacerlo sin un “sí” explícito.
 5. Nombre de la vista “Volver a mí” (VISION §3): elegir con ella.
 6. **Sacar una actividad** sigue siendo definitivo (con “Deshacer” en el aviso), no va a la papelera: lo decidió la Fase 1 para no romper ese flujo (D26). Si ella quiere actividades en la papelera, es un cambio chico en `js/ui/activity.js` + `MC.model`.
-7. **Nube (respondido el 05/10, D40):** nunca la prueba con la psicóloga ni en el celular, nunca un segundo proyecto de Supabase; **lo próximo son las fotos en la nube (NB1)**. Sigue abierto: qué ítems de la etapa C (C1–C5 en `BACKLOG.md`) se hacen, y si restaurar una copia con la nube prendida debe reemplazar también lo de la nube (NB4).
+7. **Nube (respondido el 05/10, D40):** nunca la prueba con la psicóloga ni en el celular, nunca un segundo proyecto de Supabase; **lo próximo son las fotos en la nube (NB1)**. La etapa C quedó descartada (D42). Sigue abierto: si restaurar una copia con la nube prendida debe reemplazar también lo de la nube (NB4).
 8. **Páginas:** el índice que a veces no respondía tras borrar se **reprodujo y arregló en Chromium** (cache `v25`): `MC.motion.swap` animaba `#panel-body` mientras se reemplazaba su contenido y Chromium dejaba el hit-test del contenedor viejo; ahora se anima la hoja nueva (antes 1/6 corridas fallaban, después 0/9). Falta confirmarlo en el navegador o celular de la dueña y en otros motores. Detalle en [`PAGES_INDEX_INVESTIGATION.md`](PAGES_INDEX_INVESTIGATION.md).
 
 ## 5. Cómo retomar (paso a paso)

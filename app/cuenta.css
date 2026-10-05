@@ -51,3 +51,24 @@ body.account {
 @media (max-width: 480px) { body.account { padding: var(--s-3) var(--s-3); } .sheet { padding: var(--s-5) var(--s-4); } }
 .choice { border: 0; margin: 0; padding: 0; display: grid; gap: var(--s-2); }
 .choice legend { font-size: var(--fs-sm); color: var(--ink-soft); margin-bottom: var(--s-2); }
+
+/* Entrar (D41): elegir a la persona con un toque, como en la entrada de una app compartida. */
+.field { display: grid; gap: var(--s-2); }
+.field__label { font-size: var(--fs-sm); color: var(--ink-soft); }
+.who-list { display: grid; border: 1px solid var(--rule-strong); border-radius: var(--radius-note); background: var(--paper-shade); max-height: 18rem; overflow-y: auto; }
+.who {
+  display: grid; grid-template-columns: 1.25rem minmax(0, 1fr) auto; grid-template-areas: "check name tag" "check user tag";
+  align-items: center; column-gap: var(--s-2); text-align: left; padding: var(--s-2) var(--s-3); min-height: 52px;
+  font: inherit; color: var(--ink); background: transparent; border: 0; border-bottom: 1px solid var(--rule); cursor: pointer;
+}
+.who:last-child { border-bottom: 0; }
+.who[aria-checked="true"] { background: color-mix(in srgb, var(--butter) 35%, var(--paper)); }
+.who:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+@media (hover: hover) and (pointer: fine) { .who:hover { background: color-mix(in srgb, var(--butter) 18%, var(--paper)); } }
+.who__check { grid-area: check; font-weight: 700; color: var(--thread-done-text); }
+.who__name { grid-area: name; font-family: var(--font-text); font-size: var(--fs-md); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.who__user { grid-area: user; font-size: var(--fs-xs); color: var(--ink-soft); }
+.who__tag { grid-area: tag; font-size: var(--fs-xs); color: var(--ink-soft); border: 1px dashed var(--rule-strong); border-radius: var(--radius-label); padding: 2px 8px; }
+.entrar-btn { width: 100%; justify-content: center; }
+.entrar-extras { display: grid; gap: var(--s-3); padding-top: var(--s-4); border-top: 1px dashed var(--rule-strong); }
+.entrar-extras .label-btn { width: 100%; justify-content: center; }

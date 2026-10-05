@@ -1,13 +1,13 @@
 # MI CUADERNO en la nube: Vercel + Supabase (etapa B, base)
 
-Estado al 05/10/2026: **la base de la nube está hecha y probada en local, y el esquema ya está aplicado en Supabase** (§4.2). Faltan `SUPABASE_SECRET_KEY` en Vercel, un deploy nuevo y probar la Preview: **no está verificado que entrar, los permisos o los avisos funcionen en la nube.** Hay cuentas con usuario y PIN, Nicole administra, permisos por sección con RLS, avisos push y el latido que evita que Supabase pause el proyecto. **Todavía no hay sincronización**: el cuaderno de cada persona vive en su dispositivo (IndexedDB) hasta el paso B5, que viene después de A7 porque la forma de las hojas cambia en A6–A7. Decisiones: `DECISIONS.md` D35 (etapas), D36 (personas, roles y permisos) y D37 (cómo quedó armada la base).
+Estado al 05/10/2026: **publicada en `https://micuaderno-five.vercel.app`** (Production se despliega en cada push a `main`). Supabase con esquema y RLS aplicados; Nicole creó su cuenta de administradora. Hay cuentas con usuario y PIN (entrada eligiendo a la persona, D41), permisos por sección con RLS, cuadernos compartidos y sincronización (D38), avisos push y el latido que evita que Supabase pause el proyecto. **Falta** que viajen fotos, dibujos y adjuntos (NB1, lo próximo) y lo demás de la sección NB de `BACKLOG.md`. Las secciones de abajo guardan la historia de la puesta en marcha. Decisiones: D35–D38, D40–D42.
 
 ## 1. Cómo está armado
 
 ```
 navegador ──► Vercel (Next.js 16)
                 ├─ /                 → el cuaderno de siempre (public/index.html, copiado por tools/copy-notebook.mjs)
-                ├─ /entrar           → usuario + PIN
+                ├─ /entrar           → elegir persona + PIN, instalar la app, activar avisos (D41)
                 ├─ /preparar         → crear la primera persona administradora (con SETUP_TOKEN, una sola vez)
                 ├─ /cuenta           → cambiar PIN, avisos, personas (admin), quién ve mi cuaderno
                 ├─ /api/*            → login, logout, setup, pin, me, people, grants, push, keepalive
@@ -190,3 +190,8 @@ Estructura: `app/` (páginas y `/api`), `lib/` (env, PIN, sesión, personas, avi
 3. Storage privado para fotos y adjuntos (sección `fotos`), con la misma RLS.
 4. Pantalla de `audit_events` para quien administra, y cambiar quién administra sin tocar SQL.
 5. Etapa C: vistas en React una por una (`MIGRATION_PLAN.md`).
+
+## Probar `/entrar` con una Supabase simulada (sin tocar la base real)
+
+La lista de personas se arma en el servidor con `profiles`. Para verla en local sin la base de verdad: un servidor HTTP que responda `GET /rest/v1/profiles…` con un JSON como `[{ "username": "nicole", "display_name": "Nicole", "is_admin": true, "disabled_at": null }]` y 401 a todo lo demás; `npm run build` y `next start` con `NEXT_PUBLIC_SUPABASE_URL` apuntando a ese servidor (y claves inventadas: las `NEXT_PUBLIC_*` se fijan al armar). Después, `npm run build` otra vez sin esas variables para dejar `public/` como estaba.
+

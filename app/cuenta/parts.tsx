@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { send, useNote } from '../form';
+import { b64ToBytes, send, useNote } from '../form';
 
 export function ChangePin() {
   const note = useNote();
@@ -33,13 +33,6 @@ export function Logout() {
       <p className="note">Lo que escribiste queda guardado en este dispositivo, separado del de otras personas.</p>
     </div>
   );
-}
-
-function b64ToBytes(b64: string): Uint8Array<ArrayBuffer> {
-  const s = atob(b64.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((b64.length + 3) % 4));
-  const out = new Uint8Array(new ArrayBuffer(s.length));
-  for (let i = 0; i < s.length; i++) out[i] = s.charCodeAt(i);
-  return out;
 }
 
 export function Notices({ vapid }: { vapid: string }) {

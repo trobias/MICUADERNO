@@ -22,19 +22,10 @@ La etapa A está completa (A0–A13). Este documento dice qué hay de la nube (B
 2. **Cola de salida más firme** (NB2): la cola en un store de IndexedDB en la misma transacción que el cambio y Web Locks para que sincronice una sola pestaña. *Chico/mediano.*
 3. **Historial de migraciones de Supabase** (NB3): registrar la migración aplicada (`npx supabase migration repair --status applied 20261004120000`) antes de la próxima. *Necesita la CLI con el token de la dueña, en su máquina.*
 
-## 2. Etapa C · React y escenas 2.0: ¿conviene ahora?
+## 2. Etapa C · descartada (D42)
 
-**Recomendación: no reescribir las vistas en React ahora.** Razones:
-
-- **Funciona y está probado**: 126 pruebas unitarias y 54 recorridos E2E cubren el cuaderno vanilla; una reescritura vista por vista los tiene que volver a pasar uno por uno, sin ganar nada visible para Nicole.
-- **El doble clic en `index.html` y el modo sin red** son parte de la filosofía (AGENTS: “nada sale del dispositivo”, `file://`). React con build obliga a servir el cuaderno y complica ese modo.
-- **El costo es alto y el beneficio, sobre todo interno** (mantenimiento). Tiene sentido si entra más gente a programar o si una pantalla nueva se vuelve muy interactiva.
-- **Three.js / Motion para escenas**: las escenas actuales (SVG + Web Animations, solo `transform`/`opacity`) son livianas, respetan el motion reducido y rinden bien (ver `docs/QA.md`). Una escena 3D pesaría cientos de KB, necesita WebGL con respaldo y no suma al “cuaderno de tela”. Si algún día se quiere una escena especial (abrir la tapa en 3D, por ejemplo), hacerla **una sola**, cargada a demanda y con respaldo.
-
-**Una “C chica” que sí conviene, cuando haga falta:**
-1. Compartir `js/core` con el servidor (Next) como módulos, para validar en el servidor con los mismos normalizadores que el cuaderno (hoy el servidor confía en la forma de los pedazos y la RLS decide quién; validar la forma sumaría una capa).
-2. Si una vista nueva necesita mucho estado (por ejemplo un buscador o “Volver a mí” de la VISION), evaluarla en React como isla dentro del shell, con su E2E.
+Se le presentaron a la dueña las cinco opciones (validar en el servidor con `js/core`, vistas React, armazón React, escenas 3D, islas React). Respuesta: **“no me gusta ninguna, nunca pasemos a React, está bien como está”**. No hay etapa C y no se vuelve a proponer.
 
 ## 3. Lo que sigue esperando a la dueña
 
-Están en `HANDOFF.md` §4: motion por defecto con “reducir movimiento”, canciones con metadatos, bloqueo con PIN local, reescribir historia de git (no sin su “sí”), nombre de “Volver a mí”, actividades a la papelera. De la etapa C: qué ítems (C1–C5 en `BACKLOG.md`) se hacen y cuáles se archivan.
+Están en `HANDOFF.md` §4: motion por defecto con “reducir movimiento”, canciones con metadatos, bloqueo con PIN local, reescribir historia de git (no sin su “sí”), nombre de “Volver a mí”, actividades a la papelera. Y NB4: si abrir una copia con la nube prendida tiene que reemplazar también lo de la nube.

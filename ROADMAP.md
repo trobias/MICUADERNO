@@ -1,6 +1,6 @@
 # MI CUADERNO — Roadmap
 
-Estado al 05/10/2026: **la etapa A del plan nuevo está completa** (A0–A13) y la base de la nube está publicada (`https://micuaderno-five.vercel.app`, Nicole ya tiene su cuenta) con cuadernos compartidos (D38). **Lo próximo: fotos, dibujos y adjuntos en la nube** (NB1, D40). Lo que falta de B y lo que hay en C están en `BACKLOG.md` (secciones NB y C) y en [`docs/EVALUACION_BC.md`](docs/EVALUACION_BC.md); el orden y los criterios, en [`MIGRATION_PLAN.md`](MIGRATION_PLAN.md). La tabla de fases históricas más abajo conserva la visión anterior como referencia de ideas: **no es el orden de implementación actual**. Lo visible hoy está en `SPEC.md` y lo entregado por commit, en `CHANGELOG.md`.
+Estado al 05/10/2026: **la etapa A del plan nuevo está completa** (A0–A13) y la base de la nube está publicada (`https://micuaderno-five.vercel.app`, Nicole ya tiene su cuenta) con cuadernos compartidos (D38). **Lo próximo: fotos, dibujos y adjuntos en la nube** (NB1, D40). Lo que falta de la nube está en `BACKLOG.md` (sección NB); la etapa C (React) quedó descartada (D42) y en [`docs/EVALUACION_BC.md`](docs/EVALUACION_BC.md); el orden y los criterios, en [`MIGRATION_PLAN.md`](MIGRATION_PLAN.md). La tabla de fases históricas más abajo conserva la visión anterior como referencia de ideas: **no es el orden de implementación actual**. Lo visible hoy está en `SPEC.md` y lo entregado por commit, en `CHANGELOG.md`.
 
 ## Ruta aprobada ahora
 
@@ -22,7 +22,8 @@ Estado al 05/10/2026: **la etapa A del plan nuevo está completa** (A0–A13) y 
 | **NB1 · fotos, dibujos y adjuntos en la nube** | **Siguiente** | Storage privado por persona, firmado desde el servidor, con permiso por la sección `fotos` (D40). |
 | NB2–NB5 · cola firme, historial de migraciones, restaurar con nube, avisos más seguido | Después de NB1 | `BACKLOG.md` sección NB. |
 | Pruebas con la psicóloga y en el celular; segundo proyecto de Supabase | **Descartado por la dueña** (D40) | No se proponen. |
-| C · React y escenas 2.0 | Esperando a la dueña | C1–C5 en `BACKLOG.md` sección C; recomendación: solo C1 y C5 cuando hagan falta. |
+| Entrar eligiendo a la persona + instalar + avisos | Hecho (05/10) | D41. |
+| C · React y escenas 2.0 | **Descartado para siempre** (D42) | El cuaderno sigue sin framework. |
 
 Cada paso exige `npm run check`, revisión visual y documentación del cambio. La verificación en Firefox/Safari/dispositivos reales sigue pendiente; no sustituye la suite Chromium. Publicar en GitHub Pages (V7) deja de ser un objetivo porque la migración de nube aprobada usa Vercel.
 
@@ -111,4 +112,4 @@ Referencias comunes en vez de copias (VISION §3).
 
 ## Próximo paso
 
-**NB1: fotos, dibujos y adjuntos en la nube** (`BACKLOG.md` sección NB, D40). Después, NB2–NB5. Las fases 2–10 de arriba son la reserva de ideas para cuando la dueña pida algo nuevo; la etapa C espera su elección (sección C del backlog).
+**NB1: fotos, dibujos y adjuntos en la nube** (`BACKLOG.md` sección NB, D40). Después, NB2–NB5. Las fases 2–10 de arriba son la reserva de ideas para cuando la dueña pida algo nuevo. Nunca React (D42).

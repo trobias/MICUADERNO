@@ -17,3 +17,11 @@ export function useNote() {
   const view = note ? <p className="note" data-kind={note.kind} role={note.kind === 'problem' ? 'alert' : 'status'}>{note.text}</p> : null;
   return { view, ok: (text: string) => setNote({ text, kind: 'ok' }), problem: (text: string) => setNote({ text, kind: 'problem' }), clear: () => setNote(null) };
 }
+
+/** Clave VAPID (base64url) → bytes para `pushManager.subscribe`. */
+export function b64ToBytes(b64: string): Uint8Array<ArrayBuffer> {
+  const s = atob(b64.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((b64.length + 3) % 4));
+  const out = new Uint8Array(new ArrayBuffer(s.length));
+  for (let i = 0; i < s.length; i++) out[i] = s.charCodeAt(i);
+  return out;
+}

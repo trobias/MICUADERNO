@@ -1,6 +1,6 @@
 # AGENTS.md — MI CUADERNO
 
-Leé esto primero. Si venís sin contexto de conversaciones anteriores, seguí con **`HANDOFF.md`** (estado real y cómo retomar), **`MIGRATION_PLAN.md`** (plan A→B→C; la etapa A está completa) y **`docs/EVALUACION_BC.md`** (qué falta de la nube y si conviene C). Después `SPEC.md` (qué hace hoy), `DESIGN.md` (cómo se ve y se mueve) y `DATA_MODEL.md` (qué se guarda). Hacia dónde va: `VISION.md` (referencia, no implementación literal). Lo que falta: `ROADMAP.md` y `BACKLOG.md`. Recién ahí abrí el código relevante. Los encabezados antiguos de esos documentos pueden describir ideas históricas; la ruta vigente es `MIGRATION_PLAN.md`.
+Leé esto primero. Si venís sin contexto de conversaciones anteriores, seguí con **`HANDOFF.md`** (estado real y cómo retomar), **`MIGRATION_PLAN.md`** (la etapa A está completa; la C, descartada: nunca React, D42) y **`docs/EVALUACION_BC.md`** (qué falta de la nube). Después `SPEC.md` (qué hace hoy), `DESIGN.md` (cómo se ve y se mueve) y `DATA_MODEL.md` (qué se guarda). Hacia dónde va: `VISION.md` (referencia, no implementación literal). Lo que falta: `ROADMAP.md` y `BACKLOG.md`. Recién ahí abrí el código relevante. Los encabezados antiguos de esos documentos pueden describir ideas históricas; la ruta vigente es `MIGRATION_PLAN.md`.
 
 ## Qué es
 
@@ -33,7 +33,7 @@ Un diario personal digital con forma de **cuaderno de tela bordado**: emociones 
 
 ## Stack
 
-HTML + CSS + **JavaScript clásico** (sin `type="module"`: los módulos no cargan en `file://`). Sin framework, sin build. Todo cuelga de un namespace global `window.MC`.
+HTML + CSS + **JavaScript clásico** (sin `type="module"`: los módulos no cargan en `file://`). Sin framework, sin build. Todo cuelga de un namespace global `window.MC`. **Nunca React** ni otro framework para el cuaderno (D42); Next.js solo sirve la nube.
 
 ## Estructura
 
@@ -84,12 +84,12 @@ assets/fonts/           woff2 autoalojadas
 assets/icons/           favicon, iconos PWA, notificación (generados por tools/make-icons.mjs)
 tests/unit/             node:test sobre js/core
 tests/e2e/              Playwright
-app/ lib/ proxy.ts      nube (Next.js 16): /entrar, /preparar, /cuenta, /api; sesión, PIN, personas, avisos
+app/ lib/ proxy.ts      nube (Next.js 16): /entrar (elegir persona + PIN + instalar + avisos, D41), /preparar, /cuenta, /api; sesión, PIN, personas, avisos
 next.config.ts          CSP y cabeceras; `/` → index.html copiado a public/ (generado, no editar)
 vercel.json             cron diarios: latido anti-pausa de Supabase y avisos
 supabase/migrations/    esquema y RLS de la nube
 docs/QA.md              QA cruzada (A12): matriz de navegación, auditorías y lo que no se probó
-docs/EVALUACION_BC.md   qué falta de la nube (B) y recomendación sobre React/escenas (C)
+docs/EVALUACION_BC.md   qué falta de la nube (B); la etapa C quedó descartada (D42)
 docs/NUBE.md            puesta en marcha, variables, MCP de Supabase y de Vercel (dos cuentas), red del entorno
 tests/cloud/            PIN, plan de avisos, RLS en Postgres 16 real, humo de next start
 tools/                  copy-notebook.mjs (cuaderno → public/), serve.mjs, make-icons.mjs, build-fonts.mjs, dist.mjs, check.mjs, shot.mjs (captura para QA)
@@ -120,7 +120,7 @@ skills/                 colección de skills del proyecto (no es parte de la app
 
 - Solo `transform`/`opacity` (y `stroke-dashoffset` para bordar). Easing `--ease-out`. UI ≤ 300ms salvo rituales raros (tapa).
 - Respetar `html[data-motion]` (completas/suaves/reducidas/ninguna). El default es **Completas** para todas las personas (D23, pedido de la dueña); quien elige menos en Ajustes, lo tiene.
-- Escenas solo vía `MC.scenes` (respeta frecuencia, foco, tecleo, `document.hidden`). A10 ajustará frecuencia y escenas; C podrá añadir Motion/Three.js con fallback si aporta al cuaderno.
+- Escenas solo vía `MC.scenes` (respeta frecuencia, foco, tecleo, `document.hidden`), con SVG + Web Animations. Nada de Motion/Three.js ni React (D42).
 
 ## Almacenamiento y privacidad
 

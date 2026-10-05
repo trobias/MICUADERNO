@@ -74,11 +74,9 @@ A12: matriz E2E de pasar entre todas las secciones y **volver al calendario** (�
 
 Verificar versiones vigentes y documentación oficial de Next.js, Supabase y Vercel al continuar B; las versiones fijadas en el plan de 03/10/2026 pueden haber cambiado. No instalar paquetes globales ni `latest` mutable. La base B1–B4 y B6 está implementada en local (D37), con migración SQL versionada; `docs/NUBE.md` registra el acceso comprobado y lo que falta para autenticar Supabase, aplicar la migración y verificar un despliegue nuevo. B5 y la entrega B7–B8 siguen pendientes.
 
-## Etapa C · React y escenas 2.0
+## Etapa C · descartada (D42)
 
-**Evaluación (05/10/2026):** se recomienda **no** reescribir las vistas ahora; ver [`docs/EVALUACION_BC.md`](docs/EVALUACION_BC.md) §2 (una “C chica”: compartir `js/core` con el servidor e islas React solo para vistas nuevas muy interactivas). Lo de abajo queda como plan si la dueña decide hacerla.
-
-Convertir lógica `js/core` en módulos compartidos; mantener paridad de test. Montar vistas React una por una en el shell existente: Ajustes → Año → Mis hojas → Semana/Mes → Día → scrapbook/dibujo; borrar la vista vieja solo cuando la nueva pasa sus recorridos. Al final migrar el shell. Motion/Three.js solo para interacciones justificadas por el cuaderno, cargadas a demanda, con fallback sin WebGL, limpieza de recursos y pausa al salir; las referencias de componentes del pedido son inspiración, no material para copiar tal cual.
+La dueña decidió el 05/10/2026: **nunca React**. El cuaderno queda en HTML + CSS + JavaScript clásico; Next.js solo sirve la nube. No hay etapa C. Lo que sigue es la sección NB de `BACKLOG.md`.
 
 ## Regla por entrega y evidencia
 

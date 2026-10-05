@@ -8,6 +8,17 @@ Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantien
 - `.mcp.json` ya está en la rama. La dueña habilitó los dos MCP en su entorno web de Claude Code; el estado de `claude mcp list` en una instalación local distinta no verifica ese entorno.
 - `docs/NUBE.md` registra la verificación de red, los entornos y lo que falta para aplicar la migración SQL existente. Ningún secreto se agregó a Git.
 
+## 2026-10-05 · Entrar eligiendo a la persona; nunca React
+
+**Para quien lo usa**
+- En la entrada de la nube ya no hace falta escribir el usuario: aparece la lista de personas del cuaderno, se toca la propia y se escribe el PIN. El dispositivo recuerda a quién eligió la última vez.
+- Ahí mismo: **Instalar app** (si el navegador lo ofrece; en iPhone dice cómo agregarlo a inicio) y **Activar notificaciones**, que al entrar dejan ese dispositivo con los avisos de la mañana y la noche.
+
+**Para quien lo mantiene**
+- `app/entrar/page.tsx` arma la lista en el servidor (`profiles` habilitados, con `connection()`); `app/entrar/login.tsx` con radiogroup accesible, `beforeinstallprompt`, suscripción push guardada al entrar. `b64ToBytes` pasa a `app/form.tsx`. D41.
+- La etapa C (React, islas, Three.js) queda **descartada para siempre** (D42). Docs al día.
+- Pruebas: typecheck, build y `e2e:cloud` 3/3; la lista se revisó con una Supabase simulada local (`docs/NUBE.md`).
+
 ## 2026-10-05 · Lo próximo y lo descartado (docs)
 
 - Decisiones de la dueña (D40): nunca la prueba con la psicóloga ni en el celular, nunca un segundo proyecto de Supabase. Lo próximo del roadmap: **fotos, dibujos y adjuntos en la nube** (NB1).
