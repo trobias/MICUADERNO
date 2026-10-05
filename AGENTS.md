@@ -52,6 +52,7 @@ js/core/ns.js           namespace, utilidades DOM (h, $, on), ids, debounce
 js/cloud.js             cuentas de la nube: solo con <meta name="mc-cloud">; base y preferencias por persona (D37)
 js/core/sections.js     mapa campo → sección para permisos (única fuente; test contra la migración)
 js/core/dates.js        fechas locales AAAA-MM-DD, nombres en español
+js/core/brush.js        pinceles (A11): balde con tolerancia, presión, semilla, estabilizador (puro)
 js/core/theme.js        motor de temas (A9): presets, derivar tokens, contraste AA (puro)
 js/core/templates.js    plantillas de fábrica de las hojas (bloques), instanciar y clonar estructura (A7)
 js/core/routes.js       rutas #/…: armar (MC.routes.day(fecha)…) y leer (parse); única fuente

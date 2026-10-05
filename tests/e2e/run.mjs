@@ -979,6 +979,64 @@ await test('A10: escenas más seguido, todas en el margen, se cortan al escribir
   await context.close();
 });
 
+await test('A11: balde acotado, plumilla con presión, aerógrafo con semilla; deshacer y reabrir sin perder nada', async () => {
+  const { page, errors, context } = await newPage(browser);
+  await page.goto(FILE_URL);
+  await onboard(page);
+  await page.click('#panel .sticker-tools button:has-text("Pegar un sticker")');
+  await page.click('dialog.sheet button:has-text("Dibujar uno")');
+  await page.waitForSelector('dialog.sheet--draw canvas');
+  const box = await page.locator('dialog.sheet--draw canvas').boundingBox();
+  const P = (fx, fy) => [box.x + box.width * fx, box.y + box.height * fy];
+  async function stroke(points) {
+    await page.mouse.move(...P(...points[0]));
+    await page.mouse.down();
+    for (const pt of points.slice(1)) await page.mouse.move(...P(...pt), { steps: 6 });
+    await page.mouse.up();
+  }
+  // Un cuadrado cerrado con el técnico (grueso, para que no queden huecos).
+  await page.click('dialog.sheet--draw .draw__widths .draw__opt >> nth=2');
+  await stroke([[0.3, 0.3], [0.7, 0.3], [0.7, 0.7], [0.3, 0.7], [0.3, 0.3]]);
+  // Balde adentro, con otro color.
+  await page.click('dialog.sheet--draw .draw__colors .draw__opt >> nth=3');
+  await page.click('dialog.sheet--draw .draw__opt[aria-label^="Balde"]');
+  await page.mouse.click(...P(0.5, 0.5));
+  const pixel = (fx, fy) => page.evaluate(([fx, fy]) => { const cv = document.querySelector('dialog.sheet--draw canvas'); return Array.from(cv.getContext('2d').getImageData(Math.round(cv.width * fx), Math.round(cv.height * fy), 1, 1).data); }, [fx, fy]);
+  const inside = await pixel(0.5, 0.5);
+  assert.equal(inside[3], 255, 'adentro quedó pintado');
+  assert.equal((await pixel(0.1, 0.1))[3], 0, 'afuera, no: el balde respeta el contorno');
+  // Deshacer el relleno y rehacerlo.
+  await page.click('dialog.sheet--draw button[aria-label="Deshacer Rellenar"]');
+  assert.equal((await pixel(0.5, 0.5))[3], 0);
+  await page.click('dialog.sheet--draw button[aria-label^="Rehacer"]');
+  assert.equal((await pixel(0.5, 0.5))[3], 255);
+  // Plumilla (guarda presión) y aerógrafo (guarda semilla).
+  await page.click('dialog.sheet--draw .draw__opt[aria-label^="Plumilla"]');
+  await stroke([[0.1, 0.85], [0.4, 0.9], [0.8, 0.85]]);
+  await page.click('dialog.sheet--draw .draw__opt[aria-label="Aerógrafo"]');
+  await stroke([[0.1, 0.15], [0.3, 0.12]]);
+  await page.click('dialog.sheet--draw .draw__opt[aria-label="Grafito"]');
+  await stroke([[0.8, 0.1], [0.9, 0.2]]);
+  await page.fill('#draw-name', 'Cuadrito de Nicole');
+  await page.click('dialog.sheet--draw button:has-text("Pegar en la hoja")');
+  await page.waitForFunction(() => !document.querySelector('dialog.sheet--draw'));
+  const saved = await page.evaluate(() => MC.model.images().find((i) => i.name === 'Cuadrito de Nicole'));
+  const tools = saved.drawing.strokes.map((s) => s.tool);
+  assert.deepEqual(tools, ['technical', 'fill', 'nib', 'airbrush', 'graphite']);
+  const nib = saved.drawing.strokes[2];
+  assert.equal(nib.pressure.length, nib.points.length);
+  assert.ok(Number.isInteger(saved.drawing.strokes[3].seed));
+  // La imagen recortada incluye el relleno (no solo los trazos).
+  assert.ok(saved.w > 200 && saved.h > 200);
+  // Reabrir para editar: el relleno sigue ahí.
+  await page.evaluate((id) => { MC.draw.open({ image: MC.model.imageById(id) }); }, saved.id);
+  await page.waitForSelector('dialog.sheet--draw canvas');
+  await page.waitForTimeout(100);
+  assert.equal((await pixel(0.5, 0.5))[3], 255);
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
 await test('dibujar, subir imágenes como stickers y adjuntar archivos', async () => {
   const { page, errors, context } = await newPage(browser);
   await page.goto(FILE_URL);

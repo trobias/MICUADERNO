@@ -8,6 +8,16 @@ Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantien
 - `.mcp.json` ya está en la rama. La dueña habilitó los dos MCP en su entorno web de Claude Code; el estado de `claude mcp list` en una instalación local distinta no verifica ese entorno.
 - `docs/NUBE.md` registra la verificación de red, los entornos y lo que falta para aplicar la migración SQL existente. Ningún secreto se agregó a Git.
 
+## 2026-10-05 · A11: balde y tipos de trazo (cache `v34`)
+
+**Para quien lo usa**
+- La hojita de dibujo suma herramientas: **plumilla** (más finita si vas rápido o apretás menos), **grafito**, **resaltador**, **aerógrafo** y **balde** para rellenar una zona cerrada. El lápiz de siempre ahora se llama *Técnico*.
+- Todo se deshace y se rehace, y al volver a abrir un dibujo para editarlo está igual que como lo dejaste, rellenos incluidos.
+
+**Para quien lo mantiene**
+- `js/core/brush.js` (`MC.brush`: `floodFill` scanline con tolerancia, `random` con semilla, `smooth`, `pressureFrom`, `widthAt`, `sprayDots`, `graphiteStrands`). `draw.js` pinta por herramienta, guarda presión/semilla, recorta por alfa y repinta en vivo solo el trazo nuevo. Íconos nuevos `nib`, `graphite`, `marker`, `spray`, `bucket`, `eraser`.
+- Pruebas: 121 unit (`brush-a11.test.js`), 52/52 E2E (recorrido A11: balde acotado, deshacer, presión, semilla, reabrir).
+
 ## 2026-10-05 · A10: escenas más seguido (cache `v33`)
 
 **Para quien lo usa**

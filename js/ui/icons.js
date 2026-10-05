@@ -48,6 +48,13 @@
     grow: '<path d="M12 5v14M5 12h14"/><circle cx="12" cy="12" r="9"/>',
     shrink: '<path d="M5 12h14"/><circle cx="12" cy="12" r="9"/>',
     text: '<path d="M5 6.5h14M12 6.5V19M9 19h6"/>',
+    // Herramientas de dibujo (A11)
+    nib: '<path d="M12 3.5l5.5 7-5.5 10-5.5-10z"/><path d="M12 13.2v7.3"/><circle cx="12" cy="11.2" r="1.3"/>',
+    graphite: '<path d="M5 19l2.2-.6L18.6 7a1.8 1.8 0 0 0-2.6-2.6L4.6 15.8z"/><path d="M5 19l.6-2.2M14.6 5.8l2.6 2.6"/><path d="M8.5 20.5h10" stroke-dasharray="1.5 2.5"/>',
+    marker: '<path d="M7 15.5l8.8-8.8 3 3-8.8 8.8H7z"/><path d="M14.2 8.3l3 3"/><path d="M4 21h9" stroke-width="3" opacity=".45"/>',
+    spray: '<rect x="8.5" y="9" width="7" height="11.5" rx="1.6"/><path d="M10 9V6.5h4V9M12 6.5V4.5h3"/><path d="M18.5 3.5h.01M20.5 5.5h.01M18.5 6.8h.01M20.8 2.8h.01" stroke-width="2.2"/>',
+    bucket: '<path d="M4.5 11l6.6-6.6 7.5 7.5-6.6 6.6a2 2 0 0 1-2.8 0L4.5 13.8a2 2 0 0 1 0-2.8z"/><path d="M8 7.5L5.6 5.1"/><path d="M4.8 12h13.6"/><path d="M20 15.5c.9 1.3 1.4 2.2 1.4 3a1.4 1.4 0 0 1-2.8 0c0-.8.5-1.7 1.4-3z"/>',
+    eraser: '<path d="M8.5 19.5h11"/><path d="M4.6 14.6l9-9a2 2 0 0 1 2.8 0l2.9 2.9a2 2 0 0 1 0 2.8l-7.8 7.8H8.4l-3.8-3.8a1.2 1.2 0 0 1 0-1.7z"/><path d="M9 10.3l5.6 5.6"/>',
     list: '<path d="M9.5 7h10M9.5 12h10M9.5 17h10"/><path d="M5 7h.01M5 12h.01M5 17h.01" stroke-width="2.6"/>',
     cup: '<path d="M5 9.5h11v4.5a5 5 0 0 1-5 5h-1a5 5 0 0 1-5-5z"/><path d="M16 11h1.5a2.3 2.3 0 0 1 0 4.6H16"/><path d="M8.5 3.5c-.8 1 .8 2 0 3M12 3.5c-.8 1 .8 2 0 3"/>',
     energy1: '<rect x="7" y="4" width="10" height="17" rx="2.5"/><path d="M9.5 17.5h5"/>',

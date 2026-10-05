@@ -5,7 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const ROOT = path.join(__dirname, '..', '..');
-const CORE = ['ns', 'dates', 'routes', 'recurrence', 'store', 'theme', 'templates', 'model', 'backup', 'zip', 'exporters', 'insights'];
+const CORE = ['ns', 'dates', 'routes', 'recurrence', 'store', 'theme', 'brush', 'templates', 'model', 'backup', 'zip', 'exporters', 'insights'];
 
 function load() {
   if (globalThis.MC && globalThis.MC.__loaded) return globalThis.MC;

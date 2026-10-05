@@ -25,7 +25,8 @@ La referencia visual de la segunda imagen era una paleta pastel (`#F2CFD7`, `#D6
 | A8 · Mi año | Hecho | `MC.insights.period/byMonth/victories`, victorias con `marks` de id fijo desde actividad y hoja, gráfico SVG + tabla. Cache v31. |
 | A9 · Colores propios | Hecho | `MC.theme` + `MC.themeUI`, presets por familia, editor con contraste AA, alto contraste/colores forzados ganan. Cache v32. |
 | A10 · Escenas | Hecho | `MC.scenes.delay` (12–25 s; 1–2,5 min; 3–5 min), flor/esquina/bordado/lluvia. Cache v33. |
-| A11–A13 | Pendiente | Orden y criterios debajo. |
+| A11 · Dibujo | Hecho | `MC.brush` + `draw.js`: balde con tolerancia, presión, semilla, estabilizador, recorte por alfa. Cache v34. |
+| A12–A13 | Pendiente | Orden y criterios debajo. |
 
 ### A5 · Menos marcadores y Mis hojas inicial
 

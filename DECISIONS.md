@@ -164,7 +164,7 @@ Registro breve de decisiones de arquitectura y producto. Formato: contexto → d
 ## D32 · Dibujo con herramientas (2026-10-04)
 **Contexto:** la dueña pidió balde de pintura y tipos de trazo (pluma con presión, aerógrafo, estabilizador, grafito, técnico…).
 **Decisión:** un núcleo puro de pinceles (`js/core/brush.js`: suavizado, presión, relleno por inundación con tolerancia, aerógrafo con semilla). Los dibujos siguen re-editables: cada trazo guarda `tool`, `pressure[]` y `seed`, y cada relleno es un paso `{ tool: 'fill', x, y, color, tolerance }` en la misma lista ordenada. La pintura raster (acuarela, carboncillo, óleo seco, mezclador, difumino) queda experimental en el backlog.
-**Consecuencias:** los dibujos viejos son “trazo técnico”. Estado: contrato; se implementa en el paso A11.
+**Consecuencias:** los dibujos viejos son “trazo técnico”. Estado: **implementado en A11** (05/10): técnico, plumilla con presión (o velocidad), grafito con hebras por semilla, resaltador, aerógrafo con semilla y balde con tolerancia 40; estabilizador suave al soltar; recorte por píxeles pintados. Mientras se dibuja, lo anterior queda en una foto y solo se repinta el trazo nuevo (el balde es caro). Mezclador, óleo, acuarela y difumino siguen experimentales.
 
 ## D33 · Escenas más seguido (2026-10-04)
 **Contexto:** la dueña pidió que las escenas ocasionales aparezcan “bastante más” (y, más adelante, más ricas con Motion/Three.js).
