@@ -19,7 +19,7 @@ La etapa A está completa (A0–A13). Este documento dice qué hay de la nube (B
 
 - **Descartado por la dueña:** la prueba guiada con la psicóloga, la prueba en el celular y un segundo proyecto de Supabase para las Preview. No volver a proponerlos.
 1. **Hecho (06/10, D43): fotos, dibujos y adjuntos en la nube** (NB1). Hoy una foto queda solo en el dispositivo donde se subió y quien mira el cuaderno compartido no la ve. Bucket privado por persona, subida y descarga firmadas desde el servidor, la misma RLS por sección (`fotos`), papelera y copia `.json` sin cambios. *Mediano; entra en el plan gratis mientras no pase de 1 GB.*
-2. **Cola de salida más firme** (NB2): la cola en un store de IndexedDB en la misma transacción que el cambio y Web Locks para que sincronice una sola pestaña. *Chico/mediano.*
+2. **Hecho (06/10, D44): cola de salida más firme** (NB2): la cola en un store de IndexedDB en la misma transacción que el cambio y Web Locks para que sincronice una sola pestaña. *Chico/mediano.*
 3. **Hecho (06/10): historial de migraciones** (NB3): ya estaban registradas; se sumó la del bucket.
 
 ## 2. Etapa C · descartada (D42)

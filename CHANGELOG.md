@@ -8,6 +8,15 @@ Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantien
 - `.mcp.json` ya está en la rama. La dueña habilitó los dos MCP en su entorno web de Claude Code; el estado de `claude mcp list` en una instalación local distinta no verifica ese entorno.
 - `docs/NUBE.md` registra la verificación de red, los entornos y lo que falta para aplicar la migración SQL existente. Ningún secreto se agregó a Git.
 
+## 2026-10-06 · NB2: cola de salida firme (cache `v38`)
+
+**Para quien lo usa**
+- Si el navegador se cierra justo después de escribir, lo escrito igual sube a la nube la próxima vez que se abre. Con varias pestañas abiertas, sincroniza una sola por vez.
+
+**Para quien lo mantiene**
+- IndexedDB 5: store interno `outbox` (`INTERNAL_STORES`), escrito en la misma transacción que el cambio (`store.put/del` con tercer argumento); `store.queueAll/queuePut/queueDone`. `js/sync.js` lee la cola de ahí, saca solo lo que se mandó sin cambios, migra la cola vieja de `localStorage` y usa `navigator.locks` para el cuaderno propio. D44.
+- Pruebas: 130 unit, 56/56 E2E (“nube (NB2)”), `test:cloud` 22/22.
+
 ## 2026-10-06 · NB1: fotos, dibujos y adjuntos en la nube (cache `v37`)
 
 **Para quien lo usa**
