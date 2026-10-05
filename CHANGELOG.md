@@ -8,6 +8,10 @@ Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantien
 - `.mcp.json` ya está en la rama. La dueña habilitó los dos MCP en su entorno web de Claude Code; el estado de `claude mcp list` en una instalación local distinta no verifica ese entorno.
 - `docs/NUBE.md` registra la verificación de red, los entornos y lo que falta para aplicar la migración SQL existente. Ningún secreto se agregó a Git.
 
+## 2026-10-06 · Quien mira: lo no compartido no se abre (cache `v43`)
+
+- En el cuaderno de otra persona, lo que no te compartieron ni se abre: aparece “Esta parte no está compartida”. Lo que es solo para ver se abre sin poder tocar nada (campos de solo lectura, botones apagados) y cada parte dice “solo para mirar”. También en la semana del fondo. `MC.access`, D51.
+
 ## 2026-10-06 · Cerrar sesión desde el cuaderno (cache `v42`)
 
 - Ajustes → Mi cuenta tiene **Cerrar sesión en este dispositivo** (antes había que ir a Mi cuenta). Quien mira el cuaderno de otra persona también lo tiene en el cartelito de arriba (“Cuaderno de Nicole · … · Cerrar sesión”), visible desde el calendario. Antes de salir sube lo pendiente. `MC.cloud.logout()`.

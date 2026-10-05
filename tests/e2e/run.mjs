@@ -2314,9 +2314,13 @@ await test('nube: la psicóloga abre el cuaderno de Nicole, edita lo permitido y
   // Sin copia local del cuaderno de Nicole.
   const dbs = await page.evaluate(async () => (await indexedDB.databases()).map((d) => d.name));
   assert.ok(!dbs.some((n) => /^mi-cuaderno/.test(n)), JSON.stringify(dbs));
-  // Cambiar notas (solo puede mirar escritura): se intenta, el servidor no lo guarda y se le avisa.
-  await page.fill('#notes', 'intento de la psicóloga');
-  await page.waitForTimeout(400);
+  // D51: escritura es solo para mirar → las notas no se pueden tocar y lo dice; emociones (editar) sí.
+  assert.equal(await page.evaluate(() => document.getElementById('notes').readOnly), true);
+  assert.match(await page.textContent('#q-notes'), /solo para mirar/);
+  assert.equal(await page.evaluate(() => document.querySelector('.section--mood .feelings__input').readOnly), false);
+  assert.equal(await page.evaluate(() => !!document.getElementById('q-list').closest('.is-lookonly')), true, 'actividades, solo para mirar');
+  // Si igual llega un cambio de escritura (otra pestaña, una versión vieja), el servidor no lo guarda y se le avisa.
+  await page.evaluate(async (k) => { const d = await MC.model.getDay(k); d.notes = 'intento de la psicóloga'; await MC.model.saveDay(d); }, TODAY);
   await page.evaluate(() => MC.sync.flush());
   await page.waitForSelector('.toast:not([hidden])', { timeout: 6000 });
   assert.match(await page.textContent('.toast'), /Este cuaderno es de Nicole: esta parte la podés mirar, pero no cambiar/);
@@ -2325,11 +2329,22 @@ await test('nube: la psicóloga abre el cuaderno de Nicole, edita lo permitido y
   // Algo de una sección sin ningún permiso de edición (rutinas) ni siquiera se escribe en memoria.
   const blocked = await page.evaluate(() => MC.store.put('routines', { id: 'rut_x', title: 'x', rule: { type: 'daily' } }).then(() => 'ok', (e) => e.code));
   assert.equal(blocked, 'MC_READONLY');
+  // Lo no compartido (hojas, repeticiones, ajustes) ni se abre: un cartel lo dice. En Ajustes, igual puede salir.
+  await page.evaluate(() => { location.hash = MC.routes.sheets(); });
+  await page.waitForSelector('.access-blocked');
+  assert.match(await page.textContent('.access-blocked'), /no está compartida/);
+  assert.equal(await page.locator('.index-page').count(), 0);
+  await page.evaluate(() => { location.hash = MC.routes.settings(); });
+  await page.waitForSelector('.access-blocked button:has-text("Cerrar sesión")');
   // Cerrar sesión desde el cartelito: avisa al servidor y vuelve al ingreso.
   let loggedOut = false;
   await context.route('**/api/auth/logout', (route) => { loggedOut = true; return route.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":true}' }); });
   await page.click('#panel-close');
   await page.waitForFunction(() => !document.getElementById('panel').open);
+  // La semana de fondo: sin permiso de Semana, Importante y Notas no se muestran; actividades solo para mirar.
+  await page.waitForSelector('.planner');
+  assert.equal(await page.evaluate(() => [...document.querySelectorAll('.planner__cell--important, .planner__cell--notes')].every((el) => el.hidden)), true);
+  assert.equal(await page.evaluate(() => [...document.querySelectorAll('.week-day .add-activity input')].every((el) => el.readOnly)), true);
   await page.click('.guest-note__out');
   await page.waitForURL(/\/entrar$/, { timeout: 4000 });
   assert.ok(loggedOut, 'se cerró la sesión en el servidor');

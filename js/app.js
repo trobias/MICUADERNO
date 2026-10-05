@@ -260,7 +260,15 @@
     MC.c.closeMenu(false);
     var render = function () {
       MC.clear(panelBody);
-      panel = { route: route, instance: view.render(panelBody, route.params) || null };
+      // Cuaderno de otra persona (D51): lo no compartido no se abre; lo que es para ver, sin controles.
+      if (MC.access && MC.access.guest() && !MC.access.viewLevel(route.name)) {
+        panel = { route: route, instance: MC.access.blocked(panelBody, route.name) };
+        return;
+      }
+      var unwatch = MC.access ? MC.access.watch(panelBody) : function () {};
+      var inst = view.render(panelBody, route.params) || null;
+      if (inst && unwatch) { var d = inst.destroy; inst.destroy = function () { unwatch(); if (d) d.apply(inst, arguments); }; }
+      panel = { route: route, instance: inst || { destroy: unwatch } };
     };
     panelEl.setAttribute('aria-label', PANEL_LABEL[route.name] || 'Cuaderno');
     markOpt(route.opt);
@@ -521,6 +529,7 @@
       return MC.model.touchOpen();
     }).then(function (openInfo) {
       MC.on('settings', applySettings);
+      if (MC.access) MC.access.watch(main); // la semana del fondo también respeta los permisos de la invitada (D51)
       MC.on('store:changed', markBaseDirty);
       MC.on('store:remote', function () {
         Promise.all([MC.model.loadSettings(), MC.model.loadImages()]).then(function (r) {

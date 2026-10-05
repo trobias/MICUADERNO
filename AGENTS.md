@@ -67,6 +67,7 @@ js/core/insights.js     “Lo que fui notando”
 js/ui/icons.js          sprite SVG de íconos
 js/ui/stickers.js       arte SVG de stickers + glifos de ánimo
 js/ui/components.js     editor de emociones libres, casilla de punto cruz, diálogos, toasts, askDate, etc.
+js/ui/access.js         permisos de la invitada en pantalla: lo no compartido no se abre, lo de ver sin controles (D51; partes en PARTS)
 js/ui/activity.js       fila de actividad (casilla + menú: estados, antes/después, pasar a otro día, que se repita, renombrar, sacar)
 js/ui/privacy.js        privacidad de un día o una hoja (MC.privacy)
 js/ui/repeat.js         editor de repetición (MC.repeat.editor), con regla anual; lo usan Mis hojas, la actividad y Guardar (A7)

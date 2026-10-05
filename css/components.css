@@ -511,3 +511,10 @@ dialog.sheet.sheet--draw { width: min(760px, calc(100vw - 16px)); max-height: ca
 .sf-satin { fill: var(--st-satin); } .ss-satin { stroke: var(--st-satin); }
 .sf-cloud { fill: var(--st-cloud); } .ss-cloud { stroke: var(--st-cloud); }
 .sf-wax { fill: var(--st-wax); } .ss-wax { stroke: var(--st-wax); }
+
+/* ---------- Cuaderno de otra persona: solo para mirar y lo no compartido (D51) ---------- */
+.is-lookonly button:disabled, .is-lookonly input:disabled, .is-lookonly select:disabled, button.is-lookonly:disabled { opacity: 0.55; cursor: default; }
+.is-lookonly textarea[readonly], .is-lookonly input[readonly] { cursor: default; }
+.is-lookonly .sticker { pointer-events: none; }
+.lookonly-tag { font-family: var(--font-ui); font-size: var(--fs-xs); font-style: normal; font-weight: 400; color: var(--ink-soft); }
+.access-blocked { display: grid; gap: var(--s-3); align-content: start; }

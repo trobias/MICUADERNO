@@ -392,5 +392,8 @@
 
   status.flush = flush;
   status.pull = pull;
+  /** Permiso sobre una sección (D51): la dueña, 'editar'; la invitada, el que le dieron o null. */
+  status.level = function (sec) { return !guest ? 'editar' : ((share && share.sections) || {})[sec] || null; };
+  Object.defineProperty(status, 'share', { get: function () { return share; } });
   status.pending = function () { return count; };
 })(typeof window !== 'undefined' ? window : globalThis);
