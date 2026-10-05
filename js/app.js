@@ -62,8 +62,12 @@
 
   MC.views = MC.views || {};
 
-  /** Lee una ruta (ver js/core/routes.js); “#/calendario” vuelve al mes que se estaba mirando. */
-  function parse(hash) { return R.parse(hash, { calMonth: MC.ui.get('calMonth', null) }); }
+  /* Mes o semana: lo elegido dura la sesión (D27); por defecto, la semana-planner. */
+  function sessGet(k) { try { return root.sessionStorage.getItem('mc.' + k); } catch (e) { return null; } }
+  function sessSet(k, v) { try { root.sessionStorage.setItem('mc.' + k, v); } catch (e) { /* sin sessionStorage: vuelve a la semana */ } }
+
+  /** Lee una ruta (ver js/core/routes.js); “#/calendario” vuelve a lo que se estaba mirando en esta sesión. */
+  function parse(hash) { return R.parse(hash, { calMode: sessGet('calMode'), calMonth: MC.ui.get('calMonth', null), calWeek: sessGet('calWeek') }); }
 
   /* ---------- Marcadores ---------- */
   function buildTabs() {
@@ -100,7 +104,7 @@
   }
 
   function baseKey(params) {
-    return 'cal:' + params.mode + ':' + (params.mode === 'semana' ? params.date : params.month + ':' + (params.routine || ''));
+    return 'cal:' + params.mode + ':' + (params.mode === 'semana' ? D.startOfWeek(params.date) : params.month + ':' + (params.routine || ''));
   }
 
   var shownBase = null;     // el calendario que está en pantalla (puede ir un paso atrás de `base` mientras se dibuja el nuevo)
@@ -127,6 +131,8 @@
     refreshSoon.cancel();
     baseDirty = false;
     if (params.mode === 'mes') MC.ui.set('calMonth', params.month);
+    else sessSet('calWeek', params.date);
+    sessSet('calMode', params.mode);
     followYear(params);
     if (!prev) {
       // Primera vez (o se viene de la bienvenida): directo, sin animación.
@@ -180,6 +186,8 @@
   function refreshBase() {
     refreshSoon.cancel();
     if (!base || !base.params) return Promise.resolve();
+    // La semana se edita en el fondo (D27): mientras se escribe en ella o tiene un menú abierto, se espera.
+    if (base.instance && typeof base.instance.busy === 'function' && base.instance.busy()) { baseDirty = true; refreshSoon(); return Promise.resolve(); }
     baseDirty = false;
     var entry = base;
     var holder = document.createElement('div');
@@ -188,6 +196,7 @@
       if (base !== entry) { destroy({ instance: inst }); return; } // mientras tanto se fue a otro mes
       var focused = main.contains(document.activeElement) ? document.activeElement : null;
       var focusDate = focused && focused.dataset ? focused.dataset.date : null;
+      var focusKey = focused && focused.closest('[data-focus]') ? focused.closest('[data-focus]').dataset.focus : null;
       destroy(entry);
       MC.clear(main);
       while (holder.firstChild) main.appendChild(holder.firstChild);
@@ -195,6 +204,9 @@
       entry.day = D.today();
       shownBase = entry;
       if (!focused) return;
+      // En la semana, el foco vuelve al mismo control (la casilla de esa actividad, el renglón de ese día…).
+      var same = focusKey && main.querySelector('[data-focus="' + focusKey.replace(/"/g, '') + '"]');
+      if (same) { (same.matches('button, a, input, textarea, [tabindex]') ? same : same.querySelector('button, a, input, textarea') || same).focus({ preventScroll: true }); return; }
       // Si la persona estaba recorriendo el mes con el teclado, sigue en el mismo día.
       var again = focusDate && main.querySelector('.day-cell[data-date="' + focusDate + '"]');
       if (again) {
@@ -208,7 +220,9 @@
   function focusMarkedDay() {
     var a = document.activeElement;
     if (a && a !== document.body && a.isConnected && !panelEl.contains(a)) return;
-    var cell = main.querySelector('.day-cell[tabindex="0"]') || main.querySelector('.week-day__head');
+    var marked = MC.ui.get('calSelected', null);
+    var cell = main.querySelector('.day-cell[tabindex="0"]') ||
+      (marked && main.querySelector('.week-day[data-date="' + marked + '"] .week-day__head')) || main.querySelector('.week-day.is-today .week-day__head') || main.querySelector('.week-day__head');
     if (cell) cell.focus({ preventScroll: true });
   }
 
@@ -218,9 +232,13 @@
       if (route.name === 'today' && base.params.mode === 'mes' && D.monthKey(route.params.date) !== base.params.month) {
         return { mode: 'mes', month: D.monthKey(route.params.date) };
       }
+      // En la semana, igual: un día de otra semana deja de fondo esa semana.
+      if (route.name === 'today' && base.params.mode === 'semana' && D.startOfWeek(route.params.date) !== D.startOfWeek(base.params.date)) {
+        return { mode: 'semana', date: route.params.date };
+      }
       return base.params;
     }
-    if (route.name === 'today') return { mode: 'mes', month: D.monthKey(route.params.date) };
+    if (route.name === 'today') return sessGet('calMode') === 'mes' ? { mode: 'mes', month: D.monthKey(route.params.date) } : { mode: 'semana', date: route.params.date };
     return parse(R.calendar()).params;
   }
 
@@ -236,6 +254,7 @@
   /* ---------- Cuadro desplegable ---------- */
   function openPanel(route, dir) {
     var view = MC.views[route.name];
+    if (base && base.instance && base.instance.flush) base.instance.flush(); // lo escrito en la semana se guarda antes de tapar
     var wasOpen = !!panel;
     destroy(panel);
     MC.c.closeMenu(false);
@@ -426,6 +445,7 @@
 
   function flush() {
     if (panel && panel.instance && panel.instance.flush) panel.instance.flush();
+    if (base && base.instance && base.instance.flush) base.instance.flush(); // Importante/Notas de la semana
   }
 
   /**

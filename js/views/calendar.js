@@ -1,4 +1,4 @@
-/* CALENDARIO — mes ilustrado y semana como agenda. Ver SPEC §7.3. */
+/* CALENDARIO — el mes ilustrado; la semana-planner vive en week.js (A6). Ver SPEC §7.3. */
 (function (root) {
   'use strict';
   var MC = root.MC;
@@ -179,71 +179,11 @@
   }
 
   /* ---------- SEMANA ---------- */
-  function renderWeek(main, date) {
-    var start = D.startOfWeek(date);
-    var end = D.addDays(start, 6);
-    var today = D.today();
-    var destroyed = false;
-    var leftPage = h('section.page.week-page');
-    var rightPage = h('section.page.week-page');
-    main.appendChild(h('div.spread', leftPage, h('div.spine', { 'aria-hidden': 'true' }), rightPage));
-
-    var ready = Promise.all([M.getRoutines(), M.daysInRange(start, end), M.getPages()]).then(function (r) {
-      var routines = r[0];
-      var byDay = {};
-      r[1].forEach(function (d) { byDay[d.date] = d; });
-      var pagesByDay = M.summarize([], [], { from: start, to: end, pages: r[2] });
-      return Promise.all(D.range(start, end).map(function (k) { return M.itemsForDay(k, routines); })).then(function (lists) {
-        if (destroyed) return;
-        var sp = D.parse(start), ep = D.parse(end);
-        var title = sp.m === ep.m ? sp.d + ' al ' + ep.d + ' de ' + D.MONTHS[ep.m - 1] : sp.d + ' de ' + D.MONTHS[sp.m - 1] + ' al ' + ep.d + ' de ' + D.MONTHS[ep.m - 1];
-        leftPage.appendChild(h('header.cal-head',
-          h('div.cal-head__title',
-            h('a.icon-btn', { href: R.week(D.addDays(start, -7)), 'aria-label': 'Semana anterior' }, MC.icon('arrow-left')),
-            h('h1.t-display.week-title', 'Semana', h('span.week-title__range', title)),
-            h('a.icon-btn', { href: R.week(D.addDays(start, 7)), 'aria-label': 'Semana siguiente' }, MC.icon('arrow-right'))),
-          h('div.cal-head__tools', (today < start || today > end) ? h('a.text-btn', { href: R.week(today) }, 'Esta semana') : null, modeSwitch('semana', D.monthKey(date), date))));
-        var palette = M.emotionPalette(r[1], M.settings());
-        D.range(start, end).forEach(function (k, i) {
-          (i < 3 ? leftPage : rightPage).appendChild(dayBlock(k, byDay[k], lists[i], today, pagesByDay[k] ? pagesByDay[k].pages : [], palette));
-        });
-        if (!r[1].length && !Object.keys(pagesByDay).length && lists.every(function (l) { return !l.length; })) {
-          leftPage.appendChild(h('p.section__hint.week-empty', 'Tu semana recién empieza.'));
-        }
-      });
-    });
-    return { destroy: function () { destroyed = true; }, ready: ready };
-  }
-
-  function dayBlock(k, day, list, today, pages, palette) {
-    var feelings = day && (M.feelingsOf(day.evening).length ? M.feelingsOf(day.evening) : M.feelingsOf(day.morning));
-    var p = D.parse(k);
-    var head = h('a.week-day__head', { href: R.day(k) },
-      h('span.week-day__name', D.capitalize(D.DAYS[D.weekday(k)])),
-      h('span.week-day__num.t-display', String(p.d)),
-      feelings && feelings.length ? h('span.week-day__feelings', feelings.map(function (word) { return c.feelingMark(word, palette); })) : null);
-    var ul = h('ul.week-day__list');
-    list.slice(0, 7).forEach(function (it) {
-      ul.appendChild(h('li', { dataset: { status: it.status } },
-        c.statusMark(it.status),
-        h('span', it.title),
-        h('span.sr-only', ' — ' + (it.status === 'pending' ? 'sin marcar' : M.STATUS_LABEL[it.status].toLowerCase()))));
-    });
-    if (list.length > 7) ul.appendChild(h('li.t-soft', '+ ' + (list.length - 7) + ' más'));
-    var firstLine = day && (day.notes.trim().split('\n')[0] || day.intention.trim());
-    return h('article.week-day', { class: k === today ? 'is-today' : null },
-      head,
-      list.length ? ul : null,
-      firstLine ? h('p.week-day__line', firstLine.length > 90 ? firstLine.slice(0, 88) + '…' : firstLine) : null,
-      pages.length ? c.pageLinks(pages, 'day-pages--week') : null,
-      !list.length && !firstLine && !pages.length ? h('p.week-day__blank', k < today ? 'en blanco' : '') : null);
-  }
-
   function render(main, params) {
-    if (params.mode === 'semana') return renderWeek(main, params.date || D.today());
+    if (params.mode === 'semana') return MC.views.week.render(main, params); // la semana-planner (A6, week.js)
     return renderMonth(main, params.month || D.monthKey(D.today()), params.routine || null);
   }
 
   MC.views = MC.views || {};
-  MC.views.calendar = { render: render };
+  MC.views.calendar = { render: render, parts: { modeSwitch: modeSwitch, monthsStrip: monthsStrip } };
 })(window);

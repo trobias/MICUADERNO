@@ -6,7 +6,7 @@ const path = require('node:path');
 const { load, ROOT } = require('./_load');
 const MC = load();
 const R = MC.routes;
-const ctx = { today: '2026-10-01', calMonth: '2026-08' };
+const ctx = { today: '2026-10-01', calMode: 'mes', calMonth: '2026-08' };
 
 test('cada ruta armada se lee como la vista que corresponde', () => {
   const cases = [
@@ -47,7 +47,11 @@ test('rutas raras o rotas no rompen nada', () => {
   assert.equal(R.parse('#/cualquiera', ctx), null);
   assert.equal(R.parse('', ctx).name, 'calendar');
   assert.equal(R.parse('#/calendario/mes/2026-1', ctx).params.month, '2026-08', 'mes inválido vuelve al último mirado');
-  assert.equal(R.parse('#/calendario', { today: '2026-10-01' }).params.month, '2026-10', 'sin mes guardado: el de hoy');
+  assert.equal(R.parse('#/calendario', { today: '2026-10-01', calMode: 'mes' }).params.month, '2026-10', 'sin mes guardado: el de hoy');
+  // A6: sin elección en la sesión, el calendario abre la semana de hoy (o la que se miraba).
+  assert.deepEqual(R.parse('#/calendario', { today: '2026-10-01' }).params, { mode: 'semana', date: '2026-10-01' });
+  assert.deepEqual(R.parse('#/calendario', { today: '2026-10-01', calWeek: '2026-09-21' }).params, { mode: 'semana', date: '2026-09-21' });
+  assert.equal(R.parse('#/calendario', { today: '2026-10-01', calWeek: 'basura' }).params.date, '2026-10-01');
   assert.equal(R.parse('#/anio/20x6', ctx).params.year, '2026');
 });
 

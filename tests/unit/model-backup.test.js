@@ -282,3 +282,23 @@ test('backup v3: imágenes y adjuntos van y vuelven; una copia v2 se migra', asy
   assert.equal(old.ok, true);
   assert.deepEqual([old.payload.images, old.payload.files], [[], []]);
 });
+
+test('semana del planner: Importante y Notas por lunes; vacía no se guarda (A6)', async () => {
+  await fresh();
+  const w = await M.getWeek('2026-10-08');
+  assert.equal(w.week, '2026-10-05', 'la clave es el lunes');
+  assert.deepEqual(w.important, []);
+  w.important.push({ id: 'imp_1', text: 'llamar a la abuela', done: false });
+  w.notes = 'semana tranquila';
+  const saved = await M.saveWeek(w);
+  assert.ok(saved.updatedAt);
+  const again = await M.getWeek('2026-10-11');
+  assert.equal(again.notes, 'semana tranquila');
+  assert.equal(again.important[0].text, 'llamar a la abuela');
+  again.important = [{ id: 'imp_1', text: '  ', done: false }];
+  again.notes = '';
+  await M.saveWeek(again);
+  assert.equal(await MC.store.get('weeks', '2026-10-05'), undefined, 'vacía se borra');
+  const all = await M.everything();
+  assert.ok(Array.isArray(all.weeks));
+});

@@ -71,7 +71,7 @@ js/ui/scenes.js         director de escenas ocasionales
 js/ui/scrapbook.js      capa de stickers (arrastrar, rotar, teclado) + Mis stickers (img:<id>)
 js/ui/draw.js           hojita para dibujar (lápiz, goma, texto, colores, deshacer) → imagen propia
 js/ui/images.js         subir imágenes (rasterizadas) y adjuntos de un día/página
-js/views/*.js           cover, onboarding, today, calendar, sheets (Mis hojas), pages (hoja suelta), year, settings, print
+js/views/*.js           cover, onboarding, today, calendar (mes), week (semana-planner), sheets (Mis hojas), pages (hoja suelta), year, settings, print
 js/notify.js            recordatorios locales
 js/pwa.js               registro de SW, instalación, aviso de actualización
 js/app.js               router por hash + arranque: calendario de fondo + cuadro desplegable (dialog #panel) + marcadores
@@ -163,7 +163,7 @@ Probar a mano además: doble clic en `index.html`; mobile 375px; teclado solo; `
 - Antes de dibujar o contar algo, buscá si ya existe (D19): `MC.model.summarize` / `countsAsDone` / `hasWriting` / `feelingsOf` / `emotionPalette` / `pageTitle`, `MC.dates.fromISO`, `MC.c.feelingEditor` / `feelingMark` / `statusMark` / `pageLink(s)`, `MC.stickers.statusMarkup`.
 - Conexiones (D20): una vista nueva se conecta con las demás por las fechas: de cada cosa a sus días y de cada día a sus cosas (SPEC §5.1). Enlaces sobre texto que ya existe, no botones nuevos.
 - Todo lo que tiene fecha tiene que verse en el calendario (DECISIONS D18). Si agregás algo fechado, sumalo en `MC.model.summarize` (con test) y dale marca + texto en la celda y la leyenda de `js/views/calendar.js`. En días pasados, nunca mostrar lo que quedó sin hacer.
-- El calendario de fondo se redibuja solo después de cada cambio guardado (D21): no hace falta avisarle. Una vista del calendario tiene que devolver `{ destroy, ready }` (`ready` = promesa de “ya está dibujado”) para que el cambio sea sin parpadeo.
+- El calendario de fondo se redibuja solo después de cada cambio guardado (D21): no hace falta avisarle. Una vista del calendario tiene que devolver `{ destroy, ready }` (`ready` = promesa de “ya está dibujado”) para que el cambio sea sin parpadeo. La semana (A6, D27) suma `busy()` (mientras se escribe o hay un menú abierto, el redibujo espera) y `flush()` (el router guarda Importante/Notas antes de abrir un cuadro y al ocultar la pestaña); los controles llevan `data-focus` para que el foco vuelva al mismo lugar después de redibujar.
 
 ## Anti-patterns
 

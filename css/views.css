@@ -150,6 +150,45 @@ a.months__year { text-decoration: none; padding: 4px 6px; border-radius: 6px; }
 .week-day__line { font-family: var(--font-text); font-style: italic; color: var(--ink-soft); }
 .week-day__blank { font-family: var(--font-hand); font-size: 1.3rem; color: var(--ink-faint); }
 
+/* ---------- Mi semana: el planner (A6, D27) ----------
+   Una grilla impresa en la hoja, con marcos de puntada corrida (no cards): Importante · Lun · Mar /
+   Mié · Jue · Vie / Sáb · Dom · Notas. Las columnas siguen al ancho de la hoja, no de la pantalla. */
+.planner-page { container-type: inline-size; }
+.planner-page .cal-head { margin-bottom: var(--s-4); }
+.planner-page .months { flex-basis: 100%; }
+.planner { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-3); }
+@container (min-width: 560px) { .planner { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@container (min-width: 900px) { .planner { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.planner__cell {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  padding: var(--s-3) var(--s-3) var(--s-2);
+  border: 1.5px dashed var(--rule-strong);
+  border-radius: var(--radius-note);
+  min-height: 180px;
+}
+.planner .week-day { border-bottom: 1.5px dashed var(--rule-strong); }
+.planner .week-day:last-child { border-bottom: 1.5px dashed var(--rule-strong); }
+.planner__cell.is-today { border-color: var(--rose); border-style: solid; border-width: 1.5px; }
+.planner__title { font-family: var(--font-display); font-weight: 400; font-size: var(--fs-lg); min-height: 44px; display: flex; align-items: center; }
+.planner__checks { display: grid; }
+.planner__check { display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--rule); }
+.planner__line { flex: 1; min-width: 0; border: 0; background: transparent; font-family: var(--font-text); font-size: var(--fs-md); padding: 8px 0; }
+.planner__line::placeholder, .planner__cell--notes .write::placeholder { color: var(--placeholder); font-style: italic; }
+.planner__line:focus-visible { outline: none; }
+.planner__check:focus-within { border-bottom-color: var(--rule-strong); }
+.planner__cell--notes .write { flex: 1; min-height: 140px; background: transparent; }
+.week-day__top { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 10px; }
+.planner .week-day__head { min-height: 44px; }
+.activity-list--compact .activity { min-height: 0; padding-block: 4px; gap: 6px; }
+.activity-list--compact .activity__text { font-size: var(--fs-sm); }
+.add-activity--compact { min-height: 40px; border-bottom-style: dashed; }
+.add-activity--compact input { font-size: var(--fs-sm); padding: 6px 0; }
+.add-activity--compact svg { width: 16px; height: 16px; }
+.planner__foot { display: flex; justify-content: flex-end; margin-top: var(--s-2); min-height: 24px; }
+
 /* ---------- Rutinas ---------- */
 .routine-group + .routine-group { margin-top: var(--s-5); }
 .routine-group__title { font-family: var(--font-text); font-style: italic; font-size: var(--fs-md); color: var(--ink-soft); margin-bottom: var(--s-2); }

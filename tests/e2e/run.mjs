@@ -86,22 +86,22 @@ await test('registrar el día y que persista al recargar (file://)', async () =>
   await onboard(page);
   await addFeeling(page, 'con energía');
   await page.fill('#intention', 'tomar agua');
-  const add = page.locator('.add-activity input');
+  const add = page.locator('#panel .add-activity input');
   for (const t of ['caminar', 'leer', 'ordenar']) { await add.fill(t); await add.press('Enter'); }
-  await page.waitForFunction(() => document.querySelectorAll('.activity').length === 3);
-  await page.locator('.activity .stitch-box').nth(0).click();
-  await page.locator('.activity .icon-btn').nth(1).click();
+  await page.waitForFunction(() => document.querySelectorAll('#panel .activity').length === 3);
+  await page.locator('#panel .activity .stitch-box').nth(0).click();
+  await page.locator('#panel .activity .icon-btn').nth(1).click();
   await page.click('.menu__item:has-text("Hice un poquito")');
-  await page.locator('.activity .icon-btn').nth(2).click();
+  await page.locator('#panel .activity .icon-btn').nth(2).click();
   await page.click('.menu__item:has-text("Hoy no salió")');
   await page.fill('#notes', 'Un día tranquilo.');
   await page.waitForTimeout(800);
   await page.reload();
   await openCover(page);
-  await page.waitForSelector('.activity');
+  await page.waitForSelector('#panel .activity');
   const state = await page.evaluate(() => ({
     feelings: [...document.querySelectorAll('.section--mood .feeling-chip')].map((el) => el.dataset.feeling),
-    statuses: [...document.querySelectorAll('.activity')].map((li) => li.dataset.status),
+    statuses: [...document.querySelectorAll('#panel .activity')].map((li) => li.dataset.status),
     notes: document.querySelector('#notes').value,
     intention: document.querySelector('#intention').value
   }));
@@ -115,7 +115,7 @@ await test('emociones libres en una actividad y colores propios en Ajustes', asy
   await page.goto(FILE_URL);
   await onboard(page);
   await addFeeling(page, 'con ansiedad');
-  const input = page.locator('.add-activity input');
+  const input = page.locator('#panel .add-activity input');
   await input.fill('Caminar'); await input.press('Enter');
   await page.waitForSelector('.activity:has-text("Caminar")');
   await page.locator('.activity .icon-btn').first().click();
@@ -596,6 +596,9 @@ await test('calendario en vivo: se actualiza detrás del cuadro y desde otra pes
   await onboard(page);
   await page.click('#panel-close');
   await page.waitForSelector('#panel:not([open])', { state: 'attached' });
+  // El mes elegido en la sesión (por defecto abre la semana, A6).
+  await goto(page, '#/calendario/mes/' + TODAY.slice(0, 7));
+  await page.waitForSelector('#main .day-cell');
   const cell = (k) => page.locator(`#main .day-cell[data-date="${k}"]`);
   // Abrir hoy con el teclado y registrar el ánimo: el calendario de atrás se entera solo.
   await cell(TODAY).focus();
@@ -684,6 +687,83 @@ await test('A5: cuatro marcadores; Agenda va a la semana; Mis hojas reúne hojas
   assert.match(await page.getAttribute('#panel .page-meta a', 'href'), new RegExp('#/dia/' + later + '$'));
   await goto(page, '#/dia/' + later);
   await page.waitForSelector('#panel .day-pages a');
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+await test('A6: la semana-planner de fondo; anotar y marcar ahí; pasado sin repeticiones sin marcar; Importante y Notas persisten', async () => {
+  const { page, errors, context } = await newPage(browser);
+  await page.goto(FILE_URL);
+  await onboard(page);
+  const add = (k, n) => { const d = new Date(+k.slice(0, 4), +k.slice(5, 7) - 1, +k.slice(8, 10) + n); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+  await page.evaluate(async (k) => {
+    const D = MC.dates;
+    await MC.model.saveRoutine({ title: 'Estirar', rule: { type: 'daily' }, startDate: D.addDays(k, -21) });
+  }, TODAY);
+  await page.click('#panel-close');
+  await page.waitForFunction(() => !document.getElementById('panel').open);
+  // De fondo, la semana: Importante, los siete días y Notas, en ese orden.
+  await page.waitForSelector('#main .planner');
+  const order = await page.$$eval('#main .planner > *', (els) => els.map((e) => e.dataset.date ? 'dia' : e.querySelector('h2').textContent));
+  assert.deepEqual(order, ['Importante', 'dia', 'dia', 'dia', 'dia', 'dia', 'dia', 'dia', 'Notas']);
+  assert.match(await page.textContent('#main h1'), /Mi semana/);
+  // Anotar en el día de hoy desde la semana y marcarlo ahí mismo, sin abrir nada.
+  const todayCell = `#main .week-day[data-date="${TODAY}"]`;
+  await page.fill(`${todayCell} .add-activity input`, 'turno con la dentista');
+  await page.press(`${todayCell} .add-activity input`, 'Enter');
+  await page.waitForSelector(`${todayCell} .activity:has-text("turno con la dentista")`);
+  await page.click(`${todayCell} .activity:has-text("turno con la dentista") .stitch-box`);
+  await page.waitForSelector(`${todayCell} .activity[data-status="done"]:has-text("turno con la dentista")`);
+  assert.equal(await page.evaluate(() => document.getElementById('panel').open), false, 'no se abrió ningún cuadro');
+  // Importante y Notas son de la semana.
+  await page.fill('#main .planner__cell--important input', 'pagar la luz');
+  await page.press('#main .planner__cell--important input', 'Enter');
+  await page.keyboard.type('regalo de cumple');
+  await page.click('#main .planner__check:first-child .stitch-box');
+  await page.click('#week-notes');
+  await page.keyboard.type('semana ');
+  // Un cambio guardado desde otro lado mientras se escribe: no se pierde ni una letra, ni el foco.
+  await page.evaluate((k) => MC.model.addActivity(k, 'algo de otra pestaña'), TODAY);
+  await page.waitForTimeout(1300);
+  await page.keyboard.type('tranquila');
+  assert.equal(await page.inputValue('#week-notes'), 'semana tranquila');
+  assert.equal(await page.evaluate(() => document.activeElement.id), 'week-notes');
+  await page.waitForTimeout(800);
+  await page.reload();
+  await openCover(page);
+  await page.waitForSelector('#main .planner');
+  assert.equal(await page.inputValue('#week-notes'), 'semana tranquila');
+  const imp = await page.$$eval('#main .planner__check', (els) => els.map((e) => [e.querySelector('input').value, e.querySelector('.stitch-box').dataset.status]));
+  assert.deepEqual(imp.slice(0, 2), [['pagar la luz', 'done'], ['regalo de cumple', 'pending']]);
+  // Lo que pasó afuera mientras se escribía ya está en su día.
+  await page.waitForSelector(`${todayCell} .activity:has-text("algo de otra pestaña")`);
+  // Una semana pasada: lo anotado nace hecho y no aparecen repeticiones sin marcar (D18).
+  const past = add(TODAY, -7);
+  await goto(page, '#/calendario/semana/' + past);
+  await page.waitForSelector(`#main .week-day[data-date="${past}"]`);
+  assert.equal(await page.locator('#main .activity:has-text("Estirar")').count(), 0, 'sin repeticiones sin marcar en el pasado');
+  await page.fill(`#main .week-day[data-date="${past}"] .add-activity input`, 'caminé por el río');
+  await page.press(`#main .week-day[data-date="${past}"] .add-activity input`, 'Enter');
+  await page.waitForSelector(`#main .week-day[data-date="${past}"] .activity[data-status="done"]:has-text("caminé por el río")`);
+  // Del teclado al día y de vuelta: Enter abre su página; Escape vuelve al mismo día.
+  await goto(page, '#/calendario/semana/' + TODAY);
+  await page.waitForSelector(`${todayCell} .week-day__head`);
+  await page.focus(`${todayCell} .week-day__head`);
+  await page.keyboard.press('Enter');
+  await page.waitForSelector('#panel[open] .day-head');
+  await page.keyboard.press('Escape');
+  await page.waitForFunction((k) => !document.getElementById('panel').open && document.activeElement && document.activeElement.dataset.date === k, TODAY, { timeout: 4000 });
+  // Mes o semana: lo elegido dura la sesión; una sesión nueva vuelve a la semana.
+  await page.click('#main .cal-mode button:has-text("Mes")');
+  await page.waitForSelector('#main .day-cell');
+  await goto(page, '#/hoy');
+  await page.click('#panel-close');
+  await page.waitForFunction(() => !document.getElementById('panel').open);
+  await page.waitForSelector('#main .day-cell');
+  const fresh = await context.newPage();
+  await fresh.goto(FILE_URL);
+  await openCover(fresh);
+  await fresh.waitForSelector('#main .planner');
   assert.deepEqual(errors, []);
   await context.close();
 });
@@ -799,7 +879,7 @@ await test('historial con teclado: el foco no se pierde y rehacer “sacar” sa
   await page.waitForFunction(() => document.activeElement.classList.contains('sticker'));
   await page.click('#panel .sticker-tools button:has-text("Listo")');
 
-  await page.fill('.add-activity input', 'Regar las plantas');
+  await page.fill('#panel .add-activity input', 'Regar las plantas');
   await page.keyboard.press('Enter');
   const row = page.locator('#panel li.activity:has-text("Regar las plantas")');
   await row.waitFor();
@@ -857,7 +937,7 @@ await test('actividades: no se deshace desde otra vista; estado, nombre y trasla
   const { page, errors, context } = await newPage(browser);
   await page.goto(FILE_URL);
   await onboard(page);
-  await page.fill('.add-activity input', 'Regar las plantas');
+  await page.fill('#panel .add-activity input', 'Regar las plantas');
   await page.keyboard.press('Enter');
   const row = page.locator('#panel li.activity:has-text("Regar las plantas")');
   await row.waitFor();
@@ -1002,6 +1082,9 @@ await test('pantalla única: tocar un día abre su cuadro, cerrar vuelve al cale
   await page.click('#panel-close');
   await page.waitForFunction(() => !document.getElementById('panel').open);
   assert.match(page.url(), /#\/calendario/);
+  // De fondo, la semana-planner (A6), que ya muestra la emoción de hoy; el mes queda a un toque.
+  await page.waitForFunction((k) => { const c = document.querySelector(`#main .week-day[data-date="${k}"] .week-day__feelings`); return c && /motivada/.test(c.textContent); }, TODAY, { timeout: 4000 });
+  await page.click('#main .cal-mode button:has-text("Mes")');
   await page.waitForFunction((k) => { const c = document.querySelector(`#main .day-cell[data-date="${k}"]`); return c && c.dataset.feeling === 'motivada'; }, TODAY, { timeout: 4000 }); // el calendario ya tiene la emoción
   // Otro día del mes
   const other = await page.$eval('.day-cell:not(.is-out)', (el) => el.dataset.date);
@@ -1321,7 +1404,7 @@ await test('base: una base vieja (IDB v2, datos y borrador v4) se actualiza a v3
     assert.equal(db.fileUpdatedAt, '2026-10-01T09:00:00.000Z');
     assert.deepEqual(db.pageItems, ['la plaza']);
     assert.equal(db.mood, 2, 'el borrador (forma vieja) se guardó con su ánimo');
-    assert.equal(await page.locator('.activity:has-text("Regar")').count(), 1);
+    assert.equal(await page.locator('#panel .activity:has-text("Regar")').count(), 1);
   };
   await page.goto(HTTP_URL + '#/hoy');
   await check();

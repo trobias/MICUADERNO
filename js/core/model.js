@@ -696,6 +696,25 @@
     };
   }
 
+  function isEmptyWeek(w) {
+    return !w || (!w.notes.trim() && !w.important.some(function (it) { return it.text.trim(); }));
+  }
+  /** La semana de una fecha (su lunes). Nunca null: una semana sin nada es válida y no se guarda. */
+  function getWeek(date) {
+    var key = D.startOfWeek(date);
+    return S().get('weeks', key).then(function (raw) {
+      return normalizeWeek(raw && !isDeleted(raw) ? raw : { week: key });
+    });
+  }
+  /** Guarda “Importante” y “Notas”; una semana que quedó vacía se borra en vez de guardarse. */
+  function saveWeek(week) {
+    var w = normalizeWeek(week);
+    if (!w) return Promise.reject(new Error('Semana inválida.'));
+    w.important = w.important.filter(function (it, i, all) { return it.text.trim() || i === all.length - 1; });
+    if (isEmptyWeek(w)) return S().del('weeks', w.week).then(function () { return w; });
+    return S().put('weeks', stamp(w));
+  }
+
   /** Plantilla de hoja: estructura (bloques), contenido inicial, papel y stickers. `frozen`: copia de una repetición. */
   function normalizeTemplate(t) {
     if (!t || typeof t !== 'object') return null;
@@ -1013,7 +1032,7 @@
     normalizeRoutine: normalizeRoutine, getRoutines: getRoutines, saveRoutine: saveRoutine, deleteRoutine: deleteRoutine,
     normalizePage: normalizePage, getPages: getPages, getPage: getPage, savePage: savePage, deletePage: deletePage,
     sanitizeBlocks: sanitizeBlocks, sanitizeValues: sanitizeValues, BLOCK_TYPES: BLOCK_TYPES,
-    normalizeWeek: normalizeWeek, normalizeTemplate: normalizeTemplate, normalizeMark: normalizeMark,
+    normalizeWeek: normalizeWeek, getWeek: getWeek, saveWeek: saveWeek, isEmptyWeek: isEmptyWeek, normalizeTemplate: normalizeTemplate, normalizeMark: normalizeMark,
     sanitizeFeelings: sanitizeFeelings, sanitizeFeel: sanitizeFeel, sanitizeMoves: sanitizeMoves,
     feelingsOf: feelingsOf, emotionKey: emotionKey, emotionPalette: emotionPalette, emotionSuggestions: emotionSuggestions,
     sanitizeTheme: sanitizeTheme, sanitizeEmotionColors: sanitizeEmotionColors, occurrenceId: occurrenceId, DRAW_TOOLS: DRAW_TOOLS,

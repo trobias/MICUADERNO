@@ -33,8 +33,8 @@
   /**
    * hash → { kind: 'base'|'panel'|'onboarding', name, opt, params } o null si no es una ruta conocida.
    * Las rutas viejas devuelven { redirect: hash } (D27): #/agenda → la semana; #/rutinas y #/paginas → Mis hojas.
-   * ctx (opcional): { today: 'AAAA-MM-DD', calMonth: 'AAAA-MM' } — el mes que se estaba mirando,
-   * para que “#/calendario” vuelva a donde estaba la persona.
+   * ctx (opcional): { today, calMode: 'semana' | 'mes', calMonth: 'AAAA-MM', calWeek: 'AAAA-MM-DD' } — lo que se
+   * estaba mirando en esta sesión, para que “#/calendario” vuelva ahí (por defecto, la semana de hoy).
    */
   function parse(hash, ctx) {
     ctx = ctx || {};
@@ -54,7 +54,9 @@
           if (parts[3] === 'rutina' && parts[4]) params.routine = parts[4];
           return { kind: 'base', name: 'calendar', opt: null, params: params };
         }
-        return { kind: 'base', name: 'calendar', opt: null, params: { mode: 'mes', month: MONTH_RE.test(ctx.calMonth || '') ? ctx.calMonth : D.monthKey(today) } };
+        // Por defecto, la semana-planner (D27); si en esta sesión se eligió el mes, el mes que se miraba.
+        if (ctx.calMode === 'mes') return { kind: 'base', name: 'calendar', opt: null, params: { mode: 'mes', month: MONTH_RE.test(ctx.calMonth || '') ? ctx.calMonth : D.monthKey(today) } };
+        return { kind: 'base', name: 'calendar', opt: null, params: { mode: 'semana', date: D.isValid(ctx.calWeek || '') ? ctx.calWeek : today } };
       case 'hoy': return { kind: 'panel', name: 'today', opt: 'hoy', params: { date: today, isToday: true } };
       case 'dia': return D.isValid(parts[1]) ? { kind: 'panel', name: 'today', opt: parts[1] === today ? 'hoy' : null, params: { date: parts[1] } } : null;
       case 'hojas': return { kind: 'panel', name: 'sheets', opt: 'hojas', params: parts[1] === 'repite' && parts[2] ? { focus: parts[2] } : {} };

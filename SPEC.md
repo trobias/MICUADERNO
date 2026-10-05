@@ -47,14 +47,14 @@ La visión de memoria, scrapbook, privacidad y experiencia personal (revisiones,
 
 Pedido de la dueña del proyecto (DECISIONS D17): **sin secciones separadas**. Todo pasa en una pantalla:
 
-- **Centro: el calendario del mes**, con la **tira de los 12 meses** (y flechas de año) para saltar de mes con un toque. Interruptor chico *Mes / Semana*.
+- **Centro: el calendario**, que abre en **Mi semana** (la semana-planner, A6) y tiene el mes a un toque; lo elegido dura la sesión. **Tira de los 12 meses** (y flechas de año) para saltar de mes con un toque. Interruptor chico *Mes / Semana*.
 - **Marcadores de tela al costado del cuaderno** (en el celular, abajo): *Hoy · Mis hojas · Mi año* y, separado, *Ajustes* (en el celular, solo el carretel) (D27, A5). Cada uno abre un **cuadro desplegable** encima del calendario (un `<dialog>`), sin salir de la pantalla. Con un cuadro abierto los marcadores se mudan a su costado: se pasa de uno a otro sin cerrar (DECISIONS D22). Agenda y Rutinas dejaron de ser marcadores: anotar en cualquier día se hace desde ese día (y desde A6, desde la semana); repetir, desde el menú de una actividad o desde Mis hojas. Las rutas viejas redirigen: `#/agenda` → la semana, `#/rutinas` y `#/paginas` → Mis hojas.
 - **Tocar un día** del calendario abre la página de ese día en el cuadro. Al cerrarlo (botón “Volver al calendario”, `Esc`, tocar afuera o *atrás* del navegador) se vuelve al calendario. El calendario de atrás **se actualiza solo** mientras el cuadro está abierto y cuando otra pestaña cambia algo, sin parpadeo y sin tocar lo que se está escribiendo (DECISIONS D21). Al volver, la cinta y el foco quedan en el último día abierto; si el cuadro se abrió con un marcador, el foco vuelve a ese marcador.
 - **Teclado en el celular (T6):** en pantallas chicas (< 700px), cuando se hace foco en un campo editable para escribir, la barra inferior de marcadores se oculta de forma automática (detectada vía `visualViewport` con fallback de redimensión y foco) para no tapar el texto ni estorbar, y reaparece suavemente al cerrar el teclado o perder el foco.
 
 | Ruta | Qué muestra |
 |---|---|
-| `#/calendario` · `#/calendario/mes/AAAA-MM` · `#/calendario/semana/AAAA-MM-DD` | la pantalla principal (sin cuadro) |
+| `#/calendario` · `#/calendario/mes/AAAA-MM` · `#/calendario/semana/AAAA-MM-DD` | la pantalla principal (sin cuadro); `#/calendario` abre la semana salvo que en la sesión se haya elegido el mes |
 | `#/calendario/mes/AAAA-MM/rutina/:id` | el mes con los días de esa rutina marcados |
 | `#/hoy` · `#/dia/AAAA-MM-DD` | cuadro con la página del día |
 | `#/rutinas` · `#/rutinas/:id` | cuadro de rutinas (con esa rutina resaltada) |
@@ -154,7 +154,10 @@ El calendario es donde aparece **todo lo que tiene fecha**: emociones, escritura
   
   Los días pasados **no** muestran lo que quedó sin marcar (sin cuentas de “pendientes” para atrás: amable, ver D18). Cada marca tiene su texto en el `aria-label` del día (“una cosa planeada”, “empezaste una página”) y su lugar en la leyenda. Todo lo que esté en la papelera (`deletedAt != null`) se ignora por completo (DA1). Hoy con borde a lápiz; el último día abierto lleva una cinta-marcador. Tocar un día → su página en el cuadro desplegable.
 - **Animaciones** (con motion “Completas”/“Suaves”): cambiar de mes desliza la hoja hacia ese lado; pasar de mes a semana (o al revés) la acomoda con una escala apenas; el día nuevo se arma aparte y entra cuando está listo (sin parpadeo).
-- **Semana**: agenda de 7 días (desktop: lun-mié izquierda / jue-dom derecha). Cada día: emociones, actividades (incluye rutinas futuras virtuales), primera línea escrita y enlaces a las páginas empezadas ese día. Tocar → abre el día. La semana planner editable y por defecto corresponde a A6; aún no está hecha.
+- **Mi semana (A6, vista por defecto)**: un planner de papel en una sola hoja: **Importante · Lunes · Martes / Miércoles · Jueves · Viernes / Sábado · Domingo · Notas** (tres columnas si la hoja es ancha, dos en tablet, una en el celular, con hoy a la vista). Flechas de semana, “Esta semana”, Mes/Semana y la tira de meses.
+  - **Cada día:** nombre y número (enlace a su página; flechas, Enter y foco de vuelta al cerrar), sus emociones, sus actividades con la **misma fila** que la página del día (casilla que se marca ahí mismo, menú completo, antes/después) y un renglón **anotar…** (Enter agrega, Esc cancela); sus hojas. En días pasados queda lo que se hizo o se anotó y **nunca** lo que se repetía y no se marcó (D18); lo que se anota en un día pasado **nace hecho** (se cambia con un toque).
+  - **Importante** (casillas) y **Notas** son de la semana (`weeks`): se guardan solos con borrador (D13) e indicador de guardado; una semana vacía no se guarda.
+  - Se edita en el fondo (D27): mientras se escribe en ella o hay un menú abierto, el calendario en vivo espera (no pisa ni una letra ni el foco); lo escrito se guarda antes de abrir un cuadro, al ocultar la pestaña y al cerrar.
 - **Mi año** sigue mostrando solo lo registrado: una rutina sin marcar no borda medio punto. Días con `privacy.noReviews` no aportan recuerdos a “Lo que guardé” (PV1), y elementos borrados no se computan (DA1).
 - **Los días de algo que se repite** (desde Mis hojas, el menú de la actividad o *Lo que fui notando*): el mes marca con tinte de salvia + el ícono de rutinas los días que la tocan de hoy en adelante y los días pasados en que se hizo (también “un poquito”). Los días pasados en que no se hizo no se marcan. Arriba, un aviso con “Ver lo que se repite” y “Dejar de mostrar”.
 - Navegación anterior/siguiente, “hoy”.

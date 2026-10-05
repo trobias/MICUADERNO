@@ -8,6 +8,17 @@ Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantien
 - `.mcp.json` ya está en la rama. La dueña habilitó los dos MCP en su entorno web de Claude Code; el estado de `claude mcp list` en una instalación local distinta no verifica ese entorno.
 - `docs/NUBE.md` registra la verificación de red, los entornos y lo que falta para aplicar la migración SQL existente. Ningún secreto se agregó a Git.
 
+## 2026-10-05 · A6: Mi semana, el planner por defecto (cache `v29`)
+
+**Para quien lo usa**
+- El calendario abre en **Mi semana**, como un planner de papel: Importante · Lunes · Martes / Miércoles · Jueves · Viernes / Sábado · Domingo · Notas. En el celular, una columna con hoy a la vista. El mes queda a un toque, y lo que elijas dura hasta cerrar el cuaderno.
+- En cada día se anota y se marca ahí mismo, sin abrir nada; el menú de cada cosa es el de siempre (antes/después, pasar a otro día, que se repita…). Lo que anotás en un día que ya pasó nace hecho. En los días pasados nunca aparecen las repeticiones que no marcaste.
+- **Importante** (con casillas) y **Notas** son de la semana y se guardan solos.
+
+**Para quien lo mantiene**
+- `js/views/week.js` (nuevo) reemplaza la semana de `calendar.js` (que exporta `parts.modeSwitch` y `parts.monthsStrip`). `M.getWeek`, `M.saveWeek`, `M.isEmptyWeek`. `MC.routes.parse` abre la semana por defecto (`ctx.calMode`, `ctx.calWeek` desde `sessionStorage`). Contrato de vista base con `busy()` y `flush()`; foco restaurado con `data-focus`. La etiqueta de las actividades que se repiten dice “se repite”.
+- Pruebas: 101 unit (semana del planner; rutas por defecto), 47/47 E2E (recorrido A6 nuevo; los que suponían el mes de fondo ahora lo eligen).
+
 ## 2026-10-05 · A5: cuatro marcadores y Mis hojas (cache `v28`)
 
 **Para quien lo usa**

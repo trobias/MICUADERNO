@@ -236,7 +236,7 @@ v5 es **aditiva** (D34): los stores y campos nuevos conviven con los viejos hast
 
 **IndexedDB v3** (`onupgradeneeded`): stores nuevos `weeks`, `templates` y `marks`; índice `pages.date`; `files.updatedAt = createdAt` donde faltaba. La versión de IndexedDB es la autoridad; `meta.schemaVersion` queda como marca informativa.
 
-### `weeks` (keyPath `week`) — la semana-planner (A6)
+### `weeks` (keyPath `week`) — la semana-planner (A6, visible desde v29: `M.getWeek` / `M.saveWeek`; una semana sin texto se borra en vez de guardarse)
 ```js
 {
   week: '2026-09-28',             // lunes de la semana (clave)

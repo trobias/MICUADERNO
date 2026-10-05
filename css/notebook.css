@@ -28,6 +28,7 @@
 /* Una sola hoja: ancho de cuaderno, no de pantalla. El mes usa hoja ancha. */
 .pages:has(> .spread--single) { width: min(800px, 100%); }
 .pages:has(> .spread--single > .cal-page) { width: min(1040px, 100%); }
+.pages:has(> .spread--single > .planner-page) { width: min(1180px, 100%); }
 .pages:focus { outline: none; }
 
 /* ---------- Hojas ---------- */

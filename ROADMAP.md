@@ -9,7 +9,8 @@ Estado al 04/10/2026: **etapa A del plan nuevo en curso**. A0–A4 están termin
 | A0–A3 · protección, navegación, limpieza y datos v5 | Hecho en `main` | Commits `34e9b6e`, `cc7697d`, `4f124d7`, `a39dad2`. |
 | A4 · emociones libres | Hecho | Día, actividad, calendarios, Año, ajustes, exportación, impresión e insights sin escala de cinco. |
 | A5 · Mis hojas y cuatro marcadores | Hecho (v28) | Fuera Agenda/Rutinas como marcadores, sin perder repeticiones. |
-| A6–A7 · semana planner y hojas/plantillas | Pendiente | Semana inicial editable; Guardar y repetir hojas. |
+| A6 · semana planner | Hecho (v29) | Semana inicial editable. |
+| A7 · hojas/plantillas | Siguiente | Guardar y repetir hojas. |
 | A8–A11 · Año, temas, escenas, dibujo | Pendiente | Métricas amables, colores propios, más escenas, balde/trazos. |
 | A12–A13 · QA y contrato v6 | Pendiente | Navegación completa, accesibilidad, revisión de redundancia, migración segura. |
 | B-base · cuentas en la nube (adelantada) | Hecho en local, sin desplegar | Next.js + Supabase: PIN, Nicole admin, permisos con RLS, push, latido anti-pausa. `docs/NUBE.md`. |
