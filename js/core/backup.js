@@ -5,7 +5,7 @@
   var D = MC.dates;
   var M = function () { return MC.model; };
 
-  var SCHEMA_VERSION = 7;
+  var SCHEMA_VERSION = 8;
   var APP_ID = 'mi-cuaderno';
 
   /* ---------- contrato v6 (A13, D34): retirar las formas viejas sin perder nada ---------- */
@@ -102,7 +102,9 @@
       return data;
     },
     // v7 (D45, aditiva): las plantillas pueden ser de día (`kind: 'day'` + `day`). Las de antes son de hoja.
-    7: function (data) { return data; }
+    7: function (data) { return data; },
+    // v8 (D52, aditiva): los ajustes pueden traer `hiddenDefaults` (lo de fábrica que la persona sacó).
+    8: function (data) { return data; }
   };
 
   function build(everything) {

@@ -55,14 +55,37 @@
     var dayInput = h('input.input', { id: 'tp-day', type: 'date', value: D.isValid(date) ? date : D.today() });
     var mineWrap = h('div.template-group');
     var grid = h('div.template-grid');
-    TEMPLATES.forEach(function (t) {
-      grid.appendChild(templateCard(t.label, t.draw ? 'con el lápiz listo' : kindOf(t.blocks), t.sticker, function () { dlg.close(); create({ factory: t.id }, dayInput.value); }));
-    });
+    // Las de fábrica, menos las que la persona sacó (D52). “En blanco” queda siempre: es el punto de partida.
+    function paintFactory() {
+      MC.clear(grid);
+      var hidden = M.settings().hiddenDefaults.templates;
+      TEMPLATES.forEach(function (t) {
+        if (hidden.indexOf(t.id) !== -1) return;
+        var card = templateCard(t.label, t.draw ? 'con el lápiz listo' : kindOf(t.blocks), t.sticker, function () { dlg.close(); create({ factory: t.id }, dayInput.value); });
+        if (t.id === 'blank') { grid.appendChild(card); return; }
+        var drop = h('button.icon-btn.icon-btn--sm.template__drop', { type: 'button', 'aria-label': 'Sacar «' + t.label + '» de Nueva hoja', title: 'Sacar de Nueva hoja' }, MC.icon('close'));
+        drop.addEventListener('click', function () {
+          var hd = M.settings().hiddenDefaults;
+          M.saveSettings({ hiddenDefaults: { feelings: hd.feelings, templates: hd.templates.concat(t.id) } }).then(paintFactory);
+        });
+        grid.appendChild(h('div.template-factory', card, drop));
+      });
+      MC.clear(factoryNote);
+      if (hidden.length) {
+        var back = h('button.text-btn', { type: 'button' }, 'Volver a mostrar las ' + hidden.length + ' que sacaste');
+        back.addEventListener('click', function () {
+          M.saveSettings({ hiddenDefaults: { feelings: M.settings().hiddenDefaults.feelings, templates: [] } }).then(paintFactory);
+        });
+        factoryNote.appendChild(back);
+      }
+    }
+    var factoryNote = h('p.template-factory-note');
+    paintFactory();
     var dlg = c.dialog({ title: 'Nueva hoja', content: [
       h('div.field.field--inline', h('label', { for: 'tp-day' }, 'Para el día'), dayInput),
       h('p.section__hint', 'Empezá en blanco o con una idea. Todo se puede cambiar, también el día.'),
       mineWrap,
-      h('h3.template-group__title', 'De fábrica'), grid] });
+      h('h3.template-group__title', 'De fábrica'), grid, factoryNote] });
     // Las propias primero: son las que la persona armó para sí. La primera tarjeta, “+”, arma una nueva.
     M.getTemplates().then(function (mine) {
       var g = h('div.template-grid');

@@ -271,9 +271,32 @@
           if (value && !/^#[0-9a-fA-F]{6}$/.test(value)) { code.setAttribute('aria-invalid', 'true'); return; }
           setColor(value.toUpperCase());
         });
-        emotionList.appendChild(h('li', h('span', word), swatch, code));
+        // Sacarla de las sugerencias (D52): las de base y cualquier otra. Lo ya anotado en los días no cambia.
+        var drop = h('button.icon-btn.icon-btn--sm', { type: 'button', 'aria-label': 'Sacar «' + word + '» de las sugerencias', title: 'Sacar de las sugerencias' }, MC.icon('close'));
+        drop.addEventListener('click', function () {
+          var hd = M.settings().hiddenDefaults;
+          var nextColors = Object.assign({}, M.settings().emotionColors); delete nextColors[key];
+          save({ hiddenDefaults: { feelings: hd.feelings.concat(key), templates: hd.templates }, emotionColors: nextColors }).then(function () {
+            knownEmotions = knownEmotions.filter(function (w) { return M.emotionKey(w) !== key; });
+            paintEmotionColors(knownEmotions);
+            c.toast('«' + word + '» ya no aparece en las sugerencias. Lo que anotaste sigue en tus días.');
+          });
+        });
+        emotionList.appendChild(h('li', h('span', word), swatch, code, drop));
       });
+      var gone = M.settings().hiddenDefaults.feelings;
+      MC.clear(hiddenNote);
+      if (gone.length) {
+        var back = h('button.text-btn', { type: 'button' }, 'Volver a mostrarlas');
+        back.addEventListener('click', function () {
+          save({ hiddenDefaults: { feelings: [], templates: M.settings().hiddenDefaults.templates } }).then(function () {
+            M.emotionSuggestions().then(function (words) { knownEmotions = words; paintEmotionColors(knownEmotions); });
+          });
+        });
+        hiddenNote.appendChild(h('p.t-meta', 'Sacaste de las sugerencias: ' + gone.join(', ') + '. ', back));
+      }
     }
+    var hiddenNote = h('div.emotion-colors__hidden');
     var knownEmotions = [];
     M.emotionSuggestions().then(function (words) {
       if (!left.isConnected) return;
@@ -292,7 +315,7 @@
       newEmotion.value = '';
       newEmotion.focus();
     });
-    left.appendChild(c.section('Mis emociones', [colorHint, emotionList,
+    left.appendChild(c.section('Mis emociones', [colorHint, emotionList, hiddenNote,
       h('div.emotion-colors__add', newEmotion, newColor, addEmotionColor)], { id: 'st-emotions' }));
 
     // Tapa

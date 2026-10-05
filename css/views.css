@@ -293,9 +293,9 @@ a.months__year { text-decoration: none; padding: 4px 6px; border-radius: 6px; }
 .sheet-add { justify-self: start; }
 .page-actions { margin-top: var(--s-5); }
 .template-group__title { font-family: var(--font-display); font-size: var(--fs-md); margin: var(--s-4) 0 var(--s-2); }
-.template-own { position: relative; display: grid; }
-.template-own .template { padding-right: 44px; }
-.template__edit { position: absolute; right: 2px; bottom: 2px; }
+.template-own, .template-factory { position: relative; display: grid; }
+.template-own .template, .template-factory .template { padding-right: 44px; }
+.template__edit, .template__drop { position: absolute; right: 2px; bottom: 2px; }
 .template--new { border-style: dashed; background-image: none; color: var(--ink-soft); }
 .template__plus { position: absolute; top: 12px; left: 12px; color: var(--rose); }
 .template__plus svg { display: block; width: 26px; height: 26px; }
@@ -451,7 +451,7 @@ a.months__year { text-decoration: none; padding: 4px 6px; border-radius: 6px; }
 .theme-preview__soft { font-family: var(--font-hand, var(--font-text)); color: var(--ink-soft); font-size: var(--fs-sm); }
 
 .emotion-colors { display: grid; gap: var(--s-2); padding: 0; margin: var(--s-3) 0; list-style: none; }
-.emotion-colors li { display: grid; grid-template-columns: minmax(90px, 1fr) 48px minmax(95px, 120px); align-items: center; gap: var(--s-2); }
+.emotion-colors li { display: grid; grid-template-columns: minmax(80px, 1fr) 48px minmax(90px, 120px) 36px; align-items: center; gap: var(--s-2); }
 .emotion-colors input[type='color'], .emotion-colors__add input[type='color'], .theme-field input[type='color'] { width: 44px; height: 38px; padding: 2px; border: 1px solid var(--rule-strong); background: var(--paper); }
 .emotion-colors__code { width: 100%; }
 .emotion-colors__add { display: flex; align-items: end; gap: var(--s-2); flex-wrap: wrap; }

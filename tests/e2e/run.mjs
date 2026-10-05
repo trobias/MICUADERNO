@@ -900,6 +900,34 @@ await test('D45: Guardar del día — que se repita, como plantilla de día y us
   await context.close();
 });
 
+await test('D52: sacar emociones de base y plantillas de fábrica, y volver a mostrarlas', async () => {
+  const { page, errors, context } = await newPage(browser);
+  await page.goto(FILE_URL);
+  await onboard(page);
+  await goto(page, '#/ajustes');
+  await page.click('button[aria-label="Sacar «pesado» de las sugerencias"]');
+  await page.waitForSelector('.emotion-colors__hidden:has-text("pesado")');
+  assert.equal(await page.locator('.emotion-colors li:has-text("pesado")').count(), 0);
+  await goto(page, '#/hoy');
+  await page.waitForSelector('.section--mood .feelings__suggestion');
+  assert.equal(await page.locator('.section--mood .feelings__suggestion:has-text("pesado")').count(), 0);
+  assert.equal(await page.locator('.section--mood .feelings__suggestion:has-text("bajito")').count(), 1);
+  await goto(page, '#/hojas');
+  await page.click('#panel button:has-text("Nueva hoja")');
+  await page.click('dialog.sheet button[aria-label="Sacar «Pros y contras» de Nueva hoja"]');
+  await page.waitForSelector('dialog.sheet .template-factory-note button');
+  assert.equal(await page.locator('dialog.sheet .template:has-text("Pros y contras")').count(), 0);
+  assert.equal(await page.locator('dialog.sheet button[aria-label^="Sacar «En blanco»"]').count(), 0, 'en blanco queda siempre');
+  await page.click('dialog.sheet .template-factory-note button');
+  await page.waitForSelector('dialog.sheet .template:has-text("Pros y contras")');
+  await page.keyboard.press('Escape');
+  await goto(page, '#/ajustes');
+  await page.click('.emotion-colors__hidden button:has-text("Volver a mostrarlas")');
+  await page.waitForSelector('.emotion-colors li:has-text("pesado")');
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
 await test('A8: Mi año cuenta semana/mes/año sin puntajes, gráfico con tabla y pequeñas victorias desde la actividad', async () => {
   const { page, errors, context } = await newPage(browser);
   await page.goto(FILE_URL);

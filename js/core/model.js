@@ -44,7 +44,8 @@
       },
       notifyAsked: false,
       theme: null,                // v5 (D30): colores propios; null = la tela de la tapa (paso A9)
-      emotionColors: {}           // v5 (D28): color elegido por emoción, { clave: '#RRGGBB' } (paso A4)
+      emotionColors: {},          // v5 (D28): color elegido por emoción, { clave: '#RRGGBB' } (paso A4)
+      hiddenDefaults: { feelings: [], templates: [] } // v8 (D52): emociones de base y plantillas de fábrica que la persona sacó
     };
   }
 
@@ -61,6 +62,20 @@
     out.accents = (Array.isArray(t.accents) ? t.accents : []).filter(function (c) { return HEX6.test(c); }).slice(0, 4).map(function (c) { return c.toUpperCase(); });
     out.finish = THEME_FINISHES.indexOf(t.finish) !== -1 ? t.finish : 'mate';
     return out.cloth ? out : null;
+  }
+
+  /** Lo de fábrica que la persona sacó (D52): claves de emociones y ids de plantillas, sin repetir. */
+  function sanitizeHiddenDefaults(v) {
+    var out = { feelings: [], templates: [] };
+    if (!v || typeof v !== 'object') return out;
+    (Array.isArray(v.feelings) ? v.feelings : []).slice(0, 200).forEach(function (k) {
+      var key = emotionKey(String(k).slice(0, 40));
+      if (key && out.feelings.indexOf(key) === -1) out.feelings.push(key);
+    });
+    (Array.isArray(v.templates) ? v.templates : []).slice(0, 100).forEach(function (id) {
+      if (typeof id === 'string' && /^[\w-]{1,40}$/.test(id) && out.templates.indexOf(id) === -1) out.templates.push(id);
+    });
+    return out;
   }
 
   function sanitizeEmotionColors(m) {
@@ -106,6 +121,7 @@
     }
     out.theme = sanitizeTheme(saved.theme);
     out.emotionColors = sanitizeEmotionColors(saved.emotionColors);
+    out.hiddenDefaults = sanitizeHiddenDefaults(saved.hiddenDefaults);
     return out;
   }
 
@@ -1027,8 +1043,10 @@
       });
       var used = Object.keys(counts).sort(function (a, b) { return counts[b] - counts[a] || a.localeCompare(b, 'es'); })
         .slice(0, 12).map(function (key) { return labels[key]; });
-      // Las de base completan la lista (hasta 12) para tener algo de dónde partir.
-      BASE_FEELINGS.forEach(function (word) { if (used.length < 12 && !counts[emotionKey(word)]) used.push(word); });
+      // Las de base completan la lista (hasta 12) para tener algo de dónde partir. Las que la persona sacó, no (D52).
+      var hidden = settings().hiddenDefaults.feelings;
+      used = used.filter(function (word) { return hidden.indexOf(emotionKey(word)) === -1; });
+      BASE_FEELINGS.forEach(function (word) { if (used.length < 12 && !counts[emotionKey(word)] && hidden.indexOf(emotionKey(word)) === -1) used.push(word); });
       return used;
     });
   }
@@ -1260,7 +1278,7 @@
     getTemplates: getTemplates, getTemplate: getTemplate, getDayTemplates: getDayTemplates, dayTemplateFrom: dayTemplateFrom, applyDayTemplate: applyDayTemplate, repeatDay: repeatDay, saveTemplate: saveTemplate, deleteTemplate: deleteTemplate, templateFrom: templateFrom, repeatSheet: repeatSheet, getWeek: getWeek, saveWeek: saveWeek, isEmptyWeek: isEmptyWeek, normalizeTemplate: normalizeTemplate, normalizeMark: normalizeMark,
     sanitizeFeelings: sanitizeFeelings, sanitizeFeel: sanitizeFeel, sanitizeMoves: sanitizeMoves,
     feelingsOf: feelingsOf, emotionKey: emotionKey, emotionPalette: emotionPalette, emotionSuggestions: emotionSuggestions,
-    BASE_FEELINGS: BASE_FEELINGS, feelingGlyph: feelingGlyph,
+    BASE_FEELINGS: BASE_FEELINGS, feelingGlyph: feelingGlyph, sanitizeHiddenDefaults: sanitizeHiddenDefaults,
     sanitizeTheme: sanitizeTheme, sanitizeEmotionColors: sanitizeEmotionColors, occurrenceId: occurrenceId, DRAW_TOOLS: DRAW_TOOLS,
     sanitizeStickers: sanitizeStickers, summarize: summarize, summaryRange: summaryRange, pagesOn: pagesOn, everything: everything,
     hasWriting: hasWriting, countsAsDone: countsAsDone, pageTitle: pageTitle, pageDate: pageDate,

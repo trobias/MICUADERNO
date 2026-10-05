@@ -316,6 +316,9 @@ Cola de cambios para subir a la nube: `{ id: '<store>\u0001<clave>', at }`. Se e
 - **En IndexedDB** (versión **4**, `onupgradeneeded`, atómico y exclusivo entre pestañas): lee los ajustes, guarda en `meta.preV6` una instantánea `{ at, days, pages, settings }` con la forma vieja de lo que cambia y reescribe. Si algo falla, la transacción se aborta, la base queda en la versión 3 tal como estaba, el cuaderno la abre igual (los normalizadores siguen leyendo `mood` y `kind/body/items`) y avisa que lo vuelve a intentar.
 - **En una copia `.json`**: `MIGRATIONS[6]` hace lo mismo con los nombres de ánimo de esa copia. `SCHEMA_VERSION` = 6; una copia 7 o más nueva se rechaza.
 
+### Esquema v8 (D52, aditivo)
+Los ajustes pueden traer `hiddenDefaults: { feelings: [clave], templates: [id de fábrica] }`: lo de fábrica que la persona sacó. `MIGRATIONS[8]` es la identidad.
+
 ### Esquema v7 (D45, aditivo)
 `templates` puede llevar `kind: 'day'` y `day` (plantillas de día). `MIGRATIONS[7]` es la identidad: las plantillas sin `kind` son de hojas. `SCHEMA_VERSION` = 7; una copia 8 o más nueva se rechaza. IndexedDB sigue en 5.
 - **Leer nunca pierde:** si igual llega un `mood` o una hoja vieja (una pestaña vieja, un borrador local, la nube, una base que no pudo actualizarse), `normalizeDay`/`normalizePage`/`feelingsOf` la leen; nunca se vuelve a escribir la forma vieja.

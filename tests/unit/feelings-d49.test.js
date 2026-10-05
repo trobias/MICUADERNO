@@ -26,3 +26,15 @@ test('emotionSuggestions: primero las que ya usó; las de base completan sin rep
   assert.ok(!s.includes('bien'), 'la de base que ya usó no se repite');
   assert.ok(s.includes('pesado'));
 });
+
+test('D52: sacar emociones de base (y otras) de las sugerencias; volver a mostrarlas', async () => {
+  await MC.store.init({ memory: true });
+  await M.loadSettings();
+  await M.saveSettings({ hiddenDefaults: { feelings: ['Pesado', 'bajito', 'bajito', 42], templates: ['comidas', 'mal id!'] } });
+  assert.deepEqual(M.settings().hiddenDefaults, { feelings: ['pesado', 'bajito', '42'], templates: ['comidas'] });
+  assert.deepEqual(await M.emotionSuggestions(), ['normal', 'bien', 'muy bien']);
+  const d = M.emptyDay('2026-10-05'); d.morning.feelings = ['pesado', 'calma']; await M.saveDay(d);
+  assert.deepEqual(await M.emotionSuggestions(), ['calma', 'normal', 'bien', 'muy bien'], 'una sacada no vuelve aunque se use');
+  await M.saveSettings({ hiddenDefaults: { feelings: [], templates: [] } });
+  assert.ok((await M.emotionSuggestions()).includes('bajito'));
+});

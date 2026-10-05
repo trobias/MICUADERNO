@@ -8,6 +8,10 @@ Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantien
 - `.mcp.json` ya está en la rama. La dueña habilitó los dos MCP en su entorno web de Claude Code; el estado de `claude mcp list` en una instalación local distinta no verifica ese entorno.
 - `docs/NUBE.md` registra la verificación de red, los entornos y lo que falta para aplicar la migración SQL existente. Ningún secreto se agregó a Git.
 
+## 2026-10-06 · Sacar lo de fábrica (cache `v45`)
+
+- Ajustes → Mis emociones: una ✕ en cada palabra la saca de las sugerencias (también las de base: pesado, bajito…). “Nueva hoja”: una ✕ saca una plantilla de fábrica. Las dos tienen “Volver a mostrar”. D52, copia v8.
+
 ## 2026-10-06 · Solo para mirar, sin campos para escribir (cache `v44`)
 
 - Lo que es solo para mirar ya no parece un formulario: no aparecen “Escribí cómo te sentiste”, “agregar algo para este día”, las sugerencias, las ✕, los menús ni los botones; queda lo anotado y, si no hay nada, “Nada anotado.”. Ya no salta “no se pudo guardar” al abrir un día. Probado con 9 combinaciones de permisos en todos los cuadros.
