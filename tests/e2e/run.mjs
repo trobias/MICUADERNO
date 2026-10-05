@@ -2124,6 +2124,8 @@ async function cloudContext(state) {
     const parts = (state.parts || []).filter((p) => !id || (p.record_id === id && p.store === u.searchParams.get('store')));
     return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ parts, more: false }) });
   });
+  // Apariencia del cuaderno de la dueña (D48).
+  await context.route('**/api/look**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(state.look || { cover: null, theme: null }) }));
   // Storage simulado (NB1): pedazos por dueña/store/id/n.
   state.media = state.media || {};
   await context.route('**/api/media**', async (route) => {
@@ -2290,7 +2292,9 @@ await test('nube: la psicóloga abre el cuaderno de Nicole, edita lo permitido y
       { store: 'days', record_id: TODAY, section: 'emociones', data: { date: TODAY, morning: { feelings: ['tranquila'], at: null }, updatedAt: '2026-10-05T10:00:00.000Z' }, deleted_at: null, updated_at: '2026-10-05T10:00:00.001Z', updated_by: CA }
     ],
     // El servidor de verdad descarta lo que no se puede escribir: acá, escritura.
-    onPush: () => ['escritura']
+    onPush: () => ['escritura'],
+    // Sin permiso en Ajustes igual ve la tela que eligió Nicole (D48).
+    look: { cover: 'lavanda', theme: null }
   };
   const { page, errors, context, setCookie } = await cloudContext(state);
   await setCookie('mc_person', PSI);
@@ -2302,6 +2306,11 @@ await test('nube: la psicóloga abre el cuaderno de Nicole, edita lo permitido y
   assert.equal(await page.inputValue('#notes'), 'lo que escribió Nicole');
   assert.match(await page.textContent('.section--mood'), /tranquila/);
   assert.match(await page.textContent('.guest-note'), /Cuaderno de Nicole · podés editar: emociones/);
+  assert.equal(await page.evaluate(() => document.body.dataset.cover), 'lavanda', 'la tela de Nicole');
+  // Nicole elige colores propios: en la próxima vuelta cambian acá también.
+  state.look = { cover: 'lavanda', theme: { preset: 'menta', cloth: '#A9CDBF', paper: '#FBFBF3', ink: '#33433E', accents: [] } };
+  await page.evaluate(() => MC.sync.pull(false));
+  await page.waitForFunction(() => MC.model.settings().theme && MC.model.settings().theme.preset === 'menta', null, { timeout: 4000 });
   // Sin copia local del cuaderno de Nicole.
   const dbs = await page.evaluate(async () => (await indexedDB.databases()).map((d) => d.name));
   assert.ok(!dbs.some((n) => /^mi-cuaderno/.test(n)), JSON.stringify(dbs));

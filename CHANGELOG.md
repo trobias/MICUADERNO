@@ -8,6 +8,15 @@ Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantien
 - `.mcp.json` ya está en la rama. La dueña habilitó los dos MCP en su entorno web de Claude Code; el estado de `claude mcp list` en una instalación local distinta no verifica ese entorno.
 - `docs/NUBE.md` registra la verificación de red, los entornos y lo que falta para aplicar la migración SQL existente. Ningún secreto se agregó a Git.
 
+## 2026-10-06 · El cuaderno compartido con los colores de su dueña (cache `v40`)
+
+**Para quien lo usa**
+- Quien mira el cuaderno de Nicole lo ve con la tela y los colores que eligió ella, aunque no tenga permiso en Ajustes. Si Nicole los cambia, cambian solos para quien mira (en menos de un minuto). Quien tiene su propio cuaderno lo sigue viendo con sus propios colores.
+
+**Para quien lo mantiene**
+- `GET /api/look` (`lib/look.ts`: solo `cover` y `theme`), `pullLook()` en `js/sync.js` para la invitada. D48.
+- Pruebas: `test:cloud` 24/24 (`look.test.mjs`), E2E de la invitada con la apariencia.
+
 ## 2026-10-06 · Cuentas sin PIN
 
 **Para quien lo usa**

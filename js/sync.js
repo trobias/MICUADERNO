@@ -280,7 +280,8 @@
         });
       });
     }
-    pulling = page(since).then(function () { return retryWaiting().then(function (n) { applied += n; }); }).then(function () {
+    pulling = page(since).then(function () { return retryWaiting().then(function (n) { applied += n; }); })
+      .then(function () { return guest ? pullLook().then(function (n) { applied += n; }) : null; }).then(function () {
       status.lastPull = new Date().toISOString();
       pulling = null;
       if (applied) MC.emit('store:remote', { store: '*', from: 'cloud' });
@@ -291,6 +292,21 @@
       return 0;
     });
     return pulling;
+  }
+  /**
+   * La invitada ve el cuaderno con la tela y los colores que eligió su dueña (D48), aunque no tenga permiso en
+   * “Ajustes”; si la dueña los cambia, cambian acá en la próxima vuelta. Su propio cuaderno conserva los suyos.
+   */
+  function pullLook() {
+    return api('/api/look?owner=' + encodeURIComponent(owner)).then(function (look) {
+      return store.get('meta', 'settings').then(function (row) {
+        var value = Object.assign({}, row ? row.value : {});
+        var cover = look.cover || value.cover, theme = look.theme === undefined ? value.theme : look.theme;
+        if (cover === value.cover && JSON.stringify(theme || null) === JSON.stringify(value.theme || null)) return 0;
+        value.cover = cover; value.theme = theme || null;
+        return quietly(function () { return put0.call(store, 'meta', { key: 'settings', value: value }); }).then(function () { return 1; });
+      });
+    }, function () { return 0; });
   }
   function apply(parts) {
     var groups = {}, order = [];
