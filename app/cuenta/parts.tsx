@@ -196,13 +196,24 @@ export function Sharing({ sections, people, grants }: { sections: { id: string; 
 function PersonEditor({ person: p, self, onDone }: { person: Person; self: boolean; onDone: () => void }) {
   const note = useNote();
   const [askDelete, setAskDelete] = useState(false);
+  const [noPin, setNoPin] = useState(p.noPin);
+  const [admin, setAdmin] = useState(p.admin);
   async function save(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const f = new FormData(e.currentTarget);
     // Una casilla deshabilitada no se manda: así no se cambia sin querer (por ejemplo, la propia de administrar).
+    // Sin PIN nunca administra (D47).
     const box = e.currentTarget.elements.namedItem('isAdmin') as HTMLInputElement;
-    const r = await send(`/api/people/${p.id}`, 'PATCH', { displayName: f.get('displayName'), username: f.get('username'), hasNotebook: f.get('kind') === 'propio', isAdmin: box.disabled ? undefined : box.checked });
-    if (r.ok) location.reload(); else note.problem(String(r.data.error || 'No se pudo.'));
+    const fields = { displayName: f.get('displayName'), username: f.get('username'), hasNotebook: f.get('kind') === 'propio', isAdmin: noPin ? false : box.disabled ? undefined : box.checked };
+    const pinChange = noPin === p.noPin ? null : noPin ? { noPin: true } : { pin: f.get('pin') };
+    // Orden: para sacar el PIN, primero deja de administrar; para administrar, primero tiene PIN.
+    const steps = noPin ? [fields, pinChange] : [pinChange, fields];
+    for (const step of steps) {
+      if (!step) continue;
+      const r = await send(`/api/people/${p.id}`, 'PATCH', step);
+      if (!r.ok) { note.problem(String(r.data.error || 'No se pudo.')); return; }
+    }
+    location.reload();
   }
   async function remove(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -221,8 +232,11 @@ function PersonEditor({ person: p, self, onDone }: { person: Person; self: boole
           <label className="check"><input type="radio" name="kind" value="propio" defaultChecked={p.hasNotebook} /> Tiene su propio cuaderno</label>
         </fieldset>
         {p.hasNotebook && <p className="note">Si pasa a “solo mira”, su cuaderno no se borra: queda guardado y vuelve si después le devolvés el suyo.</p>}
-        <label className="check"><input type="checkbox" name="isAdmin" defaultChecked={p.admin} disabled={p.noPin || (self && p.admin)} /> También administra (suma personas y cambia PIN)</label>
-        {p.noPin && <p className="note">Para que administre, primero ponele un PIN.</p>}
+        {!self && <label className="check"><input type="checkbox" name="noPin" checked={noPin} onChange={(e) => { setNoPin(e.target.checked); if (e.target.checked) setAdmin(false); }} /> Sin PIN (entra con solo elegir su nombre)</label>}
+        {!self && noPin && !p.noPin && <p className="note">Se le saca el PIN que tenía. Ojo: cualquiera que abra la página puede entrar como {p.name} y ver lo que le compartan.</p>}
+        {!self && !noPin && p.noPin && <label>PIN nuevo (6 números)<input name="pin" type="password" inputMode="numeric" pattern="\d{6}" maxLength={6} autoComplete="new-password" required /></label>}
+        <label className="check"><input type="checkbox" name="isAdmin" checked={admin} onChange={(e) => setAdmin(e.target.checked)} disabled={noPin || (self && p.admin)} /> También administra (suma personas y cambia PIN)</label>
+        {noPin && <p className="note">Una cuenta sin PIN no puede administrar.</p>}
         {note.view}
         <div className="row">
           <button className="label-btn">Guardar cambios</button>
