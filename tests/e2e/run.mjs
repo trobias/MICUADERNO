@@ -1748,8 +1748,8 @@ await test('base: una base vieja (IDB v2, datos y borrador v4) se actualiza a v4
     // El borrador recuperado se escribe un instante después de mostrarse.
     let db = await readDb();
     for (let i = 0; i < 20 && !(db.feelings && db.feelings[0] === 'bajito'); i++) { await page.waitForTimeout(100); db = await readDb(); }
-    assert.equal(db.version, 4);
-    assert.deepEqual(db.stores, ['activities', 'days', 'files', 'images', 'marks', 'meta', 'pages', 'routines', 'templates', 'weeks']);
+    assert.equal(db.version, 5);
+    assert.deepEqual(db.stores, ['activities', 'days', 'files', 'images', 'marks', 'meta', 'outbox', 'pages', 'routines', 'templates', 'weeks']);
     assert.deepEqual(db.pageIdx, ['date', 'updatedAt']);
     assert.equal(db.fileUpdatedAt, '2026-10-01T09:00:00.000Z');
     assert.deepEqual(db.page, { old: false, items: ['la plaza'], updatedAt: '2026-10-01T09:00:00.000Z' }, 'la página pasó a bloque sin tocar updatedAt');
@@ -1837,7 +1837,7 @@ await test('A13: base v5 (IDB v3) → v6; si el contrato falla queda como estaba
     await page.goto(HTTP_URL + '#/hoy');
     await page.waitForSelector('.day-head');
     const info = await dbInfo(page);
-    assert.equal(info.version, 4);
+    assert.equal(info.version, 5);
     assert.deepEqual(info.morning.feelings, ['lindo'], 'con los nombres de esa persona');
     assert.equal('mood' in info.morning, false);
     assert.equal(info.kind, undefined);
@@ -2093,6 +2093,37 @@ async function cloudContext(state) {
 }
 
 const CA = '11111111-1111-4111-8111-111111111111', CB = '22222222-2222-4222-8222-222222222222';
+
+await test('nube (NB2): la cola de salida vive en IndexedDB junto al cambio, sobrevive a recargar y sincroniza una sola pestaña', async () => {
+  const state = { me: { id: CA, username: 'nicole', name: 'Nicole', admin: true, hasNotebook: true, shares: [] } };
+  const { page, errors, setCookie } = await cloudContext(state);
+  await setCookie('mc_person', CA);
+  await page.goto(HTTP_URL);
+  await onboard(page);
+  await page.evaluate(() => MC.sync.flush());
+  await page.waitForFunction(() => MC.sync.pending() === 0, null, { timeout: 6000 });
+  // Otra pestaña tiene el candado de sincronizar: esta no sube nada (no se pisan).
+  await page.evaluate(() => { window.__release = null; navigator.locks.request('mc-sync-' + MC.cloud.view, () => new Promise((r) => { window.__release = r; })); });
+  await page.waitForFunction(() => typeof window.__release === 'function');
+  const before = state.pushes.length;
+  await page.evaluate((d) => MC.model.saveDay(Object.assign(MC.model.emptyDay(d), { notes: 'en la cola' })), TODAY);
+  // El cambio y su entrada en la cola se escribieron juntos.
+  const queued = await page.evaluate(() => MC.store.queueAll().then((q) => q.map((x) => x.id)));
+  assert.ok(queued.includes('days\u0001' + TODAY), JSON.stringify(queued));
+  await page.evaluate(() => MC.sync.flush());
+  await page.waitForTimeout(300);
+  assert.equal(state.pushes.length, before, 'con el candado tomado por otra pestaña, no sube');
+  // Se cierra antes de subir: al volver, la cola sigue ahí y sube.
+  await page.evaluate(() => window.__release());
+  await page.reload();
+  await page.waitForSelector('#panel, .cal-page', { timeout: 6000 });
+  await page.waitForFunction(() => MC.sync && MC.sync.pending() === 0, null, { timeout: 8000 });
+  const day = state.pushes.slice(before).flatMap((b) => b.changes).find((c) => c.store === 'days' && c.record && c.record.notes === 'en la cola');
+  assert.ok(day, 'lo que quedó en la cola subió después de recargar');
+  assert.deepEqual(await page.evaluate(() => MC.store.queueAll()), []);
+  assert.deepEqual(errors, []);
+  await page.context().close();
+});
 
 await test('nube (NB1): una foto sube su contenido en pedazos y la ficha sin él; una que llega se baja y se ve; si falta, se reintenta', async () => {
   const PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';

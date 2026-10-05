@@ -302,6 +302,9 @@ A8: el id es fijo por cosa marcada (`M.markId(tipo, id)` = `mrk_<tipo>_<id>`), a
 - **En una copia `.json`**: `MIGRATIONS[5]` agrega `weeks`, `templates` y `marks` vacíos si faltan. Los registros pasan por los mismos normalizadores. Una copia v6 o más nueva se rechaza (“versión más nueva”).
 - **Contrato v6** (A13): ver abajo.
 
+### `outbox` (keyPath `id`) — interno, IndexedDB 5 (NB2, D44)
+Cola de cambios para subir a la nube: `{ id: '<store>\u0001<clave>', at }`. Se escribe en la misma transacción que el registro; no va en la copia (`INTERNAL_STORES`), ni en la papelera, ni tiene sección.
+
 ### Contrato v6 (A13, 05/10/2026 · D34, D39)
 **Qué se retira:** `days.*.mood` (el ánimo 1–5 pasa a ser su palabra en `feelings`, solo si ese momento no tenía emociones; `[]` se respeta), `pages.kind/body/items` (pasan a un bloque: `blk_body` de renglones o `blk_items` de lista, si la hoja no tenía bloques) y `settings.moodLabels` / `settings.legacyMoodLabels` (ya usados para convertir). **Qué queda:** `settings.cover` (D39: es la tela de la tapa cuando no hay tema propio). Ninguna conversión toca `updatedAt`. La conversión es una sola función pura, `MC.backup.contractRecord(store, registro, palabras)`, con `MC.backup.moodWords(settings)` (los nombres congelados, los elegidos o los de fábrica).
 - **En IndexedDB** (versión **4**, `onupgradeneeded`, atómico y exclusivo entre pestañas): lee los ajustes, guarda en `meta.preV6` una instantánea `{ at, days, pages, settings }` con la forma vieja de lo que cambia y reescribe. Si algo falla, la transacción se aborta, la base queda en la versión 3 tal como estaba, el cuaderno la abre igual (los normalizadores siguen leyendo `mood` y `kind/body/items`) y avisa que lo vuelve a intentar.

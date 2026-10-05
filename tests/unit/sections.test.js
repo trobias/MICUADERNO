@@ -12,9 +12,10 @@ test('las secciones coinciden con public.sections de la migración', () => {
   assert.deepStrictEqual(ids, S.LIST.map((s) => [s.id, s.label]));
 });
 
-test('cada store del cuaderno tiene sección', () => {
+test('cada store del cuaderno tiene sección (salvo los internos, como la cola de salida)', () => {
   const src = fs.readFileSync(path.join(__dirname, '../../js/core/store.js'), 'utf8');
-  const stores = Object.keys(eval('(' + src.match(/var STORES = (\{[\s\S]*?\n  \});/)[1] + ')'));
+  const internal = ['outbox'];
+  const stores = Object.keys(eval('(' + src.match(/var STORES = (\{[\s\S]*?\n  \});/)[1] + ')')).filter((s) => !internal.includes(s));
   assert.deepStrictEqual(stores.slice().sort(), S.STORES.slice().sort());
   stores.forEach((s) => assert.ok(S.ids().includes(S.sectionOf(s, 'cualquiera')), s));
 });

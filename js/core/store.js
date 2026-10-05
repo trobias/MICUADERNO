@@ -11,7 +11,9 @@
   // índice pages.date; files.updatedAt completado. Puramente aditiva.
   // v4 (esquema v6, A13, D34 contraer): días sin `mood`, hojas sin `kind/body/items`, ajustes sin nombres de ánimo.
   // Antes de reescribir se guarda una instantánea de lo que cambia (`meta.preV6`) para “Descargar la copia de antes”.
-  var DB_VERSION = 4;
+  // v5 (NB2): store interno `outbox`, la cola de cambios para subir a la nube, escrita en la MISMA transacción
+  // que el cambio (si el navegador se cierra en el medio, o quedan los dos o ninguno). Aditiva.
+  var DB_VERSION = 5;
   var PREV_VERSION = 3;   // si el contrato falla, se abre la base como estaba (v5 se sigue leyendo entera)
   // Con cuentas (js/cloud.js, etapa B) cada persona tiene su base: `mi-cuaderno@<id>`. Sin cuentas, la de siempre.
   function dbName() { return DB_NAME + ((MC.cloud && MC.cloud.suffix) || ''); }
@@ -25,7 +27,8 @@
     files: { keyPath: 'id', indexes: [['owner', 'owner']] },
     weeks: { keyPath: 'week' },
     templates: { keyPath: 'id' },
-    marks: { keyPath: 'id', indexes: [['sourceId', 'sourceId']] }
+    marks: { keyPath: 'id', indexes: [['sourceId', 'sourceId']] },
+    outbox: { keyPath: 'id' }   // interno (NB2): no va en la copia ni en la papelera
   };
   var STORE_NAMES = Object.keys(STORES);
 
@@ -47,8 +50,9 @@
           return x >= lo && x <= hi;
         })));
       },
-      put: function (s, v) { data[s].set(keyOf(s, v), MC.clone(v)); return Promise.resolve(v); },
-      del: function (s, k) { data[s].delete(k); return Promise.resolve(); },
+      put: function (s, v, q) { data[s].set(keyOf(s, v), MC.clone(v)); if (q) data.outbox.set(q.id, MC.clone(q)); return Promise.resolve(v); },
+      del: function (s, k, q) { data[s].delete(k); if (q) data.outbox.set(q.id, MC.clone(q)); return Promise.resolve(); },
+      hasStore: function (s) { return !!data[s]; },
       replaceAll: function (payload) {
         STORE_NAMES.forEach(function (s) {
           data[s].clear();
@@ -208,22 +212,29 @@
         var store = os(s);
         return track(req(index ? store.index(index).getAll(range) : store.getAll(range)));
       },
-      put: function (s, v) {
+      // `q` (opcional, NB2): una entrada de la cola de salida que se escribe en la misma transacción.
+      put: function (s, v, q) {
         if (closed) return closedError();
-        var tx = db.transaction(s, 'readwrite');
+        var queued = q && s !== 'outbox' && db.objectStoreNames.contains('outbox');
+        var tx = db.transaction(queued ? [s, 'outbox'] : s, 'readwrite');
         tx.objectStore(s).put(v);
+        if (queued) tx.objectStore('outbox').put(q);
         return track(txDone(tx).then(function () { return v; }));
       },
-      del: function (s, k) {
+      del: function (s, k, q) {
         if (closed) return closedError();
-        var tx = db.transaction(s, 'readwrite');
+        var queued = q && s !== 'outbox' && db.objectStoreNames.contains('outbox');
+        var tx = db.transaction(queued ? [s, 'outbox'] : s, 'readwrite');
         tx.objectStore(s).delete(k);
+        if (queued) tx.objectStore('outbox').put(q);
         return track(txDone(tx));
       },
+      hasStore: function (s) { return db.objectStoreNames.contains(s); },
       replaceAll: function (payload) {
         if (closed) return closedError();
-        var tx = db.transaction(STORE_NAMES, 'readwrite');
+        var tx = db.transaction(STORE_NAMES.filter(function (s) { return db.objectStoreNames.contains(s); }), 'readwrite');
         STORE_NAMES.forEach(function (s) {
+          if (!db.objectStoreNames.contains(s)) return;
           var store = tx.objectStore(s);
           store.clear();
           (payload[s] || []).forEach(function (v) { store.put(v); });
@@ -251,8 +262,8 @@
 
   MC.store = {
     STORE_NAMES: STORE_NAMES, DB_VERSION: DB_VERSION,
-    // Stores que no van en la copia de seguridad (p. ej. la cola de sincronización de la etapa B). Hoy: ninguno.
-    INTERNAL_STORES: [],
+    // Stores que no van en la copia de seguridad: la cola de salida a la nube (NB2).
+    INTERNAL_STORES: ['outbox'],
     init: function (opts) {
       opts = opts || {};
       if (root.BroadcastChannel && root.document && !channel) {
@@ -292,12 +303,21 @@
     getAll: function (s) { return backend.getAll(s); },
     getAllByIndex: function (s, i, v) { return backend.getAllByIndex(s, i, v); },
     getRange: function (s, i, lo, hi) { return backend.getRange(s, i, lo, hi); },
-    put: function (s, v) { return wrapWrite(backend.put(s, v), { store: s }); },
-    del: function (s, k) { return wrapWrite(backend.del(s, k), { store: s }); },
+    put: function (s, v, q) { return wrapWrite(backend.put(s, v, q), { store: s }); },
+    del: function (s, k, q) { return wrapWrite(backend.del(s, k, q), { store: s }); },
+    /* Cola de salida (NB2): leer y sacar entradas sin avisar al resto del cuaderno (no son cambios de la persona). */
+    queueAll: function () { return backend.hasStore('outbox') ? backend.getAll('outbox') : Promise.resolve([]); },
+    queuePut: function (q) { return backend.put('outbox', q); },
+    /** Saca la entrada solo si sigue siendo la misma que se subió (si el registro cambió de nuevo, queda). */
+    queueDone: function (q) {
+      return backend.get('outbox', q.id).then(function (cur) { return cur && cur.at === q.at ? backend.del('outbox', q.id) : null; });
+    },
+    /** ¿Existe este store? (la cola de salida no existe si la base quedó en una versión anterior). */
+    hasStore: function (s) { return !!backend && backend.hasStore(s); },
     replaceAll: function (payload) { return wrapWrite(backend.replaceAll(payload), { store: '*' }); },
     dumpAll: function () {
       var out = {};
-      return Promise.all(STORE_NAMES.map(function (s) {
+      return Promise.all(STORE_NAMES.filter(function (s) { return backend.hasStore(s); }).map(function (s) {
         return backend.getAll(s).then(function (rows) { out[s] = rows; });
       })).then(function () { return out; });
     }

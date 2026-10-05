@@ -14,7 +14,7 @@ Cada idea pendiente, con su estado. **Nada se pierde por estar fuera de la fase 
 | **EXPERIMENTAL** | probar en chico; si no suma, se descarta |
 | **BLOCKED** | espera otra cosa (dice cuál) |
 
-**Dónde estamos (05/10/2026):** la etapa **A está completa** (A0–A13) y la nube está publicada con cuadernos compartidos. **NB1 (fotos en la nube) y NB3 (historial de migraciones) están hechos** (D43); **lo próximo es NB2** y después NB4–NB5. La etapa C (React) quedó **descartada para siempre** (D42). Las tablas de ideas de `VISION.md` siguen valiendo como reserva: su NEXT/LATER no salta a NB1.
+**Dónde estamos (05/10/2026):** la etapa **A está completa** (A0–A13) y la nube está publicada con cuadernos compartidos. **NB1 (fotos en la nube), NB2 (cola firme) y NB3 (historial de migraciones) están hechos** (D43, D44). Quedan NB4 (espera la respuesta de la dueña) y NB5. La etapa C (React) quedó **descartada para siempre** (D42). Las tablas de ideas de `VISION.md` siguen valiendo como reserva: su NEXT/LATER no salta a NB1.
 
 ## Pedido del 03/10, rastreo por entrega
 
@@ -37,6 +37,7 @@ Cada idea pendiente, con su estado. **Nada se pierde por estar fuera de la fase 
 | Nube: sincronización y cuadernos compartidos (quien recibe permiso mira el cuaderno de Nicole) | B5 | Hecho en su forma simple | D38. Lo que falta, en la sección NB. |
 | Nube: fotos, dibujos y adjuntos | NB1 | Hecho (06/10) | D43: en pedazos por el servidor a Storage privado. |
 | Nube: historial de migraciones de Supabase | NB3 | Hecho (06/10) | Ya estaban registradas; se sumó la del bucket. |
+| Nube: cola de salida en IndexedDB y una sola pestaña sincronizando | NB2 | Hecho (06/10) | D44. |
 | React/TypeScript y escenas especiales | C | Descartado (D42) | “Nunca React.” |
 | Entrar eligiendo a la persona, instalar la app y activar avisos desde la entrada | Nube | Hecho (D41) | Como la entrada de Mamayucca. |
 
@@ -50,7 +51,6 @@ Al empezar un ítem: pasarlo a NOW, leer `VISION.md` §0 y la decisión que lo c
 
 | # | Qué | Estado | Depende de | Notas |
 |---|---|---|---|---|
-| NB2 | **Cola de salida más firme**: la cola de cambios en un store de IndexedDB, en la misma transacción que el cambio, y Web Locks para que sincronice una sola pestaña. | **NOW** | — | Hoy la cola vive en `localStorage` y la puede mover cualquier pestaña. |
 | NB4 | Restaurar una copia con la nube prendida: hoy reemplaza también lo de la nube. Confirmar con la dueña si así lo quiere o si pide confirmación aparte. | NEEDS DESIGN | — | |
 | NB5 | Avisos más de una vez por día (hoy un cron diario por el plan Hobby de Vercel). | LATER | — | Con `pg_cron` + `pg_net` en Supabase, o Vercel Pro (pago: no sin su ok). |
 | — | Prueba guiada con la psicóloga, prueba en el celular, segundo proyecto de Supabase para las Preview. | **Descartado por la dueña** | — | D40: no volver a proponerlos. |

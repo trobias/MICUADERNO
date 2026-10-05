@@ -164,7 +164,7 @@ Después de que la dueña volvió a autorizar el conector de Vercel para `trobia
 - **Quién tiene cuaderno:** `profiles.has_notebook`. La primera administradora sí. Al sumar a alguien en Mi cuenta → Personas, se elige “Mira mi cuaderno, con los permisos que le dé abajo” (por defecto) o “Tiene su propio cuaderno”.
 - **Cómo se comparte:** Mi cuenta → “Quién puede ver mi cuaderno”: por sección, nada / ver / editar. “Ver” deja mirar; “editar” también deja escribir, cambiar y borrar en esa sección.
 - **La invitada (por ejemplo, la psicóloga):** entra con su usuario y PIN y se le abre el cuaderno de Nicole, en memoria y sin copia local, con un aviso arriba (“Cuaderno de Nicole · podés editar: …”). Si nadie le compartió nada, Mi cuenta se lo dice. Si le compartieron varios cuadernos, elige cuál abrir en Mi cuenta → “Cuadernos que podés abrir”.
-- **Sincronización (`js/sync.js`):** el dispositivo de la dueña sube cada cambio (cola de claves en `mc.ui.<id>.sync.outbox`; el contenido se lee de IndexedDB al subir), y la primera vez sube todo el cuaderno. Trae cada 45 s, al volver a la pestaña y al recuperar la red. `POST /api/sync/push` y `GET /api/sync/pull` (paginado por `updated_at`) usan la sesión de la persona, así que la RLS es la segunda llave.
+- **Sincronización (`js/sync.js`):** el dispositivo de la dueña sube cada cambio (cola en el store `outbox` de IndexedDB, escrita en la misma transacción que el cambio, NB2/D44; el contenido se lee de IndexedDB al subir; una sola pestaña sincroniza a la vez con Web Locks), y la primera vez sube todo el cuaderno. Trae cada 45 s, al volver a la pestaña y al recuperar la red. `POST /api/sync/push` y `GET /api/sync/pull` (paginado por `updated_at`) usan la sesión de la persona, así que la RLS es la segunda llave.
 - **No viaja:** lo de `meta` que no son ajustes (es del dispositivo).
 - **Migración remota:** `20261005090000_cuadernos_compartidos.sql` aplicada con el conector de Supabase (`execute_sql`). Verificado: 1 persona, administradora y con cuaderno; columna `updated_by` presente.
 
@@ -199,7 +199,7 @@ Estructura: `app/` (páginas y `/api`), `lib/` (env, PIN, sesión, personas, avi
 ## 6. Qué falta (en orden)
 
 Lo hecho: despliegue (§4.5), sincronización y cuadernos compartidos (§4.6), entrada eligiendo a la persona (D41), fotos en la nube (§4.7) e historial de migraciones (§4.8). Lo que queda está en `BACKLOG.md`, sección NB:
-1. **NB2** cola de salida en IndexedDB y una sola pestaña sincronizando (Web Locks).
+1. ~~NB2~~ hecho (D44).
 2. **NB4** qué hace “abrir una copia” con la nube prendida (espera a la dueña).
 3. **NB5** avisos más de una vez por día.
 4. Pantalla de `audit_events` para quien administra, y cambiar quién administra sin tocar SQL.

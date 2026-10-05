@@ -48,18 +48,50 @@
     return e;
   }
 
-  /* ---------- cola de salida (solo claves: el contenido se lee de la base al subir) ---------- */
-  function outbox() { return MC.ui.get(K.out, []); }
-  function enqueue(s, key) {
-    if (!syncs(s, key)) return;
-    if (s === 'meta' && guest && !canEdit('meta', 'settings')) return;
-    var id = s + SEP + key, q = outbox();
-    if (q.indexOf(id) === -1) { q.push(id); MC.ui.set(K.out, q); }
+  /* ---------- cola de salida (NB2): en IndexedDB, en la misma transacción que el cambio ----------
+     Cada entrada es { id: '<store>\u0001<clave>', at }: el contenido se lee de la base al subir. Si la base quedó
+     en una versión sin el store `outbox` (o es la memoria de una invitada sin él), la cola vuelve a localStorage. */
+  var count = 0;
+  var seq = 0;
+  function idbQueue() { return store.hasStore('outbox'); }
+  function entry(s, key) { return { id: s + SEP + key, at: Date.now() * 1000 + (seq++ % 1000) }; }
+  function lsQueue() { return MC.ui.get(K.out, []); }
+  function lsAdd(id) { var q = lsQueue(); if (q.indexOf(id) === -1) { q.push(id); MC.ui.set(K.out, q); } }
+  function readQueue() {
+    if (idbQueue()) return store.queueAll();
+    return Promise.resolve(lsQueue().map(function (id) { return { id: id, at: 0 }; }));
+  }
+  function doneQueue(sent) {
+    if (idbQueue()) return Promise.all(sent.map(function (q) { return store.queueDone(q); }));
+    var ids = sent.map(function (q) { return q.id; });
+    MC.ui.set(K.out, lsQueue().filter(function (id) { return ids.indexOf(id) === -1; }));
+    return Promise.resolve();
+  }
+  function queued(s, key) {
+    if (!syncs(s, key)) return null;
+    if (s === 'meta' && guest && !canEdit('meta', 'settings')) return null;
+    return entry(s, key);
+  }
+  function afterQueue(q) {
+    if (!q) return;
+    if (!idbQueue()) lsAdd(q.id);
+    count++;
     schedule(1500);
   }
   function schedule(ms) {
     clearTimeout(flushTimer);
     flushTimer = setTimeout(flush, ms);
+  }
+  /** La cola vieja (localStorage, antes de NB2) pasa a IndexedDB una sola vez. */
+  function migrateQueue() {
+    var old = lsQueue();
+    if (!old.length || !idbQueue()) return Promise.resolve();
+    return Promise.all(old.map(function (id) { return store.queuePut({ id: id, at: 0 }); })).then(function () { MC.ui.set(K.out, []); });
+  }
+  /** Una sola pestaña sincroniza el cuaderno propio a la vez (Web Locks); las demás no hacen nada ese turno. */
+  function withLock(fn, idle) {
+    if (guest || !root.navigator.locks) return fn();
+    return root.navigator.locks.request('mc-sync-' + owner, { ifAvailable: true }, function (lock) { return lock ? fn() : idle; });
   }
 
   /* ---------- envolver las escrituras del cuaderno ---------- */
@@ -67,12 +99,14 @@
   store.put = function (s, v) {
     var skip = applying > 0, key = S.keyOf(s, v);
     if (!skip && !canEdit(s, key)) { var e = readonlyError(); MC.emit('store:error', e); return Promise.reject(e); }
-    return put0.call(store, s, v).then(function (r) { if (!skip) enqueue(s, key); return r; });
+    var q = skip ? null : queued(s, key);
+    return put0.call(store, s, v, q && idbQueue() ? q : undefined).then(function (r) { afterQueue(q); return r; });
   };
   store.del = function (s, k) {
     var skip = applying > 0;
     if (!skip && !canEdit(s, k)) { var e = readonlyError(); MC.emit('store:error', e); return Promise.reject(e); }
-    return del0.call(store, s, k).then(function (r) { if (!skip) enqueue(s, k); return r; });
+    var q = skip ? null : queued(s, k);
+    return del0.call(store, s, k, q && idbQueue() ? q : undefined).then(function (r) { afterQueue(q); return r; });
   };
   store.replaceAll = function (payload) {
     if (guest && !applying) { var e = readonlyError(); MC.emit('store:error', e); return Promise.reject(e); }
@@ -81,11 +115,15 @@
   function enqueueAll() {
     return Promise.all(SYNC.map(function (s) {
       return store.getAll(s).then(function (rows) {
-        var q = outbox();
-        rows.forEach(function (r) { var key = S.keyOf(s, r); if (syncs(s, key) && q.indexOf(s + SEP + key) === -1) q.push(s + SEP + key); });
-        MC.ui.set(K.out, q);
+        var list = rows.map(function (r) { return S.keyOf(s, r); }).filter(function (key) { return syncs(s, key); });
+        return Promise.all(list.map(function (key) {
+          var q = entry(s, key);
+          if (idbQueue()) return store.queuePut(q);
+          lsAdd(q.id);
+          return null;
+        }));
       });
-    })).then(function () { schedule(300); });
+    })).then(function () { return readQueue(); }).then(function (all) { count = all.length; schedule(300); });
   }
   function quietly(fn) {
     applying++;
@@ -107,15 +145,21 @@
   }
   function flush() {
     if (!ready || flushing || !root.navigator.onLine) return Promise.resolve();
-    var q = outbox();
-    if (!q.length) return Promise.resolve();
+    return withLock(flushLocked);
+  }
+  function flushLocked() {
+    if (flushing) return Promise.resolve();
     flushing = true;
-    var batch = q.slice(0, 100);
+    var batch = [];
     // De a uno: una foto primero sube su contenido y recién después su ficha (sin contenido) va en el lote.
     var changes = [];
-    return batch.reduce(function (chain, id) {
+    return readQueue().then(function (all) {
+      count = all.length;
+      batch = all.sort(function (a, b) { return a.at - b.at; }).slice(0, 100);
+      if (!batch.length) { flushing = false; return null; }
+      return batch.reduce(function (chain, item) {
       return chain.then(function () {
-        var i = id.indexOf(SEP), s = id.slice(0, i), key = id.slice(i + 1);
+        var id = item.id, i = id.indexOf(SEP), s = id.slice(0, i), key = id.slice(i + 1);
         return store.get(s, key).then(function (rec) {
           if (!MD.isMedia(s) || !rec) { changes.push({ store: s, key: key, record: rec || null }); return; }
           return uploadMedia(s, key, rec).then(function () { changes.push({ store: s, key: key, record: MD.strip(s, rec) }); });
@@ -126,18 +170,20 @@
       if (guest) body.owner = owner;
       return api('/api/sync/push', { method: 'POST', body: JSON.stringify(body) });
     }).then(function (res) {
-      var rest = outbox().filter(function (id) { return batch.indexOf(id) === -1; });
-      MC.ui.set(K.out, rest);
-      status.lastPush = new Date().toISOString();
-      status.error = null;
-      retryMs = 2000;
-      if (!rest.length && !guest) MC.ui.set(K.uploaded, true);
-      if (guest && res.skipped && res.skipped.length) {
-        MC.c && MC.c.toast && MC.c.toast(readonlyError().message);
-        pull(true); // vuelve a mostrar lo que de verdad quedó guardado
-      }
-      flushing = false;
-      if (rest.length) schedule(200);
+      return doneQueue(batch).then(function () { return readQueue(); }).then(function (rest) {
+        count = rest.length;
+        status.lastPush = new Date().toISOString();
+        status.error = null;
+        retryMs = 2000;
+        if (!rest.length && !guest) MC.ui.set(K.uploaded, true);
+        if (guest && res.skipped && res.skipped.length) {
+          MC.c && MC.c.toast && MC.c.toast(readonlyError().message);
+          pull(true); // vuelve a mostrar lo que de verdad quedó guardado
+        }
+        flushing = false;
+        if (rest.length) schedule(200);
+      });
+    });
     }).catch(function (err) {
       flushing = false;
       status.error = String(err && err.message || err);
@@ -215,6 +261,9 @@
   var pulling = null;
   function pull(full, force) {
     if (!ready && !force) return Promise.resolve(0);
+    return withLock(function () { return pullLocked(full); }, 0);
+  }
+  function pullLocked(full) {
     if (pulling || !root.fetch) return pulling || Promise.resolve(0);
     var since = full ? '1970-01-01T00:00:00Z' : MC.ui.get(K.cursor, '1970-01-01T00:00:00Z');
     var applied = 0;
@@ -277,13 +326,14 @@
       return init0.call(store, opts).then(function (kind) {
         ready = true;
         var first = !MC.ui.get(K.uploaded, false);
-        (first ? enqueueAll() : Promise.resolve()).then(function () { schedule(400); return pull(false); });
+        migrateQueue().then(function () { return first ? enqueueAll() : readQueue().then(function (all) { count = all.length; }); })
+          .then(function () { schedule(400); return pull(false); });
         return kind;
       });
     }
     // Invitada: memoria, con el cuaderno compartido traído de la nube antes de dibujar nada.
     return init0.call(store, { memory: true }).then(function (kind) {
-      return shareReady.then(function () { return pull(true, true); }).then(function () {
+      return shareReady.then(function () { return pullLocked(true); }).then(function () {
         ready = true;
         return store.get('meta', 'settings');
       }).then(function (row) {
@@ -319,5 +369,5 @@
 
   status.flush = flush;
   status.pull = pull;
-  status.pending = function () { return outbox().length; };
+  status.pending = function () { return count; };
 })(typeof window !== 'undefined' ? window : globalThis);
