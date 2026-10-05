@@ -8,6 +8,11 @@ Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantien
 - `.mcp.json` ya está en la rama. La dueña habilitó los dos MCP en su entorno web de Claude Code; el estado de `claude mcp list` en una instalación local distinta no verifica ese entorno.
 - `docs/NUBE.md` registra la verificación de red, los entornos y lo que falta para aplicar la migración SQL existente. Ningún secreto se agregó a Git.
 
+## 2026-10-05 · Lo próximo y lo descartado (docs)
+
+- Decisiones de la dueña (D40): nunca la prueba con la psicóloga ni en el celular, nunca un segundo proyecto de Supabase. Lo próximo del roadmap: **fotos, dibujos y adjuntos en la nube** (NB1).
+- `BACKLOG.md` suma la sección **NB** (lo que falta de la nube) y la sección **C** (qué hay en la etapa C, ítem por ítem, con su costo); `ROADMAP.md` y `HANDOFF.md` al día.
+
 ## 2026-10-05 · A13: contrato v6 (cache `v36`)
 
 **Para quien lo usa**

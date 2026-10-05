@@ -63,7 +63,7 @@ A12: matriz E2E de pasar entre todas las secciones y **volver al calendario** (�
 
 ## Etapa B · Cuenta, nube y permisos
 
-**Estado (05/10/2026):** publicado en `https://micuaderno-five.vercel.app` con B1, B3–B4, B6 (sin dispositivos reales), B2 sin Storage, el latido anti-pausa y B5 en su forma simple (cuadernos compartidos, D38). Quedan Storage, preview aislada, la prueba con dos cuentas reales y en dispositivos: orden y recomendación en [`docs/EVALUACION_BC.md`](docs/EVALUACION_BC.md); detalle técnico en [`docs/NUBE.md`](docs/NUBE.md).
+**Estado (05/10/2026):** publicado en `https://micuaderno-five.vercel.app` con B1, B3–B4, B6 (sin dispositivos reales), B2 sin Storage, el latido anti-pausa y B5 en su forma simple (cuadernos compartidos, D38). **Lo próximo es Storage para fotos, dibujos y adjuntos (NB1).** La dueña descartó la preview aislada y las pruebas guiadas con personas y dispositivos (D40). Lo que falta, en `BACKLOG.md` sección NB y en [`docs/EVALUACION_BC.md`](docs/EVALUACION_BC.md); detalle técnico en [`docs/NUBE.md`](docs/NUBE.md).
 
 1. **B1 estructura:** Next.js/TypeScript en raíz; cuaderno probado a `public/` conservando sus rutas mientras se migra; ajustar herramientas, CSP, SW y tests. Nunca cachear API ni páginas de login como shell offline del cuaderno.
 2. **B2 datos:** Supabase Postgres con migraciones versionadas, RLS en todas las tablas, Storage privado. Separar los datos por sección **en servidor** para que lectura de `emociones` no entregue escritura. Mapa de campos por defecto denegado, prueba que falla al aparecer un campo nuevo sin clasificación. Privacidad “Solo para mí” también en adjuntos y referencias del día.
