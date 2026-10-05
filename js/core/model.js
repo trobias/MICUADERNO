@@ -637,8 +637,75 @@
   /** Las plantillas que se ven en Mis hojas (no las congeladas de una repetición). */
   function getTemplates() {
     return S().getAll('templates').then(function (rows) {
-      return rows.filter(function (t) { return !isDeleted(t) && !t.frozen; }).map(normalizeTemplate).filter(Boolean)
+      return rows.filter(function (t) { return !isDeleted(t) && !t.frozen && t.kind !== 'day'; }).map(normalizeTemplate).filter(Boolean)
         .sort(function (a, b) { return a.title.localeCompare(b.title, 'es'); });
+    });
+  }
+
+  /* ---------- plantillas y repetición de un día (D45) ---------- */
+  function getDayTemplates() {
+    return S().getAll('templates').then(function (rows) {
+      return rows.filter(function (t) { return !isDeleted(t) && t.kind === 'day'; }).map(normalizeTemplate).filter(Boolean)
+        .sort(function (a, b) { return a.title.localeCompare(b.title, 'es'); });
+    });
+  }
+  /** Las actividades propias de un día (lo que se repite ya se repite solo: no entra). */
+  function ownTitles(items) {
+    return (items || []).filter(function (it) { return !it.routineId && !it.virtual && String(it.title || '').trim(); }).map(function (it) { return it.title.trim(); });
+  }
+  /** Un día como plantilla: sus actividades (sin estado), su intención y sus notas. */
+  function dayTemplateFrom(day, items, title) {
+    return saveTemplate({
+      kind: 'day', title: String(title || '').trim() || 'Mi día',
+      day: { intention: day ? day.intention : '', notes: day ? day.notes : '', activities: ownTitles(items) }
+    });
+  }
+  /**
+   * Usar una plantilla de día en `date`: suma las actividades que todavía no estén (por nombre) y completa la
+   * intención y las notas solo si están vacías. Nunca pisa lo escrito. Devuelve cuántas actividades sumó.
+   */
+  function applyDayTemplate(date, tpl) {
+    var t = normalizeTemplate(tpl);
+    if (!t || t.kind !== 'day') return Promise.reject(new Error('Esa no es una plantilla de día.'));
+    return Promise.all([getDay(date), itemsForDay(date)]).then(function (r) {
+      var day = r[0], have = {};
+      r[1].forEach(function (it) { have[String(it.title).trim().toLowerCase()] = true; });
+      var add = t.day.activities.filter(function (title) { return !have[title.toLowerCase()]; });
+      if (!day.intention.trim() && t.day.intention.trim()) day.intention = t.day.intention;
+      if (!day.notes.trim() && t.day.notes.trim()) day.notes = t.day.notes;
+      return saveDay(day).then(function () {
+        return add.reduce(function (chain, title) { return chain.then(function () { return addActivity(date, title); }); }, Promise.resolve());
+      }).then(function () { return add.length; });
+    });
+  }
+  /**
+   * “Que se repita este día”: cada actividad propia del día pasa a repetirse con la misma regla (el motor de
+   * siempre, D7), salvo las que ya se repiten con ese nombre. Devuelve las repeticiones creadas.
+   */
+  function repeatDay(items, routine) {
+    var titles = ownTitles(items);
+    if (!titles.length) return Promise.reject(new Error('Este día todavía no tiene actividades para repetir.'));
+    return getRoutines().then(function (existing) {
+      var taken = {};
+      existing.forEach(function (r) { if (!r.archived && r.kind !== 'sheet') taken[r.title.trim().toLowerCase()] = true; });
+      var out = [];
+      return titles.filter(function (title) { return !taken[title.toLowerCase()]; }).reduce(function (chain, title) {
+        return chain.then(function () {
+          return saveRoutine({ title: title, rule: routine.rule, startDate: routine.startDate, endDate: routine.endDate, moment: routine.moment }).then(function (r) {
+            out.push(r);
+            return adoptInto(r, items.filter(function (it) { return !it.routineId && !it.virtual && String(it.title).trim().toLowerCase() === title.toLowerCase(); })[0]);
+          });
+        });
+      }, Promise.resolve()).then(function () { return out; });
+    });
+  }
+  /** Si la repetición nueva cae en el día de la actividad suelta, la actividad pasa a ser esa ocurrencia (como en el menú de la actividad): sin duplicados, con su estado. */
+  function adoptInto(r, it) {
+    if (!it || !MC.recurrence.occursOn(r, it.date)) return null;
+    var status = it.status;
+    return deleteActivity(it).then(function () { return itemsForDay(it.date); }).then(function (list) {
+      var occ = list.filter(function (x) { return x.routineId === r.id; })[0];
+      return occ && status && status !== 'pending' ? setStatus(occ, status) : null;
     });
   }
   function getTemplate(id) { return S().get('templates', id).then(function (t) { return t && !isDeleted(t) ? normalizeTemplate(t) : null; }); }
@@ -852,9 +919,24 @@
       values: sanitizeValues(t.values),
       stickers: sanitizeStickers(t.stickers),
       frozen: t.frozen === true,
+      // v7 (D45): una plantilla puede ser de hoja (la de siempre) o de día (actividades, intención y notas).
+      kind: t.kind === 'day' ? 'day' : 'sheet',
+      day: t.kind === 'day' ? sanitizeDayTemplate(t.day) : null,
       deletedAt: sanitizeDeletedAt(t.deletedAt),
       createdAt: stampOf(t.createdAt),
       updatedAt: stampOf(t.updatedAt)
+    };
+  }
+
+  /** Lo que guarda una plantilla de día: títulos de actividades (sin estados), intención y notas. */
+  function sanitizeDayTemplate(d) {
+    d = d && typeof d === 'object' ? d : {};
+    var seen = {};
+    return {
+      intention: str(d.intention).slice(0, 500),
+      notes: str(d.notes),
+      activities: (Array.isArray(d.activities) ? d.activities : []).map(function (a) { return str(a).trim().slice(0, 200); })
+        .filter(function (a) { var k = a.toLowerCase(); if (!a || seen[k]) return false; seen[k] = true; return true; }).slice(0, 50)
     };
   }
 
@@ -1160,7 +1242,7 @@
     sanitizeBlocks: sanitizeBlocks, sanitizeValues: sanitizeValues, BLOCK_TYPES: BLOCK_TYPES,
     normalizeWeek: normalizeWeek, sheetOccurrenceId: sheetOccurrenceId, sheetOccurrences: sheetOccurrences, sheetBlocks: sheetBlocks, sheetText: sheetText, sheetCount: sheetCount,
     markId: markId, getMarks: getMarks, isVictory: isVictory, setVictory: setVictory,
-    getTemplates: getTemplates, getTemplate: getTemplate, saveTemplate: saveTemplate, deleteTemplate: deleteTemplate, templateFrom: templateFrom, repeatSheet: repeatSheet, getWeek: getWeek, saveWeek: saveWeek, isEmptyWeek: isEmptyWeek, normalizeTemplate: normalizeTemplate, normalizeMark: normalizeMark,
+    getTemplates: getTemplates, getTemplate: getTemplate, getDayTemplates: getDayTemplates, dayTemplateFrom: dayTemplateFrom, applyDayTemplate: applyDayTemplate, repeatDay: repeatDay, saveTemplate: saveTemplate, deleteTemplate: deleteTemplate, templateFrom: templateFrom, repeatSheet: repeatSheet, getWeek: getWeek, saveWeek: saveWeek, isEmptyWeek: isEmptyWeek, normalizeTemplate: normalizeTemplate, normalizeMark: normalizeMark,
     sanitizeFeelings: sanitizeFeelings, sanitizeFeel: sanitizeFeel, sanitizeMoves: sanitizeMoves,
     feelingsOf: feelingsOf, emotionKey: emotionKey, emotionPalette: emotionPalette, emotionSuggestions: emotionSuggestions,
     sanitizeTheme: sanitizeTheme, sanitizeEmotionColors: sanitizeEmotionColors, occurrenceId: occurrenceId, DRAW_TOOLS: DRAW_TOOLS,

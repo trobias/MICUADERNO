@@ -110,7 +110,21 @@ function Extras({ vapid }: { vapid: string }) {
     addEventListener('beforeinstallprompt', onPrompt);
     addEventListener('appinstalled', onInstalled);
     // El service worker del cuaderno: hace falta para instalar y para recibir avisos.
-    if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+    // Acá no hay cuaderno abierto: una versión nueva del service worker se activa enseguida (así un arreglo
+    // llega aunque la versión vieja no deje abrir el cuaderno).
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').then((reg) => {
+        const activate = (w: ServiceWorker | null) => {
+          if (!w) return;
+          const go = () => { if (w.state === 'installed') w.postMessage({ type: 'skipWaiting' }); };
+          go();
+          w.addEventListener('statechange', go);
+        };
+        activate(reg.waiting || reg.installing);
+        reg.addEventListener('updatefound', () => activate(reg.installing));
+        reg.update().catch(() => {});
+      }).catch(() => {});
+    }
     const can = !!vapid && 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
     setPushOk(can);
     setPushOn(can && Notification.permission === 'granted' && !!read(PENDING));

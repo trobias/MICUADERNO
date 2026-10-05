@@ -29,6 +29,11 @@ export default async function Page() {
       <p className="lead">{list && list.length ? 'Elegí quién sos y escribí tu PIN.' : 'Escribí tu usuario y tu PIN para abrir tu cuaderno.'}</p>
       <Login people={list} vapid={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || ''} />
       <p className="note">Si te olvidaste el PIN, pedíselo a quien administra el cuaderno: lo puede cambiar.</p>
+      <p className="note">
+        ¿Todavía no tenés cuenta? No se crea desde acá (así nadie de afuera puede sumarse): quien administra la arma en
+        <strong> Mi cuenta → Personas → Sumar una persona</strong>, con tu usuario, un PIN y si tenés tu propio cuaderno.
+        {list && list.length ? null : ' La primera cuenta, la de quien administra, se prepara una sola vez con el enlace de preparación.'}
+      </p>
     </main>
   );
 }

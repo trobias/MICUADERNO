@@ -242,6 +242,26 @@
     });
   };
 
+  /** Pedir un texto corto (un nombre) → Promise<string|null>. Enter confirma. */
+  c.askText = function (opts) {
+    return new Promise(function (resolve) {
+      var id = MC.uid('ask');
+      var input = h('input.input', { id: id, type: 'text', value: opts.value || '', maxlength: opts.max || 120, placeholder: opts.placeholder || '' });
+      var dlg = c.dialog({
+        title: opts.title,
+        content: [opts.hint ? h('p.section__hint', opts.hint) : null, h('div.field', h('label', { for: id }, opts.label || 'Nombre'), input)],
+        actions: [
+          { label: 'Cancelar', kind: 'text', value: null },
+          { label: opts.confirm || 'Guardar', value: true, onClick: function () { dlg.value = input.value.trim() || opts.value || ''; } }
+        ],
+        onClose: function (v) { resolve(v === true ? (dlg.value || null) : null); }
+      });
+      dlg.value = null;
+      input.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); dlg.value = input.value.trim() || opts.value || ''; dlg.close(true); } });
+      setTimeout(function () { input.focus(); input.select(); }, 30);
+    });
+  };
+
   /* ---------- Aviso breve ---------- */
   var toastEl = null, toastTimer = null;
   c.toast = function (text, opts) {

@@ -1,6 +1,6 @@
 /* MIS HOJAS (A5, D27, D29) — el índice de hojas y lo que se repite, en un solo cuadro.
    Reemplaza los marcadores Páginas y Rutinas: los datos son los mismos (pages, routines). Desde A7 suma
-   plantillas y hojas que se repiten. Ver SPEC §7.5. */
+   hojas que se repiten; las plantillas propias viven en “Nueva hoja” (D45). Ver SPEC §7.5. */
 (function (root) {
   'use strict';
   var MC = root.MC;
@@ -15,10 +15,9 @@
     main.appendChild(h('div.spread', left, h('div.spine', { 'aria-hidden': 'true' }), right));
 
     function load() {
-      return Promise.all([M.getPages(), M.getRoutines(), M.getTemplates()]).then(function (r) {
+      return Promise.all([M.getPages(), M.getRoutines()]).then(function (r) {
         if (destroyed) return;
         paintIndex(r[0]);
-        paintTemplates(r[2]);
         paintRepeats(r[1]);
         showFocus();
       });
@@ -49,26 +48,6 @@
           h('p.toc__preview', preview)));
       });
       left.appendChild(ol);
-    }
-
-    /* ---------- mis plantillas (A7): debajo del índice; se crean desde “Guardar” de una hoja o acá ---------- */
-    function paintTemplates(list) {
-      var add = h('button.text-btn', { type: 'button' }, MC.icon('plus'), 'Nueva plantilla');
-      add.addEventListener('click', function () {
-        M.saveTemplate({ title: 'Mi plantilla', blocks: [{ type: 'text' }] }).then(function (t) { location.hash = R.template(t.id); });
-      });
-      var sec = h('section.templates-mine', { 'aria-labelledby': 'mine-title' },
-        h('header.page-head', h('h2.t-display', { id: 'mine-title' }, 'Mis plantillas'), add));
-      if (!list.length) {
-        sec.appendChild(h('p.page-intro.t-text', 'Cualquier hoja se puede guardar como plantilla desde su botón Guardar. Las tuyas aparecen acá y al empezar una hoja nueva.'));
-      } else {
-        var ul = h('ul.template-list');
-        list.forEach(function (t) {
-          ul.appendChild(h('li', h('a.text-btn', { href: R.template(t.id) }, MC.icon('paginas'), t.title, h('span.t-meta', ' · ' + MC.views.pages.kindOf(t.blocks)))));
-        });
-        sec.appendChild(ul);
-      }
-      left.appendChild(sec);
     }
 
     /* ---------- lo que se repite (rutinas, también las pausadas) ---------- */

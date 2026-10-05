@@ -258,6 +258,12 @@ v5 es **aditiva** (D34): los stores y campos nuevos conviven con los viejos hast
   values: { [blockId]: Value },   // contenido inicial (“con lo escrito”); {} = en blanco
   stickers: [Placed],
   frozen: false,                  // true: copia congelada que usa una repetición (no se lista ni se edita)
+  kind: 'sheet' | 'day',          // D45 (copia v7): 'day' = plantilla de un día; sin campo = 'sheet'
+  day: null | {                   // solo con kind 'day': lo que se suma al usarla (nunca pisa lo escrito)
+    intention: string,            // ≤ 500
+    notes: string,
+    activities: [string]          // títulos sin marcar, sin repetidos, ≤ 50
+  },
   // A7: una hoja nacida de una plantilla guarda `templateId` pero es independiente; editar la plantilla no la toca.
   deletedAt: ISO | null,
   createdAt: ISO | null, updatedAt: ISO | null
@@ -309,6 +315,9 @@ Cola de cambios para subir a la nube: `{ id: '<store>\u0001<clave>', at }`. Se e
 **Qué se retira:** `days.*.mood` (el ánimo 1–5 pasa a ser su palabra en `feelings`, solo si ese momento no tenía emociones; `[]` se respeta), `pages.kind/body/items` (pasan a un bloque: `blk_body` de renglones o `blk_items` de lista, si la hoja no tenía bloques) y `settings.moodLabels` / `settings.legacyMoodLabels` (ya usados para convertir). **Qué queda:** `settings.cover` (D39: es la tela de la tapa cuando no hay tema propio). Ninguna conversión toca `updatedAt`. La conversión es una sola función pura, `MC.backup.contractRecord(store, registro, palabras)`, con `MC.backup.moodWords(settings)` (los nombres congelados, los elegidos o los de fábrica).
 - **En IndexedDB** (versión **4**, `onupgradeneeded`, atómico y exclusivo entre pestañas): lee los ajustes, guarda en `meta.preV6` una instantánea `{ at, days, pages, settings }` con la forma vieja de lo que cambia y reescribe. Si algo falla, la transacción se aborta, la base queda en la versión 3 tal como estaba, el cuaderno la abre igual (los normalizadores siguen leyendo `mood` y `kind/body/items`) y avisa que lo vuelve a intentar.
 - **En una copia `.json`**: `MIGRATIONS[6]` hace lo mismo con los nombres de ánimo de esa copia. `SCHEMA_VERSION` = 6; una copia 7 o más nueva se rechaza.
+
+### Esquema v7 (D45, aditivo)
+`templates` puede llevar `kind: 'day'` y `day` (plantillas de día). `MIGRATIONS[7]` es la identidad: las plantillas sin `kind` son de hojas. `SCHEMA_VERSION` = 7; una copia 8 o más nueva se rechaza. IndexedDB sigue en 5.
 - **Leer nunca pierde:** si igual llega un `mood` o una hoja vieja (una pestaña vieja, un borrador local, la nube, una base que no pudo actualizarse), `normalizeDay`/`normalizePage`/`feelingsOf` la leen; nunca se vuelve a escribir la forma vieja.
 - **Copia de antes:** Ajustes → Mis datos → *Antes de la actualización*: “Descargar la copia de antes” (`MC.backup.downloadPreV6`: el cuaderno de hoy con días, hojas y ajustes como eran, en una copia v5 que se puede volver a abrir) y “Ya no la necesito” (borra `meta.preV6`). La instantánea no va en las copias ni a la nube.
 

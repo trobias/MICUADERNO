@@ -44,6 +44,8 @@ Para retomar el desarrollo **sin haber estado en las conversaciones anteriores**
 | 23 | “No me gusta ninguna de la etapa C, nunca pasemos a React; sigamos con los NB.” | Etapa C descartada; se sigue con NB. | D42 |
 | 24 | NB1: fotos en la nube. | Hecho: pedazos por el servidor a Storage privado; NB3 cerrado. | D43 |
 | 25 | NB2: cola firme. | Hecho: cola en IndexedDB junto al cambio, una pestaña sincroniza. | D44 |
+| 26 | “Guardar repetición era para los días”; plantillas en Nueva hoja con un “+”; guardar un día como plantilla. | Hecho: Guardar en el encabezado del día; Mis plantillas dentro de Nueva hoja. | D45 |
+| 27 | “No anda al principio en `/`, en `/entrar` sí” y “¿dónde se crea la cuenta?”. | Arreglado el service worker; el ingreso explica que la cuenta la suma quien administra (Mi cuenta → Personas). | D46 |
 
 ## 3. Estado actual
 

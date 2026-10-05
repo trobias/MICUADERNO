@@ -433,7 +433,7 @@
       var offMe = MC.on('cloud:me', showMe);
       right.appendChild(c.section('Mi cuenta', [
         who,
-        h('p.t-text', h('a', { href: MC.cloud.accountUrl }, 'Mi cuenta'), ': cambiar el PIN, avisos en este dispositivo y quién puede ver mi cuaderno.')
+        h('p.t-text', h('a', { href: MC.cloud.accountUrl }, 'Mi cuenta'), ': cambiar el PIN, avisos en este dispositivo, quién puede ver mi cuaderno y, si administrás, sumar personas (crear cuentas).')
       ], { id: 'st-account' }));
       cleanups.push(offMe);
     }

@@ -3,7 +3,7 @@
    NO pasan por acá: viven en IndexedDB. Al cambiar cualquier archivo de SHELL, subir CACHE_VERSION. */
 'use strict';
 
-var CACHE_VERSION = 'mi-cuaderno-v38';
+var CACHE_VERSION = 'mi-cuaderno-v39';
 var SHELL = [
   './', 'index.html', 'manifest.webmanifest',
   'css/fonts.css', 'css/tokens.css', 'css/base.css', 'css/notebook.css', 'css/components.css', 'css/views.css', 'css/print.css',
@@ -19,8 +19,20 @@ var SHELL = [
   'assets/icons/notification-icon.png', 'assets/icons/notification-badge.png', 'assets/icons/shortcut-hoy.png'
 ];
 
+// El HTML del cuaderno se guarda solo si llegó tal cual: en la nube, sin sesión, el servidor lo redirige a
+// /entrar (el service worker se registra también desde ahí) y una respuesta redirigida no sirve para navegar.
+var PAGES = ['./', 'index.html'];
+function usable(res) { return !!res && res.ok && !res.redirected && res.type !== 'opaqueredirect'; }
+
 self.addEventListener('install', function (event) {
-  event.waitUntil(caches.open(CACHE_VERSION).then(function (cache) { return cache.addAll(SHELL); }));
+  event.waitUntil(caches.open(CACHE_VERSION).then(function (cache) {
+    return Promise.all([
+      cache.addAll(SHELL.filter(function (f) { return PAGES.indexOf(f) === -1; })),
+      Promise.all(PAGES.map(function (f) {
+        return fetch(f, { cache: 'reload', redirect: 'manual' }).then(function (res) { if (usable(res)) return cache.put(f, res); }, function () {});
+      }))
+    ]);
+  }));
 });
 
 self.addEventListener('activate', function (event) {
@@ -46,8 +58,13 @@ self.addEventListener('fetch', function (event) {
     var scopePath = new URL(self.registration.scope).pathname;
     if (url.pathname !== scopePath && url.pathname !== scopePath + 'index.html') return;
     event.respondWith(caches.match('index.html').then(function (hit) {
-      return hit || fetch(req);
-    }).catch(function () { return caches.match('index.html'); }));
+      if (usable(hit)) return hit;
+      // Sin copia buena: la red decide (en la nube, sin sesión, lleva a /entrar). Si trae el cuaderno, queda guardado.
+      return fetch(req).then(function (res) {
+        if (usable(res)) { var copy = res.clone(); caches.open(CACHE_VERSION).then(function (c) { c.put('index.html', copy); }); }
+        return res;
+      });
+    }).catch(function () { return caches.match('index.html').then(function (hit) { return usable(hit) ? hit : Response.error(); }); }));
     return;
   }
   event.respondWith(caches.match(req, { ignoreSearch: true }).then(function (hit) {

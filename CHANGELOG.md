@@ -8,6 +8,18 @@ Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantien
 - `.mcp.json` ya está en la rama. La dueña habilitó los dos MCP en su entorno web de Claude Code; el estado de `claude mcp list` en una instalación local distinta no verifica ese entorno.
 - `docs/NUBE.md` registra la verificación de red, los entornos y lo que falta para aplicar la migración SQL existente. Ningún secreto se agregó a Git.
 
+## 2026-10-06 · Guardar del día, plantillas en Nueva hoja y entrada por `/` (cache `v39`)
+
+**Para quien lo usa**
+- Cada día (Hoy o cualquier otro) tiene **Guardar** arriba: *que se repita este día* (sus actividades aparecen solas en los días que elijas), *como plantilla de día* y *usar* una plantilla de día en otro (suma lo que falte, nunca pisa lo escrito).
+- Las plantillas de hojas ya no aparecen sueltas en Mis hojas: están en **Nueva hoja**, con un **+** para armar una nueva y un lápiz para editar las tuyas. El Guardar de una hoja queda solo como plantilla.
+- Entrar por `https://micuaderno-five.vercel.app/` vuelve a andar (antes había que ir a `/entrar`). En el ingreso se explica cómo se crea una cuenta: la suma quien administra en Mi cuenta → Personas.
+
+**Para quien lo mantiene**
+- `templates` con `kind: 'day'` y `day`; `M.getDayTemplates/dayTemplateFrom/applyDayTemplate/repeatDay`; copia `schemaVersion` 7 (aditiva). `c.askText`; `MC.repeat.editor` con `noTitle`/`dialogTitle`. D45.
+- `sw.js` guarda el HTML del cuaderno solo si llegó sin redirección y, sin copia buena, deja decidir a la red; `/entrar` activa enseguida un service worker nuevo. D46.
+- Pruebas: 136 unit (`day-templates`, `sw-redirect`), 57/57 E2E (“D45”, A7 actualizado), `e2e:cloud` 3/3.
+
 ## 2026-10-06 · NB2: cola de salida firme (cache `v38`)
 
 **Para quien lo usa**

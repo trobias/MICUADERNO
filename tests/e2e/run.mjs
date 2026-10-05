@@ -768,7 +768,7 @@ await test('A6: la semana-planner de fondo; anotar y marcar ahí; pasado sin rep
   await context.close();
 });
 
-await test('A7: hojas en bloques; Guardar como plantilla y que se repita; la hoja del día aparece sola y se guarda al escribir', async () => {
+await test('A7: hojas en bloques; Guardar como plantilla; Mis plantillas dentro de Nueva hoja; la hoja del día aparece sola y se guarda al escribir', async () => {
   const { page, errors, context } = await newPage(browser);
   await page.goto(FILE_URL);
   await onboard(page);
@@ -796,33 +796,39 @@ await test('A7: hojas en bloques; Guardar como plantilla y que se repita; la hoj
   await page.click('.free-head button:has-text("Guardar")');
   await page.click('[role="menuitem"]:has-text("Como plantilla, con lo escrito")');
   await page.waitForSelector('.toast:has-text("Mis plantillas")');
-  // Mis hojas la muestra y “Nueva hoja” la ofrece primero.
+  // Mis hojas ya no la lista aparte (D45): “Nueva hoja” la ofrece primero, junto al “+”.
   await goto(page, '#/hojas');
-  await page.waitForSelector('.templates-mine a:has-text("Pros y contras")');
+  assert.equal(await page.locator('.templates-mine').count(), 0);
   assert.match(await page.textContent('.toc'), /Mudarme o no/, 'la vista previa lee los bloques');
   await page.click('#panel button:has-text("Nueva hoja")');
   await page.waitForSelector('dialog.sheet .template-group__title:has-text("Mis plantillas")');
-  await page.click('dialog.sheet .template-group .template:has-text("Pros y contras")');
+  assert.equal(await page.locator('dialog.sheet .template--new').count(), 1);
+  await page.click('dialog.sheet .template-own .template:has-text("Pros y contras")');
   await page.waitForSelector('#page-body');
   assert.equal(await page.inputValue('#page-body'), 'Mudarme o no');
   assert.equal(await page.locator('.sheet-cols textarea').first().inputValue(), 'más luz');
-  // Editar la plantilla no toca las hojas ya hechas.
+  // Editar la plantilla (lápiz de su tarjeta) no toca las hojas ya hechas.
   await goto(page, '#/hojas');
-  await page.click('.templates-mine a:has-text("Pros y contras")');
+  await page.click('#panel button:has-text("Nueva hoja")');
+  await page.click('dialog.sheet .template-own:has-text("Pros y contras") .template__edit');
   await page.waitForSelector('.template-page .page-title');
   await page.fill('.template-page #page-body, .template-page textarea.write >> nth=0', 'otra idea');
   await page.waitForTimeout(700);
   assert.equal((await page.evaluate((id) => MC.model.getPage(id), pageId)).values[stored.blocks[0].id], 'Mudarme o no');
-  // Guardar → que se repita, en blanco, todos los días.
+  // El “+” arma una plantilla nueva y la abre.
+  await goto(page, '#/hojas');
+  await page.click('#panel button:has-text("Nueva hoja")');
+  await page.click('dialog.sheet .template--new');
+  await page.waitForSelector('.template-page .page-title');
+  assert.equal((await page.evaluate(() => MC.model.getTemplates())).length, 2);
+  // Guardar de una hoja: solo como plantilla (repetir es cosa de los días).
   await page.evaluate((id) => { location.hash = MC.routes.page(id); }, pageId);
   await page.waitForSelector('#page-body');
   await page.click('.free-head button:has-text("Guardar")');
-  await page.click('[role="menuitem"]:has-text("Que se repita, en blanco")');
-  await page.fill('#rt-title', 'Pensar en voz alta');
-  await page.selectOption('#rt-freq', 'daily');
-  await page.click('dialog.sheet button:has-text("Que se repita")');
-  await page.waitForSelector('.toast:has-text("aparecer sola")');
-  // No es una actividad: no aparece en la lista del día, sí en “Hojas de este día”.
+  assert.equal(await page.locator('[role="menuitem"]:has-text("Que se repita")').count(), 0);
+  await page.keyboard.press('Escape');
+  // Una hoja que ya se repetía (de antes) sigue apareciendo sola: no es actividad, sí “Hojas de este día”.
+  await page.evaluate((id) => MC.model.getPage(id).then((p) => MC.model.repeatSheet(p, { title: 'Pensar en voz alta', rule: { type: 'daily' }, startDate: MC.dates.today() }, false)), pageId);
   await goto(page, '#/hoy');
   await page.waitForSelector('#q-pages');
   assert.equal(await page.locator('.activity:has-text("Pensar en voz alta")').count(), 0);
@@ -836,15 +842,58 @@ await test('A7: hojas en bloques; Guardar como plantilla y que se repita; la hoj
   await page.fill('#page-body', 'Hoy pensé en el balcón.');
   await page.waitForFunction(() => document.querySelector('.free-head .saved-note').dataset.state === 'saved', null, { timeout: 3000 });
   assert.match(await page.evaluate((id) => MC.store.get('pages', id).then((p) => MC.model.sheetText(p)), occId), /Hoy pensé en el balcón\.$/);
-  // Mis hojas la lista en “Lo que se repite” con enlace a la hoja.
   await goto(page, '#/hojas');
   await page.waitForSelector('.routine:has-text("Pensar en voz alta") a:has-text("(la hoja)")');
-  // Las notas del día también se pueden guardar.
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+await test('D45: Guardar del día — que se repita, como plantilla de día y usarla otro día', async () => {
+  const { page, errors, context } = await newPage(browser);
+  await page.goto(FILE_URL);
+  await onboard(page);
+  const tomorrow = await page.evaluate((k) => MC.dates.addDays(k, 1), TODAY);
+  const later = await page.evaluate((k) => MC.dates.addDays(k, 2), TODAY);
+  await page.evaluate(async (k) => {
+    const M = MC.model;
+    const d = M.emptyDay(k); d.intention = 'ir despacio'; await M.saveDay(d);
+    const a = await M.addActivity(k, 'Estirar');
+    await M.setStatus(a, 'done');
+    await M.addActivity(k, 'Leer un rato');
+  }, TODAY);
+  await goto(page, '#/anio');
   await goto(page, '#/hoy');
-  await page.fill('#notes', 'Nicole anotó una idea.');
-  await page.click('#q-notes + * .keep-btn, .keep-btn');
-  await page.click('[role="menuitem"]:has-text("Como plantilla, en blanco")');
-  await page.waitForSelector('.toast:has-text("Notas del día")');
+  // Como plantilla de día.
+  await page.click('.day-head__tools .keep-btn');
+  await page.click('[role="menuitem"]:has-text("Como plantilla de día")');
+  await page.fill('dialog.sheet input.input', 'Día tranquilo');
+  await page.click('dialog.sheet button:has-text("Guardar")');
+  await page.waitForSelector('.toast:has-text("Día tranquilo")');
+  const tpl = (await page.evaluate(() => MC.model.getDayTemplates()))[0];
+  assert.deepEqual(tpl.day.activities, ['Estirar', 'Leer un rato']);
+  assert.equal(tpl.day.intention, 'ir despacio');
+  assert.equal((await page.evaluate(() => MC.model.getTemplates())).length, 0, 'las de día no aparecen en Nueva hoja');
+  // Que se repita este día: todos los días; la actividad de hoy pasa a ser la ocurrencia (sin duplicar).
+  await page.click('.day-head__tools .keep-btn');
+  await page.click('[role="menuitem"]:has-text("Que se repita este día")');
+  assert.equal(await page.locator('dialog.sheet #rt-title').count(), 0, 'sin nombre: son las actividades del día');
+  await page.selectOption('#rt-freq', 'daily');
+  await page.click('dialog.sheet button:has-text("Que se repita")');
+  await page.waitForSelector('.toast:has-text("aparecer sola")');
+  await page.waitForFunction(() => document.querySelectorAll('#panel li.activity .activity__routine').length === 2);
+  assert.equal(await page.locator('#panel li.activity:has-text("Estirar")').count(), 1);
+  const next = await page.evaluate((k) => MC.model.itemsForDay(k).then((l) => l.map((i) => i.title).sort()), tomorrow);
+  assert.deepEqual(next, ['Estirar', 'Leer un rato']);
+  // Usar la plantilla otro día: suma lo que falta y la intención si estaba vacía.
+  await page.evaluate((k) => MC.model.addActivity(k, 'Llamar'), later);
+  await page.evaluate((k) => { location.hash = MC.routes.day(k); }, later);
+  await page.waitForSelector('.day-head__tools .keep-btn');
+  await page.click('.day-head__tools .keep-btn');
+  await page.click('[role="menuitem"]:has-text("Usar «Día tranquilo»")');
+  await page.waitForSelector('.toast:has-text("Día tranquilo")');
+  const titles = await page.evaluate((k) => MC.model.itemsForDay(k).then((l) => l.map((i) => i.title).sort()), later);
+  assert.deepEqual(titles, ['Estirar', 'Leer un rato', 'Llamar']);
+  assert.equal((await page.evaluate((k) => MC.model.getDay(k), later)).intention, 'ir despacio');
   assert.deepEqual(errors, []);
   await context.close();
 });

@@ -284,10 +284,12 @@ a.months__year { text-decoration: none; padding: 4px 6px; border-radius: 6px; }
 .sheet-add { justify-self: start; }
 .page-actions { margin-top: var(--s-5); }
 .template-group__title { font-family: var(--font-display); font-size: var(--fs-md); margin: var(--s-4) 0 var(--s-2); }
-.templates-mine { margin-top: var(--s-6); }
-.template-list { display: grid; gap: var(--s-1); }
-.template-list .text-btn { justify-content: flex-start; text-align: start; }
-.keep-row { display: flex; justify-content: flex-end; }
+.template-own { position: relative; display: grid; }
+.template-own .template { padding-right: 44px; }
+.template__edit { position: absolute; right: 2px; bottom: 2px; }
+.template--new { border-style: dashed; background-image: none; color: var(--ink-soft); }
+.template__plus { position: absolute; top: 12px; left: 12px; color: var(--rose); }
+.template__plus svg { display: block; width: 26px; height: 26px; }
 .keep-btn { font-size: var(--fs-sm); }
 .page-link__note { color: var(--ink-soft); font-size: var(--fs-xs); }
 .routine__kind { display: inline-flex; vertical-align: -2px; margin-right: 6px; color: var(--ink-soft); }

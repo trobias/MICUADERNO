@@ -104,9 +104,73 @@
           next),
         h('div.day-head__tools',
           !isToday ? h('a.text-btn', { href: R.today() }, MC.icon('hoy'), 'Ir a hoy') : null,
-          privacyEl = MC.privacy.button(day.privacy, openPrivacy)),
+          privacyEl = MC.privacy.button(day.privacy, openPrivacy),
+          keepButton()),
         trashNotice = h('p.slip', { hidden: !M.isDeleted(day) }, 'Este día está en la papelera. Si lo editás, vuelve a tu cuaderno con lo que ya habías guardado.')
       );
+    }
+
+    /* “Guardar” del día (D45): que se repita (sus actividades), como plantilla de día, o usar una plantilla. */
+    function keepButton() {
+      var b = h('button.text-btn.keep-btn', { type: 'button', 'aria-haspopup': 'menu', 'aria-label': 'Guardar este día: que se repita o como plantilla' }, MC.icon('loop'), 'Guardar');
+      b.addEventListener('click', function () {
+        // Lo del día tal como está guardado ahora (otra pestaña o la nube pudieron sumar algo).
+        Promise.all([M.getDayTemplates(), M.itemsForDay(date)]).then(function (r) {
+          var tpls = r[0];
+          items = r[1];
+          var own = items.filter(function (it) { return !it.routineId && !it.virtual; }).length;
+          var list = [];
+          list.push({ label: 'Que se repita este día…', icon: 'loop', onSelect: function () {
+            if (!own) { c.toast('Este día todavía no tiene actividades propias para repetir. Anotá alguna primero.'); return; }
+            MC.repeat.editor(null, function () { refreshList(); }, {
+              date: date, noTitle: true, title: 'Este día', dialogTitle: 'Que se repita este día',
+              rule: { type: 'weekdays', days: [D.weekday(date)] },
+              hint: own === 1 ? 'La actividad de este día va a aparecer sola en los días que elijas.' : 'Las ' + own + ' actividades de este día van a aparecer solas en los días que elijas (cada una se puede cambiar después en Mis hojas).',
+              save: function (routine) { return M.repeatDay(items, routine).then(function (made) { return made[0] || routine; }); }
+            });
+          } });
+          list.push({ label: 'Como plantilla de día…', icon: 'paginas', onSelect: function () {
+            persist.flush();
+            c.askText({ title: 'Guardar como plantilla de día', label: 'Nombre de la plantilla', value: D.capitalize(D.DAYS[D.weekday(date)]),
+              hint: 'Guarda las actividades (sin marcar), la intención y las notas, para empezar otro día igual.' }).then(function (name) {
+              if (!name) return;
+              M.dayTemplateFrom(day, items, name).then(function (t) { c.toast('Quedó la plantilla de día «' + t.title + '».'); });
+            });
+          } });
+          if (tpls.length) {
+            list.push('sep');
+            tpls.forEach(function (t) {
+              list.push({ label: 'Usar «' + t.title + '»', icon: 'plus', onSelect: function () {
+                persist.flush();
+                M.applyDayTemplate(date, t).then(function (n) {
+                  reload();
+                  c.toast(n ? (n === 1 ? 'Sumé una actividad' : 'Sumé ' + n + ' actividades') + ' de «' + t.title + '».' : 'Listo: «' + t.title + '» ya estaba en este día.');
+                });
+              } });
+            });
+            list.push({ label: 'Borrar una plantilla de día…', icon: 'trash', onSelect: function () { setTimeout(function () { dropDayTemplate(b, tpls); }, 0); } });
+          }
+          c.menu(b, list, 'Guardar este día');
+        });
+      });
+      return b;
+    }
+    function dropDayTemplate(anchor, tpls) {
+      c.menu(anchor, tpls.map(function (t) {
+        return { label: 'Mandar «' + t.title + '» a la papelera', icon: 'trash', onSelect: function () {
+          M.deleteTemplate(t.id).then(function () {
+            c.toast('Se fue a la papelera.', { action: 'Deshacer', onAction: function () { M.restoreTrash('templates', t.id); } });
+          });
+        } };
+      }), 'Plantillas de día');
+    }
+    function reload() {
+      if (destroyed) return;
+      Promise.all([M.getDay(date, { includeDeleted: true }), M.itemsForDay(date)]).then(function (res) {
+        day = recoverDraft(res[0]); items = res[1];
+        if (scrap) scrap.destroy();
+        build();
+      });
     }
 
     /* Privacidad de este día (PV1): un acceso discreto en el encabezado; el estado se dice en palabras. */
@@ -214,15 +278,9 @@
     /* ---------- Hoja derecha ---------- */
     function buildRight() {
       MC.clear(right);
-      // “Guardar” (A7): lo escrito acá puede volverse una plantilla o una hoja que se repite.
-      var keepBtn = h('button.text-btn.keep-btn', { type: 'button', 'aria-haspopup': 'menu', 'aria-label': 'Guardar estas notas como plantilla o que se repitan' }, 'Guardar');
-      keepBtn.addEventListener('click', function () {
-        var notes = { title: 'Notas del día', paper: 'rayado', blocks: [{ id: 'blk_notes', type: 'text', title: '' }], values: { blk_notes: day.notes || '' } };
-        MC.views.pages.keep(keepBtn, notes, { date: date, title: 'Notas del día' });
-      });
-      right.appendChild(c.section(isFuture ? 'Notas para ese día' : 'Durante el día', [
+      right.appendChild(c.section(isFuture ? 'Notas para ese día' : 'Durante el día',
         c.writeArea({ id: 'notes', value: day.notes, rows: 5, ariaLabel: 'Durante el día', placeholder: 'Cuando quieras, escribí la primera línea.', onInput: function (v) { day.notes = v; persist(); } }),
-        h('div.keep-row', keepBtn)], { id: 'q-notes' }));
+        { id: 'q-notes' }));
 
       right.appendChild(pagesSection());
       // Adjuntos del día: una foto, una entrada, un PDF… (una imagen se puede pegar como sticker).
@@ -384,14 +442,7 @@
     return {
       destroy: function () { destroyed = true; persist.flush(); if (scrap) scrap.destroy(); },
       flush: function () { persist.flush(); },
-      refresh: function () {
-        if (destroyed) return;
-        Promise.all([M.getDay(date, { includeDeleted: true }), M.itemsForDay(date)]).then(function (res) {
-          day = recoverDraft(res[0]); items = res[1];
-          if (scrap) scrap.destroy();
-          build();
-        });
-      }
+      refresh: reload
     };
   }
 

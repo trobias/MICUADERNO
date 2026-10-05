@@ -138,6 +138,7 @@
     actions.push({ label: 'Cancelar', kind: 'text' });
     actions.push({ label: existing ? 'Guardar' : 'Que se repita', onClick: function () {
       var cur = currentRoutine();
+      if (opts.noTitle && !cur.title) cur.title = opts.title || 'Este día';
       if (!cur.title) { titleErr.textContent = 'Poné un nombre, por ejemplo “caminar”.'; title.setAttribute('aria-invalid', 'true'); title.focus(); return false; }
       if (!cur.rule) { error.textContent = 'Elegí al menos un día de la semana.'; return false; }
       if (cur.endDate && cur.endDate < cur.startDate) { endErr.textContent = 'La fecha final quedó antes del inicio: movela un poco más adelante.'; end.setAttribute('aria-invalid', 'true'); end.focus(); return false; }
@@ -149,10 +150,10 @@
     } });
 
     c.dialog({
-      title: existing ? 'Editar lo que se repite' : 'Que se repita',
+      title: existing ? 'Editar lo que se repite' : (opts.dialogTitle || 'Que se repita'),
       content: [
         opts.hint ? h('p.section__hint', opts.hint) : null,
-        h('div.field', h('label', { for: 'rt-title' }, 'Nombre'), title, titleErr),
+        opts.noTitle ? null : h('div.field', h('label', { for: 'rt-title' }, 'Nombre'), title, titleErr),
         h('div.field', h('label', { for: 'rt-freq' }, 'Frecuencia'), freq),
         extra,
         preview,
@@ -164,7 +165,7 @@
       ],
       actions: actions
     });
-    setTimeout(function () { if (!existing) title.focus(); }, 30);
+    setTimeout(function () { if (!existing && !opts.noTitle) title.focus(); }, 30);
   }
 
   MC.repeat = { editor: editor, FREQ: FREQ };

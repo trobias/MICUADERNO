@@ -63,13 +63,24 @@
       h('p.section__hint', 'Empezá en blanco o con una idea. Todo se puede cambiar, también el día.'),
       mineWrap,
       h('h3.template-group__title', 'De fábrica'), grid] });
-    // Las propias primero, si hay: son las que la persona armó para sí.
+    // Las propias primero: son las que la persona armó para sí. La primera tarjeta, “+”, arma una nueva.
     M.getTemplates().then(function (mine) {
-      if (!mine.length) return;
       var g = h('div.template-grid');
+      var plus = h('button.template.template--new', { type: 'button' },
+        h('span.template__plus', { 'aria-hidden': 'true' }, MC.icon('plus')),
+        h('span.template__title', 'Nueva plantilla'),
+        h('span.template__kind', 'armala a tu gusto'));
+      plus.addEventListener('click', function () {
+        dlg.close();
+        M.saveTemplate({ title: 'Mi plantilla', blocks: [{ type: 'text' }] }).then(function (t) { location.hash = R.template(t.id); });
+      });
+      g.appendChild(plus);
       mine.forEach(function (t) {
         var st = t.stickers[0] && !/^img:/.test(t.stickers[0].sticker) ? t.stickers[0].sticker : null;
-        g.appendChild(templateCard(t.title, kindOf(t.blocks), st, function () { dlg.close(); create({ own: t }, dayInput.value); }));
+        var card = templateCard(t.title, kindOf(t.blocks), st, function () { dlg.close(); create({ own: t }, dayInput.value); });
+        var edit = h('a.icon-btn.icon-btn--sm.template__edit', { href: R.template(t.id), 'aria-label': 'Editar la plantilla «' + t.title + '»', title: 'Editar la plantilla' }, MC.icon('edit'));
+        edit.addEventListener('click', function () { dlg.close(); });
+        g.appendChild(h('div.template-own', card, edit));
       });
       mineWrap.appendChild(h('h3.template-group__title', 'Mis plantillas'));
       mineWrap.appendChild(g);
@@ -77,8 +88,8 @@
   }
 
   /**
-   * “Guardar” (A7, D29): una hoja (o las notas de un día) como plantilla propia, o que se repita.
-   * `src`: algo con forma de hoja ({ title, paper, blocks/values o body }). `opts.date`: semilla de la repetición.
+   * “Guardar” (A7, D29, D45): una hoja como plantilla propia, en blanco o con lo escrito.
+   * `src`: algo con forma de hoja ({ title, paper, blocks/values o body }). `opts.title`: nombre propuesto.
    */
   function keep(anchor, src, opts) {
     opts = opts || {};
@@ -87,20 +98,11 @@
         c.toast('Quedó en Mis plantillas: «' + t.title + '».', { action: 'Ver', onAction: function () { location.hash = R.template(t.id); } });
       });
     }
-    function repeat(withContent) {
-      MC.repeat.editor(null, function () {}, {
-        date: opts.date, title: opts.title || M.pageTitle(src), rule: { type: 'weekdays', days: [D.weekday(opts.date || D.today())] },
-        hint: withContent ? 'Cada vez aparece una hoja nueva con lo que tiene ahora.' : 'Cada vez aparece una hoja nueva, con la misma forma y en blanco.',
-        save: function (routine) { return M.repeatSheet(src, routine, withContent); }
-      });
-    }
+    // Repetir es cosa de los días (D45): una hoja se guarda como plantilla. Las hojas que ya se repetían siguen igual.
     c.menu(anchor, [
       { label: 'Como plantilla, en blanco', icon: 'paginas', onSelect: function () { asTemplate(false); } },
-      { label: 'Como plantilla, con lo escrito', icon: 'paginas', onSelect: function () { asTemplate(true); } },
-      'sep',
-      { label: 'Que se repita, en blanco…', icon: 'loop', onSelect: function () { repeat(false); } },
-      { label: 'Que se repita, con lo escrito…', icon: 'loop', onSelect: function () { repeat(true); } }
-    ], 'Guardar');
+      { label: 'Como plantilla, con lo escrito', icon: 'paginas', onSelect: function () { asTemplate(true); } }
+    ], 'Guardar como plantilla');
   }
 
   /* ---------- Página ---------- */
