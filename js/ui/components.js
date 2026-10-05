@@ -15,19 +15,19 @@
   c.feelingEditor = function (opts) {
     var values = MC.model.sanitizeFeelings(opts.value) || [];
     var input = h('input.input.feelings__input', {
-      type: 'text', maxlength: 40, placeholder: 'Escribí cómo te sentiste',
+      type: 'text', maxlength: 40, placeholder: 'Escribí una emoción',
       'aria-label': opts.label || 'Emoción'
     });
     var suggestions = h('div.feelings__suggestions', { 'aria-label': 'Palabras para elegir' });
     var list = h('ul.feelings__list', { 'aria-label': 'Emociones anotadas' });
     var add = h('button.label-btn.label-btn--soft', { type: 'button' }, MC.icon('plus'), 'Agregar');
     function render() {
+      if (typeof paintSuggestions === 'function') paintSuggestions();
       MC.clear(list);
       values.forEach(function (value, i) {
         var remove = h('button.feeling-chip__remove', { type: 'button', 'aria-label': 'Sacar ' + value }, MC.icon('close'));
         remove.addEventListener('click', function () { values.splice(i, 1); render(); opts.onChange(values.slice()); input.focus(); });
-        var chosen = MC.model.settings().emotionColors[MC.model.emotionKey(value)];
-        var color = opts.color ? opts.color(value, i) : chosen || 'var(--emotion-' + (i % 8 + 1) + ')';
+        var color = opts.color ? opts.color(value, i) : MC.model.feelingColor(value);
         list.appendChild(h('li.feeling-chip', { dataset: { feeling: value }, style: { '--feeling-color': color } },
           c.feelingPatch(value), h('span', value), remove));
       });
@@ -41,13 +41,18 @@
     add.addEventListener('click', function () { commit(); });
     input.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); commit(); } });
     input.addEventListener('input', function () { MC.emit('typing'); });
-    if (opts.suggestions) Promise.resolve(opts.suggestions).then(function (words) {
-      (words || []).slice(0, 6).forEach(function (word) {
-        var button = h('button.feelings__suggestion', { type: 'button', style: { '--feeling-color': opts.color ? opts.color(word, 0) : (MC.model.settings().emotionColors[MC.model.emotionKey(word)] || 'var(--ink-soft)') } }, c.feelingPatch(word), word);
+    // Sugerencias: nunca las que ya están anotadas acá; se vuelven a pintar al sumar o sacar una.
+    var offered = [];
+    function paintSuggestions() {
+      MC.clear(suggestions);
+      var have = values.map(MC.model.emotionKey);
+      offered.filter(function (w) { return have.indexOf(MC.model.emotionKey(w)) === -1; }).slice(0, 6).forEach(function (word) {
+        var button = h('button.feelings__suggestion', { type: 'button', style: { '--feeling-color': opts.color ? opts.color(word, 0) : MC.model.feelingColor(word) } }, c.feelingPatch(word), word);
         button.addEventListener('click', function () { commit(word); });
         suggestions.appendChild(button);
       });
-    }).catch(function () {});
+    }
+    if (opts.suggestions) Promise.resolve(opts.suggestions).then(function (words) { offered = words || []; paintSuggestions(); }).catch(function () {});
     render();
     return h('div.feelings', { role: 'group', 'aria-label': opts.label || 'Emociones' }, list,
       h('div.feelings__entry', input, add), suggestions);

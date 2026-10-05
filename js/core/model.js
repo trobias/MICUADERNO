@@ -142,8 +142,37 @@
     return getMeta('settings', null).then(function (s) {
       settingsCache = mergeSettings(s);
       if (MC.backup && MC.backup.moodWords) moodWordsNow = MC.backup.moodWords(s);
-      return settingsCache;
+      return refreshPalette().then(function () { return settingsCache; }, function () { return settingsCache; });
     });
+  }
+
+  /* El hilo de cada emoción es el mismo en todo el cuaderno (D52): se reparte por cuántas veces aparece en todos
+     los días (las 8 más usadas tienen hilo; el resto, tinta). Se recalcula cuando cambia un día. */
+  var globalColors = null;
+  function refreshPalette() {
+    return S().getAll('days').then(function (days) {
+      var counts = {};
+      days.filter(function (d) { return !isDeleted(d); }).forEach(function (d) {
+        [d.morning, d.evening].forEach(function (slot) {
+          feelingsOf(slot).forEach(function (v) { var k = emotionKey(v); if (k) counts[k] = (counts[k] || 0) + 1; });
+        });
+      });
+      var next = {};
+      Object.keys(counts).sort(function (a, b) { return counts[b] - counts[a] || a.localeCompare(b, 'es'); })
+        .forEach(function (k, i) { next[k] = i < 8 ? 'var(--emotion-' + (i + 1) + ')' : 'var(--ink-soft)'; });
+      globalColors = next;
+    });
+  }
+  var paletteTimer = null;
+  if (MC.on) MC.on('store:changed', function (what) {
+    if (what && what.store && what.store !== 'days' && what.store !== '*') return;
+    clearTimeout(paletteTimer);
+    paletteTimer = setTimeout(function () { refreshPalette().catch(function () {}); }, 250);
+  });
+  /** El color de una emoción: el elegido en Ajustes o su hilo de todo el cuaderno. */
+  function feelingColor(value) {
+    var key = emotionKey(value);
+    return settings().emotionColors[key] || (globalColors && globalColors[key]) || 'var(--ink-soft)';
   }
   function settings() { return settingsCache || defaultSettings(); }
   function saveSettings(patch) {
@@ -1008,7 +1037,8 @@
     });
     var order = Object.keys(counts).sort(function (a, b) { return counts[b] - counts[a] || a.localeCompare(b, 'es'); });
     var colors = {};
-    order.forEach(function (key, i) { colors[key] = chosen[key] || (i < 8 ? 'var(--emotion-' + (i + 1) + ')' : 'var(--ink-soft)'); });
+    // El mismo hilo en todo el cuaderno (D52); si todavía no se calculó, el orden de esta vista.
+    order.forEach(function (key, i) { colors[key] = chosen[key] || (globalColors && globalColors[key]) || (i < 8 ? 'var(--emotion-' + (i + 1) + ')' : 'var(--ink-soft)'); });
     return { labels: order.slice(0, 8).map(function (key) { return labels[key]; }), otherCount: Math.max(0, order.length - 8),
       color: function (value) { var key = emotionKey(value); return colors[key] || chosen[key] || 'var(--ink-soft)'; },
       count: function (value) { return counts[emotionKey(value)] || 0; } };
@@ -1278,7 +1308,7 @@
     getTemplates: getTemplates, getTemplate: getTemplate, getDayTemplates: getDayTemplates, dayTemplateFrom: dayTemplateFrom, applyDayTemplate: applyDayTemplate, repeatDay: repeatDay, saveTemplate: saveTemplate, deleteTemplate: deleteTemplate, templateFrom: templateFrom, repeatSheet: repeatSheet, getWeek: getWeek, saveWeek: saveWeek, isEmptyWeek: isEmptyWeek, normalizeTemplate: normalizeTemplate, normalizeMark: normalizeMark,
     sanitizeFeelings: sanitizeFeelings, sanitizeFeel: sanitizeFeel, sanitizeMoves: sanitizeMoves,
     feelingsOf: feelingsOf, emotionKey: emotionKey, emotionPalette: emotionPalette, emotionSuggestions: emotionSuggestions,
-    BASE_FEELINGS: BASE_FEELINGS, feelingGlyph: feelingGlyph, sanitizeHiddenDefaults: sanitizeHiddenDefaults,
+    BASE_FEELINGS: BASE_FEELINGS, feelingGlyph: feelingGlyph, feelingColor: feelingColor, refreshPalette: refreshPalette, sanitizeHiddenDefaults: sanitizeHiddenDefaults,
     sanitizeTheme: sanitizeTheme, sanitizeEmotionColors: sanitizeEmotionColors, occurrenceId: occurrenceId, DRAW_TOOLS: DRAW_TOOLS,
     sanitizeStickers: sanitizeStickers, summarize: summarize, summaryRange: summaryRange, pagesOn: pagesOn, everything: everything,
     hasWriting: hasWriting, countsAsDone: countsAsDone, pageTitle: pageTitle, pageDate: pageDate,

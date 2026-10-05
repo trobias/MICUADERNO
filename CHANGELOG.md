@@ -8,6 +8,11 @@ Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantien
 - `.mcp.json` ya está en la rama. La dueña habilitó los dos MCP en su entorno web de Claude Code; el estado de `claude mcp list` en una instalación local distinta no verifica ese entorno.
 - `docs/NUBE.md` registra la verificación de red, los entornos y lo que falta para aplicar la migración SQL existente. Ningún secreto se agregó a Git.
 
+## 2026-10-06 · QA de emociones (cache `v46`)
+
+- Una emoción tiene el mismo color en el día, la semana, el mes y Mi año (antes podía cambiar de una vista a otra). En Ajustes, el cuadradito muestra ese color real (antes todos salían azules).
+- Las sugerencias ya no repiten palabras que ya anotaste en ese lugar. El campo dice “Escribí una emoción” (en el celular se cortaba).
+
 ## 2026-10-06 · Sacar lo de fábrica (cache `v45`)
 
 - Ajustes → Mis emociones: una ✕ en cada palabra la saca de las sugerencias (también las de base: pesado, bajito…). “Nueva hoja”: una ✕ saca una plantilla de fábrica. Las dos tienen “Volver a mostrar”. D52, copia v8.

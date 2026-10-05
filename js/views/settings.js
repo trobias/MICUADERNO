@@ -247,14 +247,23 @@
     var emotionList = h('ul.emotion-colors');
     var newEmotion = h('input.input', { type: 'text', maxlength: 40, placeholder: 'Una palabra tuya', 'aria-label': 'Emoción para elegir color' });
     var newColor = h('input', { type: 'color', value: '#0A5A9A', 'aria-label': 'Color de la nueva emoción' }); // color-ok: valor inicial del selector nativo
-    var colorHint = h('p.t-meta', 'Si no elegís uno, el calendario asigna un hilo según las emociones que aparecen en esa vista.');
+    /** Un color CSS (también `var(--…)`) → #RRGGBB, para el selector nativo. */
+    function toHex(css) {
+      var probe = h('span', { style: { color: css, display: 'none' } });
+      document.body.appendChild(probe);
+      var m = getComputedStyle(probe).color.match(/\d+(\.\d+)?/g) || [0, 0, 0];
+      probe.remove();
+      return '#' + m.slice(0, 3).map(function (n) { return ('0' + Math.round(+n).toString(16)).slice(-2); }).join('').toUpperCase();
+    }
+    var colorHint = h('p.t-meta', 'Si no elegís uno, cada emoción toma un hilo según cuánto la usás, y es el mismo en todo el cuaderno. Las que todavía no usaste van en tinta.');
     function paintEmotionColors(words) {
       MC.clear(emotionList);
       var colors = M.settings().emotionColors;
       words.forEach(function (word) {
         var key = M.emotionKey(word);
         var chosen = colors[key];
-        var swatch = h('input', { type: 'color', value: chosen || '#0A5A9A', 'aria-label': 'Color de ' + word }); // color-ok: valor inicial del selector nativo
+        // El selector muestra el color que la emoción tiene hoy (el elegido o su hilo del cuaderno), no uno fijo.
+        var swatch = h('input', { type: 'color', value: chosen || toHex(M.feelingColor(word)), 'aria-label': 'Color de ' + word });
         var code = h('input.input.emotion-colors__code', { type: 'text', value: chosen || '', maxlength: 7,
           placeholder: '#RRGGBB', 'aria-label': 'Código de color de ' + word });
         function setColor(value) {
@@ -298,7 +307,7 @@
     }
     var hiddenNote = h('div.emotion-colors__hidden');
     var knownEmotions = [];
-    M.emotionSuggestions().then(function (words) {
+    M.refreshPalette().catch(function () {}).then(function () { return M.emotionSuggestions(); }).then(function (words) {
       if (!left.isConnected) return;
       knownEmotions = words.concat(Object.keys(M.settings().emotionColors).filter(function (key) { return !words.some(function (word) { return M.emotionKey(word) === key; }); }));
       paintEmotionColors(knownEmotions);
