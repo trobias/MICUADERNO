@@ -1,26 +1,26 @@
 # MI CUADERNO — Roadmap
 
-Estado al 04/10/2026: **etapa A del plan nuevo en curso**. A0–A4 están terminados, el índice de Páginas quedó arreglado y la base de la nube (cuentas, permisos, push) se adelantó en local; A5 es el siguiente paso. El orden vigente, los criterios de cada entrega y la futura nube están en [`MIGRATION_PLAN.md`](MIGRATION_PLAN.md). La tabla de fases históricas más abajo conserva la visión anterior como referencia de ideas: **no es el orden de implementación actual**. Lo visible hoy está en `SPEC.md` y lo entregado por commit, en `CHANGELOG.md`.
+Estado al 05/10/2026: **la etapa A del plan nuevo está completa** (A0–A13) y la base de la nube está publicada (`https://micuaderno-five.vercel.app`, Nicole ya tiene su cuenta) con cuadernos compartidos (D38). Lo que falta de B y la evaluación de C están en [`docs/EVALUACION_BC.md`](docs/EVALUACION_BC.md); el orden y los criterios, en [`MIGRATION_PLAN.md`](MIGRATION_PLAN.md). La tabla de fases históricas más abajo conserva la visión anterior como referencia de ideas: **no es el orden de implementación actual**. Lo visible hoy está en `SPEC.md` y lo entregado por commit, en `CHANGELOG.md`.
 
 ## Ruta aprobada ahora
 
-| Tramo | Estado | Próximo resultado |
+| Tramo | Estado | Resultado |
 |---|---|---|
-| A0–A3 · protección, navegación, limpieza y datos v5 | Hecho en `main` | Commits `34e9b6e`, `cc7697d`, `4f124d7`, `a39dad2`. |
+| A0–A3 · protección, navegación, limpieza y datos v5 | Hecho | Commits `34e9b6e`, `cc7697d`, `4f124d7`, `a39dad2`. |
 | A4 · emociones libres | Hecho | Día, actividad, calendarios, Año, ajustes, exportación, impresión e insights sin escala de cinco. |
 | A5 · Mis hojas y cuatro marcadores | Hecho (v28) | Fuera Agenda/Rutinas como marcadores, sin perder repeticiones. |
 | A6 · semana planner | Hecho (v29) | Semana inicial editable. |
-| A7 · hojas/plantillas | Hecho (05/10, cache v30) | Bloques, plantillas propias, Guardar y hojas que se repiten. |
-| A8 · Mi año | Hecho (05/10, cache v31) | Cuentas por período, mes a mes con tabla, pequeñas victorias. |
-| A9 · Colores propios | Hecho (05/10, cache v32) | Presets, editor, AA, Noche (PE5). |
-| A10 · Escenas | Hecho (05/10, cache v33) | Más seguido (D33) y cuatro escenas nuevas. |
-| A11 · Dibujo | Hecho (05/10, cache v34) | Balde, plumilla, grafito, resaltador, aerógrafo. |
-| A12 · QA cruzada | Hecho (05/10, cache v35) | Matriz de navegación, auditorías, `docs/QA.md`. Solo Chromium. |
-| A13 · Contrato v6 | Hecho (05/10, cache v36) | IndexedDB 4, `SCHEMA_VERSION` 6, instantánea y vuelta atrás; `cover` queda (D39). **Etapa A completa.** | Métricas amables, colores propios, más escenas, balde/trazos. |
-| A12–A13 · QA y contrato v6 | Pendiente | Navegación completa, accesibilidad, revisión de redundancia, migración segura. |
-| B-base · cuentas en la nube (adelantada) | Hecho en local, sin desplegar | Next.js + Supabase: PIN, Nicole admin, permisos con RLS, push, latido anti-pausa. `docs/NUBE.md`. |
-| B5–B8 · sincronización, Storage, deploy y dispositivos | Pendiente (después de A7) | Copia offline sincronizada por persona, solo lectura para quien recibe permiso. |
-| C · React y motion | Pendiente | Migrar vistas una a una; escenas especiales si aportan y rinden bien. |
+| A7 · hojas/plantillas | Hecho (v30) | Bloques, plantillas propias, Guardar y hojas que se repiten. |
+| A8 · Mi año | Hecho (v31) | Cuentas por período, mes a mes con tabla, pequeñas victorias. |
+| A9 · Colores propios | Hecho (v32) | Presets, editor, AA, Noche (PE5). |
+| A10 · Escenas | Hecho (v33) | Más seguido (D33) y cuatro escenas nuevas. |
+| A11 · Dibujo | Hecho (v34) | Balde, plumilla, grafito, resaltador, aerógrafo. |
+| A12 · QA cruzada | Hecho (v35) | Matriz de navegación, auditorías, `docs/QA.md`. Solo Chromium. |
+| A13 · Contrato v6 | Hecho (v36) | IndexedDB 4, `SCHEMA_VERSION` 6, instantánea y vuelta atrás; `cover` queda (D39). |
+| B-base · cuentas en la nube | Publicado (05/10) | Next.js + Supabase: PIN, Nicole admin, permisos con RLS, push, latido anti-pausa. `docs/NUBE.md`, D37. |
+| B5 · sincronización y cuadernos compartidos | Hecho en su forma simple (D38) | La dueña sube su cuaderno partido por sección; quien mira lo abre en memoria. Falta probar con dos cuentas reales. |
+| B-resto · Storage, preview aislada, dispositivos | Pendiente | Ver `docs/EVALUACION_BC.md` §1. |
+| C · React y motion | En evaluación | Recomendación: no reescribir ahora (ver `docs/EVALUACION_BC.md` §2). |
 
 Cada paso exige `npm run check`, revisión visual y documentación del cambio. La verificación en Firefox/Safari/dispositivos reales sigue pendiente; no sustituye la suite Chromium. Publicar en GitHub Pages (V7) deja de ser un objetivo porque la migración de nube aprobada usa Vercel.
 

@@ -4,7 +4,7 @@
 
 ## 1. Qué es
 
-MI CUADERNO es un cuaderno personal digital: diario, agenda, registro de ánimo, rutinas y scrapbook, en un solo objeto. Funciona 100 % en el dispositivo de la persona, sin cuenta, sin servidor y sin conexión.
+MI CUADERNO es un cuaderno personal digital: diario, semana-planner, emociones escritas, lo que se repite, hojas con plantillas y scrapbook, en un solo objeto. Sin cuenta funciona 100 % en el dispositivo de la persona, sin servidor y sin conexión; con cuenta (etapa B, `docs/NUBE.md`) el cuaderno de la dueña se sincroniza y quien recibe permiso lo mira por sección.
 
 **Problema que resuelve.** Las apps de hábitos castigan (rachas perdidas, rojo, “fallaste”). Las apps de notas son frías. Los cuadernos de papel no se pueden buscar, se pierden y no muestran el año de un vistazo. MI CUADERNO toma lo mejor del papel (ritual, calma, belleza, propiedad) y lo mejor del software (persistencia, calendario, recurrencias, exportación), sin traer la ansiedad del software de productividad.
 
@@ -210,7 +210,7 @@ La Agenda dejó de existir como cuadro (D27): anotar en cualquier día se hace d
 - **Mis datos**:
   - Texto de privacidad.
   - **Papelera (DA1):** selector de tiempo de retención (`settings.trashRetentionDays`, default 30 días; opciones 7, 15, 30, 60 días o nunca), acceso al listado de elementos en papelera con opción de **Restaurar** o **Eliminar definitivamente**, y botón **Vaciar papelera** con confirmación clara.
-  - **Copia de seguridad y exportación:** guardar copia (`.json` v5); abrir/restaurar copia; exportar (TXT, CSV, XLSX); imprimir; recordatorio de copia (cada 7/14/30 días/nunca); borrar todo (doble confirmación, escribiendo “borrar”).
+  - **Copia de seguridad y exportación:** guardar copia (`.json` v6); “Descargar la copia de antes” después del contrato v6; abrir/restaurar copia; exportar (TXT, CSV, XLSX); imprimir; recordatorio de copia (cada 7/14/30 días/nunca); borrar todo (doble confirmación, escribiendo “borrar”).
 - **Guardado visible (DA3):** cada cambio de configuración se confirma con `c.savedNote`.
 - **Instalar**: si el navegador lo permite, botón “Instalar en este dispositivo”.
 
@@ -406,7 +406,7 @@ skills/               colección de skills (no es parte de la app)
 
 ## 20. Estrategia de pruebas
 
-- **Unit (node:test):** fechas, recurrencias (incluye 29/02, día 31, n-ésimo día, intervalos, temporales), materialización de rutinas, validación y migración de backups (v1→v2, v2→v3, v3→v4, rechazo de v5), historial de deshacer/rehacer (`MC.history`: límites, reversión, eventos), papelera (DA1: soft-delete, retención, purga, restauración), privacidad emocional (PV1: exclusión en insights y recuerdos), CSV (escapes), ZIP/XLSX (estructura válida), insights (umbrales, redacción no causal).
+- **Unit (node:test):** fechas, recurrencias (incluye 29/02, día 31, n-ésimo día, intervalos, temporales), materialización de rutinas, validación y migración de backups (v1→…→v6, contrato v6 puro, rechazo de versiones más nuevas), plantillas y bloques de hojas, cuentas del año y victorias, motor de temas (AA), pinceles y balde, historial de deshacer/rehacer (`MC.history`: límites, reversión, eventos), papelera (DA1: soft-delete, retención, purga, restauración), privacidad emocional (PV1: exclusión en insights y recuerdos), CSV (escapes), ZIP/XLSX (estructura válida), insights (umbrales, redacción no causal).
 - **E2E (Playwright/Chromium):** primera apertura → onboarding → registrar ánimo → actividades con estados → recargar y ver persistencia → rutina que aparece → calendario → exportar JSON → borrar → restaurar → datos de vuelta. En `file://` y en `http://` (SW registrado, offline con red cortada). Viewports 375×812, 820×1180, 1440×900.
 - **QA visual:** capturas desktop + mobile revisadas contra DESIGN.md; detector de `impeccable` una vez al final.
 

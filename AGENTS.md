@@ -1,10 +1,10 @@
 # AGENTS.md — MI CUADERNO
 
-Leé esto primero. Si venís sin contexto de conversaciones anteriores, seguí con **`HANDOFF.md`** (estado real y cómo retomar) y **`MIGRATION_PLAN.md`** (plan A→B→C aprobado y pasos pendientes). Después `SPEC.md` (qué hace hoy), `DESIGN.md` (cómo se ve y se mueve) y `DATA_MODEL.md` (qué se guarda). Hacia dónde va: `VISION.md` (referencia, no implementación literal). Lo que falta: `ROADMAP.md` y `BACKLOG.md`. Recién ahí abrí el código relevante. Los encabezados antiguos de esos documentos pueden describir ideas históricas; la ruta vigente es `MIGRATION_PLAN.md`.
+Leé esto primero. Si venís sin contexto de conversaciones anteriores, seguí con **`HANDOFF.md`** (estado real y cómo retomar), **`MIGRATION_PLAN.md`** (plan A→B→C; la etapa A está completa) y **`docs/EVALUACION_BC.md`** (qué falta de la nube y si conviene C). Después `SPEC.md` (qué hace hoy), `DESIGN.md` (cómo se ve y se mueve) y `DATA_MODEL.md` (qué se guarda). Hacia dónde va: `VISION.md` (referencia, no implementación literal). Lo que falta: `ROADMAP.md` y `BACKLOG.md`. Recién ahí abrí el código relevante. Los encabezados antiguos de esos documentos pueden describir ideas históricas; la ruta vigente es `MIGRATION_PLAN.md`.
 
 ## Qué es
 
-Un diario personal digital con forma de **cuaderno de tela bordado**: emociones escritas al comenzar/cerrar el día y antes/después de actividades, estados amables, rutinas recurrentes, páginas libres con stickers, calendario, mapa del año, exportación e impresión. **Hoy** es 100 % local (IndexedDB), offline, sin cuenta ni servidor. La **base** de la nube (Next.js + Supabase: cuenta con usuario y PIN, Nicole admin, permisos por sección con RLS, push, latido anti-pausa) está hecha y probada en local pero **no desplegada ni sincronizando** (D37, `docs/NUBE.md`); no afirmar que está publicada. Español rioplatense, neutro en género.
+Un diario personal digital con forma de **cuaderno de tela bordado**: emociones escritas al comenzar/cerrar el día y antes/después de actividades, estados amables, rutinas recurrentes, páginas libres con stickers, calendario, mapa del año, exportación e impresión. Sin cuenta (doble clic en `index.html` o un servidor simple) es 100 % local (IndexedDB) y offline. **Con cuenta** (publicado en `https://micuaderno-five.vercel.app`, Next.js + Supabase: usuario y PIN, Nicole admin, permisos por sección con RLS, push, latido anti-pausa) el cuaderno de la dueña se sincroniza partido por sección y quien recibe permiso lo mira en memoria (D37, D38, `docs/NUBE.md`). Fotos y adjuntos todavía no viajan; los avisos y los cuadernos compartidos no están probados con personas/dispositivos reales (`docs/EVALUACION_BC.md`). Español rioplatense, neutro en género.
 
 ## Skills del repo que aplican (leelas antes de tocar UI)
 
@@ -76,7 +76,7 @@ js/ui/scenes.js         director de escenas ocasionales
 js/ui/scrapbook.js      capa de stickers (arrastrar, rotar, teclado) + Mis stickers (img:<id>)
 js/ui/draw.js           hojita para dibujar (lápiz, goma, texto, colores, deshacer) → imagen propia
 js/ui/images.js         subir imágenes (rasterizadas) y adjuntos de un día/página
-js/views/*.js           cover, onboarding, today, calendar (mes), week (semana-planner), sheets (Mis hojas), pages (hoja suelta), year, settings, print
+js/views/*.js           cover, onboarding, today, calendar (mes), week (semana-planner), sheets (Mis hojas + plantillas), pages (hoja en bloques y plantilla propia), year, settings, print
 js/notify.js            recordatorios locales
 js/pwa.js               registro de SW, instalación, aviso de actualización
 js/app.js               router por hash + arranque: calendario de fondo + cuadro desplegable (dialog #panel) + marcadores
@@ -88,6 +88,8 @@ app/ lib/ proxy.ts      nube (Next.js 16): /entrar, /preparar, /cuenta, /api; se
 next.config.ts          CSP y cabeceras; `/` → index.html copiado a public/ (generado, no editar)
 vercel.json             cron diarios: latido anti-pausa de Supabase y avisos
 supabase/migrations/    esquema y RLS de la nube
+docs/QA.md              QA cruzada (A12): matriz de navegación, auditorías y lo que no se probó
+docs/EVALUACION_BC.md   qué falta de la nube (B) y recomendación sobre React/escenas (C)
 docs/NUBE.md            puesta en marcha, variables, MCP de Supabase y de Vercel (dos cuentas), red del entorno
 tests/cloud/            PIN, plan de avisos, RLS en Postgres 16 real, humo de next start
 tools/                  copy-notebook.mjs (cuaderno → public/), serve.mjs, make-icons.mjs, build-fonts.mjs, dist.mjs, check.mjs, shot.mjs (captura para QA)
