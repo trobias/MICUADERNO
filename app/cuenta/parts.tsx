@@ -88,6 +88,7 @@ type Person = { id: string; name: string; username: string; admin: boolean; disa
 export function People({ me, people }: { me: string; people: Person[] }) {
   const note = useNote();
   const [noPin, setNoPin] = useState(false);
+  const [editing, setEditing] = useState<string | null>(null);
   async function create(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = e.currentTarget, f = new FormData(form);
@@ -114,15 +115,18 @@ export function People({ me, people }: { me: string; people: Person[] }) {
       <ul className="people">
         {people.map((p) => (
           <li key={p.id}>
+            {editing === p.id ? <PersonEditor person={p} self={p.id === me} onDone={() => setEditing(null)} /> : <>
             <span className="who">{p.name}</span>
             <span className="meta">usuario {p.username} · {p.hasNotebook ? 'su propio cuaderno' : 'mira cuadernos compartidos'}{p.admin ? ' · administra' : ''}{p.noPin ? ' · sin PIN' : ''}{p.disabled ? ' · en pausa' : ''}</span>
-            {p.id !== me && (
-              <div className="row">
+            <div className="row">
+              <button className="label-btn label-btn--soft" onClick={() => setEditing(p.id)} aria-label={`Editar a ${p.name}`}>Editar</button>
+              {p.id !== me && <>
                 <button className="label-btn label-btn--soft" onClick={() => resetPin(p)}>{p.noPin ? 'Ponerle PIN' : 'Cambiar su PIN'}</button>
                 {!p.noPin && !p.admin && <button className="label-btn label-btn--soft" onClick={() => dropPin(p)}>Dejarla sin PIN</button>}
                 <button className="label-btn label-btn--soft" onClick={() => toggle(p)}>{p.disabled ? 'Reactivar' : 'Poner en pausa'}</button>
-              </div>
-            )}
+              </>}
+            </div>
+            </>}
           </li>
         ))}
       </ul>
@@ -184,6 +188,58 @@ export function Sharing({ sections, people, grants }: { sections: { id: string; 
       </div>
       {people.some((p) => p.noPin) && <p className="note">Lo que compartas con una cuenta sin PIN lo puede ver cualquiera que abra la página y elija ese nombre.</p>}
       {note.view}
+    </div>
+  );
+}
+
+/** Editar a una persona en el lugar (D50): nombre, usuario, qué cuaderno usa, si administra. Y borrarla. */
+function PersonEditor({ person: p, self, onDone }: { person: Person; self: boolean; onDone: () => void }) {
+  const note = useNote();
+  const [askDelete, setAskDelete] = useState(false);
+  async function save(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const f = new FormData(e.currentTarget);
+    // Una casilla deshabilitada no se manda: así no se cambia sin querer (por ejemplo, la propia de administrar).
+    const box = e.currentTarget.elements.namedItem('isAdmin') as HTMLInputElement;
+    const r = await send(`/api/people/${p.id}`, 'PATCH', { displayName: f.get('displayName'), username: f.get('username'), hasNotebook: f.get('kind') === 'propio', isAdmin: box.disabled ? undefined : box.checked });
+    if (r.ok) location.reload(); else note.problem(String(r.data.error || 'No se pudo.'));
+  }
+  async function remove(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const f = new FormData(e.currentTarget);
+    const r = await send(`/api/people/${p.id}`, 'DELETE', { confirm: f.get('confirm') });
+    if (r.ok) location.reload(); else note.problem(String(r.data.error || 'No se pudo.'));
+  }
+  return (
+    <div className="form person-edit">
+      <form className="form" onSubmit={save}>
+        <label>Cómo se llama<input name="displayName" defaultValue={p.name} maxLength={60} required /></label>
+        <label>Usuario<input name="username" defaultValue={p.username} autoCapitalize="none" spellCheck={false} required /></label>
+        <fieldset className="choice">
+          <legend>Qué cuaderno usa</legend>
+          <label className="check"><input type="radio" name="kind" value="invitada" defaultChecked={!p.hasNotebook} /> Mira cuadernos que le compartan</label>
+          <label className="check"><input type="radio" name="kind" value="propio" defaultChecked={p.hasNotebook} /> Tiene su propio cuaderno</label>
+        </fieldset>
+        {p.hasNotebook && <p className="note">Si pasa a “solo mira”, su cuaderno no se borra: queda guardado y vuelve si después le devolvés el suyo.</p>}
+        <label className="check"><input type="checkbox" name="isAdmin" defaultChecked={p.admin} disabled={p.noPin || (self && p.admin)} /> También administra (suma personas y cambia PIN)</label>
+        {p.noPin && <p className="note">Para que administre, primero ponele un PIN.</p>}
+        {note.view}
+        <div className="row">
+          <button className="label-btn">Guardar cambios</button>
+          <button type="button" className="label-btn label-btn--soft" onClick={onDone}>Cancelar</button>
+          {!self && !askDelete && <button type="button" className="label-btn label-btn--soft" onClick={() => setAskDelete(true)}>Borrar cuenta…</button>}
+        </div>
+      </form>
+      {askDelete && (
+        <form className="form person-delete" onSubmit={remove}>
+          <p className="note">Esto borra la cuenta de {p.name} para siempre{p.hasNotebook ? ', con su cuaderno, sus fotos y sus adjuntos de la nube' : ''}, y los permisos que tenía. No se puede deshacer. Si solo querés que no entre por un tiempo, usá “Poner en pausa”.</p>
+          <label>Para confirmar, escribí su usuario ({p.username})<input name="confirm" autoCapitalize="none" spellCheck={false} autoComplete="off" required /></label>
+          <div className="row">
+            <button className="label-btn">Borrar para siempre</button>
+            <button type="button" className="label-btn label-btn--soft" onClick={() => setAskDelete(false)}>No, dejarla</button>
+          </div>
+        </form>
+      )}
     </div>
   );
 }

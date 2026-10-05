@@ -186,4 +186,23 @@ test('RLS de cuentas y permisos', { skip: !have && 'sin Postgres local' }, async
     const q = as(NICOLE, `select count(*) from storage.buckets;`);
     assert.ok(!q.ok && /permission denied/.test(q.err), 'sin permisos para el navegador');
   });
+
+  await t.test('D50: borrar una cuenta (su usuario de Auth) se lleva su perfil, su cuaderno, sus permisos y sus avisos', () => {
+    const X = '44444444-4444-4444-8444-444444444444';
+    sql(`
+      insert into auth.users (id) values ('${X}');
+      insert into public.profiles (id, username, display_name, pin_hash, is_admin, has_notebook, created_by) values ('${X}', 'nicole.prueba', 'Prueba de Nicole', 'sin-pin', false, true, '${NICOLE}');
+      insert into public.notebook_parts (owner_id, store, record_id, section, data, private, updated_at) values ('${X}', 'days', '2026-10-05', 'escritura', '{"notes":"x"}', false, now());
+      insert into public.notebook_grants (owner_id, grantee_id, section, level) values ('${X}', '${PSI}', 'escritura', 'ver'), ('${NICOLE}', '${X}', 'emociones', 'ver');
+      insert into public.push_subscriptions (endpoint, user_id, p256dh, auth) values ('https://push.example/x', '${X}', 'p', 'a');
+      insert into public.audit_events (actor_id, action, target_id) values ('${NICOLE}', 'persona.alta', '${X}');
+      delete from auth.users where id = '${X}';
+    `);
+    for (const [table, col] of [['profiles', 'id'], ['notebook_parts', 'owner_id'], ['push_subscriptions', 'user_id']]) {
+      assert.strictEqual(sql(`select count(*) from public.${table} where ${col} = '${X}';`), '0', table);
+    }
+    assert.strictEqual(sql(`select count(*) from public.notebook_grants where owner_id = '${X}' or grantee_id = '${X}';`), '0');
+    assert.strictEqual(sql(`select count(*) from public.audit_events where action = 'persona.alta' and target_id is null;`), '1', 'el registro queda, sin la persona');
+    assert.strictEqual(sql(`select count(*) from public.notebook_parts where owner_id = '${NICOLE}';`) !== '0', true, 'lo de Nicole sigue');
+  });
 });

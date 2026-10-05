@@ -8,6 +8,15 @@ Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantien
 - `.mcp.json` ya está en la rama. La dueña habilitó los dos MCP en su entorno web de Claude Code; el estado de `claude mcp list` en una instalación local distinta no verifica ese entorno.
 - `docs/NUBE.md` registra la verificación de red, los entornos y lo que falta para aplicar la migración SQL existente. Ningún secreto se agregó a Git.
 
+## 2026-10-06 · Editar y borrar cuentas
+
+**Para quien lo usa**
+- En Mi cuenta → Personas, **Editar** cambia el nombre, el usuario, si tiene su propio cuaderno o solo mira, y si administra. **Borrar cuenta…** la borra para siempre (con su cuaderno y sus fotos de la nube, si tenía), después de escribir su usuario para confirmar. Para algo reversible sigue estando “Poner en pausa”.
+
+**Para quien lo mantiene**
+- `updatePerson`, `deletePerson` (`lib/people.ts`), `dropAllMedia` (`lib/media.ts`); `PATCH`/`DELETE /api/people/:id`. D50.
+- Pruebas: `test:cloud` 25/25 (cascada al borrar).
+
 ## 2026-10-06 · Emociones con parche y marcas bordadas, también en la semana (cache `v41`)
 
 **Para quien lo usa**

@@ -41,3 +41,24 @@ export async function dropMedia(owner: string, store: string, id: string) {
   const paths = Array.from({ length: media.MAX_CHUNKS }, (_, n) => media.path(owner, store, id, n));
   await supabaseAdmin().storage.from(BUCKET).remove(paths);
 }
+
+/** Borra todas las fotos, dibujos y adjuntos de un cuaderno (al borrar la cuenta de su dueña, D50). */
+export async function dropAllMedia(owner: string) {
+  const bucket = supabaseAdmin().storage.from(BUCKET);
+  const list = async (prefix: string) => {
+    const out: string[] = [];
+    for (let offset = 0; offset < 100000; offset += 1000) {
+      const { data, error } = await bucket.list(prefix, { limit: 1000, offset });
+      if (error || !data || !data.length) break;
+      out.push(...data.map((x) => x.name));
+      if (data.length < 1000) break;
+    }
+    return out;
+  };
+  for (const store of media.STORES) {
+    for (const id of await list(`${owner}/${store}`)) {
+      const files = (await list(`${owner}/${store}/${id}`)).map((n) => `${owner}/${store}/${id}/${n}`);
+      if (files.length) await bucket.remove(files);
+    }
+  }
+}
