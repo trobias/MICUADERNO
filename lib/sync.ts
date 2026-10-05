@@ -3,8 +3,9 @@
 import 'server-only';
 import { NOTEBOOK_STORES, sectionsOf, splitAll } from './sections';
 
-// Fotos y adjuntos todavía no viajan (pesan; irán a Storage privado). Lo demás sí.
-export const SYNC_STORES = NOTEBOOK_STORES.filter((s) => s !== 'images' && s !== 'files');
+// Todo viaja. De fotos y adjuntos (NB1, D43) viaja la ficha; el contenido va aparte a Storage (lib/media.ts).
+export const SYNC_STORES = NOTEBOOK_STORES;
+const MEDIA_FIELD: Record<string, string> = { images: 'src', files: 'data' };
 // De `meta` solo viajan los ajustes; lo demás (última copia, recordatorios vistos…) es del dispositivo.
 export const SYNC_META_KEYS = ['settings'];
 
@@ -17,6 +18,15 @@ export function validChange(c: unknown): c is Change {
   if (typeof x.key !== 'string' || !x.key || x.key.length > 160) return false;
   if (x.store === 'meta' && !SYNC_META_KEYS.includes(x.key)) return false;
   return x.record === null || (typeof x.record === 'object' && !Array.isArray(x.record));
+}
+
+/** Por las dudas: la ficha de una foto o adjunto nunca lleva el contenido (va a Storage, no a la tabla). */
+export function withoutMedia(c: Change): Change {
+  const f = MEDIA_FIELD[c.store];
+  if (!f || !c.record || !(f in c.record)) return c;
+  const record = { ...c.record };
+  delete record[f];
+  return { ...c, record };
 }
 
 export type Row = {

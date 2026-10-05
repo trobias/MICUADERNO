@@ -3,7 +3,8 @@
      por sección (js/core/sections.js). Lo que cambian otras personas con permiso de editar se trae y se aplica.
    - Invitada (`mode: 'guest'`): abre el cuaderno de quien le dio permiso, en memoria (sin copia local, D36).
      Ve solo las secciones permitidas; si intenta cambiar algo que no puede, se le dice con amabilidad.
-   Fotos y adjuntos todavía no viajan (irán a Storage privado). Se carga después de store.js. */
+   Fotos, dibujos y adjuntos (NB1, D43): viaja la ficha partida por sección y el contenido aparte, en pedazos,
+   a Storage privado por el servidor (js/core/media.js). Se carga después de store.js. */
 (function (root) {
   'use strict';
   var MC = root.MC;
@@ -11,12 +12,15 @@
   if (!C || !C.mode || C.leaving || !MC.store) { MC.sync = { on: false }; return; }
 
   var S = MC.sections;
+  var MD = MC.media;
   var store = MC.store;
   var guest = C.mode === 'guest';
   var owner = C.view;
-  var SYNC = S.STORES.filter(function (s) { return s !== 'images' && s !== 'files'; });
+  var SYNC = S.STORES.slice();
   var SEP = '\u0001';
-  var K = { out: 'sync.outbox.' + owner, cursor: 'sync.cursor.' + owner, uploaded: 'sync.uploaded.' + owner };
+  var K = { out: 'sync.outbox.' + owner, cursor: 'sync.cursor.' + owner, uploaded: 'sync.uploaded.' + owner,
+    sent: 'sync.media.' + owner,        // { 'images/<id>': versión ya subida }
+    wait: 'sync.mediaWait.' + owner };  // fichas que llegaron sin poder bajar su contenido (se reintentan)
   var applying = 0;
   var ready = false; // hasta que la base abre, no se sube ni se trae nada
   var flushTimer = null, flushing = false, retryMs = 2000;
@@ -35,7 +39,6 @@
   function canEdit(s, key) {
     if (!guest) return true;
     if (s === 'meta' && key !== 'settings') return true; // lo del dispositivo (última apertura, avisos vistos) queda local
-    if (s === 'images' || s === 'files') return false;
     var lv = (share && share.sections) || {};
     return S.sectionsOf(s).some(function (sec) { return lv[sec] === 'editar'; });
   }
@@ -108,10 +111,17 @@
     if (!q.length) return Promise.resolve();
     flushing = true;
     var batch = q.slice(0, 100);
-    return Promise.all(batch.map(function (id) {
-      var i = id.indexOf(SEP), s = id.slice(0, i), key = id.slice(i + 1);
-      return store.get(s, key).then(function (rec) { return { store: s, key: key, record: rec || null }; });
-    })).then(function (changes) {
+    // De a uno: una foto primero sube su contenido y recién después su ficha (sin contenido) va en el lote.
+    var changes = [];
+    return batch.reduce(function (chain, id) {
+      return chain.then(function () {
+        var i = id.indexOf(SEP), s = id.slice(0, i), key = id.slice(i + 1);
+        return store.get(s, key).then(function (rec) {
+          if (!MD.isMedia(s) || !rec) { changes.push({ store: s, key: key, record: rec || null }); return; }
+          return uploadMedia(s, key, rec).then(function () { changes.push({ store: s, key: key, record: MD.strip(s, rec) }); });
+        });
+      });
+    }, Promise.resolve()).then(function () {
       var body = { changes: changes };
       if (guest) body.owner = owner;
       return api('/api/sync/push', { method: 'POST', body: JSON.stringify(body) });
@@ -135,6 +145,72 @@
     });
   }
 
+  /* ---------- contenido de fotos y adjuntos (NB1) ---------- */
+  function mediaUrl(s, key, n) {
+    return '/api/media?owner=' + encodeURIComponent(owner) + '&store=' + s + '&id=' + encodeURIComponent(key) + '&n=' + n;
+  }
+  /** Sube los pedazos si esa versión todavía no se subió desde este dispositivo. */
+  function uploadMedia(s, key, rec) {
+    var body = rec[MD.FIELD[s]];
+    if (typeof body !== 'string' || !body) return Promise.resolve();
+    var v = MD.version(rec, s), sent = MC.ui.get(K.sent, {});
+    if (sent[s + '/' + key] === v) return Promise.resolve();
+    var parts = MD.split(body);
+    return parts.reduce(function (chain, text, n) {
+      return chain.then(function () {
+        return api('/api/media', { method: 'PUT', body: JSON.stringify({ owner: guest ? owner : undefined, store: s, id: key, n: n, text: text }) });
+      });
+    }, Promise.resolve()).then(function () {
+      var now = MC.ui.get(K.sent, {});
+      now[s + '/' + key] = v;
+      MC.ui.set(K.sent, now);
+    });
+  }
+  /** Baja y junta los pedazos de una ficha. Resuelve con el contenido o null si todavía no se puede. */
+  function downloadMedia(s, key, meta) {
+    if (!MD.validMeta(meta)) return Promise.resolve(null);
+    var n = [];
+    for (var i = 0; i < meta.chunks; i++) n.push(i);
+    return Promise.all(n.map(function (i) { return api(mediaUrl(s, key, i)).then(function (r) { return r.text; }); }))
+      .then(function (texts) { var body = texts.join(''); return body.length === meta.length ? body : null; }, function () { return null; });
+  }
+  function waitList() { return MC.ui.get(K.wait, []); }
+  function setWait(id, on) {
+    var w = waitList().filter(function (x) { return x !== id; });
+    if (on) w.push(id);
+    MC.ui.set(K.wait, w);
+  }
+  /** Una ficha que llegó: si el contenido local ya es esa versión, se conserva; si no, se baja. */
+  function withMedia(s, key, rec, local) {
+    var meta = rec.media;
+    if (!meta) return Promise.resolve(rec);
+    if (local && typeof local[MD.FIELD[s]] === 'string' && MD.version(local, s) === meta.v) {
+      rec[MD.FIELD[s]] = local[MD.FIELD[s]];
+      return Promise.resolve(rec);
+    }
+    return downloadMedia(s, key, meta).then(function (body) {
+      if (body === null) return null;
+      rec[MD.FIELD[s]] = body;
+      return rec;
+    });
+  }
+  /** Reintenta las fichas que quedaron sin contenido (la red se cortó, o el pedazo todavía no había subido). */
+  function retryWaiting() {
+    var w = waitList();
+    if (!w.length) return Promise.resolve(0);
+    var got = 0;
+    return w.reduce(function (chain, id) {
+      return chain.then(function () {
+        var i = id.indexOf(SEP), s = id.slice(0, i), key = id.slice(i + 1);
+        return api('/api/sync/pull?owner=' + encodeURIComponent(owner) + '&since=1970-01-01T00:00:00Z&store=' + s + '&id=' + encodeURIComponent(key))
+          .then(function (res) {
+            var mine = (res.parts || []).filter(function (p) { return p.store === s && p.record_id === key; });
+            return apply(mine).then(function (n) { got += n; });
+          }, function () { /* sin red: se vuelve a intentar */ });
+      });
+    }, Promise.resolve()).then(function () { return got; });
+  }
+
   /* ---------- traer ---------- */
   var pulling = null;
   function pull(full, force) {
@@ -155,7 +231,7 @@
         });
       });
     }
-    pulling = page(since).then(function () {
+    pulling = page(since).then(function () { return retryWaiting().then(function (n) { applied += n; }); }).then(function () {
       status.lastPull = new Date().toISOString();
       pulling = null;
       if (applied) MC.emit('store:remote', { store: '*', from: 'cloud' });
@@ -181,12 +257,15 @@
         var g = groups[id], s = g[0].store, key = g[0].record_id;
         var alive = g.filter(function (p) { return !p.deleted_at; });
         return store.get(s, key).then(function (local) {
-          return quietly(function () {
-            if (!alive.length) return local ? store.del(s, key) : null;
-            var rec = S.overlay(s, local, alive.map(function (p) { return { section: p.section, data: p.data }; }));
-            if (S.keyOf(s, rec) === undefined) return null; // parte suelta sin su identidad (permiso parcial): no se inventa
-            return store.put(s, rec);
-          }).then(function () { n++; });
+          if (!alive.length) return quietly(function () { setWait(id, false); return local ? store.del(s, key) : null; }).then(function () { n++; });
+          var rec = S.overlay(s, local, alive.map(function (p) { return { section: p.section, data: p.data }; }));
+          if (S.keyOf(s, rec) === undefined) return null; // parte suelta sin su identidad (permiso parcial): no se inventa
+          return (MD.isMedia(s) ? withMedia(s, key, rec, local) : Promise.resolve(rec)).then(function (full) {
+            // Sin el contenido todavía: se guarda nada y se reintenta (nunca una foto rota).
+            if (!full) { setWait(id, true); return; }
+            if (MD.isMedia(s)) setWait(id, false);
+            return quietly(function () { return store.put(s, full); }).then(function () { n++; });
+          });
         });
       });
     }, Promise.resolve()).then(function () { return n; });

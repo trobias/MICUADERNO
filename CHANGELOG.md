@@ -8,6 +8,16 @@ Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantien
 - `.mcp.json` ya está en la rama. La dueña habilitó los dos MCP en su entorno web de Claude Code; el estado de `claude mcp list` en una instalación local distinta no verifica ese entorno.
 - `docs/NUBE.md` registra la verificación de red, los entornos y lo que falta para aplicar la migración SQL existente. Ningún secreto se agregó a Git.
 
+## 2026-10-06 · NB1: fotos, dibujos y adjuntos en la nube (cache `v37`)
+
+**Para quien lo usa**
+- Las fotos, los dibujos y los adjuntos ya viajan con el cuaderno: quien tiene permiso en “Fotos y adjuntos” los ve. Si alguno tarda en llegar, aparece cuando está, nunca roto.
+
+**Para quien lo mantiene**
+- `js/core/media.js` (única fuente), `lib/media.ts` y `PUT/GET /api/media`: la ficha va por la sincronización sin el contenido; el contenido, en pedazos de 3 MB a un bucket privado (`cuaderno`) que solo usa el servidor después de revisar el permiso. `js/sync.js` sube antes la foto y después su ficha, conserva lo local si es la misma versión y reintenta lo que no pudo bajar. `GET /api/sync/pull` acepta `store` + `id`. D43.
+- Supabase: bucket creado y migración `20261006090000_fotos_storage` registrada; el historial ya tenía las anteriores (NB3 cerrado).
+- Pruebas: 130 unit (`media-nb1`), 55/55 E2E (“nube (NB1)” con Storage simulado), `test:cloud` 22/22 (bucket privado).
+
 ## 2026-10-05 · Entrar eligiendo a la persona; nunca React
 
 **Para quien lo usa**

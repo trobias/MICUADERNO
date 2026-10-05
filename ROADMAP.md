@@ -1,6 +1,6 @@
 # MI CUADERNO — Roadmap
 
-Estado al 05/10/2026: **la etapa A del plan nuevo está completa** (A0–A13) y la base de la nube está publicada (`https://micuaderno-five.vercel.app`, Nicole ya tiene su cuenta) con cuadernos compartidos (D38). **Lo próximo: fotos, dibujos y adjuntos en la nube** (NB1, D40). Lo que falta de la nube está en `BACKLOG.md` (sección NB); la etapa C (React) quedó descartada (D42) y en [`docs/EVALUACION_BC.md`](docs/EVALUACION_BC.md); el orden y los criterios, en [`MIGRATION_PLAN.md`](MIGRATION_PLAN.md). La tabla de fases históricas más abajo conserva la visión anterior como referencia de ideas: **no es el orden de implementación actual**. Lo visible hoy está en `SPEC.md` y lo entregado por commit, en `CHANGELOG.md`.
+Estado al 05/10/2026: **la etapa A del plan nuevo está completa** (A0–A13) y la base de la nube está publicada (`https://micuaderno-five.vercel.app`, Nicole ya tiene su cuenta) con cuadernos compartidos (D38). Fotos en la nube hechas (NB1, D43); **lo próximo: NB2**. Lo que falta de la nube está en `BACKLOG.md` (sección NB); la etapa C (React) quedó descartada (D42) y en [`docs/EVALUACION_BC.md`](docs/EVALUACION_BC.md); el orden y los criterios, en [`MIGRATION_PLAN.md`](MIGRATION_PLAN.md). La tabla de fases históricas más abajo conserva la visión anterior como referencia de ideas: **no es el orden de implementación actual**. Lo visible hoy está en `SPEC.md` y lo entregado por commit, en `CHANGELOG.md`.
 
 ## Ruta aprobada ahora
 
@@ -19,8 +19,10 @@ Estado al 05/10/2026: **la etapa A del plan nuevo está completa** (A0–A13) y 
 | A13 · Contrato v6 | Hecho (v36) | IndexedDB 4, `SCHEMA_VERSION` 6, instantánea y vuelta atrás; `cover` queda (D39). |
 | B-base · cuentas en la nube | Publicado (05/10) | Next.js + Supabase: PIN, Nicole admin, permisos con RLS, push, latido anti-pausa. `docs/NUBE.md`, D37. |
 | B5 · sincronización y cuadernos compartidos | Hecho en su forma simple (D38) | La dueña sube su cuaderno partido por sección; quien mira lo abre en memoria. Falta probar con dos cuentas reales. |
-| **NB1 · fotos, dibujos y adjuntos en la nube** | **Siguiente** | Storage privado por persona, firmado desde el servidor, con permiso por la sección `fotos` (D40). |
-| NB2–NB5 · cola firme, historial de migraciones, restaurar con nube, avisos más seguido | Después de NB1 | `BACKLOG.md` sección NB. |
+| NB1 · fotos, dibujos y adjuntos en la nube | Hecho (06/10, cache v37) | En pedazos por el servidor a Storage privado, permiso por `fotos` (D43). |
+| NB3 · historial de migraciones | Hecho (06/10) | Registradas en Supabase. |
+| **NB2 · cola de salida firme** | **Siguiente** | Cola en IndexedDB y una sola pestaña sincronizando. |
+| NB4–NB5 · restaurar con nube, avisos más seguido | Después | `BACKLOG.md` sección NB. |
 | Pruebas con la psicóloga y en el celular; segundo proyecto de Supabase | **Descartado por la dueña** (D40) | No se proponen. |
 | Entrar eligiendo a la persona + instalar + avisos | Hecho (05/10) | D41. |
 | C · React y escenas 2.0 | **Descartado para siempre** (D42) | El cuaderno sigue sin framework. |
@@ -112,4 +114,4 @@ Referencias comunes en vez de copias (VISION §3).
 
 ## Próximo paso
 
-**NB1: fotos, dibujos y adjuntos en la nube** (`BACKLOG.md` sección NB, D40). Después, NB2–NB5. Las fases 2–10 de arriba son la reserva de ideas para cuando la dueña pida algo nuevo. Nunca React (D42).
+**NB2: cola de salida firme** (`BACKLOG.md` sección NB). Después, NB4–NB5. Las fases 2–10 de arriba son la reserva de ideas para cuando la dueña pida algo nuevo. Nunca React (D42).

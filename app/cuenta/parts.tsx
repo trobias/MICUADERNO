@@ -148,7 +148,7 @@ export function Sharing({ sections, people, grants }: { sections: { id: string; 
   }
   return (
     <div className="form">
-      <p className="note">Por sección: nada, ver o editar. Ver deja mirar esa parte de tu cuaderno; editar también deja escribir, cambiar y borrar en ella. Las fotos y los adjuntos todavía no se comparten.</p>
+      <p className="note">Por sección: nada, ver o editar. Ver deja mirar esa parte de tu cuaderno; editar también deja escribir, cambiar y borrar en ella. “Fotos y adjuntos” incluye las imágenes, los dibujos y los archivos adjuntos.</p>
       <div className="table-scroll">
         <table className="grants">
           <thead><tr><th scope="col">Sección</th>{people.map((p) => <th key={p.id} scope="col">{p.name}</th>)}</tr></thead>

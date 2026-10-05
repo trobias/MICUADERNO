@@ -17,3 +17,10 @@ $$;
 grant usage on schema auth to anon, authenticated, service_role;
 grant execute on function auth.uid() to anon, authenticated, service_role;
 grant usage on schema public to anon, authenticated, service_role;
+
+-- Storage (NB1): solo la tabla de buckets, para que la migración que crea el bucket privado se pueda aplicar.
+create schema if not exists storage;
+create table if not exists storage.buckets (
+  id text primary key, name text not null, public boolean default false,
+  file_size_limit bigint, allowed_mime_types text[], created_at timestamptz default now()
+);

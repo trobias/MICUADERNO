@@ -2069,12 +2069,70 @@ async function cloudContext(state) {
     const skipped = state.onPush ? state.onPush(b) : [];
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, skipped }) });
   });
-  await context.route('**/api/sync/pull**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ parts: state.parts || [], more: false }) }));
+  await context.route('**/api/sync/pull**', (route) => {
+    const u = new URL(route.request().url());
+    const id = u.searchParams.get('id');
+    const parts = (state.parts || []).filter((p) => !id || (p.record_id === id && p.store === u.searchParams.get('store')));
+    return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ parts, more: false }) });
+  });
+  // Storage simulado (NB1): pedazos por dueña/store/id/n.
+  state.media = state.media || {};
+  await context.route('**/api/media**', async (route) => {
+    const req = route.request();
+    if (req.method() === 'PUT') {
+      const b = JSON.parse(req.postData() || '{}');
+      state.media[[b.owner || state.me.id, b.store, b.id, b.n].join('/')] = b.text;
+      return route.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":true}' });
+    }
+    const u = new URL(req.url());
+    const text = state.media[[u.searchParams.get('owner'), u.searchParams.get('store'), u.searchParams.get('id'), u.searchParams.get('n')].join('/')];
+    return route.fulfill({ status: text ? 200 : 404, contentType: 'application/json', body: JSON.stringify(text ? { text } : { error: 'Todavía no está en la nube.' }) });
+  });
   ctx.setCookie = (name, value) => context.addCookies([{ name, value, url: `http://127.0.0.1:${PORT}/` }]);
   return ctx;
 }
 
 const CA = '11111111-1111-4111-8111-111111111111', CB = '22222222-2222-4222-8222-222222222222';
+
+await test('nube (NB1): una foto sube su contenido en pedazos y la ficha sin él; una que llega se baja y se ve; si falta, se reintenta', async () => {
+  const PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+  const state = { me: { id: CA, username: 'nicole', name: 'Nicole', admin: true, hasNotebook: true, shares: [] } };
+  const { page, errors, context, setCookie } = await cloudContext(state);
+  await setCookie('mc_person', CA);
+  await page.goto(HTTP_URL);
+  await onboard(page);
+  // Subir: el contenido va a /api/media y la ficha (sin src) a la sincronización.
+  const id = await page.evaluate(async (src) => (await MC.model.saveImage({ kind: 'upload', name: 'flor de Nicole', src, w: 1, h: 1 })).id, PNG);
+  await page.evaluate(() => MC.sync.flush());
+  await page.waitForFunction(() => MC.sync.pending() === 0, null, { timeout: 6000 });
+  assert.equal(state.media[[CA, 'images', id, 0].join('/')], PNG, 'el contenido subió entero');
+  const card = state.pushes.flatMap((b) => b.changes).find((c) => c.store === 'images' && c.key === id);
+  assert.ok(card && !('src' in card.record), 'la ficha no lleva el contenido');
+  assert.equal(card.record.media.length, PNG.length);
+  // Cambiar solo el nombre no vuelve a subir el contenido.
+  const putsBefore = Object.keys(state.media).length;
+  // Llega una foto de otra persona: primero sin contenido en la nube (se espera), después con él (se baja).
+  const other = '33333333-3333-4333-8333-333333333333';
+  const meta = { v: '2030-01-01T00:00:00.000Z:' + PNG.length, chunks: 1, length: PNG.length };
+  state.parts = [{ store: 'images', record_id: 'img_remota', section: 'fotos', data: { id: 'img_remota', kind: 'upload', name: 'foto compartida', w: 1, h: 1, updatedAt: '2030-01-01T00:00:00.000Z', media: meta }, deleted_at: null, updated_at: '2030-01-01T00:00:00.000Z', updated_by: other }];
+  await page.evaluate(() => MC.sync.pull());
+  assert.equal(await page.evaluate(() => MC.store.get('images', 'img_remota')), undefined, 'sin contenido no se guarda una foto rota');
+  state.media[[CA, 'images', 'img_remota', 0].join('/')] = PNG;
+  await page.evaluate(() => MC.sync.pull());
+  const got = await page.evaluate(() => MC.store.get('images', 'img_remota'));
+  assert.equal(got.src, PNG);
+  await page.waitForFunction(() => MC.model.images().some((i) => i.id === 'img_remota'), null, { timeout: 3000 });
+  // Volver a traer la misma versión no la vuelve a bajar.
+  let gets = 0;
+  await context.route('**/api/media**', async (route) => { gets++; await route.fallback(); });
+  await page.evaluate(() => MC.sync.pull(true));
+  assert.equal(gets, 0, 'la misma versión se conserva sin bajarla de nuevo');
+  assert.equal(Object.keys(state.media).length, putsBefore + 1);
+  // El 404 simulado de “todavía no está en la nube” lo anota el navegador; nada más.
+  assert.deepEqual(errors.filter((e) => !/404/.test(e)), []);
+  await context.close();
+});
+
 
 await test('nube: con cuentas cada persona abre su propia base y sus preferencias; sin sesión va al ingreso (D37)', async () => {
   const state = { me: { id: CA, username: 'nicole', name: 'Nicole', admin: true, hasNotebook: true, shares: [] } };
@@ -2103,7 +2161,7 @@ await test('nube: con cuentas cada persona abre su propia base y sus preferencia
   const day = state.pushes.flatMap((b) => b.changes).find((c) => c.store === 'days' && c.record && c.record.notes === 'lo de Nicole');
   assert.ok(day, 'el día se subió: ' + JSON.stringify(state.pushes).slice(0, 300));
   assert.ok(state.pushes.every((b) => !b.owner));
-  assert.ok(!state.pushes.flatMap((b) => b.changes).some((c) => c.store === 'images' || c.store === 'files' || (c.store === 'meta' && c.key !== 'settings')));
+  assert.ok(!state.pushes.flatMap((b) => b.changes).some((c) => (c.store === 'meta' && c.key !== 'settings') || (c.record && ('src' in c.record || 'data' in c.record))), 'lo del dispositivo no viaja, ni el contenido de fotos en la ficha');
   // Lo que edita la psicóloga (emociones) le llega a Nicole sin tocar sus notas; lo propio no se vuelve a aplicar.
   state.parts = [
     { store: 'days', record_id: TODAY, section: 'emociones', data: { date: TODAY, morning: { feelings: ['acompañada'], at: null }, updatedAt: '2030-01-01T00:00:00.000Z' }, deleted_at: null, updated_at: '2030-01-01T00:00:00.000Z', updated_by: '33333333-3333-4333-8333-333333333333' },

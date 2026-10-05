@@ -4,7 +4,7 @@ Leé esto primero. Si venís sin contexto de conversaciones anteriores, seguí c
 
 ## Qué es
 
-Un diario personal digital con forma de **cuaderno de tela bordado**: emociones escritas al comenzar/cerrar el día y antes/después de actividades, estados amables, rutinas recurrentes, páginas libres con stickers, calendario, mapa del año, exportación e impresión. Sin cuenta (doble clic en `index.html` o un servidor simple) es 100 % local (IndexedDB) y offline. **Con cuenta** (publicado en `https://micuaderno-five.vercel.app`, Next.js + Supabase: usuario y PIN, Nicole admin, permisos por sección con RLS, push, latido anti-pausa) el cuaderno de la dueña se sincroniza partido por sección y quien recibe permiso lo mira en memoria (D37, D38, `docs/NUBE.md`). Fotos y adjuntos todavía no viajan; los avisos y los cuadernos compartidos no están probados con personas/dispositivos reales (`docs/EVALUACION_BC.md`). Español rioplatense, neutro en género.
+Un diario personal digital con forma de **cuaderno de tela bordado**: emociones escritas al comenzar/cerrar el día y antes/después de actividades, estados amables, rutinas recurrentes, páginas libres con stickers, calendario, mapa del año, exportación e impresión. Sin cuenta (doble clic en `index.html` o un servidor simple) es 100 % local (IndexedDB) y offline. **Con cuenta** (publicado en `https://micuaderno-five.vercel.app`, Next.js + Supabase: usuario y PIN, Nicole admin, permisos por sección con RLS, push, latido anti-pausa) el cuaderno de la dueña se sincroniza partido por sección y quien recibe permiso lo mira en memoria (D37, D38, `docs/NUBE.md`). Fotos, dibujos y adjuntos también viajan, en pedazos por el servidor a Storage privado (D43). Los avisos y los cuadernos compartidos no se prueban con personas/dispositivos reales por decisión de la dueña (D40). Español rioplatense, neutro en género.
 
 ## Skills del repo que aplican (leelas antes de tocar UI)
 
@@ -51,6 +51,7 @@ css/print.css           impresión
 js/core/ns.js           namespace, utilidades DOM (h, $, on), ids, debounce
 js/cloud.js             cuentas de la nube: solo con <meta name="mc-cloud">; base y preferencias por persona (D37)
 js/core/sections.js     mapa campo → sección para permisos (única fuente; test contra la migración)
+js/core/media.js        cómo viajan fotos y adjuntos a la nube: ficha sin contenido + pedazos (NB1, D43; lo usa también lib/media.ts)
 js/core/dates.js        fechas locales AAAA-MM-DD, nombres en español
 js/core/brush.js        pinceles (A11): balde con tolerancia, presión, semilla, estabilizador (puro)
 js/core/theme.js        motor de temas (A9): presets, derivar tokens, contraste AA (puro)

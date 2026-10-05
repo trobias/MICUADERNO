@@ -42,6 +42,7 @@ Para retomar el desarrollo **sin haber estado en las conversaciones anteriores**
 | 21 | Respuestas: nunca pruebas con la psicóloga/celular ni segundo Supabase; fotos en la nube como lo próximo; documentar qué hay en C. | NB1 en NOW; secciones NB y C en el backlog. | D40, `BACKLOG.md` |
 | 22 | Entrar como en Mamayucca: elegir el usuario de una lista, PIN, instalar app y activar avisos. | Hecho. | D41 |
 | 23 | “No me gusta ninguna de la etapa C, nunca pasemos a React; sigamos con los NB.” | Etapa C descartada; se sigue con NB. | D42 |
+| 24 | NB1: fotos en la nube. | Hecho: pedazos por el servidor a Storage privado; NB3 cerrado. | D43 |
 
 ## 3. Estado actual
 
@@ -49,7 +50,7 @@ Para retomar el desarrollo **sin haber estado en las conversaciones anteriores**
 - **Datos:** `schemaVersion` **6**, IndexedDB **4** (contrato v6, D39). Las formas viejas (`mood`, `kind/body/items`, `moodLabels`) ya no se escriben, pero se leen si llegan. `cover` queda. Después de actualizar, Ajustes ofrece “Descargar la copia de antes”.
 - **Pruebas:** `npm run check` → 126 unitarias y 54/54 recorridos E2E en Chromium (`file://` y HTTP); `npm run test:cloud` verde. Solo Chromium: Firefox, Safari, dispositivos reales y lectores de pantalla **no** se probaron (`docs/QA.md` §4).
 - **Nube (D37, D38):** publicada en `https://micuaderno-five.vercel.app` (Vercel `trobias-projects/micuaderno`, Production se despliega en cada push a `main`; el último despliegue, A13, quedó `READY`). Supabase `lrwfkbuhmgtckjmswrzp` con esquema y RLS aplicados por SQL (el historial de migraciones está vacío: `docs/NUBE.md`). Nicole creó su cuenta. Cuadernos compartidos implementados y probados con la API simulada. La dueña decidió no hacer pruebas guiadas con personas o teléfonos ni un segundo proyecto de Supabase (D40): las Preview usan la base real.
-- **Qué queda en orden:** **NB1 (fotos, dibujos y adjuntos en la nube)**, después NB2–NB5; nunca React (D42).
+- **Qué queda en orden:** NB1 y NB3 hechos (D43); **NB2** (cola firme), después NB4–NB5; nunca React (D42).
 - **C (React/escenas 2.0): descartada para siempre** (D42, “nunca pasemos a React”). No proponerla.
 - **Entrar (D41):** `/entrar` muestra la lista de personas para elegir con un toque, el PIN, “Instalar app” y “Activar notificaciones”.
 - **Accesos:** desde claude.ai/code, `.mcp.json` no conecta (403 de red); los conectores de la cuenta (Vercel y Supabase) sí. Los secretos viven solo en las variables de Vercel; nunca en el repo ni en el chat.

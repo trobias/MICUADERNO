@@ -14,7 +14,7 @@ Cada idea pendiente, con su estado. **Nada se pierde por estar fuera de la fase 
 | **EXPERIMENTAL** | probar en chico; si no suma, se descarta |
 | **BLOCKED** | espera otra cosa (dice cuál) |
 
-**Dónde estamos (05/10/2026):** la etapa **A está completa** (A0–A13) y la nube está publicada con cuadernos compartidos. **Lo próximo es NB1: fotos, dibujos y adjuntos en la nube** (D40), y después NB2–NB5. La etapa C (React) quedó **descartada para siempre** (D42). Las tablas de ideas de `VISION.md` siguen valiendo como reserva: su NEXT/LATER no salta a NB1.
+**Dónde estamos (05/10/2026):** la etapa **A está completa** (A0–A13) y la nube está publicada con cuadernos compartidos. **NB1 (fotos en la nube) y NB3 (historial de migraciones) están hechos** (D43); **lo próximo es NB2** y después NB4–NB5. La etapa C (React) quedó **descartada para siempre** (D42). Las tablas de ideas de `VISION.md` siguen valiendo como reserva: su NEXT/LATER no salta a NB1.
 
 ## Pedido del 03/10, rastreo por entrega
 
@@ -35,7 +35,8 @@ Cada idea pendiente, con su estado. **Nada se pierde por estar fuera de la fase 
 | Cruces, redundancia, QA y contrato v6 | A12–A13 | Hecho (v35–v36) | Matriz de navegación, accesibilidad, migración de datos y tests. |
 | Nube: base de cuentas (Next.js + Supabase), PIN, Nicole admin, permisos por sección con RLS, push y latido anti-pausa | B-base | Hecho, publicado | `docs/NUBE.md`, D37. |
 | Nube: sincronización y cuadernos compartidos (quien recibe permiso mira el cuaderno de Nicole) | B5 | Hecho en su forma simple | D38. Lo que falta, en la sección NB. |
-| Nube: fotos, dibujos y adjuntos | B2 (Storage) | **NOW** | NB1. |
+| Nube: fotos, dibujos y adjuntos | NB1 | Hecho (06/10) | D43: en pedazos por el servidor a Storage privado. |
+| Nube: historial de migraciones de Supabase | NB3 | Hecho (06/10) | Ya estaban registradas; se sumó la del bucket. |
 | React/TypeScript y escenas especiales | C | Descartado (D42) | “Nunca React.” |
 | Entrar eligiendo a la persona, instalar la app y activar avisos desde la entrada | Nube | Hecho (D41) | Como la entrada de Mamayucca. |
 
@@ -49,9 +50,7 @@ Al empezar un ítem: pasarlo a NOW, leer `VISION.md` §0 y la decisión que lo c
 
 | # | Qué | Estado | Depende de | Notas |
 |---|---|---|---|---|
-| NB1 | **Fotos, dibujos y adjuntos en la nube** (Storage privado): hoy quedan solo en el dispositivo donde se subieron y quien mira el cuaderno compartido no los ve. Bucket privado por persona; subida y descarga firmadas por el servidor (el navegador nunca habla con Supabase); permiso por la sección `fotos`; borrado a la papelera igual que hoy; la copia `.json` sigue llevando las imágenes. | **NOW** | — | D40. Plan gratis: 1 GB. Tabla nueva con RLS + caso en `tests/cloud/rls.test.mjs`; `MC.sections` ya tiene `fotos`. |
-| NB2 | **Cola de salida más firme**: la cola de cambios en un store de IndexedDB, en la misma transacción que el cambio, y Web Locks para que sincronice una sola pestaña. | NEXT | — | Hoy la cola vive en `localStorage` y la puede mover cualquier pestaña. |
-| NB3 | **Registrar la migración** ya aplicada en el historial de Supabase (`supabase migration repair`) antes de la próxima migración. | NEXT | La CLI con el token de la dueña | Ver `docs/NUBE.md`. |
+| NB2 | **Cola de salida más firme**: la cola de cambios en un store de IndexedDB, en la misma transacción que el cambio, y Web Locks para que sincronice una sola pestaña. | **NOW** | — | Hoy la cola vive en `localStorage` y la puede mover cualquier pestaña. |
 | NB4 | Restaurar una copia con la nube prendida: hoy reemplaza también lo de la nube. Confirmar con la dueña si así lo quiere o si pide confirmación aparte. | NEEDS DESIGN | — | |
 | NB5 | Avisos más de una vez por día (hoy un cron diario por el plan Hobby de Vercel). | LATER | — | Con `pg_cron` + `pg_net` en Supabase, o Vercel Pro (pago: no sin su ok). |
 | — | Prueba guiada con la psicóloga, prueba en el celular, segundo proyecto de Supabase para las Preview. | **Descartado por la dueña** | — | D40: no volver a proponerlos. |

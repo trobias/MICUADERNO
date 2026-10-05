@@ -357,7 +357,7 @@ Solo cuando el cuaderno se sirve desde Vercel con Supabase configurado (index co
 - **Preparar** (`/preparar`): con la clave `SETUP_TOKEN`, crea la primera persona, que administra. Deja de funcionar cuando ya hay alguien.
 - **Mi cuenta** (`/cuenta`, enlazada desde Ajustes → Mi cuenta): cambiar el PIN (pide el actual); avisos en este dispositivo (mañana/noche, probar, desactivar); quien administra ve **Personas** (sumar, cambiar su PIN, poner en pausa/reactivar); todos ven **Quién puede ver mi cuaderno** (por sección: nada / ver / editar); cerrar sesión en este dispositivo.
 - Al sumar una persona, quien administra elige si **tiene su propio cuaderno** o **mira el cuaderno de quien la suma** (por defecto). Quien mira abre ese cuaderno con la misma interfaz, sin tapa ni bienvenida, con un aviso fijo de quién es y qué puede editar; lo que no puede cambiar no se guarda y se le avisa con amabilidad (D38).
-- Quien tiene cuaderno propio lo tiene en su dispositivo y, con cuenta en la nube, se sincroniza solo (cada cambio se sube; lo que editan otras personas con permiso llega cada 45 s o al volver a la pestaña). Cerrar sesión no borra nada. Fotos y adjuntos todavía no se comparten.
+- Quien tiene cuaderno propio lo tiene en su dispositivo y, con cuenta en la nube, se sincroniza solo (cada cambio se sube; lo que editan otras personas con permiso llega cada 45 s o al volver a la pestaña). Cerrar sesión no borra nada. Las fotos, los dibujos y los adjuntos también viajan (NB1): quien tiene permiso en “Fotos y adjuntos” los ve; si una tarda en bajar, aparece cuando llega, nunca rota.
 
 ## 16. Accesibilidad
 

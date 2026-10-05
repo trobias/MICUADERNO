@@ -165,8 +165,21 @@ Después de que la dueña volvió a autorizar el conector de Vercel para `trobia
 - **Cómo se comparte:** Mi cuenta → “Quién puede ver mi cuaderno”: por sección, nada / ver / editar. “Ver” deja mirar; “editar” también deja escribir, cambiar y borrar en esa sección.
 - **La invitada (por ejemplo, la psicóloga):** entra con su usuario y PIN y se le abre el cuaderno de Nicole, en memoria y sin copia local, con un aviso arriba (“Cuaderno de Nicole · podés editar: …”). Si nadie le compartió nada, Mi cuenta se lo dice. Si le compartieron varios cuadernos, elige cuál abrir en Mi cuenta → “Cuadernos que podés abrir”.
 - **Sincronización (`js/sync.js`):** el dispositivo de la dueña sube cada cambio (cola de claves en `mc.ui.<id>.sync.outbox`; el contenido se lee de IndexedDB al subir), y la primera vez sube todo el cuaderno. Trae cada 45 s, al volver a la pestaña y al recuperar la red. `POST /api/sync/push` y `GET /api/sync/pull` (paginado por `updated_at`) usan la sesión de la persona, así que la RLS es la segunda llave.
-- **Todavía no viajan:** fotos, dibujos y adjuntos (`images`, `files`) y lo de `meta` que no son ajustes.
+- **No viaja:** lo de `meta` que no son ajustes (es del dispositivo).
 - **Migración remota:** `20261005090000_cuadernos_compartidos.sql` aplicada con el conector de Supabase (`execute_sql`). Verificado: 1 persona, administradora y con cuaderno; columna `updated_by` presente.
+
+## 4.7 Fotos, dibujos y adjuntos en la nube (06/10/2026 · NB1, D43)
+
+- **Cómo viajan (`js/core/media.js`, única fuente para el cuaderno y el servidor):** la ficha de cada imagen o adjunto (`images`, `files`) va por la sincronización de siempre, en la sección `fotos`, **sin** el contenido y con `media = { v, chunks, length }`. El contenido (el data URL) va aparte en pedazos de hasta 3 MB por `PUT /api/media` y vuelve por `GET /api/media?owner&store&id&n`. Pedazos porque Vercel no deja pasar más de ~4,5 MB por pedido; un adjunto de 10 MB son 5 pedazos.
+- **Dónde:** bucket privado `cuaderno` de Supabase Storage (`20261006090000_fotos_storage.sql`), objetos `<dueña>/<store>/<id>/<n>`, sin políticas para el navegador. Solo el servidor (clave secreta) lee y escribe, **después** de revisar el permiso de la sección `fotos` (la dueña, o quien recibió ver/editar). El navegador nunca habla con Supabase y la CSP sigue en `connect-src 'self'`.
+- **Sin repetir:** `v` es la versión del contenido (`updatedAt` + largo). Cada dispositivo anota qué versión ya subió (`sync.media.<dueña>`) y, al recibir una ficha, conserva su contenido local si es la misma versión.
+- **Sin fotos rotas:** si una ficha llega y su contenido todavía no se puede bajar, no se guarda nada: queda en `sync.mediaWait.<dueña>` y se reintenta en cada traída (`GET /api/sync/pull?store&id`).
+- **Borrar:** mandar a la papelera viaja como cualquier cambio; borrar del todo borra también los pedazos de Storage.
+- **Aplicado el 06/10** con el conector: bucket `cuaderno` privado, límite 3,2 MB por objeto, solo `text/plain`; migración registrada en `supabase_migrations.schema_migrations`.
+
+## 4.8 Historial de migraciones (NB3)
+
+`supabase_migrations.schema_migrations` tiene registradas `20261004120000_cuentas_permisos`, `20261005090000_cuadernos_compartidos` y `20261006090000_fotos_storage` (verificado el 06/10 con el conector). La CLI (`supabase db push`) ya no las vuelve a aplicar. Una migración nueva: el archivo en `supabase/migrations/`, probarla con `npm run test:cloud` y aplicarla (conector o CLI), registrándola en esa tabla.
 
 ## 5. Desarrollo y pruebas
 
@@ -181,15 +194,16 @@ npm run check        # el gate del cuaderno: sintaxis + unit + E2E (incluye “n
 
 Para probar con Supabase de verdad en local, creá `.env.local` (no se commitea) con las variables de §3.2 y corré `npm run dev`.
 
-Estructura: `app/` (páginas y `/api`), `lib/` (env, PIN, sesión, personas, avisos, secciones), `proxy.ts`, `next.config.ts`, `vercel.json`, `supabase/migrations/`, `tests/cloud/`, `tools/copy-notebook.mjs`, `js/cloud.js` y `js/core/sections.js`.
+Estructura: `app/` (páginas y `/api`), `lib/` (env, PIN, sesión, personas, avisos, secciones), `proxy.ts`, `next.config.ts`, `vercel.json`, `supabase/migrations/`, `tests/cloud/`, `tools/copy-notebook.mjs`, `js/cloud.js`, `js/core/sections.js` y `js/core/media.js` (con `lib/media.ts` y `app/api/media`).
 
 ## 6. Qué falta (en orden)
 
-1. **Desplegar** (§3): requiere las cuentas de la dueña y su ok. Después, probar ingreso, PIN, pausa, permisos y avisos en un celular real.
-2. **B5 sincronización** (después de A7): outbox en IndexedDB, `notebook_parts` partido con `MC.sections.split`, lápidas para borrados, una pestaña sincroniza, importar la copia `.json` que ya tiene cada persona. Vista de solo lectura para quien recibió permiso, sin copia local persistente (D36).
-3. Storage privado para fotos y adjuntos (sección `fotos`), con la misma RLS.
+Lo hecho: despliegue (§4.5), sincronización y cuadernos compartidos (§4.6), entrada eligiendo a la persona (D41), fotos en la nube (§4.7) e historial de migraciones (§4.8). Lo que queda está en `BACKLOG.md`, sección NB:
+1. **NB2** cola de salida en IndexedDB y una sola pestaña sincronizando (Web Locks).
+2. **NB4** qué hace “abrir una copia” con la nube prendida (espera a la dueña).
+3. **NB5** avisos más de una vez por día.
 4. Pantalla de `audit_events` para quien administra, y cambiar quién administra sin tocar SQL.
-5. Etapa C: vistas en React una por una (`MIGRATION_PLAN.md`).
+La etapa C (React) está descartada (D42).
 
 ## Probar `/entrar` con una Supabase simulada (sin tocar la base real)
 

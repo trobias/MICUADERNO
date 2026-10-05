@@ -180,4 +180,10 @@ test('RLS de cuentas y permisos', { skip: !have && 'sin Postgres local' }, async
     assert.ok(q.ok, q.err);
     assert.strictEqual(as(NICOLE, `select count(*) from public.push_subscriptions;`).out, '0');
   });
+
+  await t.test('NB1: el bucket de fotos es privado y el navegador no lo ve', () => {
+    assert.strictEqual(sql(`select public::text || ',' || coalesce(file_size_limit, 0) from storage.buckets where id = 'cuaderno';`).trim(), 'false,3200000');
+    const q = as(NICOLE, `select count(*) from storage.buckets;`);
+    assert.ok(!q.ok && /permission denied/.test(q.err), 'sin permisos para el navegador');
+  });
 });
