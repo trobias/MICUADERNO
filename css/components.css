@@ -374,6 +374,8 @@ dialog.sheet[open] { animation: sheet-in var(--dur-panel) var(--ease-out); }
   text-align: center;
   pointer-events: none;
 }
+.guest-note__out { pointer-events: auto; padding: 4px 2px; min-height: 32px; border: 0; background: none; color: var(--ink); font: inherit; font-weight: 650; text-decoration: underline dashed; text-underline-offset: 3px; cursor: pointer; }
+.guest-note__out:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 
 /* ---------- Botones de opción (energía, frecuencia, papel) ---------- */
 .choice-row { display: flex; flex-wrap: wrap; gap: 8px; }

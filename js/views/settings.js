@@ -433,7 +433,8 @@
       var offMe = MC.on('cloud:me', showMe);
       right.appendChild(c.section('Mi cuenta', [
         who,
-        h('p.t-text', h('a', { href: MC.cloud.accountUrl }, 'Mi cuenta'), ': cambiar el PIN, avisos en este dispositivo, quién puede ver mi cuaderno y, si administrás, sumar personas (crear cuentas).')
+        h('p.t-text', h('a', { href: MC.cloud.accountUrl }, 'Mi cuenta'), ': cambiar el PIN, avisos en este dispositivo, quién puede ver mi cuaderno y, si administrás, sumar personas (crear cuentas).'),
+        action('arrow-right', 'Cerrar sesión en este dispositivo', function () { MC.cloud.logout(); }, 'label-btn.label-btn--soft')
       ], { id: 'st-account' }));
       cleanups.push(offMe);
     }

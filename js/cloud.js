@@ -43,6 +43,12 @@
     MC.cloud.leaving = true;
     root.location.replace(url);
   }
+  /** Cerrar sesión en este dispositivo: antes sube lo pendiente (si se puede) y después vuelve al ingreso. */
+  MC.cloud.logout = function () {
+    var pending = MC.sync && MC.sync.flush ? Promise.resolve(MC.sync.flush()).catch(function () {}) : Promise.resolve();
+    return pending.then(function () { return root.fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' }); })
+      .then(function () { go('/entrar'); }, function () { go('/entrar'); });
+  };
   // Sin persona (cerró sesión o nunca entró): al ingreso. Sin conexión, el ingreso no carga: se muestra igual.
   if (!person) { go('/entrar'); return; }
   // Sin saber qué cuaderno abrir (sesión de antes de D38, o recién le compartieron): se pregunta una vez y se

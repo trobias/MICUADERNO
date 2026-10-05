@@ -368,7 +368,14 @@
     el.className = 'guest-note';
     el.setAttribute('role', 'note');
     el.textContent = 'Cuaderno de ' + ((share && share.name) || 'otra persona') + ' · ' +
-      (edit.length ? 'podés editar: ' + edit.join(', ').toLowerCase() : 'solo para mirar');
+      (edit.length ? 'podés editar: ' + edit.join(', ').toLowerCase() : 'solo para mirar') + ' · ';
+    // Salir a mano: quien mira el cuaderno de otra persona suele hacerlo en un dispositivo que no es suyo.
+    var out = root.document.createElement('button');
+    out.type = 'button';
+    out.className = 'guest-note__out';
+    out.textContent = 'Cerrar sesión';
+    out.addEventListener('click', function () { if (C.logout) C.logout(); });
+    el.appendChild(out);
     root.document.body.appendChild(el);
   }
   if (guest) {

@@ -2325,6 +2325,14 @@ await test('nube: la psicóloga abre el cuaderno de Nicole, edita lo permitido y
   // Algo de una sección sin ningún permiso de edición (rutinas) ni siquiera se escribe en memoria.
   const blocked = await page.evaluate(() => MC.store.put('routines', { id: 'rut_x', title: 'x', rule: { type: 'daily' } }).then(() => 'ok', (e) => e.code));
   assert.equal(blocked, 'MC_READONLY');
+  // Cerrar sesión desde el cartelito: avisa al servidor y vuelve al ingreso.
+  let loggedOut = false;
+  await context.route('**/api/auth/logout', (route) => { loggedOut = true; return route.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":true}' }); });
+  await page.click('#panel-close');
+  await page.waitForFunction(() => !document.getElementById('panel').open);
+  await page.click('.guest-note__out');
+  await page.waitForURL(/\/entrar$/, { timeout: 4000 });
+  assert.ok(loggedOut, 'se cerró la sesión en el servidor');
   assert.deepEqual(errors.filter((e) => !/Failed to load resource/.test(e)), []);
   await context.close();
 });
