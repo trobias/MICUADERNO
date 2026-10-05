@@ -1,6 +1,6 @@
 # MI CUADERNO — Roadmap
 
-Estado al 05/10/2026: **la etapa A del plan nuevo está completa** (A0–A13) y la base de la nube está publicada (`https://micuaderno-five.vercel.app`, Nicole ya tiene su cuenta) con cuadernos compartidos (D38). Lo que falta de B y la evaluación de C están en [`docs/EVALUACION_BC.md`](docs/EVALUACION_BC.md); el orden y los criterios, en [`MIGRATION_PLAN.md`](MIGRATION_PLAN.md). La tabla de fases históricas más abajo conserva la visión anterior como referencia de ideas: **no es el orden de implementación actual**. Lo visible hoy está en `SPEC.md` y lo entregado por commit, en `CHANGELOG.md`.
+Estado al 05/10/2026: **la etapa A del plan nuevo está completa** (A0–A13) y la base de la nube está publicada (`https://micuaderno-five.vercel.app`, Nicole ya tiene su cuenta) con cuadernos compartidos (D38). **Lo próximo: fotos, dibujos y adjuntos en la nube** (NB1, D40). Lo que falta de B y lo que hay en C están en `BACKLOG.md` (secciones NB y C) y en [`docs/EVALUACION_BC.md`](docs/EVALUACION_BC.md); el orden y los criterios, en [`MIGRATION_PLAN.md`](MIGRATION_PLAN.md). La tabla de fases históricas más abajo conserva la visión anterior como referencia de ideas: **no es el orden de implementación actual**. Lo visible hoy está en `SPEC.md` y lo entregado por commit, en `CHANGELOG.md`.
 
 ## Ruta aprobada ahora
 
@@ -19,8 +19,10 @@ Estado al 05/10/2026: **la etapa A del plan nuevo está completa** (A0–A13) y 
 | A13 · Contrato v6 | Hecho (v36) | IndexedDB 4, `SCHEMA_VERSION` 6, instantánea y vuelta atrás; `cover` queda (D39). |
 | B-base · cuentas en la nube | Publicado (05/10) | Next.js + Supabase: PIN, Nicole admin, permisos con RLS, push, latido anti-pausa. `docs/NUBE.md`, D37. |
 | B5 · sincronización y cuadernos compartidos | Hecho en su forma simple (D38) | La dueña sube su cuaderno partido por sección; quien mira lo abre en memoria. Falta probar con dos cuentas reales. |
-| B-resto · Storage, preview aislada, dispositivos | Pendiente | Ver `docs/EVALUACION_BC.md` §1. |
-| C · React y motion | En evaluación | Recomendación: no reescribir ahora (ver `docs/EVALUACION_BC.md` §2). |
+| **NB1 · fotos, dibujos y adjuntos en la nube** | **Siguiente** | Storage privado por persona, firmado desde el servidor, con permiso por la sección `fotos` (D40). |
+| NB2–NB5 · cola firme, historial de migraciones, restaurar con nube, avisos más seguido | Después de NB1 | `BACKLOG.md` sección NB. |
+| Pruebas con la psicóloga y en el celular; segundo proyecto de Supabase | **Descartado por la dueña** (D40) | No se proponen. |
+| C · React y escenas 2.0 | Esperando a la dueña | C1–C5 en `BACKLOG.md` sección C; recomendación: solo C1 y C5 cuando hagan falta. |
 
 Cada paso exige `npm run check`, revisión visual y documentación del cambio. La verificación en Firefox/Safari/dispositivos reales sigue pendiente; no sustituye la suite Chromium. Publicar en GitHub Pages (V7) deja de ser un objetivo porque la migración de nube aprobada usa Vercel.
 
@@ -28,7 +30,7 @@ Regla de este roadmap: **la app no tiene que sentirse grande**. Cada fase es una
 
 ## Hecho
 
-MVP completo del brief §64 y, después: pantalla única con calendario (D17), todo lo fechado visible (D18), rutas/cuentas/dibujos compartidos (D19), secciones conectadas (D20), calendario en vivo (D21), marcadores y Agenda (D22), motion completo (D23), dibujo, imágenes y adjuntos (D24), Fase 1 (D26). En la etapa A ya se cerraron A0–A4: seguridad de base, navegación/índice/escenas, sombras y desglose de espacio retirados, esquema v5 y emociones escritas. El desglose “Cuánto ocupa” que tuvo la Fase 1 se retiró en A2. La cantidad de tests del gate se lee de `npm run check`, no de una cifra histórica.
+MVP completo del brief §64 y, después: pantalla única con calendario (D17), todo lo fechado visible (D18), rutas/cuentas/dibujos compartidos (D19), secciones conectadas (D20), calendario en vivo (D21), marcadores (D22), motion completo (D23), dibujo, imágenes y adjuntos (D24), Fase 1 (D26), la etapa A entera (A0–A13: emociones escritas, Mis hojas, semana-planner, hojas en bloques y plantillas, Mi año con cuentas y victorias, colores propios, escenas, dibujo con balde, QA y contrato v6) y la nube con cuentas y cuadernos compartidos (D37–D38). La cantidad de tests del gate se lee de `npm run check`, no de una cifra histórica.
 
 ---
 
@@ -39,8 +41,8 @@ Lo construido no se probó todavía fuera de Chromium headless.
 | # | Qué | Por qué | Prioridad |
 |---|---|---|---|
 | V1 | Firefox y Safari (macOS/iOS) con doble clic y como web | brief §66; IndexedDB en `file://` varía (Safari puede caer a modo memoria con aviso) | P1 |
-| V2 | Instalar la PWA en Android, iOS y Windows reales; ícono, splash, atajos | brief §83, §97 | P1 |
-| V3 | Que una notificación llegue de verdad (abierta, en segundo plano, instalada/cerrada) | brief §94, §97; bloquea NO1 | P1 |
+| V2 | Instalar la PWA en Android, iOS y Windows reales; ícono, splash, atajos | brief §83, §97. La dueña no quiere una prueba guiada (D40): queda para cuando ella la haga por su cuenta | — |
+| V3 | Que una notificación llegue de verdad (abierta, en segundo plano, instalada/cerrada) | brief §94, §97; bloquea NO1. Igual que V2 (D40) | — |
 | V4 | Lector de pantalla real (NVDA / VoiceOver) en Hoy, calendario, Agenda, bastidor, dibujo | skill `accessibility` | P1 |
 | V5 | Detector completo de `impeccable` y `axe-core` | corrió en modo degradado | P2 |
 | V6 | Almacenamiento lleno (cuota de IndexedDB con fotos y adjuntos) | brief §67, D24; ahora más probable | P1 |
@@ -70,7 +72,7 @@ Una sola infraestructura para todo lo que se pone sobre una hoja (VISION §2). N
 
 ### Fase 3 · Memorias — NEXT
 Referencias comunes en vez de copias (VISION §3).
-- Referencias + favorito/marcador + **pequeñas victorias** + recuerdos positivos (ME1, ME2, ME4, ME5).
+- Referencias + favorito/marcador + recuerdos positivos (ME1, ME2, ME5); las **pequeñas victorias** ya existen (A8) y se amplían (ME4).
 - **Abrime algo lindo ♡** y **recuerdos suaves** / “un día como hoy” (ME6, ME8).
 - Diseñar antes: marcadores físicos en el borde (ME3) y la vista **Volver a mí** (ME7).
 - Depende de: PV1 (Fase 1).
@@ -81,8 +83,8 @@ Referencias comunes en vez de copias (VISION §3).
 - Depende de: PV1; las colecciones, de Fase 3.
 
 ### Fase 5 · Escribir tranquila — NEXT (en paralelo, es chica)
-- **Solo escribir** + pantalla completa (ES1), **modo calma** (ES2), **“No quiero explicarlo”** (ES3), **papel de noche** (PE5).
-- Diseñar antes: bloques flexibles y `ContentBlock` (ES4, ES5), después de partir `today.js` (T1).
+- **Solo escribir** + pantalla completa (ES1), **modo calma** (ES2), **“No quiero explicarlo”** (ES3). (El papel de noche, PE5, ya está: preset *Noche*, A9.)
+- Diseñar antes: bloques flexibles en el día (ES4), después de partir `today.js` (T1). Las hojas ya tienen bloques (A7).
 
 ### Fase 6 · Media liviana — NEXT/LATER
 - Imágenes con miniatura, Blob, carga diferida y deduplicación; arrastrar/soltar y pegar (MD1, MD2).
@@ -109,4 +111,4 @@ Referencias comunes en vez de copias (VISION §3).
 
 ## Próximo paso
 
-Implementar A5 según [`MIGRATION_PLAN.md`](MIGRATION_PLAN.md): cuatro marcadores, Mis hojas y editor de repetición accesible desde el día, con rutas antiguas redirigidas. Conservar la verificación de dispositivos como trabajo pendiente y avanzar por A6–A13 antes de preparar B/C.
+**NB1: fotos, dibujos y adjuntos en la nube** (`BACKLOG.md` sección NB, D40). Después, NB2–NB5. Las fases 2–10 de arriba son la reserva de ideas para cuando la dueña pida algo nuevo; la etapa C espera su elección (sección C del backlog).

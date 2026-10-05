@@ -39,6 +39,7 @@ Para retomar el desarrollo **sin haber estado en las conversaciones anteriores**
 | 18 | Adelantar la nube; que Supabase no se pause solo; configurar Vercel y Supabase por MCP (autorizó variables, migración y push a `main`). | Cuentas con PIN, Nicole admin, permisos, push, latido; publicado. | D37, `docs/NUBE.md` |
 | 19 | Que las personas que suma Nicole (su psicóloga) entren a **su** cuaderno con permisos, y que ella elija si cada una tiene cuaderno propio o mira el suyo. | Cuadernos compartidos y sincronización por sección. | D38 |
 | 20 | “Seguí con A5…A13 y los docs finales.” | Etapa A completa, un commit por paso, todo pusheado a la rama y a `main` (Production se despliega sola). | `CHANGELOG.md` 05/10, D39 |
+| 21 | Respuestas: nunca pruebas con la psicóloga/celular ni segundo Supabase; fotos en la nube como lo próximo; documentar qué hay en C. | NB1 en NOW; secciones NB y C en el backlog. | D40, `BACKLOG.md` |
 
 ## 3. Estado actual
 
@@ -58,7 +59,7 @@ Para retomar el desarrollo **sin haber estado en las conversaciones anteriores**
 4. **Historial de git**: versiones viejas de los tests en el historial todavía tienen el nombre de ejemplo anterior. Reescribir historia exige force-push a `main`; se le ofreció y no respondió. No hacerlo sin un “sí” explícito.
 5. Nombre de la vista “Volver a mí” (VISION §3): elegir con ella.
 6. **Sacar una actividad** sigue siendo definitivo (con “Deshacer” en el aviso), no va a la papelera: lo decidió la Fase 1 para no romper ese flujo (D26). Si ella quiere actividades en la papelera, es un cambio chico en `js/ui/activity.js` + `MC.model`.
-7. **Nube:** ¿cuándo probar con la psicóloga y en el celular? ¿Crear un segundo proyecto de Supabase para las Preview (servicio nuevo)? ¿Cuándo sumar Storage para fotos? ¿Se hace la etapa C o se archiva? (`docs/EVALUACION_BC.md`). Restaurar una copia con la nube prendida reemplaza también lo de la nube: confirmar con ella si así lo quiere.
+7. **Nube (respondido el 05/10, D40):** nunca la prueba con la psicóloga ni en el celular, nunca un segundo proyecto de Supabase; **lo próximo son las fotos en la nube (NB1)**. Sigue abierto: qué ítems de la etapa C (C1–C5 en `BACKLOG.md`) se hacen, y si restaurar una copia con la nube prendida debe reemplazar también lo de la nube (NB4).
 8. **Páginas:** el índice que a veces no respondía tras borrar se **reprodujo y arregló en Chromium** (cache `v25`): `MC.motion.swap` animaba `#panel-body` mientras se reemplazaba su contenido y Chromium dejaba el hit-test del contenedor viejo; ahora se anima la hoja nueva (antes 1/6 corridas fallaban, después 0/9). Falta confirmarlo en el navegador o celular de la dueña y en otros motores. Detalle en [`PAGES_INDEX_INVESTIGATION.md`](PAGES_INDEX_INVESTIGATION.md).
 
 ## 5. Cómo retomar (paso a paso)

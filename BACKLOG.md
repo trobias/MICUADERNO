@@ -14,7 +14,7 @@ Cada idea pendiente, con su estado. **Nada se pierde por estar fuera de la fase 
 | **EXPERIMENTAL** | probar en chico; si no suma, se descarta |
 | **BLOCKED** | espera otra cosa (dice cuál) |
 
-**Dónde estamos (04/10/2026):** rige la migración A→B→C de [`MIGRATION_PLAN.md`](MIGRATION_PLAN.md). A0–A4 hechos, el índice de Páginas arreglado y la **base de la nube** (B-base) adelantada a pedido de la dueña; **A5 es el siguiente trabajo de producto**. Las tablas históricas de abajo guardan ideas de `VISION.md`, pero su columna NEXT/LATER ya no define la prioridad ni autoriza saltar la migración. DA4 se retiró a pedido de la dueña; la PWA pública futura va a Vercel, no a GitHub Pages.
+**Dónde estamos (05/10/2026):** la etapa **A está completa** (A0–A13) y la nube está publicada con cuadernos compartidos. **Lo próximo es NB1: fotos, dibujos y adjuntos en la nube** (D40). La etapa C está abajo, ítem por ítem, esperando que la dueña elija. Las tablas de ideas de `VISION.md` siguen valiendo como reserva: su NEXT/LATER no salta a NB1.
 
 ## Pedido del 03/10, rastreo por entrega
 
@@ -33,13 +33,39 @@ Cada idea pendiente, con su estado. **Nada se pierde por estar fuera de la fase 
 | Escenas más frecuentes | A10 | Hecho (v33) | Motion con propósito, silencio al escribir y control de rendimiento. |
 | Balde y tipos de trazo | A11 | Hecho (v34) | Editables al reabrir, presión/semilla y deshacer. |
 | Cruces, redundancia, QA y contrato v6 | A12–A13 | Hecho (v35–v36) | Matriz de navegación, accesibilidad, migración de datos y tests. |
-| Nube: base de cuentas (Next.js + Supabase), PIN, Nicole admin, permisos por sección con RLS, push y latido anti-pausa | B-base | Hecho en local, sin desplegar | `docs/NUBE.md`, D37. Falta el deploy con las cuentas de la dueña (§3) y probar en un celular real. |
-| Nube: sincronización offline por persona, vista de solo lectura para quien recibe permiso, Storage privado | B5–B8 | LATER tras A7 | Outbox, `notebook_parts` partido con `MC.sections`, lápidas, importar la copia `.json`, E2E de dos dispositivos. |
-| React/TypeScript y escenas especiales/Three.js si sirve | C | LATER tras B | Paridad vista por vista; fallback y motion reducido. |
+| Nube: base de cuentas (Next.js + Supabase), PIN, Nicole admin, permisos por sección con RLS, push y latido anti-pausa | B-base | Hecho, publicado | `docs/NUBE.md`, D37. |
+| Nube: sincronización y cuadernos compartidos (quien recibe permiso mira el cuaderno de Nicole) | B5 | Hecho en su forma simple | D38. Lo que falta, en la sección NB. |
+| Nube: fotos, dibujos y adjuntos | B2 (Storage) | **NOW** | NB1. |
+| React/TypeScript y escenas especiales | C | Esperando a la dueña | Sección C. |
 
 Otros ítems históricos que coinciden parcialmente (ME1/ME4/EL9/PE5, etc.) se cierran **solo** cuando la capacidad completa está entregada; no borrar ideas de estas tablas por tener ya un campo v5.
 
 Al empezar un ítem: pasarlo a NOW, leer `VISION.md` §0 y la decisión que lo cubre (D25 para todo lo de la visión). Al terminarlo: sacarlo de acá y anotarlo en `CHANGELOG.md`.
+
+---
+
+## NB · Nube: lo que falta (después de D37–D38 y D40)
+
+| # | Qué | Estado | Depende de | Notas |
+|---|---|---|---|---|
+| NB1 | **Fotos, dibujos y adjuntos en la nube** (Storage privado): hoy quedan solo en el dispositivo donde se subieron y quien mira el cuaderno compartido no los ve. Bucket privado por persona; subida y descarga firmadas por el servidor (el navegador nunca habla con Supabase); permiso por la sección `fotos`; borrado a la papelera igual que hoy; la copia `.json` sigue llevando las imágenes. | **NOW** | — | D40. Plan gratis: 1 GB. Tabla nueva con RLS + caso en `tests/cloud/rls.test.mjs`; `MC.sections` ya tiene `fotos`. |
+| NB2 | **Cola de salida más firme**: la cola de cambios en un store de IndexedDB, en la misma transacción que el cambio, y Web Locks para que sincronice una sola pestaña. | NEXT | — | Hoy la cola vive en `localStorage` y la puede mover cualquier pestaña. |
+| NB3 | **Registrar la migración** ya aplicada en el historial de Supabase (`supabase migration repair`) antes de la próxima migración. | NEXT | La CLI con el token de la dueña | Ver `docs/NUBE.md`. |
+| NB4 | Restaurar una copia con la nube prendida: hoy reemplaza también lo de la nube. Confirmar con la dueña si así lo quiere o si pide confirmación aparte. | NEEDS DESIGN | — | |
+| NB5 | Avisos más de una vez por día (hoy un cron diario por el plan Hobby de Vercel). | LATER | — | Con `pg_cron` + `pg_net` en Supabase, o Vercel Pro (pago: no sin su ok). |
+| — | Prueba guiada con la psicóloga, prueba en el celular, segundo proyecto de Supabase para las Preview. | **Descartado por la dueña** | — | D40: no volver a proponerlos. |
+
+## C · Etapa C: React y escenas 2.0 (esperando a la dueña)
+
+Qué hay en la etapa C, en criollo. La recomendación (`docs/EVALUACION_BC.md` §2) es hacer, como mucho, C1 y C5 cuando hagan falta, y **no** reescribir todo (C2–C3): cuesta mucho, Nicole no notaría nada y se perdería el abrir el cuaderno con doble clic sin internet.
+
+| # | Qué | Estado | Qué gana / qué cuesta |
+|---|---|---|---|
+| C1 | **Compartir `js/core` con el servidor**: que la nube valide lo que recibe con los mismos normalizadores que el cuaderno. | LATER (recomendado cuando se toque la nube) | Una capa más de cuidado de los datos. Chico/mediano; el cuaderno no cambia. |
+| C2 | **Pasar las vistas a React, una por una** (Ajustes → Mi año → Mis hojas → Semana/Mes → Día → stickers/dibujo), cada una con sus recorridos antes de borrar la vieja. | Esperando decisión (no recomendado ahora) | Más fácil de mantener si entra más gente a programar. Muy grande; no cambia nada visible. |
+| C3 | **Migrar el armazón** (router, cuadro, marcadores) a React cuando todas las vistas lo sean. | Esperando decisión (no recomendado ahora) | Termina C2. Rompe el doble clic en `index.html` sin internet (necesita servidor). |
+| C4 | **Escenas 2.0** con Motion o Three.js (por ejemplo la tapa que se abre en 3D). | EXPERIMENTAL | Más espectáculo. Pesa cientos de KB, necesita WebGL con respaldo; hacer una sola, a demanda, si alguna vez suma al cuaderno. |
+| C5 | **Islas React** solo para pantallas nuevas con mucho estado (buscador, “Volver a mí”). | LATER | Permite usar React donde rinde sin reescribir lo que anda. |
 
 ---
 
@@ -65,21 +91,21 @@ Al empezar un ítem: pasarlo a NOW, leer `VISION.md` §0 y la decisión que lo c
 | EL6 | **Polaroid** como estilo de `image` (marco, sombra, espacio abajo, fecha y descripción opcionales). [25] | NEXT | EL1 | |
 | EL7 | Más estilos de foto (cinta, papel fotográfico, círculo, corazón, forma orgánica) sobre la misma arquitectura. [26] | LATER | EL6 | No diez estilos de entrada. |
 | EL8 | Texto suelto, cinta con texto, fecha-sello, sellos. | LATER | EL1 | Antes B2. |
-| EL9 | **Dibujo como elemento**: resaltador, rehacer, presión del lápiz cuando exista, ocultar/duplicar. [18–19] | NEXT | EL1, DA2 | Hoy `draw.js` con lápiz, goma, texto, deshacer; el dibujo es un sticker `img:<id>`. |
+| EL9 | **Dibujo como elemento**: ocultar/duplicar sobre la hoja. [18–19] | NEXT | EL1, DA2 | Resaltador, rehacer y presión ya están (A11). El dibujo sigue siendo un sticker `img:<id>`. |
 | EL10 | **Snap suave** a bordes, centro y márgenes; desactivable (tecla o ajuste). [22] | EXPERIMENTAL | EL1 | Snap a otros objetos: probar después. |
 | EL11 | Selección múltiple. [21] | EXPERIMENTAL | EL1 | Solo si hace falta de verdad. |
 | EL12 | Gestos táctiles: mantener apretado para el menú, pellizcar para escalar/rotar. [67] | NEXT | EL1 | |
 | EL13 | Exportar un dibujo como PNG suelto; capas en el dibujo. | LATER | EL9 | Antes I10. |
-| EL14 | Páginas libres sin estructura fija (solo foto, solo dibujo, mezcla). [64] | NEXT | EL1 | Hoy una página es texto o lista + stickers. |
+| EL14 | Páginas libres sin estructura fija (solo foto, solo dibujo, mezcla). [64] | NEXT | EL1 | Hoy una hoja es de bloques (renglones, lista, casillas, columnas) + stickers (A7). |
 
 ## ME · Memorias (referencias comunes)
 
 | # | Qué | Estado | Depende de | Notas / hoy |
 |---|---|---|---|---|
-| ME1 | **Referencias** (`MemoryReference`): marcar cualquier día, entrada, página, foto, carta o recuerdo sin copiar datos. [62] | NEXT | PV1 | D25: store `marks` con `{ id, sourceType, sourceId, kind, color, createdAt }`. |
+| ME1 | **Referencias** (`MemoryReference`): marcar cualquier día, entrada, página, foto, carta o recuerdo sin copiar datos. [62] | NEXT | PV1 | El store `marks` ya existe y lo usan las victorias (A8); faltan otros tipos (favorito, marcador…). |
 | ME2 | **Favorito** (especial) y **marcador** (volver) como dos tipos. [10] | NEXT | ME1 | |
 | ME3 | **Marcadores físicos** que asoman del borde de la hoja, con colores-significado personalizables (rosa especial · amarillo volver · verde recuerdo lindo · lavanda importante). [10–11] | NEEDS DESIGN | ME2 | Convivir con los marcadores de navegación (D22) sin confundirlos. |
-| ME4 | **Pequeñas victorias**: marcar cualquier momento; página que las junta (papelitos/flores/estrellas/sellos) y abre el día. Sin XP ni niveles. [39–40] | NEXT | ME1 | Hoy existe la plantilla de página “Mis pequeñas victorias”. |
+| ME4 | **Pequeñas victorias**: que también se puedan marcar un día entero o una foto, y una página propia que las junte como papelitos. [39–40] | LATER | ME1 | Ya se marcan actividades y hojas y se ven en *Mi año* (A8). |
 | ME5 | **Recuerdos positivos**: taxonomía simple (lindo · especial · quiero recordarlo · victoria). [58] | NEXT | ME1 | “Qué quiero guardar” (`reflection.keep`) cuenta como recuerdo. |
 | ME6 | **Abrime algo lindo ♡**: azar **solo** entre lo marcado lindo/especial/victoria/quiero recordar. [59] | NEXT | ME5, PV1 | Nunca una entrada cualquiera. |
 | ME7 | **Volver a mí** (nombre a elegir: *Mis recuerdos*, *Lo que fui guardando*, *Pedacitos de mí*…): recuerdos, fotos, victorias, frases, canciones, dibujos, cartas abiertas. Nunca pendientes ni estadísticas. [60–61] | NEEDS DESIGN | ME5, MD1 | |
@@ -136,8 +162,7 @@ Al empezar un ítem: pasarlo a NOW, leer `VISION.md` §0 y la decisión que lo c
 | ES1 | **Solo escribir** (oculta todo menos página, fecha y texto) + **pantalla completa** a pedido. [14–15] | NEXT | — | |
 | ES2 | **Modo calma** (`calmMode`), independiente del nivel de motion. [16–17] | NEXT | — | Apaga escenas, insights secundarios, decoraciones y avisos visuales; no borra nada. |
 | ES3 | **“No quiero explicarlo”**: registrar un día difícil con lo mínimo (sello, color, una línea o nada). [47] | NEXT | — | Nunca pedir más. |
-| ES4 | **Bloques flexibles y opcionales**: títulos propios, ocultar/eliminar/reordenar bloques reflexivos. [45–46] | NEEDS DESIGN | ES5 | Hoy hay secciones fijas (algunas apagables en Ajustes). |
-| ES5 | Evaluar **`ContentBlock`** para páginas y cartas (no para todo a ciegas). [63] | NEEDS DESIGN | EL1 | D25: primero páginas libres y sobres. |
+| ES4 | **Bloques flexibles y opcionales en el día**: títulos propios, ocultar/eliminar/reordenar bloques reflexivos. [45–46] | NEEDS DESIGN | — | Las hojas ya tienen bloques (A7, `MC.sheet.editor`); el día sigue con secciones fijas. |
 | ES6 | Papelito tras completar algo (“¿Querés escribir cómo te hizo sentir?”), dentro de la app. | LATER | ES2 | Antes B6. |
 
 ## MD · Media
@@ -162,8 +187,8 @@ Al empezar un ítem: pasarlo a NOW, leer `VISION.md` §0 y la decisión que lo c
 
 | # | Qué | Estado | Notas |
 |---|---|---|---|
-| B4 | Escenas que faltan (cortina). | LATER | Hay 9 (A10 sumó flor, esquina, bordado y lluvia). Se apagan con el modo calma (ES2). |
 | B9 | Empaquetado portable (Tauri) para quien no quiera navegador. | EXPERIMENTAL | Solo si hace falta. |
+| B10 | Escena de la cortina (la única de las pedidas que falta). | LATER | B4. |
 | I2 | Sacar una ocurrencia de rutina de un día puntual (“hoy no toca”). | NEXT | |
 | I5 | *Mi año* alternando ánimo al empezar / al terminar. | LATER | |
 | I6 | Reordenar actividades del día arrastrando (con teclado). | LATER | |
@@ -176,7 +201,7 @@ Al empezar un ítem: pasarlo a NOW, leer `VISION.md` §0 y la decisión que lo c
 |---|---|---|---|
 | T1 | Partir `js/views/today.js` (≈370 líneas) en encabezado, cierre y cuerpo. | NEXT | Conviene antes de ES4. |
 | T2 | E2E de “pasar a mañana”, deshacer al sacar, stickers con teclado, restaurar scroll. | NEXT | |
-| T3 | Subir `CACHE_VERSION` automáticamente en `npm run dist`. | NEXT | Hoy se sube manualmente; A4 usa `v24`. |
+| T3 | Subir `CACHE_VERSION` automáticamente en `npm run dist`. | NEXT | Hoy se sube a mano (va por `v36`). |
 | T4 | Sacar los `woff2` duplicados del dist (las fuentes ya van embebidas). | LATER | |
 | T5 | Un ícono por atajo de la PWA. | LATER | |
 | T8 | Los números de la suite (unit/E2E) y la caché se repiten a mano en `AGENTS.md`, `HANDOFF.md`, `ROADMAP.md` y `README.md`, y se desactualizan. | LATER | Junto con T3: que `npm run check`/`dist` los informe, o nombrarlos en un solo lugar. |
@@ -207,3 +232,4 @@ Ya no están arriba porque están hechos. El detalle, en `CHANGELOG.md` (por fec
 | T6 | En el celular, los marcadores se esconden mientras el teclado está abierto. | 02/10/2026 | DESIGN §10, `js/app.js` |
 | — | La ✕ del cuadro vuelve siempre al calendario (antes fallaba al ir y volver a la misma hoja). | 03/10/2026 | `CHANGELOG.md`, `js/app.js` |
 | T7 | Cerrar el cuadro después de recargar (o de actualizar el SW) vuelve por el historial: el recorrido vive en `sessionStorage`. También: doble cierre sin retroceder de más, arranque directo en un cuadro (PWA, notificación, `?go=`) y fin de la bienvenida dejan el calendario detrás. | 04/10/2026 | `js/app.js` (`seedBase`, `saveTrail`, `requestClose`) |
+| A5–A13 | Etapa A completa: cuatro marcadores y Mis hojas, semana-planner, hojas en bloques con plantillas y Guardar, Mi año con cuentas y victorias, colores propios, escenas más seguido, dibujo con balde, QA cruzada y contrato v6. | 05/10/2026 | `CHANGELOG.md` 05/10, D27–D39, `docs/QA.md` |
