@@ -380,7 +380,8 @@
 
   /** Enlace a una página libre: ícono de hoja + título. */
   c.pageLink = function (p) {
-    return h('a.text-btn.page-link', { href: MC.routes.page(p.id) }, MC.icon('paginas'), MC.model.pageTitle(p));
+    return h('a.text-btn.page-link', { href: MC.routes.page(p.id) }, MC.icon('paginas'), MC.model.pageTitle(p),
+      p.virtual ? h('span.page-link__note', ' · se repite') : null);
   };
 
   /** Lista de enlaces a páginas (la página del día, la semana). */

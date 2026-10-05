@@ -214,9 +214,15 @@
     /* ---------- Hoja derecha ---------- */
     function buildRight() {
       MC.clear(right);
-      right.appendChild(c.section(isFuture ? 'Notas para ese día' : 'Durante el día',
+      // “Guardar” (A7): lo escrito acá puede volverse una plantilla o una hoja que se repite.
+      var keepBtn = h('button.text-btn.keep-btn', { type: 'button', 'aria-haspopup': 'menu', 'aria-label': 'Guardar estas notas como plantilla o que se repitan' }, 'Guardar');
+      keepBtn.addEventListener('click', function () {
+        var notes = { title: 'Notas del día', paper: 'rayado', blocks: [{ id: 'blk_notes', type: 'text', title: '' }], values: { blk_notes: day.notes || '' } };
+        MC.views.pages.keep(keepBtn, notes, { date: date, title: 'Notas del día' });
+      });
+      right.appendChild(c.section(isFuture ? 'Notas para ese día' : 'Durante el día', [
         c.writeArea({ id: 'notes', value: day.notes, rows: 5, ariaLabel: 'Durante el día', placeholder: 'Cuando quieras, escribí la primera línea.', onInput: function (v) { day.notes = v; persist(); } }),
-        { id: 'q-notes' }));
+        h('div.keep-row', keepBtn)], { id: 'q-notes' }));
 
       right.appendChild(pagesSection());
       // Adjuntos del día: una foto, una entrada, un PDF… (una imagen se puede pegar como sticker).
@@ -235,9 +241,9 @@
       right.appendChild(scrap.toolbar);
     }
 
-    /* Páginas sueltas que se empezaron este día: así el calendario también las encuentra. */
+    /* Hojas de este día: las empezadas acá y, de hoy en adelante, las que se repiten (A7). */
     function pagesSection() {
-      var start = h('button.text-btn', { type: 'button' }, MC.icon('plus'), 'Empezar una hoja para este día');
+      var start = h('button.text-btn', { type: 'button' }, MC.icon('plus'), 'Agregar una hoja');
       start.addEventListener('click', function () { MC.views.pages.newPage(date); });
       return c.section(pagesToday.length === 1 ? 'Una hoja de este día' : 'Hojas de este día',
         [pagesToday.length ? c.pageLinks(pagesToday) : null, start], { id: 'q-pages' });

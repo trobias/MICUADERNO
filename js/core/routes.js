@@ -23,6 +23,8 @@
     /** Mis hojas, con esa repetición a la vista y resaltada. */
     routine: function (id) { return '#/hojas/repite/' + enc(id); },
     page: function (id) { return '#/pagina/' + enc(id); },
+    /** Una plantilla propia (A7): se edita como una hoja sin día. */
+    template: function (id) { return '#/plantilla/' + enc(id); },
     year: function (y) { return y ? '#/anio/' + y : '#/anio'; },
     settings: function (section) { return '#/ajustes' + (section ? '/' + enc(section) : ''); },
     print: function () { return '#/imprimir'; },
@@ -61,6 +63,7 @@
       case 'dia': return D.isValid(parts[1]) ? { kind: 'panel', name: 'today', opt: parts[1] === today ? 'hoy' : null, params: { date: parts[1] } } : null;
       case 'hojas': return { kind: 'panel', name: 'sheets', opt: 'hojas', params: parts[1] === 'repite' && parts[2] ? { focus: parts[2] } : {} };
       case 'pagina': return parts[1] ? { kind: 'panel', name: 'page', opt: 'hojas', params: { id: parts[1] } } : null;
+      case 'plantilla': return parts[1] ? { kind: 'panel', name: 'template', opt: 'hojas', params: { id: parts[1] } } : null;
       // Rutas de antes de A5: se reemplazan sin sumar un paso al historial.
       case 'agenda': return { redirect: build.week(today) };
       case 'rutinas': return { redirect: parts[1] ? build.routine(parts[1]) : build.sheets() };

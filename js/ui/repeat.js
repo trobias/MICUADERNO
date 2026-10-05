@@ -17,7 +17,8 @@
 
   /**
    * existing: la repetición a editar, o null para crear una.
-   * opts: { date: día desde el que se abre (semilla de días, mes y fecha; por defecto hoy), title, rule }.
+   * opts: { date: día desde el que se abre (semilla de días, mes y fecha; por defecto hoy), title, rule,
+   *   save(routine) → Promise: guardar de otra forma (A7: una hoja que se repite congela su plantilla), hint }.
    */
   function editor(existing, onSaved, opts) {
     opts = opts || {};
@@ -140,12 +141,17 @@
       if (!cur.title) { titleErr.textContent = 'Poné un nombre, por ejemplo “caminar”.'; title.setAttribute('aria-invalid', 'true'); title.focus(); return false; }
       if (!cur.rule) { error.textContent = 'Elegí al menos un día de la semana.'; return false; }
       if (cur.endDate && cur.endDate < cur.startDate) { endErr.textContent = 'La fecha final quedó antes del inicio: movela un poco más adelante.'; end.setAttribute('aria-invalid', 'true'); end.focus(); return false; }
-      return M.saveRoutine(cur).then(function (saved) { onSaved(saved); c.toast(existing ? 'Guardado.' : 'Listo: va a aparecer sola en los días que toca.'); });
+      return (opts.save ? opts.save(cur) : M.saveRoutine(cur)).then(function (saved) {
+        onSaved(saved);
+        // Después de que el diálogo se cierra: si no, el aviso se iría con él.
+        setTimeout(function () { c.toast(existing ? 'Guardado.' : 'Listo: va a aparecer sola en los días que toca.'); }, 0);
+      });
     } });
 
     c.dialog({
       title: existing ? 'Editar lo que se repite' : 'Que se repita',
       content: [
+        opts.hint ? h('p.section__hint', opts.hint) : null,
         h('div.field', h('label', { for: 'rt-title' }, 'Nombre'), title, titleErr),
         h('div.field', h('label', { for: 'rt-freq' }, 'Frecuencia'), freq),
         extra,

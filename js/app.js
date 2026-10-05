@@ -15,7 +15,7 @@
     { id: 'anio', label: 'Mi año', icon: 'anio', href: R.year() },
     { id: 'ajustes', label: 'Ajustes', icon: 'ajustes', href: R.settings() }
   ];
-  var PANEL_LABEL = { today: 'Página del día', sheets: 'Mis hojas', page: 'Hoja', year: 'Mi año', settings: 'Ajustes', print: 'Imprimir mi cuaderno' };
+  var PANEL_LABEL = { today: 'Página del día', sheets: 'Mis hojas', page: 'Hoja', template: 'Plantilla', year: 'Mi año', settings: 'Ajustes', print: 'Imprimir mi cuaderno' };
 
   var main = document.getElementById('main');
   var book = document.getElementById('book');

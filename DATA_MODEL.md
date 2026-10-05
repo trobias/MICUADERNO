@@ -258,6 +258,7 @@ v5 es **aditiva** (D34): los stores y campos nuevos conviven con los viejos hast
   values: { [blockId]: Value },   // contenido inicial (“con lo escrito”); {} = en blanco
   stickers: [Placed],
   frozen: false,                  // true: copia congelada que usa una repetición (no se lista ni se edita)
+  // A7: una hoja nacida de una plantilla guarda `templateId` pero es independiente; editar la plantilla no la toca.
   deletedAt: ISO | null,
   createdAt: ISO | null, updatedAt: ISO | null
 }
@@ -277,7 +278,8 @@ v5 es **aditiva** (D34): los stores y campos nuevos conviven con los viejos hast
 | `activities` | `feel` | `{ before: [string], after: [string] }` o `null` | A4 visible; A6 lo pondrá también en la semana editable |
 | `activities` | `moves` | `[{ from: 'AAAA-MM-DD', to: 'AAAA-MM-DD', at: ISO }]`, máx. 50 | A3 |
 | `pages` (hojas) | `blocks`, `values` | como en `templates`; `null` mientras la hoja siga con `kind/body/items` | A7 |
-| `pages` | `templateId`, `routineId` | de qué plantilla nació; de qué repetición es ocurrencia | A7 |
+| `pages` | `templateId`, `routineId` | de qué plantilla nació; de qué repetición es ocurrencia (id `pag_<repetición>_<fecha>`, virtual hasta que se escribe) | A7 |
+| `pages` | `kind/body/items` derivados | al guardar una hoja con bloques: un solo bloque lista → `list`; si no, `text` con `M.sheetText` | A7 |
 | `routines` | `kind` | `'activity'` (de siempre) o `'sheet'` (hoja que se repite) | A7 |
 | `routines` | `templateId` | la plantilla congelada que repite (`kind: 'sheet'`) | A7 |
 | `routines.rule` | `type: 'yearly'` | `{ month: 1..12, day: 1..31 }`; el 29/02 cae el 28/02 en años comunes | A3 |

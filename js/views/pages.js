@@ -4,57 +4,103 @@
   var MC = root.MC;
   var h = MC.h, D = MC.dates, M = MC.model, R = MC.routes, c = MC.c;
 
-  var TEMPLATES = [
-    { id: 'blank', title: '', kind: 'text', paper: 'rayado', label: 'En blanco', hint: 'Una hoja libre.' },
-    { id: 'drawing', title: 'Un dibujo', kind: 'text', paper: 'liso', label: 'Para dibujar', hint: 'Una hoja lisa y el lápiz listo.' },
-    { id: 'goodThings', title: 'Cosas que me hacen bien', kind: 'list', label: 'Cosas que me hacen bien', sticker: 'sol' },
-    { id: 'places', title: 'Lugares que amo', kind: 'list', label: 'Lugares que amo', sticker: 'hoja' },
-    { id: 'people', title: 'Personas importantes', kind: 'list', label: 'Personas importantes', sticker: 'corazon' },
-    { id: 'songs', title: 'Canciones de este momento', kind: 'list', label: 'Canciones de este momento', sticker: 'auriculares' },
-    { id: 'wins', title: 'Mis pequeñas victorias', kind: 'list', label: 'Pequeñas victorias', sticker: 'estrella' },
-    { id: 'try', title: 'Cosas que quiero probar', kind: 'list', label: 'Cosas que quiero probar', sticker: 'brillito' },
-    { id: 'letter', title: 'Carta para mi yo futuro', kind: 'text', paper: 'rayado', label: 'Carta para mi yo futuro', sticker: 'sobre', body: 'Querida persona del futuro:\n\n' },
-    { id: 'dump', title: 'Vaciar la cabeza', kind: 'text', paper: 'cuadriculado', label: 'Vaciar la cabeza', hint: 'Todo lo que da vueltas, sin orden.', sticker: 'nube' },
-    { id: 'gratitude', title: 'Gracias', kind: 'list', label: 'Gratitud', sticker: 'margarita' },
-    { id: 'dreams', title: 'Sueños', kind: 'text', paper: 'punteado', label: 'Sueños', sticker: 'luna' },
-    { id: 'wishes', title: 'Lista de deseos', kind: 'list', label: 'Lista de deseos', sticker: 'mono' },
-    { id: 'month', title: 'Reflexión del mes', kind: 'text', paper: 'rayado', label: 'Reflexión del mes', sticker: 'hoja',
-      body: 'Lo que más me gustó:\n\nLo que me costó:\n\nLo que quiero para el mes que viene:\n' }
-  ];
+  var TEMPLATES = MC.templates.FACTORY;
   var PAPER_LABEL = { rayado: 'Rayado', cuadriculado: 'Cuadriculado', punteado: 'Punteado', liso: 'Liso' };
+  var KIND_WORD = { text: 'renglones', list: 'lista', checks: 'casillas', columns: 'columnas' };
 
-  function templateFor(id) { return TEMPLATES.filter(function (t) { return t.id === id; })[0] || TEMPLATES[0]; }
+  function templateFor(id) { return MC.templates.byId(id) || TEMPLATES[0]; }
 
-  function create(tpl, date) {
+  /** “lista”, “renglones y columnas”: de qué está hecha una plantilla (texto de la tarjeta). */
+  function kindOf(blocks) {
+    var seen = [];
+    (blocks || []).forEach(function (b) { var w = KIND_WORD[b.type]; if (w && seen.indexOf(w) === -1) seen.push(w); });
+    return seen.length > 1 ? seen.slice(0, -1).join(', ') + ' y ' + seen[seen.length - 1] : (seen[0] || 'renglones');
+  }
+
+  /**
+   * Una hoja nueva para `date`: desde una plantilla de fábrica (`{ factory: id }`) o propia (`{ own: plantilla }`).
+   * La hoja guarda de dónde vino (`template` / `templateId`) pero es independiente: cambiar la plantilla no la toca.
+   */
+  function create(source, date) {
     var day = D.isValid(date) ? date : D.today();
-    var page = {
-      date: day,
-      title: tpl.id === 'month' ? tpl.title + ' · ' + D.monthLabel(D.monthKey(day)) : tpl.title,
-      template: tpl.id, kind: tpl.kind, paper: tpl.paper || (tpl.kind === 'list' ? 'punteado' : 'rayado'),
-      body: tpl.body || '', items: tpl.kind === 'list' ? [{ text: '' }] : [],
-      stickers: tpl.sticker ? [{ id: MC.uid('stk'), sticker: tpl.sticker, x: 0.86, y: 0.07, rot: 8, scale: 0.9 }] : []
-    };
+    var page;
+    if (source.own) {
+      var t = source.own;
+      var copy = MC.templates.cloneStructure(t.blocks, t.values, true);
+      page = { date: day, title: t.title, template: 'own', templateId: t.id, paper: t.paper, blocks: copy.blocks, values: copy.values,
+        stickers: (t.stickers || []).map(function (st) { return Object.assign({}, st, { id: MC.uid('stk') }); }) };
+    } else {
+      var inst = MC.templates.instantiate(source.factory);
+      page = { date: day, title: inst.monthly ? inst.title + ' · ' + D.monthLabel(D.monthKey(day)) : inst.title,
+        template: inst.template, paper: inst.paper, blocks: inst.blocks, values: inst.values, stickers: inst.stickers };
+      if (inst.draw) source.draw = true;
+    }
     return M.savePage(page).then(function (p) {
-      if (tpl.id === 'drawing') MC.ui.set('drawOnOpen', p.id); // la hoja abre con el lápiz en la mano
+      if (source.draw) MC.ui.set('drawOnOpen', p.id); // la hoja abre con el lápiz en la mano
       location.hash = R.page(p.id);
     });
   }
 
-  /** Elegir plantilla y día. `date`: día propuesto (por defecto, hoy). La página aparece en ese día del calendario. */
+  function templateCard(label, kind, sticker, onPick) {
+    var b = h('button.template', { type: 'button' },
+      sticker ? h('span.template__sticker', { 'aria-hidden': 'true', html: MC.stickers.markup(sticker) }) : null,
+      h('span.template__title', label),
+      h('span.template__kind', kind));
+    b.addEventListener('click', onPick);
+    return b;
+  }
+
+  /** Elegir plantilla y día. `date`: día propuesto (por defecto, hoy). La hoja aparece en ese día del calendario. */
   function templatePicker(date) {
     var dayInput = h('input.input', { id: 'tp-day', type: 'date', value: D.isValid(date) ? date : D.today() });
+    var mineWrap = h('div.template-group');
     var grid = h('div.template-grid');
     TEMPLATES.forEach(function (t) {
-      var b = h('button.template', { type: 'button' },
-        t.sticker ? h('span.template__sticker', { 'aria-hidden': 'true', html: MC.stickers.markup(t.sticker) }) : null,
-        h('span.template__title', t.label),
-        h('span.template__kind', t.kind === 'list' ? 'lista' : 'texto'));
-      b.addEventListener('click', function () { dlg.close(); create(t, dayInput.value); });
-      grid.appendChild(b);
+      grid.appendChild(templateCard(t.label, t.draw ? 'con el lápiz listo' : kindOf(t.blocks), t.sticker, function () { dlg.close(); create({ factory: t.id }, dayInput.value); }));
     });
     var dlg = c.dialog({ title: 'Nueva hoja', content: [
       h('div.field.field--inline', h('label', { for: 'tp-day' }, 'Para el día'), dayInput),
-      h('p.section__hint', 'Empezá en blanco o con una idea. Todo se puede cambiar, también el día.'), grid] });
+      h('p.section__hint', 'Empezá en blanco o con una idea. Todo se puede cambiar, también el día.'),
+      mineWrap,
+      h('h3.template-group__title', 'De fábrica'), grid] });
+    // Las propias primero, si hay: son las que la persona armó para sí.
+    M.getTemplates().then(function (mine) {
+      if (!mine.length) return;
+      var g = h('div.template-grid');
+      mine.forEach(function (t) {
+        var st = t.stickers[0] && !/^img:/.test(t.stickers[0].sticker) ? t.stickers[0].sticker : null;
+        g.appendChild(templateCard(t.title, kindOf(t.blocks), st, function () { dlg.close(); create({ own: t }, dayInput.value); }));
+      });
+      mineWrap.appendChild(h('h3.template-group__title', 'Mis plantillas'));
+      mineWrap.appendChild(g);
+    });
+  }
+
+  /**
+   * “Guardar” (A7, D29): una hoja (o las notas de un día) como plantilla propia, o que se repita.
+   * `src`: algo con forma de hoja ({ title, paper, blocks/values o body }). `opts.date`: semilla de la repetición.
+   */
+  function keep(anchor, src, opts) {
+    opts = opts || {};
+    function asTemplate(withContent) {
+      M.templateFrom(src, { withContent: withContent, title: opts.title || M.pageTitle(src) }).then(function (t) {
+        c.toast('Quedó en Mis plantillas: «' + t.title + '».', { action: 'Ver', onAction: function () { location.hash = R.template(t.id); } });
+      });
+    }
+    function repeat(withContent) {
+      MC.repeat.editor(null, function () {}, {
+        date: opts.date, title: opts.title || M.pageTitle(src), rule: { type: 'weekdays', days: [D.weekday(opts.date || D.today())] },
+        hint: withContent ? 'Cada vez aparece una hoja nueva con lo que tiene ahora.' : 'Cada vez aparece una hoja nueva, con la misma forma y en blanco.',
+        save: function (routine) { return M.repeatSheet(src, routine, withContent); }
+      });
+    }
+    c.menu(anchor, [
+      { label: 'Como plantilla, en blanco', icon: 'paginas', onSelect: function () { asTemplate(false); } },
+      { label: 'Como plantilla, con lo escrito', icon: 'paginas', onSelect: function () { asTemplate(true); } },
+      'sep',
+      { label: 'Que se repita, en blanco…', icon: 'loop', onSelect: function () { repeat(false); } },
+      { label: 'Que se repita, con lo escrito…', icon: 'loop', onSelect: function () { repeat(true); } }
+    ], 'Guardar');
   }
 
   /* ---------- Página ---------- */
@@ -71,7 +117,7 @@
     var save = MC.debounce(function () {
       if (!page) return;
       var r = rev;
-      saved.track(M.savePage(page).then(function (p) { page.updatedAt = p.updatedAt; if (r === rev && c.durable()) MC.ui.set(draftKey, null); }),
+      saved.track(M.savePage(page).then(function (p) { page.updatedAt = p.updatedAt; page.virtual = false; if (r === rev && c.durable()) MC.ui.set(draftKey, null); }),
         function () { return r === rev; });
     }, 450);
     function persist() { rev++; if (page) { MC.ui.set(draftKey, { at: Date.now(), page: page }); saved.saving(); } save(); }
@@ -90,6 +136,8 @@
         sheet.appendChild(h('a.label-btn', { href: R.sheets() }, 'Volver a Mis hojas'));
         return;
       }
+      // Hojas de antes de A7 (texto o lista): pasan a bloques al abrirlas; al guardar conservan kind/body/items.
+      if (!p.blocks) { var sb = M.sheetBlocks(p); p.blocks = MC.clone(sb.blocks); p.values = MC.clone(sb.values); }
       page = p;
       build();
     });
@@ -105,7 +153,6 @@
           return { label: 'Papel ' + PAPER_LABEL[paper].toLowerCase(), role: 'menuitemradio', checked: page.paper === paper, onSelect: function () { page.paper = paper; persist(); persist.flush(); sheet.className = 'page page--margin free-page paper-' + paper; } };
         });
         items.push('sep');
-        items.push({ label: page.kind === 'list' ? 'Pasar a texto' : 'Pasar a lista', icon: page.kind === 'list' ? 'text' : 'list', onSelect: switchKind });
         items.push({ label: 'Cambiar el día…', icon: 'calendario', onSelect: changeDay });
         items.push({ label: page.pinned ? 'Desfijar del índice' : 'Fijar arriba en el índice', icon: 'pin', onSelect: function () { page.pinned = !page.pinned; persist(); persist.flush(); } });
         items.push({ label: 'Privacidad de esta página…', icon: 'lock', onSelect: openPrivacy });
@@ -113,17 +160,17 @@
         c.menu(more, items, 'Opciones de la página');
       });
       moreBtn = more;
+      var keepBtn = h('button.text-btn', { type: 'button', 'aria-haspopup': 'menu' }, 'Guardar');
+      keepBtn.addEventListener('click', function () { persist.flush(); keep(keepBtn, page, { date: M.pageDate(page) }); });
       privacyEl = MC.privacy.button(page.privacy, openPrivacy, true);
       privacyEl.hidden = !M.sanitizePrivacy(page.privacy);
       sheet.appendChild(h('header.free-head',
         h('a.text-btn', { href: R.sheets() }, MC.icon('arrow-left'), 'Mis hojas'),
-        h('span.free-head__right', privacyEl, saved, more)));
+        h('span.free-head__right', privacyEl, saved, keepBtn, more)));
       sheet.appendChild(h('h1.sr-only', page.title || 'Página sin título'));
       sheet.appendChild(title);
-      sheet.appendChild(page.kind === 'list' ? listEditor() : c.writeArea({
-        id: 'page-body', value: page.body, rows: 12, ariaLabel: 'Texto de la página', placeholder: 'Esta página todavía está en blanco.',
-        onInput: function (v) { page.body = v; persist(); }
-      }));
+      if (page.virtual) sheet.appendChild(h('p.page-intro.t-meta', 'Esta hoja se repite: queda guardada cuando escribas algo.'));
+      sheet.appendChild(MC.sheet.editor(page, { firstTextId: 'page-body', textLabel: 'Texto de la página', placeholder: 'Esta página todavía está en blanco.', onChange: persist }));
       metaEl = null;
       sheet.appendChild(dayMeta());
       sheet.appendChild(MC.images.attachments('page:' + page.id, { onSticker: function (img) { if (scrap) scrap.addImage(img); } }));
@@ -174,67 +221,14 @@
       });
     }
 
-    function listEditor() {
-      var ul = h('ul.free-list');
-      function itemRow(it) {
-        var input = h('input.write', { type: 'text', value: it.text, 'aria-label': 'Ítem', maxlength: 500, placeholder: 'escribí algo…', enterkeyhint: 'next' });
-        input.addEventListener('input', function () { it.text = input.value; persist(); MC.emit('typing'); });
-        input.addEventListener('keydown', function (e) {
-          if (e.key === 'Enter' && !e.isComposing) {
-            e.preventDefault();
-            var idx = page.items.indexOf(it);
-            var nu = { id: MC.uid('itm'), text: '' };
-            page.items.splice(idx + 1, 0, nu);
-            var r = itemRow(nu);
-            li.after(r);
-            r.querySelector('input').focus();
-            persist();
-          } else if (e.key === 'Backspace' && !input.value && page.items.length > 1) {
-            e.preventDefault();
-            var i = page.items.indexOf(it);
-            page.items.splice(i, 1);
-            var prevLi = li.previousElementSibling || li.nextElementSibling;
-            li.remove();
-            if (prevLi) { var pi = prevLi.querySelector('input'); pi.focus(); pi.setSelectionRange(pi.value.length, pi.value.length); }
-            persist();
-          }
-        });
-        var li = h('li.free-list__item', h('span.free-list__bullet', { 'aria-hidden': 'true' }), input);
-        return li;
-      }
-      if (!page.items.length) page.items.push({ id: MC.uid('itm'), text: '' });
-      page.items.forEach(function (it) { ul.appendChild(itemRow(it)); });
-      var add = h('button.text-btn', { type: 'button' }, MC.icon('plus'), 'Agregar otra');
-      add.addEventListener('click', function () {
-        var nu = { id: MC.uid('itm'), text: '' };
-        page.items.push(nu);
-        var r = itemRow(nu);
-        ul.appendChild(r);
-        r.querySelector('input').focus();
-      });
-      return h('div.free-list-wrap', ul, add);
-    }
-
-    function switchKind() {
-      if (page.kind === 'list') {
-        page.body = page.items.map(function (it) { return it.text; }).filter(function (t) { return t.trim(); }).join('\n');
-        page.kind = 'text';
-      } else {
-        page.items = page.body.split('\n').filter(function (t) { return t.trim(); }).map(function (t) { return { id: MC.uid('itm'), text: t }; });
-        page.kind = 'list';
-      }
-      persist(); persist.flush();
-      if (scrap) scrap.destroy();
-      build();
-    }
-
     function remove() {
       c.confirm({ title: '¿Mandar esta página a la papelera?', text: 'Podés recuperarla desde Ajustes mientras esté en la papelera.', confirm: 'Mandar a la papelera' })
         .then(function (ok) {
           if (!ok) return;
           persist.cancel();
           var id = page.id;
-          M.deletePage(id).then(function () {
+          // Una hoja que se repite y no se escribió: queda guardada en la papelera, así ese día no vuelve a aparecer.
+          (page.virtual ? M.savePage(page) : Promise.resolve()).then(function () { return M.deletePage(id); }).then(function () {
             page = null; location.hash = R.sheets();
             c.toast('Se fue a la papelera.', { action: 'Deshacer', onAction: function () { M.restoreTrash('pages', id).then(function () { location.hash = R.page(id); }); } });
           });
@@ -247,9 +241,73 @@
     };
   }
 
+  /* ---------- Plantilla propia (A7): misma hoja, sin día; lo que se arma acá es la forma de las hojas nuevas ---------- */
+  function renderTemplate(main, id) {
+    var destroyed = false, tpl = null;
+    var saved = c.savedNote();
+    var sheet = h('section.page.page--margin.free-page.template-page');
+    main.appendChild(h('div.spread.spread--single', sheet));
+    var save = MC.debounce(function () { if (tpl) saved.track(M.saveTemplate(tpl).then(function (t) { if (tpl) tpl.updatedAt = t.updatedAt; })); }, 450);
+    function persist() { if (tpl) { saved.saving(); save(); } }
+
+    M.getTemplate(id).then(function (t) {
+      if (destroyed) return;
+      if (!t || t.frozen) {
+        sheet.appendChild(c.empty('No encontré esta plantilla. Quizás la mandaste a la papelera.', 'nube'));
+        sheet.appendChild(h('a.label-btn', { href: R.sheets() }, 'Volver a Mis hojas'));
+        return;
+      }
+      tpl = t;
+      build();
+    });
+
+    function build() {
+      MC.clear(sheet);
+      sheet.className = 'page page--margin free-page template-page paper-' + tpl.paper;
+      var title = h('input.page-title', { type: 'text', value: tpl.title, placeholder: 'Nombre de la plantilla', 'aria-label': 'Nombre de la plantilla', maxlength: 120 });
+      title.addEventListener('input', function () { tpl.title = title.value; persist(); MC.emit('typing'); });
+      var use = h('button.label-btn.label-btn--soft', { type: 'button' }, MC.icon('plus'), 'Usarla en una hoja nueva');
+      use.addEventListener('click', function () { save.flush(); create({ own: tpl }, D.today()); });
+      var more = h('button.icon-btn', { type: 'button', 'aria-label': 'Opciones de la plantilla', 'aria-haspopup': 'menu' }, MC.icon('more'));
+      more.addEventListener('click', function () {
+        var items = M.PAPERS.map(function (paper) {
+          return { label: 'Papel ' + PAPER_LABEL[paper].toLowerCase(), role: 'menuitemradio', checked: tpl.paper === paper, onSelect: function () { tpl.paper = paper; persist(); save.flush(); sheet.className = 'page page--margin free-page template-page paper-' + paper; } };
+        });
+        items.push('sep');
+        items.push({ label: 'Duplicar', icon: 'paginas', onSelect: function () {
+          save.flush();
+          M.templateFrom(tpl, { title: tpl.title + ' (copia)' }).then(function (t) { location.hash = R.template(t.id); c.toast('Hice una copia.'); });
+        } });
+        items.push({ label: 'Mandar a la papelera', icon: 'trash', onSelect: function () {
+          var tid = tpl.id;
+          save.cancel();
+          M.deleteTemplate(tid).then(function () {
+            tpl = null; location.hash = R.sheets();
+            c.toast('Se fue a la papelera.', { action: 'Deshacer', onAction: function () { M.restoreTrash('templates', tid).then(function () { location.hash = R.template(tid); }); } });
+          });
+        } });
+        c.menu(more, items, 'Opciones de la plantilla');
+      });
+      sheet.appendChild(h('header.free-head',
+        h('a.text-btn', { href: R.sheets() }, MC.icon('arrow-left'), 'Mis hojas'),
+        h('span.free-head__right', saved, more)));
+      sheet.appendChild(h('h1.sr-only', 'Plantilla: ' + (tpl.title || 'sin nombre')));
+      sheet.appendChild(title);
+      sheet.appendChild(h('p.page-intro.t-meta', 'Lo que armes y escribas acá es cómo empieza cada hoja nueva con esta plantilla. Las hojas que ya hiciste no cambian.'));
+      sheet.appendChild(MC.sheet.editor(tpl, { textLabel: 'Texto inicial', placeholder: 'Si querés, un texto para empezar.', onChange: persist }));
+      sheet.appendChild(h('p.page-actions', use));
+    }
+
+    return {
+      destroy: function () { destroyed = true; save.flush(); },
+      flush: function () { save.flush(); }
+    };
+  }
+
   MC.views = MC.views || {};
   MC.views.pages = {
-    TEMPLATES: TEMPLATES, templateFor: templateFor, newPage: templatePicker
+    TEMPLATES: TEMPLATES, templateFor: templateFor, newPage: templatePicker, create: create, keep: keep, kindOf: kindOf
   };
+  MC.views.template = { render: function (main, params) { return renderTemplate(main, params.id); } };
   MC.views.page = { render: function (main, params) { return renderPage(main, params.id); } };
 })(window);

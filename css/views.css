@@ -260,6 +260,37 @@ a.months__year { text-decoration: none; padding: 4px 6px; border-radius: 6px; }
 .free-list__item input.write { border-bottom: 0; height: auto; padding: 8px 0; min-height: 44px; }
 .free-list__bullet { width: 9px; height: 9px; flex: none; border: 1.5px solid var(--rose); border-radius: 50%; }
 .free-list-wrap { display: grid; gap: var(--s-3); justify-items: start; }
+
+/* Bloques de una hoja (A7): renglones, lista, casillas, columnas. El menú de cada bloque queda quieto al costado. */
+.sheet-blocks { display: grid; gap: var(--s-5); }
+.sheet-block { display: grid; gap: var(--s-2); }
+.sheet-block__head { display: flex; align-items: center; gap: var(--s-2); justify-content: flex-end; min-height: 0; }
+.sheet-block__head:has(.sheet-block__title) { justify-content: space-between; }
+.sheet-block__head .sheet-block__more { opacity: 0.55; }
+.sheet-block:focus-within .sheet-block__more, .sheet-block__more:focus-visible, .sheet-block__more[aria-expanded="true"] { opacity: 1; }
+@media (hover: hover) and (pointer: fine) { .sheet-block:hover .sheet-block__more { opacity: 1; } }
+.sheet-block__title, .sheet-col__title {
+  flex: 1; min-width: 0; border: 0; background: transparent; padding: 4px 0; color: var(--ink);
+  font-family: var(--font-display); font-size: var(--fs-lg); line-height: 1.2;
+}
+.sheet-col__title { font-size: var(--fs-md); border-bottom: 1px solid var(--rule); }
+.sheet-block__title::placeholder, .sheet-col__title::placeholder { color: var(--ink-faint); }
+.sheet-block__title:focus-visible, .sheet-col__title:focus-visible { outline: none; background: color-mix(in srgb, var(--butter) 12%, transparent); }
+.free-page .sheet-cols textarea.write, .free-page .sheet-blocks:has(.sheet-block + .sheet-block) textarea.write { min-height: 6em; }
+.sheet-cols { display: grid; grid-template-columns: repeat(var(--cols, 2), minmax(0, 1fr)); gap: var(--s-4); }
+@media (max-width: 560px) { .sheet-cols { grid-template-columns: minmax(0, 1fr); } }
+.sheet-col { display: grid; gap: var(--s-1); align-content: start; }
+.free-list--checks .stitch-box { flex: none; }
+.sheet-add { justify-self: start; }
+.page-actions { margin-top: var(--s-5); }
+.template-group__title { font-family: var(--font-display); font-size: var(--fs-md); margin: var(--s-4) 0 var(--s-2); }
+.templates-mine { margin-top: var(--s-6); }
+.template-list { display: grid; gap: var(--s-1); }
+.template-list .text-btn { justify-content: flex-start; text-align: start; }
+.keep-row { display: flex; justify-content: flex-end; }
+.keep-btn { font-size: var(--fs-sm); }
+.page-link__note { color: var(--ink-soft); font-size: var(--fs-xs); }
+.routine__kind { display: inline-flex; vertical-align: -2px; margin-right: 6px; color: var(--ink-soft); }
 .page-meta { margin-top: var(--s-6); }
 
 /* ---------- Mi año ---------- */

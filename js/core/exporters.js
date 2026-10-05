@@ -71,8 +71,8 @@
       lines.push('');
       all.pages.forEach(function (p) {
         lines.push('— ' + (p.title || 'Sin título') + ' —');
-        if (p.kind === 'list') p.items.forEach(function (it) { if (it.text.trim()) lines.push('  • ' + it.text.trim()); });
-        else if (p.body.trim()) lines.push(p.body.trim());
+        var text = MC.model.sheetText(p); // bloques (A7) o la forma vieja: texto o lista
+        if (text) lines.push(text);
         lines.push('');
       });
     }

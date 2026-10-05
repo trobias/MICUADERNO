@@ -79,9 +79,9 @@
       all.pages.forEach(function (p) {
         doc.appendChild(h('section.p-sheet.p-page',
           h('h2.p-h', M.pageTitle(p)),
-          p.kind === 'list'
+          !p.blocks && p.kind === 'list'
             ? h('ul.p-list', p.items.filter(function (it) { return it.text.trim(); }).map(function (it) { return h('li', it.text); }))
-            : h('p.p-page__body', p.body)));
+            : h('p.p-page__body', M.sheetText(p))));
       });
     }
 

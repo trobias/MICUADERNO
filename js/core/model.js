@@ -322,7 +322,7 @@
   function routineOccurrences(routines, date, marked) {
     var out = [];
     (routines || []).forEach(function (r) {
-      if (isDeleted(r) || marked(r) || !R.occursOn(r, date)) return;
+      if (isDeleted(r) || r.kind === 'sheet' || marked(r) || !R.occursOn(r, date)) return;
       out.push({ id: 'v:' + r.id + ':' + date, virtual: true, date: date, title: r.title, status: 'pending', routineId: r.id, order: 0, movedFrom: null });
     });
     return out;
@@ -376,6 +376,23 @@
 
   /** Id de una ocurrencia materializada (D34): el mismo en todas las pestañas y dispositivos. */
   function occurrenceId(routineId, date) { return 'act_' + routineId + '_' + date; }
+  /** Lo mismo para una hoja que se repite (D29): `pag_<repetición>_<fecha>`. */
+  function sheetOccurrenceId(routineId, date) { return 'pag_' + routineId + '_' + date; }
+  var SHEET_OCC = /^pag_(.+)_(\d{4}-\d{2}-\d{2})$/;
+
+  /**
+   * Hojas que se repiten y caen en `date` sin hoja guardada (virtuales hasta que se escribe). `rows`: todas las
+   * hojas guardadas, también las de la papelera (una ocurrencia borrada queda como marca y no reaparece).
+   */
+  function sheetOccurrences(routines, date, rows) {
+    var taken = {};
+    (rows || []).forEach(function (p) { taken[p.id] = true; if (p.routineId && p.date) taken[p.routineId + '|' + p.date] = true; });
+    return (routines || []).filter(function (r) {
+      return r.kind === 'sheet' && !isDeleted(r) && R.occursOn(r, date) && !taken[sheetOccurrenceId(r.id, date)] && !taken[r.id + '|' + date];
+    }).map(function (r) {
+      return { id: sheetOccurrenceId(r.id, date), title: r.title, date: date, routineId: r.id, templateId: r.templateId, virtual: true };
+    });
+  }
 
   function addActivity(date, title) {
     var t = String(title || '').trim();
@@ -560,11 +577,116 @@
       });
     });
   }
-  function getPage(id) { return S().get('pages', id).then(function (p) { return p && !isDeleted(p) ? normalizePage(p) : null; }); }
+  /**
+   * Una hoja por id. Si no está guardada y es una ocurrencia de una hoja que se repite (`pag_<rep>_<fecha>`),
+   * se arma virtual desde su plantilla congelada: se guarda recién cuando se escribe (D29). Una ocurrencia que
+   * se mandó a la papelera no se vuelve a armar.
+   */
+  function getPage(id) {
+    return S().get('pages', id).then(function (p) {
+      if (p) return isDeleted(p) ? null : normalizePage(p);
+      var m = SHEET_OCC.exec(String(id));
+      if (!m || !D.isValid(m[2])) return null;
+      return S().get('routines', m[1]).then(function (r) {
+        if (!r || isDeleted(r) || r.kind !== 'sheet') return null;
+        return (r.templateId ? S().get('templates', r.templateId) : Promise.resolve(null)).then(function (t) {
+          var tpl = t ? normalizeTemplate(t) : null;
+          var copy = tpl ? MC.templates.cloneStructure(tpl.blocks, tpl.values, true) : { blocks: null, values: {} };
+          var page = normalizePage({
+            id: id, date: m[2], title: r.title, routineId: r.id, templateId: r.templateId,
+            paper: tpl ? tpl.paper : 'rayado', blocks: copy.blocks, values: copy.values, stickers: tpl ? tpl.stickers : []
+          });
+          page.virtual = true;
+          return page;
+        });
+      });
+    });
+  }
+
+  /** Bloques de una hoja: los suyos o, si es de antes de A7 (texto o lista), su contenido como un bloque. */
+  function sheetBlocks(p) {
+    if (p && p.blocks && p.blocks.length) return { blocks: p.blocks, values: p.values || {} };
+    if (p && p.kind === 'list') return { blocks: [{ id: 'blk_items', type: 'list', title: '' }], values: { blk_items: (p.items || []).map(function (it) { return { id: it.id, text: it.text }; }) } };
+    return { blocks: [{ id: 'blk_body', type: 'text', title: '' }], values: { blk_body: p ? p.body || '' : '' } };
+  }
+
+  /** El contenido de una hoja como texto (exportar, imprimir, la vista previa del índice). `bare`: sin títulos de bloque. */
+  function sheetText(p, bare) {
+    var sb = sheetBlocks(p), out = [];
+    sb.blocks.forEach(function (b) {
+      var v = sb.values[b.id];
+      var lines = [];
+      if (b.type === 'text') { if (typeof v === 'string' && v.trim()) lines.push(v.trim()); }
+      else if (b.type === 'list') (v || []).forEach(function (it) { if (it.text.trim()) lines.push('• ' + it.text.trim()); });
+      else if (b.type === 'checks') (v || []).forEach(function (it) { if (it.text.trim()) lines.push((it.done ? '☑ ' : '☐ ') + it.text.trim()); });
+      else if (b.type === 'columns') (b.columns || []).forEach(function (col) { var t = v && v[col.id]; if (t && t.trim()) lines.push((col.title ? col.title + ': ' : '') + t.trim()); });
+      if (lines.length) out.push((b.title && !bare ? b.title + '\n' : '') + lines.join('\n'));
+    });
+    return out.join('\n\n');
+  }
+
+  /** Cuántas cosas hay escritas en una hoja (vista previa: “3 cosas”). */
+  function sheetCount(p) {
+    var sb = sheetBlocks(p), n = 0;
+    sb.blocks.forEach(function (b) {
+      var v = sb.values[b.id];
+      if (Array.isArray(v)) n += v.filter(function (it) { return it.text.trim(); }).length;
+    });
+    return n;
+  }
+
+  /**
+   * Guarda una hoja. Con bloques, también escribe `kind/body/items` derivados (D34: conviven hasta v6) para que
+   * la copia y quien lea la forma vieja sigan viendo el contenido.
+   */
   function savePage(p) {
-    return S().put('pages', stamp(normalizePage(p)));
+    var n = normalizePage(p);
+    if (n.blocks && n.blocks.length) {
+      var only = n.blocks.length === 1 ? n.blocks[0] : null;
+      if (only && only.type === 'list') { n.kind = 'list'; n.items = (n.values[only.id] || []).map(function (it) { return { id: it.id, text: it.text }; }); n.body = ''; }
+      else { n.kind = 'text'; n.body = sheetText(n); n.items = []; }
+    }
+    return S().put('pages', stamp(n));
   }
   function deletePage(id) { return sendToTrash('pages', id); }
+
+  /* ---------- plantillas propias (A7, D29) ---------- */
+  /** Las plantillas que se ven en Mis hojas (no las congeladas de una repetición). */
+  function getTemplates() {
+    return S().getAll('templates').then(function (rows) {
+      return rows.filter(function (t) { return !isDeleted(t) && !t.frozen; }).map(normalizeTemplate).filter(Boolean)
+        .sort(function (a, b) { return a.title.localeCompare(b.title, 'es'); });
+    });
+  }
+  function getTemplate(id) { return S().get('templates', id).then(function (t) { return t && !isDeleted(t) ? normalizeTemplate(t) : null; }); }
+  function saveTemplate(t) {
+    var n = normalizeTemplate(t);
+    if (!n) return Promise.reject(new Error('Plantilla inválida.'));
+    if (!n.title) n.title = 'Mi plantilla';
+    return S().put('templates', stamp(n));
+  }
+  function deleteTemplate(id) { return sendToTrash('templates', id); }
+
+  /**
+   * Una hoja (o una plantilla) pasa a plantilla: propia (`frozen: false`, aparece en Mis hojas) o congelada
+   * (`frozen: true`, la que usa una repetición: editar la hoja original no cambia las que vienen).
+   */
+  function templateFrom(src, opts) {
+    opts = opts || {};
+    var sb = sheetBlocks(src);
+    var copy = MC.templates.cloneStructure(sb.blocks, sb.values, opts.withContent !== false);
+    return saveTemplate({
+      title: opts.title || pageTitle(src), paper: src.paper, blocks: copy.blocks, values: copy.values,
+      stickers: (src.stickers || []).map(function (st) { return Object.assign({}, st, { id: MC.uid('stk') }); }), frozen: !!opts.frozen
+    });
+  }
+
+  /** “Que se repita…” de una hoja: una repetición `kind: 'sheet'` con su plantilla congelada. */
+  function repeatSheet(src, routine, withContent) {
+    return templateFrom(src, { frozen: true, withContent: withContent, title: routine.title || pageTitle(src) }).then(function (t) {
+      return saveRoutine(Object.assign({}, routine, { kind: 'sheet', templateId: t.id, title: routine.title || pageTitle(src) }));
+    });
+  }
 
   /* ---------- imágenes propias: subidas o dibujadas (se usan como stickers, D24) ---------- */
   var IMAGE_SRC = /^data:image\/(png|webp|jpeg);base64,[A-Za-z0-9+/=]+$/;
@@ -865,6 +987,8 @@
           s.byRoutine[v.routineId] = 'pending';
           s.items.push({ title: v.title, kind: 'routine', status: 'pending' });
         });
+        // Hojas que se repiten: se ven de hoy en adelante; para atrás, solo las que se escribieron (D18).
+        if (k >= D.today()) sheetOccurrences(extra.routines, k, extra.pages).forEach(function (v) { at(k).pages.push({ id: v.id, title: v.title, virtual: true }); });
       });
     }
     (extra.pages || []).forEach(function (p) {
@@ -883,8 +1007,12 @@
   }
 
   /** Páginas empezadas en una fecha local. */
+  /** Hojas de un día: las guardadas y, de hoy en adelante, las que se repiten ese día (virtuales, D18). */
   function pagesOn(date) {
-    return getPages().then(function (ps) { return ps.filter(function (p) { return pageDate(p) === date; }); });
+    return Promise.all([S().getAll('pages'), getRoutines()]).then(function (r) {
+      var real = r[0].filter(function (p) { return !isDeleted(p); }).map(normalizePage).filter(function (p) { return pageDate(p) === date; });
+      return date >= D.today() ? real.concat(sheetOccurrences(r[1], date, r[0])) : real;
+    });
   }
 
   /**
@@ -1032,7 +1160,8 @@
     normalizeRoutine: normalizeRoutine, getRoutines: getRoutines, saveRoutine: saveRoutine, deleteRoutine: deleteRoutine,
     normalizePage: normalizePage, getPages: getPages, getPage: getPage, savePage: savePage, deletePage: deletePage,
     sanitizeBlocks: sanitizeBlocks, sanitizeValues: sanitizeValues, BLOCK_TYPES: BLOCK_TYPES,
-    normalizeWeek: normalizeWeek, getWeek: getWeek, saveWeek: saveWeek, isEmptyWeek: isEmptyWeek, normalizeTemplate: normalizeTemplate, normalizeMark: normalizeMark,
+    normalizeWeek: normalizeWeek, sheetOccurrenceId: sheetOccurrenceId, sheetOccurrences: sheetOccurrences, sheetBlocks: sheetBlocks, sheetText: sheetText, sheetCount: sheetCount,
+    getTemplates: getTemplates, getTemplate: getTemplate, saveTemplate: saveTemplate, deleteTemplate: deleteTemplate, templateFrom: templateFrom, repeatSheet: repeatSheet, getWeek: getWeek, saveWeek: saveWeek, isEmptyWeek: isEmptyWeek, normalizeTemplate: normalizeTemplate, normalizeMark: normalizeMark,
     sanitizeFeelings: sanitizeFeelings, sanitizeFeel: sanitizeFeel, sanitizeMoves: sanitizeMoves,
     feelingsOf: feelingsOf, emotionKey: emotionKey, emotionPalette: emotionPalette, emotionSuggestions: emotionSuggestions,
     sanitizeTheme: sanitizeTheme, sanitizeEmotionColors: sanitizeEmotionColors, occurrenceId: occurrenceId, DRAW_TOOLS: DRAW_TOOLS,

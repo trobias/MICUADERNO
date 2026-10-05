@@ -163,24 +163,24 @@ El calendario es donde aparece **todo lo que tiene fecha**: emociones, escritura
 - Navegación anterior/siguiente, “hoy”.
 
 ### 7.4 Mis hojas · Lo que se repite (A5)
-Mis hojas (`#/hojas`) es un cuadro de dos hojas: a la izquierda el **índice de hojas** (§7.5), a la derecha **Lo que se repite** (las rutinas de siempre, D7; desde A7 también las hojas que se repiten).
+Mis hojas (`#/hojas`) es un cuadro de dos hojas: a la izquierda el **índice de hojas** (§7.5), a la derecha **Lo que se repite** (las rutinas de siempre, D7, y las hojas que se repiten, con un ícono de hoja y enlace a la hoja de la próxima vez). Debajo del índice, **Mis plantillas** (A7).
 - Lista agrupada por momento del día (mañana / tarde / noche / cuando sea) y, aparte, **En pausa** (que siguen siendo alcanzables para retomarlas).
 - Frecuencias soportadas (§11), incluida **Todos los años** (el 29/02 cae el 28/02 en años comunes). Descripción humana de la regla (“Lun · Mié · Vie”, “Cada 3 días”, “Primer sábado del mes”, “Todos los años, el 14 de marzo”). Un solo editor (`MC.repeat.editor`, `js/ui/repeat.js`) para Mis hojas, el menú de la actividad y, desde A7, Guardar de una hoja.
 - Pausar/reanudar (archivar), editar, borrar (borrado suave a la papelera, DA1; el historial ya marcado se conserva como actividades sueltas).
 - Cada rutina: la próxima vez es un enlace a ese día; el ícono de calendario muestra sus días en el mes. Si se llega desde “Ver lo que se repite” (`#/hojas/repite/:id`), aparece resaltada y con el foco.
 
-### 7.5 Hojas (índice en Mis hojas; editor en `#/pagina/:id`)
-- Cada página tiene **su día en el calendario**: se elige al crearla (“Para el día”, por defecto hoy o el día desde donde se empezó) y se cambia con “Cambiar el día” (debajo de la hoja o en su menú). Desde la página de un día: “Empezar una hoja para este día”.
-- **Índice** con título, fecha y número de página con puntos guía (como un índice real). Fijar páginas arriba. Las páginas en papelera no se muestran en el índice (DA1).
-- **Nueva página**: en blanco o plantillas: *Cosas que me hacen bien, Lugares que amo, Personas importantes, Canciones de este momento, Mis pequeñas victorias, Cosas que quiero probar, Carta para mi yo futuro, Brain dump, Gratitud, Sueños, Lista de deseos, Reflexión del mes*.
-- Tipos: `text` (renglones) o `list` (ítems con viñeta dibujada).
+### 7.5 Hojas (índice y plantillas en Mis hojas; editor en `#/pagina/:id`; plantilla en `#/plantilla/:id`) — A7, D29
+- Cada hoja es **una hoja de un día**: se elige al crearla (“Para el día”, por defecto hoy o el día desde donde se empezó) y se cambia con “Cambiar el día”. Desde la página de un día: **Hojas de este día** y “Agregar una hoja”.
+- **Bloques** (un solo editor, `MC.sheet.editor` en `js/ui/sheet.js`, para hojas y plantillas): *renglones*, *lista*, *casillas* (punto cruz) y *columnas* (de 2 a 4, con título cada una). “Agregar a la hoja” suma un bloque; el menú `⋯` de cada bloque: ponerle/sacar título, sumar/sacar columna, pasar de lista a casillas y al revés, subir, bajar, sacar (con deshacer si tenía algo escrito). Hasta 24 bloques. Las hojas de antes (texto o lista) se abren como un bloque y no pierden nada.
+- **Nueva hoja**: primero **Mis plantillas** (si hay) y después **De fábrica**: *En blanco, Para dibujar, Comidas del día (columnas), Pros y contras, Lo hecho y lo que sigue (casillas + lista), Cosas que me hacen bien, Lugares que amo, Personas importantes, Canciones de este momento, Pequeñas victorias, Cosas que quiero probar (casillas), Carta para mi yo futuro, Vaciar la cabeza, Gratitud, Sueños, Lista de deseos, Reflexión del mes* (tres bloques con título; el título suma el mes). Cada tarjeta dice de qué está hecha (“renglones y columnas”).
+- **Guardar** (botón de texto en la cabecera de la hoja y debajo de las notas del día): *Como plantilla, en blanco* / *con lo escrito* (va a Mis plantillas) y *Que se repita, en blanco… / con lo escrito…* (abre `MC.repeat.editor`: semanal, cada tantos días, mensual, anual…).
+- **Hojas que se repiten**: son repeticiones `kind: 'sheet'` con una **copia congelada** de la plantilla (editar la hoja original no cambia las que vienen). De hoy en adelante aparecen solas en el día, la semana y el mes (con “· se repite”); en días pasados, solo las que se escribieron (D18). Son virtuales hasta que se escribe algo: entonces se guardan con id fijo `pag_<repetición>_<fecha>`. Si se manda a la papelera una que nunca se escribió, ese día no vuelve a aparecer. Nunca aparecen como actividad ni en los recordatorios.
+- **Mis plantillas** (debajo del índice): crear, editar como una hoja sin día (nombre, papel, bloques, texto inicial), *Usarla en una hoja nueva*, *Duplicar*, *Mandar a la papelera* (con deshacer y restaurable desde Ajustes). Las hojas hechas con una plantilla no cambian si después se edita la plantilla.
+- **Índice** con título, primera línea (o “3 cosas”), fecha y número de página con puntos guía. Fijar hojas arriba. Las hojas en papelera no se muestran (DA1).
 - Papel: rayado, cuadriculado, punteado, liso.
-- Stickers (scrapbook), con dibujos e imágenes propias; plantilla **Para dibujar** (hoja lisa que abre con el lápiz listo; el dibujo queda grande en el medio). Pila de deshacer/rehacer independiente para elementos colocados (DA2).
-- **Privacidad de esta página** (PV1): menú accesible en la cabecera para activar/desactivar `noMemory`, `noInsights` y `noReviews`.
-- **Guardado visible** (DA3): indicador `c.savedNote` en el encabezado.
-- **Adjuntos** de la página (se envían a la papelera si se eliminan o si la página se borra).
-- **Borrar página**: borrado suave a la papelera (`deletedAt`, DA1) con aviso amable; se puede restaurar en cualquier momento desde Ajustes.
-- “Empezada el …” es un enlace al día en que se empezó (ese día la página también aparece en el calendario).
+- Stickers (scrapbook), con dibujos e imágenes propias; **Para dibujar** abre con el lápiz listo. Pila de deshacer/rehacer independiente para elementos colocados (DA2).
+- **Privacidad de esta hoja** (PV1), **guardado visible** (DA3), **adjuntos** y **borrar** (papelera con deshacer, DA1), como antes.
+- Exportar e imprimir leen los bloques (`M.sheetText`); la hoja guardada además escribe `kind/body/items` derivados hasta el contrato v6.
 
 ### 7.6 Mi año
 - **Bordado**: 12 columnas (meses) × 31 filas (días). Día sin registro = punto de cruz a lápiz sin llenar (bonito vacío). Día con emoción = hilo de color y palabra accesible en el nombre del día.

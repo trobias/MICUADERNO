@@ -52,6 +52,7 @@ js/core/ns.js           namespace, utilidades DOM (h, $, on), ids, debounce
 js/cloud.js             cuentas de la nube: solo con <meta name="mc-cloud">; base y preferencias por persona (D37)
 js/core/sections.js     mapa campo → sección para permisos (única fuente; test contra la migración)
 js/core/dates.js        fechas locales AAAA-MM-DD, nombres en español
+js/core/templates.js    plantillas de fábrica de las hojas (bloques), instanciar y clonar estructura (A7)
 js/core/routes.js       rutas #/…: armar (MC.routes.day(fecha)…) y leer (parse); única fuente
 js/core/recurrence.js   reglas de rutinas → ¿ocurre en esta fecha? + descripción humana
 js/core/store.js        IndexedDB (con modo memoria de emergencia)
@@ -66,6 +67,7 @@ js/ui/components.js     editor de emociones libres, casilla de punto cruz, diál
 js/ui/activity.js       fila de actividad (casilla + menú: estados, antes/después, pasar a otro día, que se repita, renombrar, sacar)
 js/ui/privacy.js        privacidad de un día o una hoja (MC.privacy)
 js/ui/repeat.js         editor de repetición (MC.repeat.editor), con regla anual; lo usan Mis hojas, la actividad y Guardar (A7)
+js/ui/sheet.js          editor de bloques de hojas y plantillas (MC.sheet.editor): renglones, lista, casillas, columnas
 js/ui/motion.js         nivel de motion, helpers WAAPI, transiciones de vista
 js/ui/scenes.js         director de escenas ocasionales
 js/ui/scrapbook.js      capa de stickers (arrastrar, rotar, teclado) + Mis stickers (img:<id>)

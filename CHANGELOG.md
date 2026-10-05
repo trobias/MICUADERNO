@@ -8,6 +8,20 @@ Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantien
 - `.mcp.json` ya está en la rama. La dueña habilitó los dos MCP en su entorno web de Claude Code; el estado de `claude mcp list` en una instalación local distinta no verifica ese entorno.
 - `docs/NUBE.md` registra la verificación de red, los entornos y lo que falta para aplicar la migración SQL existente. Ningún secreto se agregó a Git.
 
+## 2026-10-05 · A7: hojas en bloques, plantillas y Guardar (cache `v30`)
+
+**Para quien lo usa**
+- Las hojas se arman con **bloques**: renglones, lista, casillas y columnas (de 2 a 4). “Agregar a la hoja” suma uno; el `⋯` de cada bloque le pone título, lo mueve, suma columnas o lo saca. Las hojas que ya tenías se abren igual que siempre.
+- Plantillas de fábrica nuevas: **Comidas del día** (Desayuno · Almuerzo · Merienda · Cena), **Pros y contras** y **Lo hecho y lo que sigue**; *Cosas que quiero probar* ahora tiene casillas y *Reflexión del mes*, tres partes con título.
+- **Guardar**, en cada hoja y debajo de las notas del día: como plantilla (en blanco o con lo escrito) o **que se repita** (en blanco o con lo escrito, cada semana, mes, año o cada tantos días). La hoja aparece sola en los días que toca y se guarda cuando escribís algo; si un día no la querés, se manda a la papelera y ese día no vuelve.
+- **Mis plantillas**, debajo del índice de Mis hojas: crear, editar, duplicar y mandar a la papelera. Al empezar una hoja nueva, las tuyas aparecen primero.
+- En la página de un día: **Hojas de este día**, también las que se repiten, y “Agregar una hoja”.
+- El aviso “Listo: va a aparecer sola…” ya no desaparece con el diálogo de repetición.
+
+**Para quien lo mantiene**
+- `js/core/templates.js` (fábrica, `instantiate`, `cloneStructure`) y `js/ui/sheet.js` (`MC.sheet.editor`). Modelo: `sheetBlocks/sheetText/sheetCount`, `getTemplates/getTemplate/saveTemplate/deleteTemplate/templateFrom/repeatSheet`, `sheetOccurrenceId/sheetOccurrences`; `getPage` arma la ocurrencia virtual, `pagesOn` y `summarize` las suman de hoy en adelante, `routineOccurrences` excluye `kind: 'sheet'`, `savePage` deriva `kind/body/items`. Ruta `#/plantilla/:id` (`MC.views.template`). `MC.repeat.editor` acepta `opts.save` y `opts.hint`. Exportar e imprimir usan `M.sheetText`.
+- Pruebas: 107 unit (`sheets-a7.test.js`; ruta de plantilla), 48/48 E2E (recorrido A7 nuevo).
+
 ## 2026-10-05 · A6: Mi semana, el planner por defecto (cache `v29`)
 
 **Para quien lo usa**

@@ -37,12 +37,14 @@ test('el botoncito que se ilumina: hoy sí, otro día no', () => {
   assert.equal(R.parse(R.day('2026-09-30'), ctx).opt, null);
   assert.equal(R.parse(R.page('a'), ctx).opt, 'hojas');
   assert.equal(R.parse(R.sheets(), ctx).opt, 'hojas');
+  assert.deepEqual(R.parse(R.template('tpl_1'), ctx), { kind: 'panel', name: 'template', opt: 'hojas', params: { id: 'tpl_1' } });
   assert.equal(R.parse(R.print(), ctx).opt, 'ajustes');
 });
 
 test('rutas raras o rotas no rompen nada', () => {
   assert.equal(R.parse('#/dia/2026-02-30', ctx), null);
   assert.equal(R.parse('#/pagina', ctx), null);
+  assert.equal(R.parse('#/plantilla', ctx), null);
   assert.equal(R.parse('#/pagina/%E0%A4%A', ctx), null, '%XX mal formado');
   assert.equal(R.parse('#/cualquiera', ctx), null);
   assert.equal(R.parse('', ctx).name, 'calendar');

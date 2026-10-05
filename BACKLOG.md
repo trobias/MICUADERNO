@@ -27,8 +27,7 @@ Cada idea pendiente, con su estado. **Nada se pierde por estar fuera de la fase 
 | Emociones escritas, también antes/después de actividades | A4 | Hecho | Día, actividad, calendarios, Año, Ajustes, TXT/CSV/XLSX, impresión, recordatorios, insights y copia vieja. |
 | Fuera Agenda/Rutinas como marcadores; Mis hojas inicial | A5 | Hecho (v28) | Cuatro marcadores, Mis hojas con hojas y repeticiones (también en pausa), `MC.repeat.editor` con regla anual desde la actividad, redirecciones. |
 | Semana planner por defecto | A6 | Hecho (v29) | Grilla Importante/días/Notas, edición, pasado amable, foco y cierre. |
-| Hojas del día, plantillas propias, Guardar y repetir | A7 | NOW siguiente | Un editor común, frecuencia semanal/mensual/anual y papelera. |
-| Año con métricas, victorias y gráficos | A8 | NEXT | Conteos descriptivos, privacidad, SVG con tabla accesible. |
+| Año con métricas, victorias y gráficos | A8 | NOW siguiente | Conteos descriptivos, privacidad, SVG con tabla accesible. |
 | Colores infinitos y código hex | A9 | NEXT | Temas, degradados/acabados, contraste, preview y copia. Color por emoción individual ya entra en A4. |
 | Escenas más frecuentes | A10 | NEXT | Motion con propósito, silencio al escribir y control de rendimiento. |
 | Balde y tipos de trazo | A11 | NEXT | Editables al reabrir, presión/semilla y deshacer. |

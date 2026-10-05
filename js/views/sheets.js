@@ -15,9 +15,10 @@
     main.appendChild(h('div.spread', left, h('div.spine', { 'aria-hidden': 'true' }), right));
 
     function load() {
-      return Promise.all([M.getPages(), M.getRoutines()]).then(function (r) {
+      return Promise.all([M.getPages(), M.getRoutines(), M.getTemplates()]).then(function (r) {
         if (destroyed) return;
         paintIndex(r[0]);
+        paintTemplates(r[2]);
         paintRepeats(r[1]);
         showFocus();
       });
@@ -35,8 +36,9 @@
       }
       var ol = h('ol.toc', { 'aria-label': 'Índice' });
       pages.forEach(function (p, i) {
-        var n = p.items.filter(function (it) { return it.text.trim(); }).length;
-        var preview = p.kind === 'list' ? n + (n === 1 ? ' cosa' : ' cosas') : (p.body.trim() ? p.body.trim().split('\n')[0].slice(0, 70) : 'en blanco');
+        var n = M.sheetCount(p), text = M.sheetText(p, true);
+        var only = M.sheetBlocks(p).blocks;
+        var preview = only.length === 1 && only[0].type !== 'text' && only[0].type !== 'columns' ? n + (n === 1 ? ' cosa' : ' cosas') : (text ? text.split('\n')[0].slice(0, 70) : 'en blanco');
         preview += ' · ' + D.shortLabel(M.pageDate(p));
         ol.appendChild(h('li.toc__item',
           h('a.toc__link', { href: R.page(p.id) },
@@ -47,6 +49,26 @@
           h('p.toc__preview', preview)));
       });
       left.appendChild(ol);
+    }
+
+    /* ---------- mis plantillas (A7): debajo del índice; se crean desde “Guardar” de una hoja o acá ---------- */
+    function paintTemplates(list) {
+      var add = h('button.text-btn', { type: 'button' }, MC.icon('plus'), 'Nueva plantilla');
+      add.addEventListener('click', function () {
+        M.saveTemplate({ title: 'Mi plantilla', blocks: [{ type: 'text' }] }).then(function (t) { location.hash = R.template(t.id); });
+      });
+      var sec = h('section.templates-mine', { 'aria-labelledby': 'mine-title' },
+        h('header.page-head', h('h2.t-display', { id: 'mine-title' }, 'Mis plantillas'), add));
+      if (!list.length) {
+        sec.appendChild(h('p.page-intro.t-text', 'Cualquier hoja se puede guardar como plantilla desde su botón Guardar. Las tuyas aparecen acá y al empezar una hoja nueva.'));
+      } else {
+        var ul = h('ul.template-list');
+        list.forEach(function (t) {
+          ul.appendChild(h('li', h('a.text-btn', { href: R.template(t.id) }, MC.icon('paginas'), t.title, h('span.t-meta', ' · ' + MC.views.pages.kindOf(t.blocks)))));
+        });
+        sec.appendChild(ul);
+      }
+      left.appendChild(sec);
     }
 
     /* ---------- lo que se repite (rutinas, también las pausadas) ---------- */
@@ -67,6 +89,7 @@
         var ul = h('ul.routine-list');
         groups[k].forEach(function (r) {
           var next = r.archived ? null : RC.nextOccurrence(r, today, 400);
+          var isSheet = r.kind === 'sheet';
           var editBtn = h('button.icon-btn.icon-btn--sm', { type: 'button', 'aria-label': 'Editar ' + r.title }, MC.icon('edit'));
           editBtn.addEventListener('click', function () { MC.repeat.editor(r, load); });
           // Sus días en el calendario: el mes de la próxima vez (o este, si está en pausa).
@@ -80,11 +103,12 @@
           });
           ul.appendChild(h('li.routine', { class: r.archived ? 'is-paused' : null, dataset: { id: r.id } },
             h('div.routine__text',
-              h('p.routine__title', r.title),
+              h('p.routine__title', isSheet ? h('span.routine__kind', MC.icon('paginas'), h('span.sr-only', 'Hoja: ')) : null, r.title),
               h('p.routine__rule', RC.describe(r)),
               // La próxima vez es un enlace a ese día.
-              next ? h('p.routine__next', h('a', { href: R.day(next) }, next === today ? 'hoy' : 'próxima: ' + D.longLabel(next))) : (r.archived ? h('p.routine__next', 'en pausa') : null)),
-            onCal, pause, editBtn));
+              // Una hoja que se repite lleva directo a la hoja de ese día.
+              next ? h('p.routine__next', h('a', { href: isSheet ? R.page(M.sheetOccurrenceId(r.id, next)) : R.day(next) }, (next === today ? 'hoy' : 'próxima: ' + D.longLabel(next)) + (isSheet ? ' (la hoja)' : ''))) : (r.archived ? h('p.routine__next', 'en pausa') : null)),
+            isSheet ? null : onCal, pause, editBtn));
         });
         right.appendChild(h('section.routine-group', h('h3.routine-group__title', k === 'pausa' ? 'En pausa' : M.MOMENT_LABEL[k]), ul));
       });

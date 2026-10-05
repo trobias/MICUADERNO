@@ -768,6 +768,87 @@ await test('A6: la semana-planner de fondo; anotar y marcar ahí; pasado sin rep
   await context.close();
 });
 
+await test('A7: hojas en bloques; Guardar como plantilla y que se repita; la hoja del día aparece sola y se guarda al escribir', async () => {
+  const { page, errors, context } = await newPage(browser);
+  await page.goto(FILE_URL);
+  await onboard(page);
+  await goto(page, '#/hojas');
+  await page.click('#panel button:has-text("Nueva hoja")');
+  await page.click('dialog.sheet .template:has-text("Pros y contras")');
+  await page.waitForSelector('#page-body');
+  // Renglones + columnas, todo en la misma hoja.
+  await page.fill('#page-body', 'Mudarme o no');
+  const cols = page.locator('.sheet-cols textarea');
+  assert.equal(await cols.count(), 2);
+  await cols.nth(0).fill('más luz');
+  // Sumar un bloque de casillas desde “Agregar a la hoja”.
+  await page.click('.sheet-add');
+  await page.click('[role="menuitem"]:has-text("Casillas")');
+  await page.locator('.free-list--checks input').first().fill('preguntar precios');
+  await page.locator('.free-list--checks .stitch-box').first().click();
+  await page.waitForFunction(() => document.querySelector('.free-head .saved-note').dataset.state === 'saved', null, { timeout: 3000 });
+  const pageId = decodeURIComponent(page.url().split('#/pagina/')[1]);
+  const stored = await page.evaluate((id) => MC.model.getPage(id), pageId);
+  assert.equal(stored.blocks.length, 3);
+  assert.match(stored.body, /A favor: más luz/);
+  assert.match(stored.body, /☑ preguntar precios/);
+  // Guardar → como plantilla con lo escrito.
+  await page.click('.free-head button:has-text("Guardar")');
+  await page.click('[role="menuitem"]:has-text("Como plantilla, con lo escrito")');
+  await page.waitForSelector('.toast:has-text("Mis plantillas")');
+  // Mis hojas la muestra y “Nueva hoja” la ofrece primero.
+  await goto(page, '#/hojas');
+  await page.waitForSelector('.templates-mine a:has-text("Pros y contras")');
+  assert.match(await page.textContent('.toc'), /Mudarme o no/, 'la vista previa lee los bloques');
+  await page.click('#panel button:has-text("Nueva hoja")');
+  await page.waitForSelector('dialog.sheet .template-group__title:has-text("Mis plantillas")');
+  await page.click('dialog.sheet .template-group .template:has-text("Pros y contras")');
+  await page.waitForSelector('#page-body');
+  assert.equal(await page.inputValue('#page-body'), 'Mudarme o no');
+  assert.equal(await page.locator('.sheet-cols textarea').first().inputValue(), 'más luz');
+  // Editar la plantilla no toca las hojas ya hechas.
+  await goto(page, '#/hojas');
+  await page.click('.templates-mine a:has-text("Pros y contras")');
+  await page.waitForSelector('.template-page .page-title');
+  await page.fill('.template-page #page-body, .template-page textarea.write >> nth=0', 'otra idea');
+  await page.waitForTimeout(700);
+  assert.equal((await page.evaluate((id) => MC.model.getPage(id), pageId)).values[stored.blocks[0].id], 'Mudarme o no');
+  // Guardar → que se repita, en blanco, todos los días.
+  await page.evaluate((id) => { location.hash = MC.routes.page(id); }, pageId);
+  await page.waitForSelector('#page-body');
+  await page.click('.free-head button:has-text("Guardar")');
+  await page.click('[role="menuitem"]:has-text("Que se repita, en blanco")');
+  await page.fill('#rt-title', 'Pensar en voz alta');
+  await page.selectOption('#rt-freq', 'daily');
+  await page.click('dialog.sheet button:has-text("Que se repita")');
+  await page.waitForSelector('.toast:has-text("aparecer sola")');
+  // No es una actividad: no aparece en la lista del día, sí en “Hojas de este día”.
+  await goto(page, '#/hoy');
+  await page.waitForSelector('#q-pages');
+  assert.equal(await page.locator('.activity:has-text("Pensar en voz alta")').count(), 0);
+  await page.click('#panel .page-link:has-text("Pensar en voz alta")');
+  await page.waitForSelector('#page-body');
+  assert.match(await page.textContent('.free-page'), /Esta hoja se repite/);
+  assert.equal(await page.inputValue('#page-body'), '', 'en blanco: se pidió sin lo escrito');
+  const occId = decodeURIComponent(page.url().split('#/pagina/')[1]);
+  assert.match(occId, new RegExp('^pag_.+_' + TODAY + '$'));
+  assert.equal(await page.evaluate((id) => MC.store.get('pages', id), occId), undefined, 'virtual hasta que se escribe');
+  await page.fill('#page-body', 'Hoy pensé en el balcón.');
+  await page.waitForFunction(() => document.querySelector('.free-head .saved-note').dataset.state === 'saved', null, { timeout: 3000 });
+  assert.match((await page.evaluate((id) => MC.store.get('pages', id), occId)).body, /Hoy pensé en el balcón\.$/);
+  // Mis hojas la lista en “Lo que se repite” con enlace a la hoja.
+  await goto(page, '#/hojas');
+  await page.waitForSelector('.routine:has-text("Pensar en voz alta") a:has-text("(la hoja)")');
+  // Las notas del día también se pueden guardar.
+  await goto(page, '#/hoy');
+  await page.fill('#notes', 'Nicole anotó una idea.');
+  await page.click('#q-notes + * .keep-btn, .keep-btn');
+  await page.click('[role="menuitem"]:has-text("Como plantilla, en blanco")');
+  await page.waitForSelector('.toast:has-text("Notas del día")');
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
 await test('dibujar, subir imágenes como stickers y adjuntar archivos', async () => {
   const { page, errors, context } = await newPage(browser);
   await page.goto(FILE_URL);
