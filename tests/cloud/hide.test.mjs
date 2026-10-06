@@ -32,3 +32,22 @@ test('quien edita el cuaderno de otra persona no escribe pedazos ocultos ni priv
   assert.ok(rows.length > 0 && rows.every((r) => r.private === false && !r.record_id.endsWith('~oculto')));
   assert.ok(!JSON.stringify(rows).includes('"hide"'));
 });
+
+test('D54: gana el más nuevo por pedazo; lo borrado y lo sin hora pasan', async () => {
+  const { dropStale } = await import('../../lib/sync.ts');
+  const { rows } = toRows(NICOLE, NICOLE, [
+    { store: 'days', key: 'd1', record: { date: 'd1', notes: 'vieja', updatedAt: '2026-10-05T10:00:00.000Z' } },
+    { store: 'days', key: 'd2', record: { date: 'd2', notes: 'nueva', updatedAt: '2026-10-05T12:00:00.000Z' } },
+    { store: 'days', key: 'd3', record: null }
+  ], all, 0);
+  const have = [
+    { store: 'days', record_id: 'd1', section: 'escritura', stamp: '2026-10-05T11:00:00.000Z', deleted_at: null },
+    { store: 'days', record_id: 'd2', section: 'escritura', stamp: '2026-10-05T11:00:00.000Z', deleted_at: null },
+    { store: 'days', record_id: 'd3', section: 'escritura', stamp: '2026-10-05T11:00:00.000Z', deleted_at: null }
+  ];
+  const kept = dropStale(rows, have);
+  assert.ok(!kept.some((r) => r.record_id === 'd1' && r.section === 'escritura'), 'la versión vieja no pisa');
+  assert.ok(kept.some((r) => r.record_id === 'd2' && r.section === 'escritura'), 'la nueva sí');
+  assert.ok(kept.some((r) => r.record_id === 'd3' && r.deleted_at), 'borrar pasa');
+  assert.ok(kept.some((r) => r.record_id === 'd1~oculto'), 'el pedazo oculto (sin hora) pasa');
+});

@@ -8,6 +8,10 @@ Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantien
 - `.mcp.json` ya está en la rama. La dueña habilitó los dos MCP en su entorno web de Claude Code; el estado de `claude mcp list` en una instalación local distinta no verifica ese entorno.
 - `docs/NUBE.md` registra la verificación de red, los entornos y lo que falta para aplicar la migración SQL existente. Ningún secreto se agregó a Git.
 
+## 2026-10-06 · Celular y compu sincronizados (cache `v48`)
+
+- Arreglado: lo que Nicole escribía en un dispositivo no aparecía en el otro. Ahora cada uno trae lo del otro, gana lo más nuevo y nunca se pisa lo que falta subir. Al abrir la versión nueva, cada dispositivo se pone al día una vez. D54.
+
 ## 2026-10-06 · Qué ven quienes miran tu cuaderno (cache `v47`)
 
 **Para quien lo usa**

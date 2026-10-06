@@ -73,3 +73,19 @@ export function toRows(owner: string, by: string, changes: Change[], canWrite: (
   }
   return { rows, skipped: [...skipped] };
 }
+
+export type Stamp = { store: string; record_id: string; section: string; stamp: string | null; deleted_at: string | null };
+
+/**
+ * Gana el más nuevo (D54): saca las filas que traen una versión (`updatedAt`) más vieja que la que ya está en la nube
+ * para ese pedazo. Lo borrado y lo que no trae hora (pedazo oculto, ajustes de antes) pasa como siempre.
+ */
+export function dropStale(rows: Row[], have: Stamp[]): Row[] {
+  const newer = new Map<string, string>();
+  for (const h of have) if (typeof h.stamp === 'string' && h.stamp && !h.deleted_at) newer.set(h.store + '|' + h.record_id + '|' + h.section, h.stamp);
+  return rows.filter((r) => {
+    const mine = typeof r.data.updatedAt === 'string' ? (r.data.updatedAt as string) : '';
+    const there = newer.get(r.store + '|' + r.record_id + '|' + r.section);
+    return !(mine && there && there > mine);
+  });
+}

@@ -2277,6 +2277,45 @@ await test('nube (D53): quien mira no ve lo oculto de Mi año y no la saluda con
   await context.close();
 });
 
+await test('nube (D54): Nicole en dos dispositivos — el nuevo trae lo de la otra, saltea la bienvenida y no pisa lo que falta subir', async () => {
+  const T1 = '2026-10-05T10:00:00.000Z', T2 = '2026-10-05T12:00:00.000Z';
+  const own = (store, id, section, data, at, n) => ({ store, record_id: id, section, data: { ...data, updatedAt: at }, deleted_at: null, updated_at: '2026-10-05T12:00:00.0' + String(n).padStart(2, '0') + 'Z', updated_by: CA });
+  const state = { me: { id: CA, username: 'nicole', name: 'Nicole', admin: true, hasNotebook: true, shares: [] },
+    parts: [
+      own('meta', 'settings', 'ajustes', { key: 'settings', value: { name: 'Nicole', onboarded: true, showCover: false, cover: 'lavanda' } }, T1, 1),
+      own('days', TODAY, 'escritura', { date: TODAY, notes: 'lo que escribí en la compu' }, T1, 2)
+    ] };
+  const { page, errors, setCookie, context } = await cloudContext(state);
+  await setCookie('mc_person', CA);
+  await page.goto(HTTP_URL);
+  // Abre directo el cuaderno (los ajustes vinieron de la nube): sin bienvenida ni tapa.
+  await page.waitForSelector('.planner, .cal-page', { timeout: 10000 });
+  assert.equal(await page.locator('.cover, .onboarding').count(), 0);
+  await goto(page, '#/hoy');
+  await page.waitForSelector('.day-head');
+  assert.equal(await page.inputValue('#notes'), 'lo que escribí en la compu');
+  assert.match(await page.textContent('.day-head__greet'), /Nicole/);
+  // Escribe en este dispositivo: mientras no subió, lo que llega de la nube (aunque sea más nuevo) no lo pisa.
+  await page.evaluate((d) => MC.model.getDay(d).then((x) => { x.notes = 'lo que escribí en el celular'; return MC.model.saveDay(x); }), TODAY);
+  state.parts = [own('days', TODAY, 'escritura', { date: TODAY, notes: 'otra vez desde la compu' }, '2099-01-01T00:00:00.000Z', 3)];
+  await page.evaluate(() => MC.sync.pull(false));
+  assert.equal((await page.evaluate((d) => MC.store.get('days', d), TODAY)).notes, 'lo que escribí en el celular');
+  // Ya subido: una versión más vieja de la otra no la pisa; una más nueva, sí.
+  await page.evaluate(() => MC.sync.flush());
+  await page.waitForFunction(() => MC.sync.pending() === 0, null, { timeout: 6000 });
+  state.parts = [own('days', TODAY, 'escritura', { date: TODAY, notes: 'vieja de la compu' }, T1, 4)];
+  await page.evaluate(() => MC.sync.pull(true));
+  assert.equal((await page.evaluate((d) => MC.store.get('days', d), TODAY)).notes, 'lo que escribí en el celular');
+  state.parts = [own('days', TODAY, 'escritura', { date: TODAY, notes: 'nueva de la compu' }, '2099-01-01T00:00:00.000Z', 5)];
+  await page.evaluate(() => MC.sync.pull(true));
+  assert.equal((await page.evaluate((d) => MC.store.get('days', d), TODAY)).notes, 'nueva de la compu');
+  // Al ponerse al día no subió de nuevo lo que ya estaba en la nube igual (los ajustes de la compu).
+  const pushedSettings = state.pushes.flatMap((b) => b.changes).filter((c) => c.store === 'meta' && c.record && c.record.value && c.record.value.name !== 'Nicole');
+  assert.deepEqual(pushedSettings, [], 'no pisó los ajustes de la otra con los de fábrica');
+  assert.deepEqual(errors.filter((e) => !/Failed to load resource/.test(e)), []);
+  await context.close();
+});
+
 await test('nube (NB1): una foto sube su contenido en pedazos y la ficha sin él; una que llega se baja y se ve; si falta, se reintenta', async () => {
   const PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
   const state = { me: { id: CA, username: 'nicole', name: 'Nicole', admin: true, hasNotebook: true, shares: [] } };

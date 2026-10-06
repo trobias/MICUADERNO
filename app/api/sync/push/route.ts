@@ -3,7 +3,7 @@ import { body, json, problem, sameOrigin } from '../../../../lib/http';
 import { me } from '../../../../lib/auth';
 import { supabaseServer } from '../../../../lib/supabase/server';
 import { supabaseAdmin } from '../../../../lib/supabase/admin';
-import { toRows, validChange, withoutMedia, type Change } from '../../../../lib/sync';
+import { dropStale, toRows, validChange, withoutMedia, type Change, type Stamp } from '../../../../lib/sync';
 import { dropMedia, media } from '../../../../lib/media';
 
 export const maxDuration = 30;
@@ -42,6 +42,18 @@ export async function POST(req: Request) {
       if (!skipped.includes(r.section)) skipped.push(r.section);
       return false;
     });
+  }
+  // Gana el más nuevo (D54): una versión más vieja que la que ya está en la nube (por ejemplo, de un dispositivo
+  // que estuvo sin conexión) no la pisa. Se compara la hora de cada registro (`updatedAt`) por pedazo.
+  if (rows.length) {
+    const keys = [...new Set(rows.map((r) => r.record_id))];
+    const have: Stamp[] = [];
+    for (let i = 0; i < keys.length; i += 200) {
+      const { data } = await supabaseAdmin().from('notebook_parts').select('store, record_id, section, stamp:data->>updatedAt, deleted_at')
+        .eq('owner_id', owner).in('record_id', keys.slice(i, i + 200));
+      have.push(...(((data as Stamp[] | null) ?? [])));
+    }
+    rows = dropStale(rows, have);
   }
   for (let i = 0; i < rows.length; i += 200) {
     const { error } = await sb.from('notebook_parts').upsert(rows.slice(i, i + 200) as never, { onConflict: 'owner_id,store,record_id,section' });

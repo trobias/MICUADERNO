@@ -19,6 +19,7 @@
   var SYNC = S.STORES.slice();
   var SEP = '\u0001';
   var K = { out: 'sync.outbox.' + owner, cursor: 'sync.cursor.' + owner, uploaded: 'sync.uploaded.' + owner,
+    caught: 'sync.alDia.' + owner, // este dispositivo ya se puso al día con los otros de la dueña (D54)
     sent: 'sync.media.' + owner,        // { 'images/<id>': versión ya subida }
     wait: 'sync.mediaWait.' + owner };  // fichas que llegaron sin poder bajar su contenido (se reintentan)
   var applying = 0;
@@ -117,6 +118,23 @@
       return store.getAll(s).then(function (rows) {
         var list = rows.map(function (r) { return S.keyOf(s, r); }).filter(function (key) { return syncs(s, key); });
         return Promise.all(list.map(function (key) {
+          var q = entry(s, key);
+          if (idbQueue()) return store.queuePut(q);
+          lsAdd(q.id);
+          return null;
+        }));
+      });
+    })).then(function () { return readQueue(); }).then(function (all) { count = all.length; schedule(300); });
+  }
+  /** Al ponerse al día (D54): sube solo lo de acá que la nube no tiene o tiene más viejo. */
+  function enqueueNewer() {
+    return Promise.all(SYNC.map(function (s) {
+      return store.getAll(s).then(function (rows) {
+        return Promise.all(rows.map(function (r) {
+          var key = S.keyOf(s, r);
+          if (key === undefined || !syncs(s, key)) return null;
+          var id = s + SEP + key, remote = seen[id];
+          if (!(remote === undefined || (r.updatedAt && (!remote || r.updatedAt > remote)))) return null;
           var q = entry(s, key);
           if (idbQueue()) return store.queuePut(q);
           lsAdd(q.id);
@@ -266,21 +284,22 @@
   function pullLocked(full) {
     if (pulling || !root.fetch) return pulling || Promise.resolve(0);
     var since = full ? '1970-01-01T00:00:00Z' : MC.ui.get(K.cursor, '1970-01-01T00:00:00Z');
-    var applied = 0;
+    var applied = 0, pending = {};
     function page(from) {
       return api('/api/sync/pull?owner=' + encodeURIComponent(owner) + '&since=' + encodeURIComponent(from)).then(function (res) {
         var parts = res.parts || [];
-        // En el dispositivo de la dueña, lo propio ya está: solo se aplica lo que escribieron otras personas.
-        var mine = parts.filter(function (p) { return guest || p.updated_by !== C.person; });
-        return apply(mine).then(function (n) {
+        // También lo que la dueña escribió en otro dispositivo (D54): `apply` decide qué versión gana.
+        return apply(parts, pending).then(function (n) {
           applied += n;
           var last = parts.length ? parts[parts.length - 1].updated_at : from;
-          if (!full || guest) MC.ui.set(K.cursor, last);
+          MC.ui.set(K.cursor, last);
           return res.more ? page(last) : null;
         });
       });
     }
-    pulling = page(since).then(function () { return retryWaiting().then(function (n) { applied += n; }); })
+    // Lo que todavía no subió desde acá nunca se pisa con lo que viene de la nube.
+    var queued = guest ? Promise.resolve([]) : readQueue();
+    pulling = queued.then(function (all) { all.forEach(function (q) { pending[q.id] = true; }); return page(since); }).then(function () { return retryWaiting().then(function (n) { applied += n; }); })
       .then(function () { return guest ? pullLook().then(function (n) { applied += n; }) : null; }).then(function () {
       status.lastPull = new Date().toISOString();
       pulling = null;
@@ -312,7 +331,12 @@
       });
     }, function () { return 0; });
   }
-  function apply(parts) {
+  var seen = {}; // la versión (updatedAt) de cada registro en la nube, de lo último que se trajo (D54)
+  function remoteStamp(g) {
+    return g.reduce(function (m, p) { var u = p.data && p.data.updatedAt; return typeof u === 'string' && u > m ? u : m; }, '');
+  }
+  function apply(parts, pending) {
+    pending = pending || {};
     var groups = {}, order = [], hiddenOf = {};
     parts.forEach(function (p) {
       // Lo que la dueña ocultó (D53) llega aparte, solo a sus dispositivos: se junta con su registro.
@@ -330,7 +354,21 @@
       return chain.then(function () {
         var g = groups[id], s = g[0].store, key = g[0].record_id;
         var alive = g.filter(function (p) { return !p.deleted_at; });
+        seen[id] = remoteStamp(alive);
         return store.get(s, key).then(function (local) {
+          // Lo que la dueña escribió desde otro dispositivo (D54), pedazo por pedazo: gana el más nuevo y nunca pisa
+          // lo que falta subir desde acá. Lo de otras personas se aplica como siempre.
+          if (!guest && local) {
+            var mine = function (p) { return p.updated_by === C.person; };
+            if (!alive.length && g.every(mine) && pending[id]) return null;
+            var had = alive.length;
+            alive = alive.filter(function (p) {
+              if (!mine(p)) return true;
+              var u = p.data && p.data.updatedAt;
+              return !pending[id] && typeof u === 'string' && !!local.updatedAt && u > local.updatedAt;
+            });
+            if (had && !alive.length) return null;
+          }
           if (!alive.length) return quietly(function () { setWait(id, false); return local ? store.del(s, key) : null; }).then(function () { n++; });
           var rec = S.overlay(s, local, alive.map(function (p) { return { section: p.section, data: p.data }; }));
           if (S.keyOf(s, rec) === undefined) return null; // parte suelta sin su identidad (permiso parcial): no se inventa
@@ -345,7 +383,7 @@
       });
     }, Promise.resolve()).then(function () {
       // Lo oculto que cambió solo (sin el resto del registro): se aplica sobre lo que hay.
-      return Object.keys(hiddenOf).filter(function (id) { return order.indexOf(id) === -1; }).reduce(function (chain, id) {
+      return Object.keys(hiddenOf).filter(function (id) { return order.indexOf(id) === -1 && !pending[id]; }).reduce(function (chain, id) {
         return chain.then(function () {
           var i = id.indexOf(SEP), s = id.slice(0, i), key = id.slice(i + 1);
           return store.get(s, key).then(function (local) {
@@ -369,8 +407,18 @@
     if (!guest) {
       return init0.call(store, opts).then(function (kind) {
         ready = true;
-        var first = !MC.ui.get(K.uploaded, false);
-        migrateQueue().then(function () { return first ? enqueueAll() : readQueue().then(function (all) { count = all.length; }); })
+        if (!MC.ui.get(K.caught, false)) {
+          // Ponerse al día con los otros dispositivos de la dueña (D54): primero se trae todo (gana lo más nuevo y
+          // lo que falta subir no se pisa), después se sube solo lo de acá que la nube no tiene o tiene más viejo.
+          // Se espera un rato antes de dibujar, así un dispositivo nuevo abre con el cuaderno y no con la bienvenida.
+          status.error = null;
+          var catchUp = migrateQueue().then(function () { return withLock(function () { return pullLocked(true).then(function () {
+            if (status.error) throw new Error(status.error);
+            return enqueueNewer().then(function () { MC.ui.set(K.caught, true); MC.ui.set(K.uploaded, true); });
+          }); }, null); }).catch(function () { schedule(4000); });
+          return Promise.race([catchUp, new Promise(function (r) { setTimeout(r, 8000); })]).then(function () { return kind; });
+        }
+        migrateQueue().then(function () { return readQueue().then(function (all) { count = all.length; }); })
           .then(function () { schedule(400); return pull(false); });
         return kind;
       });

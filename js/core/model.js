@@ -182,7 +182,8 @@
   function saveSettings(patch) {
     var next = mergeSettings(Object.assign({}, settings(), patch));
     settingsCache = next;
-    return setMeta('settings', next).then(function () { MC.emit('settings', next); return next; });
+    // Con su hora (D54): entre los dispositivos de la dueña gana el ajuste más nuevo.
+    return S().put('meta', { key: 'settings', value: next, updatedAt: MC.nowISO() }).then(function () { MC.emit('settings', next); return next; });
   }
 
   /* ---------- días ---------- */
