@@ -71,6 +71,27 @@ test('byMonth: doce filas con escritos, emociones y hechas', async () => {
   assert.deepEqual([rows[9].written, rows[9].feelings, rows[9].done], [1, 2, 2]);
 });
 
+test('metas semanales: tres un poquito son una victoria derivada en el primer día de alcance, con privacidad e historial', () => {
+  const start = '2026-09-28', D = MC.dates;
+  const r = M.normalizeRoutine({ id: 'weekly-win', title: 'Caminar', rule: { type: 'weeklyTarget', count: 3 }, startDate: start });
+  const plan = M.activityPlan(start, [r]);
+  const activities = [0, 1, 2, 3].map(n => ({ id: M.occurrenceId(r.id, D.addDays(start, n)), routineId: r.id, title: r.title, date: D.addDays(start, n), status: 'partial' }));
+  const all = { days: [], activities, pages: [], marks: [], weeks: [{ week: start, activityPlan: plan }], routines: [] };
+  let v = I.victories(all, '2026');
+  assert.equal(v.length, 1);
+  assert.deepEqual([v[0].week, v[0].date, v[0].text], [start, '2026-09-30', 'Caminar · 3/3 · 3 un poquito']);
+  assert.deepEqual(I.victories(all, '2026'), v, 'sin duplicados al volver a calcular');
+  assert.equal(I.victories(all, '2025').length, 0);
+  assert.equal(I.victories({ ...all, activities: activities.slice(0, 2) }, '2026').length, 0, '2/3 no es meta alcanzada');
+  for (const privacy of [{ noReviews: true }, { noMemory: true }, { noInsights: true }]) {
+    assert.equal(I.victories({ ...all, activities: activities.slice(0, 3), days: [{ date: start, privacy }] }, '2026').length, 0);
+  }
+  assert.equal(I.victories({ ...all, activities: activities.slice(0, 3), days: [{ date: start, deletedAt: '2026-10-01T00:00:00Z' }] }, '2026').length, 0);
+  assert.equal(I.victories({ ...all, activities: activities.map((a, n) => n < 2 ? { ...a, deletedAt: '2026-10-01T00:00:00Z' } : a) }, '2026').length, 0);
+  assert.equal(all.marks.length, 0, 'no escribe referencias nuevas');
+  assert.equal(I.victories({ ...all, weeks: [] }, '2026').length, 0, 'sin reglas ni plan no inventa una meta de rutina de 1/1');
+});
+
 test('victorias: id fijo, sin duplicados; se resuelven a su día y respetan papelera y privacidad', async () => {
   const { a, c } = await seed();
   await M.setVictory('activity', a.id, true);
@@ -81,7 +102,8 @@ test('victorias: id fijo, sin duplicados; se resuelven a su día y respetan pape
   await M.setVictory('day', '2026-09-20', true);
   await M.setVictory('activity', c.id, true); // día con noReviews: no se muestra en el repaso
   let v = I.victories(await M.activeEverything(), '2026');
-  assert.deepEqual(v.map((x) => [x.date, x.text]), [['2026-10-06', 'Lista'], ['2026-10-05', 'caminar'], ['2026-09-20', 'Este día']]);
+  assert.deepEqual(v.filter(x => x.sourceType !== 'week').map((x) => [x.date, x.text]), [['2026-10-06', 'Lista'], ['2026-10-05', 'caminar'], ['2026-09-20', 'Este día']]);
+  assert.deepEqual(v.filter(x => x.sourceType === 'week').map(x => x.text), ['leer · 1/1'], 'metas alcanzadas se suman sin duplicar la victoria manual de caminar');
   // La actividad cambió de nombre: la victoria dice el nombre nuevo (es una referencia, no una copia).
   await M.saveItem(Object.assign({}, await MC.store.get('activities', a.id), { title: 'caminar al sol' }));
   v = I.victories(await M.activeEverything(), '2026');

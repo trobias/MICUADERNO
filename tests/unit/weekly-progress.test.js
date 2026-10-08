@@ -10,12 +10,12 @@ const setup = () => [routine('trabajar', { type: 'weekdays', days: [1, 2, 3, 4, 
   routine('diseño', { type: 'weekdays', days: [1, 2, 3, 4, 5] }, { targetNote: '1 hora por día' }),
   routine('caminar', { type: 'weeklyTarget', count: 3 })];
 
-test('5 + 5 + 3 oportunidades; flexible no suma siete; solo done completa', () => {
+test('5 + 5 + 3 oportunidades; flexible no suma siete; un poquito aporta medio avance', () => {
   const plan = M.activityPlan(START, setup());
   const acts = [record('trabajar', START), record('diseño', START, 'partial'),
     ...[0, 2, 6].map((n) => record('caminar', D.addDays(START, n)))];
   const p = M.weeklyProgress(START, plan, acts);
-  assert.deepEqual([p.done, p.total, p.percent], [4, 13, 31]);
+  assert.deepEqual([p.done, p.total, p.percent, p.checked, p.value], [4, 13, 35, 5, 4.5]);
   assert.deepEqual([p.goals[2].done, p.goals[2].total], [3, 3]);
   assert.deepEqual(p.daily[D.addDays(START, 5)], { done: 0, total: 0 }, 'sábado sin caminar ni días fijos no es deuda');
   assert.deepEqual(p.daily[D.addDays(START, 6)], { done: 1, total: 1 });
@@ -154,6 +154,33 @@ test('agrupa rutinas y actividades sueltas por nombre, conservando todas las reg
   assert.deepEqual([p.goals[0].done, p.goals[0].total], [3, 5]);
   assert.deepEqual(p.goals[0].routineIds, ['walk-a', 'walk-b']);
   assert.equal(plan.length, 2, 'agrupar no modifica ni borra reglas');
+});
+
+test('tres un poquito cuentan 3/3 con media barra; completas reemplazan medios avances sin superar la meta', () => {
+  const plan = M.activityPlan(START, [routine('caminar', { type: 'weeklyTarget', count: 3 })]);
+  const acts = [0, 1, 2].map(n => record('caminar', D.addDays(START, n), 'partial'));
+  let p = M.weeklyProgress(START, plan, acts);
+  assert.deepEqual([p.done, p.partial, p.checked, p.value, p.total, p.percent], [0, 3, 3, 1.5, 3, 50]);
+  assert.deepEqual([p.goals[0].checked, p.goals[0].value], [3, 1.5]);
+  acts.push(record('caminar', D.addDays(START, 3), 'partial'));
+  p = M.weeklyProgress(START, plan, acts);
+  assert.deepEqual([p.checked, p.value, p.percent, p.goals[0].recorded], [3, 1.5, 50, 4]);
+  acts[0].status = 'done'; p = M.weeklyProgress(START, plan, acts);
+  assert.deepEqual([p.done, p.partial, p.checked, p.value, p.percent], [1, 2, 3, 2, 67]);
+  acts[1].status = 'done'; acts[2].status = 'done'; p = M.weeklyProgress(START, plan, acts);
+  assert.deepEqual([p.done, p.partial, p.checked, p.value, p.percent], [3, 0, 3, 3, 100]);
+  assert.equal(acts[3].status, 'partial', 'el límite no reescribe las marcas extra');
+});
+
+test('medios avances agrupados respetan estados, privacidad, papelera y oportunidades fijas', () => {
+  const acts = ['partial', 'partial', 'done', 'skipped', 'postponed', 'pending'].map((status, n) => ({ id: 'half-' + n, title: 'Leer', date: D.addDays(START, n), status }));
+  let p = M.weeklyProgress(START, [], acts);
+  assert.deepEqual([p.goals.length, p.checked, p.value, p.total, p.percent], [1, 3, 2, 6, 33]);
+  p = M.weeklyProgress(START, [], acts, [{ date: START, privacy: { noInsights: true } }, { date: D.addDays(START, 1), deletedAt: '2026-10-01T00:00:00Z' }]);
+  assert.deepEqual([p.done, p.partial, p.checked, p.value, p.total], [1, 0, 1, 1, 4]);
+  const rs = [routine('fixed-half', { type: 'weekdays', days: [1, 2, 3] }, { title: 'Leer' })];
+  p = M.weeklyProgress(START, M.activityPlan(START, rs), [record('fixed-half', START, 'partial', { title: 'Leer' }), ...acts]);
+  assert.deepEqual([p.goals.length, p.checked, p.value, p.total], [1, 4, 2.5, 9]);
 });
 
 test('el calendario oculta solo pending: conserva los otros cuatro estados y las hojas', async () => {

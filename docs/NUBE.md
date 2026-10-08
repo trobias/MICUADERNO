@@ -4,6 +4,8 @@ Estado al 05/10/2026: **publicada en `https://micuaderno-five.vercel.app`** (Pro
 
 ## 1. Cómo está armado
 
+**D58 (08/10):** medios avances, título Progreso y victorias semanales automáticas son cálculos derivados de los registros/planes existentes. Copia v11 e IDB 5 sin cambios; cache v52. No se escriben nuevos marks, no requiere SQL, variables ni servicios y conserva permisos D56. El push puede activar el despliegue automático; el estado publicado se comprueba por separado.
+
 **D57 (08/10):** agrupar metas por nombre y filtrar Sin marcar son lecturas derivadas en el cuaderno, sin nuevo campo persistente. Copia v11, IDB 5, cache v51; conserva la separación de permisos D56. No requiere SQL, variables ni servicios nuevos. La QA local no confirma el despliegue de Production.
 
 **Objetivos semanales (D55, cambio local del 07/10):** la copia pasa a v10 sin cambiar tablas ni RLS. `routines.targetNote` y `weeks.activityPlan` viajan con permiso `repeticiones`; Importante/Notas conservan `semana`, las marcas `actividades` y sus emociones `emociones`. Mirar como invitada no escribe planes. La clasificación usa `MC.sections`, también en el servidor. No requiere variables nuevas, servicios ni migración SQL. La QA de esta entrega es local; el push autorizado a main puede activar el despliegue automático, cuyo resultado requiere verificación aparte.

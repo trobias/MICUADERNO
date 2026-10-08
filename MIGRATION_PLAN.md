@@ -80,6 +80,8 @@ La dueña decidió el 05/10/2026: **nunca React**. El cuaderno queda en HTML + C
 
 ## Regla por entrega y evidencia
 
+**Corrección del 08/10 (D58):** Progreso reemplaza el título Importante. Conteo entero done+partial y avance done+partial/2; amarillo para medios avances, verde para completas. Checked igual a total muestra estrella y victoria semanal derivada en Mi año, usando arte/motion existentes. Sin persistencia nueva: copia v11, IDB 5, cache v52. Conserva visibilidad D57, historia y permisos; no altera pendientes NB.
+
 **Regla vigente del 08/10 (D57):** agrupación por nombre con conteo N/M en Importante. Mes y semana ocultan únicamente Sin marcar, en cualquier fecha; los demás estados aparecen. Las casillas precargadas se mantienen en la página del día. Reemplaza la visibilidad de actividades de D18/D55; no altera hojas, datos guardados, historial ni pendientes NB. Copia v11, IDB 5, cache v51, sin migración nueva. Evidencia en `docs/QA.md`.
 
 **Entrega posterior a A13 (07/10, D55):** la semana incorpora checklist automático y progreso por oportunidades, con `weeklyTarget`, `targetNote` y `weeks.activityPlan`. Copia v10 aditiva, IDB 5 y cache v49; no cambia la decisión de nunca React ni los pendientes NB. En la semana se pueden marcar oportunidades de días anteriores; la regla D18 de ocultar pendientes sigue vigente en el mes. Estado de verificación y alcance local: `docs/QA.md` y `HANDOFF.md`.

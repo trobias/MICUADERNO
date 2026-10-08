@@ -2,6 +2,11 @@
 
 Registro breve de decisiones de arquitectura y producto. Formato: contexto → decisión → consecuencias.
 
+## D58 · Un poquito llena media barra amarilla; Progreso y pequeñas victorias (2026-10-08)
+**Contexto:** la dueña pidió que tres Un poquito se vean como 3/3 con media barra amarilla. Sumó renombrar Importante a Progreso y una estrella/victoria al alcanzar todas las veces, aunque el avance sea a la mitad, usando arte y efectos existentes.
+**Decisión:** separar el conteo entero de veces (done + partial) del avance ponderado (done + partial / 2). Barra verde para completas y amarilla para medios avances, con texto y progress accesible. Limitar cada meta flexible antes de agrupar; completas tienen prioridad sobre partial extra. Mantener el resto de los estados y la visibilidad D57. La estrella SVG existente dice Pequeña victoria cuando checked alcanza total, y aparece una sola vez con MC.motion y tokens (200 ms); sin loops ni efectos durante tecleo/panel abierto/movimiento reducido.
+**Consecuencias:** Mi año agrega una victoria derivada por meta y semana, fecha de primer alcance, enlace a su semana y filtro de privacidad/papelera. Conserva victorias manuales; una 1/1 ya marcada no se duplica. Ningún peso o victoria nueva se persiste, por lo que copia v11 e IDB 5 no cambian; cache v52. D58 reemplaza el cálculo exclusivamente done de D55 y el título Importante, sin cambiar campos de anotaciones ni permisos.
+
 ## D57 · Una barra por nombre y calendarios sin actividades Sin marcar (2026-10-08)
 **Contexto:** la dueña pidió que tres Trabajar aparezcan juntos como 0/3. Su corrección final indica ocultar únicamente Sin marcar en ambos calendarios, en todas las fechas, y mostrar los demás estados, incluyendo Hoy no salió y Lo dejo para otro día. Esta indicación reemplaza su respuesta anterior de ocultarlos solo en días pasados.
 **Decisión:** agrupar las metas por nombre normalizado al calcular, sumando oportunidades reales y conservando el límite individual de cada meta flexible. No fusionar ni alterar registros. La barra muestra N/M; si reúne varias repeticiones, el lápiz permite elegir cuál editar. Mes y semana usan una única regla `calendarVisible`: todo estado registrado salvo pending. La página del día conserva todas las casillas precargadas para marcar. Las oportunidades sin marcar siguen en el denominador semanal.

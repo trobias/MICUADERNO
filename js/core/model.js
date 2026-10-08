@@ -1080,10 +1080,11 @@
     goals.forEach(function (g) {
       var key = weeklyActivityKey(g.title), group = byName[key];
       if (!group) {
-        group = Object.assign({}, g, { key: key, done: 0, total: 0, recorded: 0, dates: [], routineIds: [], targetNotes: [] });
+        group = Object.assign({}, g, { key: key, done: 0, partial: 0, checked: 0, value: 0, total: 0, recorded: 0, dates: [], routineIds: [], targetNotes: [] });
         byName[key] = group; grouped.push(group);
       }
       group.done += g.done; group.total += g.total; group.recorded += g.recorded;
+      group.partial += g.partial; group.checked += g.checked; group.value += g.value;
       group.flexible = !!group.flexible && !!g.flexible;
       (g.dates || []).forEach(function (k) { if (group.dates.indexOf(k) === -1) group.dates.push(k); });
       if (g.routineId && group.routineIds.indexOf(g.routineId) === -1) group.routineIds.push(g.routineId);
@@ -1093,7 +1094,13 @@
     return grouped;
   }
 
-  /** Cuenta completa solo `done`. `partial` conserva su estado amable, pero no completa una oportunidad. */
+  // D58: cada marca completa aporta 1 y cada Un poquito, 0.5; el conteo de veces sigue siendo entero.
+  function goalProgress(done, partial, total) {
+    done = Math.min(done, total);
+    partial = Math.min(partial, total - done);
+    return { done: done, partial: partial, checked: done + partial, value: done + partial / 2, total: total };
+  }
+
   function weeklyProgress(date, plan, activities, days) {
     var start = D.startOfWeek(date), end = D.addDays(start, 6), excluded = Object.create(null), daily = {};
     (days || []).forEach(function (d) { if (isDeleted(d) || isPrivate(d, 'noInsights')) excluded[d.date] = true; });
@@ -1105,23 +1112,28 @@
       var matches = rows.filter(function (a) { return a.routineId === g.routineId && dates.indexOf(a.date) !== -1; });
       matches.forEach(function (a) { taken[a.id] = true; });
       var done = matches.filter(function (a) { return a.status === 'done'; });
+      var partial = matches.filter(function (a) { return a.status === 'partial'; });
       var target = g.flexible ? Math.min(g.target, dates.length) : dates.length;
       dates.forEach(function (k) {
         var completed = done.some(function (a) { return a.date === k; });
-        if (!g.flexible || completed) daily[k].total++;
+        var started = partial.some(function (a) { return a.date === k; });
+        if (!g.flexible || completed || started) daily[k].total++;
         if (completed) daily[k].done++;
       });
-      return Object.assign({}, g, { done: Math.min(done.length, target), total: target, recorded: done.length });
+      return Object.assign({}, g, goalProgress(done.length, partial.length, target), { recorded: done.length + partial.length });
     }).filter(function (g) { return g.total; });
     // Las actividades sueltas (también las de una rutina ya retirada) son una oportunidad cada una.
     rows.filter(function (a) { return !taken[a.id]; }).forEach(function (a) {
       var done = a.status === 'done' ? 1 : 0;
-      goals.push({ id: a.id, title: a.title, done: done, total: 1, recorded: done, dates: [a.date], flexible: false });
+      var partial = a.status === 'partial' ? 1 : 0;
+      goals.push(Object.assign({ id: a.id, title: a.title, recorded: done + partial, dates: [a.date], flexible: false }, goalProgress(done, partial, 1)));
       daily[a.date].total++; daily[a.date].done += done;
     });
     var total = goals.reduce(function (n, g) { return n + g.total; }, 0);
     var done = goals.reduce(function (n, g) { return n + g.done; }, 0);
-    return { week: start, done: done, total: total, percent: total ? Math.round(done / total * 100) : 0, goals: groupWeeklyGoals(goals), daily: daily };
+    var partial = goals.reduce(function (n, g) { return n + g.partial; }, 0);
+    var value = done + partial / 2;
+    return { week: start, done: done, partial: partial, checked: done + partial, value: value, total: total, percent: total ? Math.round(value / total * 100) : 0, goals: groupWeeklyGoals(goals), daily: daily };
   }
 
   function getWeeklyProgress(date, plan) {

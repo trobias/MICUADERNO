@@ -1,5 +1,16 @@
 # QA cruzada (A12) — 05/10/2026
 
+## Actualización del 08/10/2026 · Medios avances y victorias (D58)
+
+- Base `main` en `80d1b33`. Copia **v11**, cache **v52**, IDB **5**, sin nueva persistencia ni SQL.
+- Casos específicos aprobados: 3 Un poquito → **3/3**, value **1,5/3**, **50 %** amarillo, estrella y una victoria en Mi año; enlace a la semana y recarga. Mezcla de 1 completa + 2 parciales → **67 %** con verde/amarillo, y 3 completas → **100 %** verde. Se mide ancho real del segmento amarillo (50 % del interior).
+- E2E específico en `file://` a 1366×900 y HTTP a 375×812: menú de estados desde la página del día, título Progreso, estrella SVG reutilizada, sin estrella antes de 3/3, sin animación con movimiento reducido y efecto con opacity/transform, duración 200 ms, sin loops. Sin errores de consola ni scroll horizontal.
+- Unitarias de límites flexibles, prioridad de completas sobre parciales extra, mezcla/agrupación, estados que no avanzan, privacidad, papelera, primera fecha de victoria, historial sin rutina vigente y recálculo sin duplicados ni nuevos marks. Referencias manuales conservadas, sin duplicar una meta de 1/1 ya elegida.
+- **Gate `npm run check` aprobado:** sintaxis de 46 scripts, **165/165 unitarias y 67/67 E2E**. Se volvió a ejecutar el conjunto unitario tras agregar la guarda de rutinas sin plan/regla (permiso parcial): 165/165. Tipos y build aprobados; humo de Next **3/3**. Tests de nube **14 aprobados y RLS omitida** por falta de Postgres local.
+- Revisión visual de escritorio y 375px con registros sintéticos de Nicole: título Progreso, barras mezcladas verde/amarillo, meta parcial 3/3 al 50 %, estrellas y controles legibles, sin scroll horizontal. SVG y tokens existentes, sin instalar dependencias. Documentación contractual, AGENTS, HANDOFF, README, CHANGELOG y ruta/backlog actualizados.
+
+**Límites:** pruebas locales; no se prueban cuentas/dispositivos reales, RLS remota ni lectores de pantalla. No se inventan reglas históricas borradas; los planes capturados siguen siendo la fuente.
+
 ## Actualización del 08/10/2026 · Agrupación y visibilidad final (D57)
 
 - Base `main` en `e9cd5a2` (D56 ya pusheado). Copia **v11**, cache **v51**, IDB **5**; sin cambio persistente ni SQL.

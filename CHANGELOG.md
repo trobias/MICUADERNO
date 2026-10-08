@@ -2,6 +2,13 @@
 
 Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantiene. El porqué de cada decisión está en `DECISIONS.md` (Dn); lo que falta, en `ROADMAP.md`. Cada entrega que toca archivos de la app sube `CACHE_VERSION` en `sw.js` para que las PWA instaladas se actualicen.
 
+## 2026-10-08 · Medio avance amarillo, Progreso y estrellas de victoria (D58, cache `v52`)
+
+- Un poquito cuenta una vez y llena media oportunidad en amarillo: tres marcas muestran **3/3**, barra al **50 %** y estrella. Lo hice llena en verde; mezclas muestran ambos segmentos y la cuenta distingue completas/un poquito.
+- La nota de barras se llama **Progreso**. Cada meta alcanzada, incluso con medios avances, muestra **Pequeña victoria** con la estrella SVG existente y una aparición breve que respeta movimiento reducido. Sin loops ni dependencias nuevas.
+- Las metas alcanzadas se suman a Pequeñas victorias de Mi año y llevan a su semana; se calculan desde las marcas y planes, sin duplicar al recargar ni escribir nuevas referencias. Privacidad, papelera, historial y victorias manuales se conservan.
+- Copia v11 e IDB 5 intactos; solo cambia cálculo y presentación. Resultados y límites en `docs/QA.md`.
+
 ## 2026-10-08 · Actividades agrupadas y calendarios sin Sin marcar (D57, cache `v51`)
 
 - Una barra por nombre en Importante: tres Trabajar aparecen como **0/3**, una hecha cambia a **1/3**. Agrupa actividades sueltas y repeticiones equivalentes, sin modificar sus registros ni reglas, respetando el límite de cada meta flexible.

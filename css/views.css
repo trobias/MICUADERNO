@@ -210,12 +210,18 @@ a.months__year { text-decoration: none; padding: 4px 6px; border-radius: 6px; }
 .week-progress__bar::-webkit-progress-bar { background: var(--paper-shade); }
 .week-progress__bar::-webkit-progress-value { background: var(--thread-done); }
 .week-progress__bar::-moz-progress-bar { background: var(--thread-done); }
+.week-progress__meter { position: relative; }
+.week-progress__segments { position: absolute; inset: 1px; pointer-events: none; overflow: hidden; border-radius: var(--radius-note); }
+.week-progress__partial { position: absolute; top: 0; bottom: 0; width: 0; background: var(--progress-partial); }
 .week-progress__details > summary { font-family: var(--font-ui); font-size: var(--fs-sm); min-height: 44px; padding-block: var(--s-3); cursor: pointer; }
 .week-progress__goals { display: grid; gap: var(--s-3); margin-top: var(--s-2); }
 .week-progress__goal { display: grid; gap: var(--s-1); overflow-wrap: anywhere; }
 .week-progress__goal-head { display: flex; align-items: center; justify-content: space-between; gap: var(--s-2); min-height: 44px; }
 .week-progress__label { display: grid; gap: var(--s-1); }
 .week-progress__name { font-family: var(--font-text); }
+.week-progress__victory { display: inline-flex; align-items: center; gap: var(--s-1); color: var(--ink); }
+.week-progress__victory[hidden] { display: none; }
+.week-progress__victory svg { width: 18px; height: 18px; color: var(--progress-partial); fill: var(--butter); flex: none; }
 .week-progress p { margin: 0; }
 .week-progress__actions { flex: none; }
 .week-progress__goal .week-progress__bar { height: var(--s-1); }
@@ -225,6 +231,8 @@ a.months__year { text-decoration: none; padding: 4px 6px; border-radius: 6px; }
   .week-progress__bar { color: Highlight; border-color: CanvasText; forced-color-adjust: none; }
   .week-progress__bar::-webkit-progress-value { background: Highlight; }
   .week-progress__bar::-webkit-progress-bar { background: Canvas; }
+  .week-progress__bar::-moz-progress-bar { background: Highlight; }
+  .week-progress__partial { background: CanvasText; forced-color-adjust: none; }
 }
 
 /* ---------- Rutinas ---------- */

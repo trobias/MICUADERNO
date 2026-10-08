@@ -52,6 +52,7 @@ Since D55, the weekly planner includes automatic activity checklists, fixed week
 D57 groups weekly bars by activity name: three Trabajar opportunities show one 0/3 bar. Both calendars hide only unmarked activities, in past, present and future dates; all other states remain visible, including skipped and postponed. Unmarked checkboxes remain preloaded on the day page and still count toward the weekly target. Grouping and visibility are derived; original records, rules and history stay intact.
 
 1. The notebook is the interface: every surface is paper, tab, sticker or ink.
+   D58 renames the weekly note to Progreso. A partial activity counts as one recorded occurrence and half a yellow fill; full completion adds a green fill. Reaching every occurrence earns the existing small-victory star, including 3/3 partials at 50%. Weekly victories in the year are derived from records and plans, respect privacy, and do not create duplicate saved marks. A short existing SVG/motion effect uses project tokens and honors reduced motion.
 2. Kind always: no failure language, no guilt mechanics.
 3. Log in under a minute; everything is optional.
 4. Visual silence by default; motion is rare and purposeful.

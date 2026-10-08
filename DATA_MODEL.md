@@ -350,6 +350,12 @@ B5 (D38, migración `20261005090000`): `profiles.has_notebook` (quien tiene cuad
 
 ## Migraciones
 
+### Lecturas derivadas · medios avances y victorias (08/10/2026, D58)
+
+- `weeklyProgress` y cada goal incluyen `done` (completas), `partial` (Un poquito), `checked = done + partial` y `value = done + partial / 2`. `percent` usa `value / total`. Para metas flexibles: completas limitadas a total; partial limitado a `total - done`. `recorded` conserva todas las marcas done/partial, incluidas extra; no cambia estados ni planes.
+- `insights.victories` suma metas con checked igual a total; id derivado `week:<lunes>:<nombre normalizado>`, fecha de primer alcance y enlace a la semana. Lee planes guardados; si faltan, usa reglas disponibles. No afirma una victoria de rutina si faltan tanto regla como plan (configuración borrada o permiso parcial). Las filas ocultas en revisiones/recuerdos conservan su oportunidad pero no aportan marcas; noInsights y días borrados se excluyen. Mi año conserva fichas de días borrados solo para excluirlas, sin dibujarlas.
+- No se guardan pesos, porcentajes, estrellas ni victorias semanales nuevas. Los datos actuales bastan para recalcular al recargar, copiar y sincronizar. Copia **v11**, IDB **5**, cache **v52**; sin migración nueva ni SQL.
+
 ### Lecturas derivadas · agrupación y calendarios (08/10/2026, D57)
 
 - `weeklyProgress.goals` agrupa por `weeklyActivityKey(title)`: ignora mayúsculas, tildes y espacios repetidos, y reconoce Practica/Practicar Diseño. Cada grupo suma `done`, `total` y `recorded` después de limitar cada meta flexible; conserva las fechas, `routineIds` y `targetNotes` de sus componentes para configurar cada repetición. No fusiona actividades ni planes guardados.

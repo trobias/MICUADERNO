@@ -714,7 +714,7 @@ await test('A6 y D55: semana-planner editable, casillas históricas, Importante 
   // De fondo, la semana: Importante, los siete días y Notas, en ese orden.
   await page.waitForSelector('#main .planner');
   const order = await page.$$eval('#main .planner > *', (els) => els.map((e) => e.dataset.date ? 'dia' : e.querySelector('h2').textContent));
-  assert.deepEqual(order, ['Importante', 'dia', 'dia', 'dia', 'dia', 'dia', 'dia', 'dia', 'Notas']);
+  assert.deepEqual(order, ['Progreso', 'dia', 'dia', 'dia', 'dia', 'dia', 'dia', 'dia', 'Notas']);
   assert.match(await page.textContent('#main h1'), /Mi semana/);
   // Anotar en la semana conserva el borrador sin marcar; la página del día ofrece su casilla.
   const todayCell = `#main .week-day[data-date="${TODAY}"]`;
@@ -2801,6 +2801,87 @@ await test('objetivos semanales D57: una barra Trabajar 0/3 y calendarios muestr
     assert.equal(await page.locator('#rt-title').inputValue(), 'Leer');
     await page.getByRole('button', { name: 'Cancelar', exact: true }).click();
     assert.equal(await page.evaluate(async () => (await MC.model.getRoutines()).filter(r => r.title === 'Leer').length), 2);
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+    assert.deepEqual(errors, []); await context.close();
+  }
+});
+
+await test('objetivos semanales D58: tres un poquito llenan media barra amarilla con 3/3, mezcla y recarga (file y HTTP, desktop y móvil)', async () => {
+  for (const [url, viewport] of [[FILE_URL, { width: 1366, height: 900 }], [HTTP_URL, { width: 375, height: 812 }]]) {
+    const { page, errors, context } = await newPage(browser, { viewport, reducedMotion: 'reduce' });
+    await page.goto(url); await onboard(page);
+    const start = await page.evaluate(async () => {
+      const k = MC.dates.startOfWeek(MC.dates.today());
+      await MC.model.saveSettings({ showCover: false, motion: 'ninguna', motionChosen: true });
+      await MC.model.saveRoutine({ id: 'half-walk', title: 'Caminar', rule: { type: 'weeklyTarget', count: 3 }, startDate: k });
+      location.hash = MC.routes.week(k); return k;
+    });
+    const goal = page.locator('.week-progress__goal:has-text("Caminar")');
+    await goal.locator('.week-progress__goal-count:has-text("0/3")').waitFor();
+    for (let n = 0; n < 3; n++) {
+      await page.locator('.week-day').nth(n).locator('.week-day__head').click();
+      await page.locator('#panel .activity:has-text("Caminar") .icon-btn').click();
+      await page.locator('.menu__item:has-text("Hice un poquito")').click();
+      await page.waitForSelector('#panel .activity[data-status="partial"]:has-text("Caminar")');
+      await page.click('#panel-close');
+      await goal.locator(`.week-progress__goal-count:has-text("${n + 1}/3")`).waitFor();
+      if (n < 2) assert.equal(await goal.locator('.week-progress__victory').isVisible(), false);
+    }
+    await page.locator('.week-progress__percent:has-text("50%")').waitFor();
+    assert.equal(await page.locator('#pl-important').textContent(), 'Progreso');
+    assert.equal(await goal.locator('.week-progress__victory').isVisible(), true);
+    assert.equal(await goal.locator('.week-progress__victory svg').count(), 1, 'estrella del cuaderno');
+    assert.equal(await goal.locator('.week-progress__victory').evaluate(el => el.getAnimations().length), 0, 'movimiento reducido conserva la estrella quieta');
+    assert.match(await goal.locator('.week-progress__goal-count').textContent(), /3\/3 · 3 un poquito/);
+    assert.doesNotMatch(await goal.locator('.week-progress__goal-count').textContent(), /completo/);
+    assert.equal(await goal.locator('progress').getAttribute('value'), '1.5');
+    await page.evaluate(() => { location.hash = MC.routes.year(MC.dates.today().slice(0, 4)); });
+    await page.locator('.wins .win:has-text("Caminar · 3/3 · 3 un poquito")').waitFor();
+    assert.equal(await page.locator('.wins .win:has-text("Caminar · 3/3")').count(), 1);
+    await page.locator('.wins a:has-text("Caminar · 3/3")').click();
+    await goal.locator('.week-progress__goal-count:has-text("3/3")').waitFor();
+    const paint = await goal.locator('.week-progress__partial').evaluate(el => {
+      const meter = el.parentNode.getBoundingClientRect(), span = el.getBoundingClientRect();
+      return { width: span.width / meter.width, left: el.style.left, yellow: getComputedStyle(el).backgroundColor, expected: getComputedStyle(document.documentElement).getPropertyValue('--progress-partial').trim() };
+    });
+    assert.ok(Math.abs(paint.width - 0.5) < 0.01, JSON.stringify(paint));
+    assert.equal(paint.left, '0%'); assert.equal(paint.yellow, 'rgb(174, 133, 15)');
+    assert.match(await goal.locator('progress').getAttribute('aria-valuetext'), /0 completas y 3 un poquito; 50%/);
+    await page.reload(); await goal.locator('.week-progress__goal-count:has-text("3/3")').waitFor();
+    assert.equal(await goal.locator('progress').getAttribute('value'), '1.5');
+    await page.locator('.week-day').nth(0).locator('.week-day__head').click();
+    await page.locator('#panel .activity:has-text("Caminar") .icon-btn').click();
+    await page.locator('.menu__item:has-text("Lo hice")').click();
+    await page.waitForSelector('#panel .activity[data-status="done"]:has-text("Caminar")');
+    await page.click('#panel-close');
+    await page.locator('.week-progress__percent:has-text("67%")').waitFor();
+    assert.equal(await goal.locator('progress').getAttribute('value'), '2');
+    assert.match(await goal.locator('progress').getAttribute('aria-valuetext'), /1 completas y 2 un poquito/);
+    await page.evaluate(async k => {
+      for (let n = 1; n < 3; n++) await MC.model.setStatus((await MC.model.itemsForDay(MC.dates.addDays(k, n))).find(a => a.routineId === 'half-walk'), 'done');
+    }, start);
+    await goal.locator('.week-progress__goal-count:has-text("3/3 · completo")').waitFor();
+    assert.equal(await goal.locator('progress').getAttribute('value'), '3');
+    assert.equal(await goal.locator('.week-progress__partial').evaluate(el => el.style.width), '0%');
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.evaluate(async k => {
+      MC.motion.apply('completas');
+      const original = Element.prototype.animate;
+      window.__victoryAnimations = [];
+      Element.prototype.animate = function (frames, opts) {
+        if (this.classList.contains('week-progress__victory')) window.__victoryAnimations.push({ frames, opts });
+        return original.call(this, frames, opts);
+      };
+      await MC.model.setStatus((await MC.model.itemsForDay(k)).find(a => a.routineId === 'half-walk'), 'pending');
+    }, start);
+    await goal.locator('.week-progress__goal-count:has-text("2/3")').waitFor();
+    await page.evaluate(async k => MC.model.setStatus((await MC.model.itemsForDay(k)).find(a => a.routineId === 'half-walk'), 'done'), start);
+    await goal.locator('.week-progress__goal-count:has-text("3/3")').waitFor();
+    await page.waitForFunction(() => window.__victoryAnimations.length === 1);
+    const animation = await page.evaluate(() => window.__victoryAnimations[0]);
+    assert.ok(animation.opts.duration > 0 && animation.opts.duration <= 300);
+    assert.equal(animation.opts.iterations, undefined, 'sin loop');
+    assert.deepEqual(Object.keys(animation.frames[0]).sort(), ['opacity', 'transform']);
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
     assert.deepEqual(errors, []); await context.close();
   }

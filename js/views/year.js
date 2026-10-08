@@ -12,8 +12,10 @@
     var right = h('section.page.page--margin.year-notes');
     main.appendChild(h('div.spread', left, h('div.spine', { 'aria-hidden': 'true' }), right));
 
-    M.activeEverything().then(function (all) {
+    M.everything().then(function (raw) {
       if (destroyed) return;
+      var all = M.activeOnly(raw);
+      var wins = MC.insights.victories(Object.assign({}, all, { days: raw.days }), year);
       // Misma cuenta que el calendario, sobre lo ya cargado. Sin rutinas: el año solo borda lo registrado.
       var sum = M.summarize(all.days, all.activities, { from: year + '-01-01', to: year + '-12-31' });
       var palette = M.emotionPalette(all.days.filter(function (d) { return d.date.slice(0, 4) === year; }), all.meta.settings);
@@ -47,7 +49,7 @@
       var cells = [];
       // Días con alguna pequeña victoria: una puntadita dorada en la esquina (y dicho en el nombre del día).
       var winDays = {};
-      MC.insights.victories(all, year).forEach(function (w) { winDays[w.date] = true; });
+      wins.forEach(function (w) { winDays[w.date] = true; });
       for (var d = 1; d <= 31; d++) {
         var row = h('div.hoop__row', { role: 'row' }, h('span.hoop__daynum', { role: 'rowheader' }, d % 5 === 0 || d === 1 ? String(d) : ''));
         for (var m = 1; m <= 12; m++) {
@@ -109,7 +111,6 @@
       pNot.appendChild(h('p.noticed__foot.t-meta', 'Son solo cuentas de lo que registraste, no conclusiones.'));
 
       // Pequeñas victorias: referencias (marks) a lo que la persona eligió; cada una lleva a su día.
-      var wins = MC.insights.victories(all, year);
       var pWins = part('victorias', right);
       pWins.appendChild(h('h2.t-display.notes-title', 'Pequeñas victorias'));
       if (!wins.length) {
@@ -117,7 +118,7 @@
       } else {
         pWins.appendChild(h('ul.wins', wins.map(function (w) {
           return h('li.win', MC.icon('star'),
-            h('a', { href: w.page ? R.page(w.page) : R.day(w.date) }, h('span.win__date', D.shortLabel(w.date)), h('span.win__text', w.text)));
+            h('a', { href: w.week ? R.week(w.week) : w.page ? R.page(w.page) : R.day(w.date) }, h('span.win__date', D.shortLabel(w.date)), h('span.win__text', w.text)));
         })));
       }
 

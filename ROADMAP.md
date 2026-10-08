@@ -4,6 +4,8 @@ Estado al 05/10/2026: **la etapa A del plan nuevo está completa** (A0–A13) y 
 
 ## Ruta aprobada ahora
 
+D58 (08/10) actualiza esa entrega: la nota se llama Progreso; Un poquito cuenta una vez y media barra amarilla, completas llenan verde. Metas con todas sus veces registradas muestran estrella y Pequeña victoria en Mi año, con SVG/motion existentes. Copia v11, IDB 5 y cache v52; cálculo y victorias derivados, sin nuevos datos ni infraestructura. Evidencia en `docs/QA.md`.
+
 Pedido del 07/10 (D55, `6caaac7`) y ajuste del 08/10 (D56, `e9cd5a2`) publicados en main: checklist automático, metas fijas/flexibles e historial, barras en Importante y cinco actividades iniciales configurables. D57 agrupa barras por nombre (Trabajar 0/3) y oculta únicamente Sin marcar en ambos calendarios, en cualquier fecha; los demás estados aparecen. Cache v51, copia v11, IndexedDB 5. Gate y QA en `docs/QA.md`; Production requiere verificación aparte.
 
 | Tramo | Estado | Resultado |

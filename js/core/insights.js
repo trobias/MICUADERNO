@@ -242,7 +242,37 @@
       var d = days[date];
       if (d && (M.isDeleted(d) && m.sourceType === 'day')) return;
       if (d && (M.isPrivate(d, 'noReviews') || M.isPrivate(d, 'noMemory'))) return;
-      out.push({ id: m.id, date: date, text: text, sourceType: m.sourceType, page: page });
+      out.push({ id: m.id, date: date, text: text, sourceType: m.sourceType, sourceId: m.sourceId, page: page });
+    });
+    // D58: metas semanales alcanzadas, incluidas las hechas Un poquito. Lectura derivada, sin marcas nuevas.
+    var weeks = {};
+    (all.activities || []).forEach(function (a) {
+      var d = days[a.date];
+      if (M.isDeleted(a) || !D.isValid(a.date)) return;
+      var start = D.startOfWeek(a.date);
+      var hidden = d && (M.isPrivate(d, 'noReviews') || M.isPrivate(d, 'noMemory'));
+      (weeks[start] || (weeks[start] = [])).push(hidden ? Object.assign({}, a, { status: 'pending' }) : a);
+    });
+    Object.keys(weeks).forEach(function (start) {
+      var rows = weeks[start];
+      var stored = (all.weeks || []).filter(function (w) { return w.week === start && !M.isDeleted(w); })[0];
+      var plan = stored && stored.activityPlan !== null && stored.activityPlan !== undefined ? stored.activityPlan : M.activityPlan(start, all.routines || []);
+      var progress = M.weeklyProgress(start, plan, rows, all.days);
+      progress.goals.forEach(function (goal) {
+        if (goal.checked !== goal.total) return;
+        // Sin la regla/plan de una rutina no se puede afirmar que su meta semanal se alcanzó (p. ej. permisos parciales).
+        if (rows.some(function (a) { return a.routineId && M.weeklyActivityKey(a.title) === goal.key && !plan.some(function (g) { return g.routineId === a.routineId; }); })) return;
+        var dates = rows.filter(function (a) { return M.countsAsDone(a.status); }).map(function (a) { return a.date; }).sort();
+        var date = dates.filter(function (k, i) { return !i || k !== dates[i - 1]; }).find(function (k) {
+          var atDate = M.weeklyProgress(start, plan, rows.map(function (a) { return a.date > k ? Object.assign({}, a, { status: 'pending' }) : a; }), all.days);
+          var g = atDate.goals.filter(function (g) { return g.key === goal.key; })[0];
+          return g && g.checked === g.total;
+        });
+        if (!date || date.slice(0, 4) !== year) return;
+        // Una actividad de 1/1 ya elegida manualmente conserva su referencia y enlace originales.
+        if (goal.total === 1 && out.some(function (w) { return w.sourceType === 'activity' && acts[w.sourceId] && M.weeklyActivityKey(acts[w.sourceId].title) === goal.key && w.date >= start && w.date <= D.addDays(start, 6); })) return;
+        out.push({ id: 'week:' + start + ':' + goal.key, date: date, week: start, text: goal.title + ' · ' + goal.checked + '/' + goal.total + (goal.partial ? ' · ' + goal.partial + ' un poquito' : ''), sourceType: 'week', page: null });
+      });
     });
     return out.sort(function (a, b) { return a.date < b.date ? 1 : a.date > b.date ? -1 : 0; });
   }
