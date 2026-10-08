@@ -310,7 +310,10 @@
         if (d.deletedAt !== stored.deletedAt) throw new Error('Este día está en la papelera. Volvé a abrirlo antes de editarlo.');
         d.deletedAt = null;
       }
-      if (isEmptyDay(d)) return S().del('days', d.date).then(function () { return d; });
+      if (isEmptyDay(d)) return S().getAllByIndex('marks', 'sourceId', d.date).then(function (marks) {
+        if (marks.some(function (m) { return m.sourceType === 'day' && !isDeleted(m); })) return S().put('days', stamp(d));
+        return S().del('days', d.date).then(function () { return d; });
+      });
       var now = MC.nowISO();
       d.createdAt = d.createdAt || now;
       d.updatedAt = now;
@@ -847,7 +850,7 @@
 
   /* ---------- pequeñas victorias (A8, D25.2): una referencia a algo del cuaderno, nunca una copia ---------- */
   /** Id fijo por cosa marcada: la misma victoria en todas las pestañas y dispositivos, sin duplicados. */
-  function markId(sourceType, sourceId) { return 'mrk_' + sourceType + '_' + String(sourceId).slice(0, 72); }
+  function markId(sourceType, sourceId, kind) { return 'mrk_' + (kind && kind !== 'victoria' ? kind + '_' : '') + sourceType + '_' + String(sourceId).slice(0, kind && kind !== 'victoria' ? 120 : 72); }
   function getMarks() {
     return S().getAll('marks').then(function (rows) { return rows.filter(function (m) { return !isDeleted(m); }).map(normalizeMark).filter(Boolean); });
   }
@@ -856,11 +859,25 @@
   }
   /** Marcar o desmarcar como pequeña victoria. Desmarcar borra la referencia (no es contenido de la persona). */
   function setVictory(sourceType, sourceId, on) {
-    var id = markId(sourceType, sourceId);
-    if (!on) return S().del('marks', id).then(function () { return null; });
-    var m = normalizeMark({ id: id, sourceType: sourceType, sourceId: String(sourceId), kind: 'victoria' });
-    if (!m) return Promise.reject(new Error('No se puede marcar esto.'));
-    return S().get('marks', id).then(function (old) {
+    if (!on) return setMemory(sourceType, sourceId, 'victoria', null);
+    return S().get('marks', markId(sourceType, sourceId)).then(function (old) {
+      return setMemory(sourceType, sourceId, 'victoria', old ? { category: old.category, note: old.note } : {});
+    });
+  }
+
+  /** D59: recuerdos y elecciones personales por referencia, compartiendo la copia y la cola existentes. */
+  function setMemory(sourceType, sourceId, kind, details) {
+    if (MARK_KINDS.indexOf(kind) === -1) return Promise.reject(new Error('Ese tipo de recuerdo no existe.'));
+    var id = markId(sourceType, sourceId, kind);
+    if (details === null) return S().del('marks', id).then(function () { return null; });
+    var m = normalizeMark(Object.assign({}, details, { id: id, sourceType: sourceType, sourceId: String(sourceId), kind: kind }));
+    if (!m) return Promise.reject(new Error('No se puede guardar este recuerdo.'));
+    if (sourceType === 'day' && !D.isValid(sourceId)) return Promise.reject(new Error('Ese día no existe.'));
+    var source = sourceType === 'day' ? S().get('days', sourceId).then(function (d) {
+      if (isDeleted(d)) throw new Error('Este día está en la papelera.');
+      if (!d) return S().put('days', stamp(emptyDay(sourceId)));
+    }) : Promise.resolve();
+    return source.then(function () { return S().get('marks', id); }).then(function (old) {
       if (old && old.createdAt) m.createdAt = old.createdAt;
       return S().put('marks', stamp(m));
     });
@@ -1176,16 +1193,24 @@
     };
   }
 
-  var MARK_SOURCES = ['activity', 'day', 'page'];
-  var MARK_KINDS = ['victoria'];
+  var MARK_SOURCES = ['activity', 'day', 'page', 'routine'];
+  var MARK_KINDS = ['victoria', 'recuerdo', 'especial', 'terminado'];
+  var MEMORY_CATEGORIES = {
+    personal: 'Algo importante para mí', first: 'Me animé a algo nuevo', meeting: 'Compartí un momento con alguien',
+    choice: 'Le hice lugar a algo que quería', return: 'Volví a algo querido', help: 'Pedí ayuda',
+    boundary: 'Puse un límite', rest: 'Descansé cuando lo necesitaba', courage: 'Hice algo que me daba miedo',
+    care: 'Cambié de plan para cuidarme', enjoy: 'Disfruté sin tener que producir nada'
+  };
   /** Referencia a algo del cuaderno (D25.2): hoy, las victorias. Nunca copia el contenido. */
   function normalizeMark(m) {
     if (!m || MARK_SOURCES.indexOf(m.sourceType) === -1 || typeof m.sourceId !== 'string' || !m.sourceId) return null;
     return {
-      id: typeof m.id === 'string' ? m.id.slice(0, 80) : MC.uid('mrk'),
+      id: typeof m.id === 'string' ? m.id.slice(0, 160) : MC.uid('mrk'),
       sourceType: m.sourceType,
       sourceId: m.sourceId.slice(0, 120),
       kind: MARK_KINDS.indexOf(m.kind) !== -1 ? m.kind : 'victoria',
+      category: Object.prototype.hasOwnProperty.call(MEMORY_CATEGORIES, m.category) ? m.category : null,
+      note: str(m.note).trim().slice(0, 200),
       deletedAt: sanitizeDeletedAt(m.deletedAt),
       createdAt: stampOf(m.createdAt),
       updatedAt: stampOf(m.updatedAt)
@@ -1499,7 +1524,7 @@
     sanitizeBlocks: sanitizeBlocks, sanitizeValues: sanitizeValues, BLOCK_TYPES: BLOCK_TYPES,
     normalizeWeek: normalizeWeek, activityPlan: activityPlan, ensureActivityPlan: ensureActivityPlan, weeklyProgress: weeklyProgress, getWeeklyProgress: getWeeklyProgress,
     sheetOccurrenceId: sheetOccurrenceId, sheetOccurrences: sheetOccurrences, sheetBlocks: sheetBlocks, sheetText: sheetText, sheetCount: sheetCount,
-    markId: markId, getMarks: getMarks, isVictory: isVictory, setVictory: setVictory,
+    markId: markId, getMarks: getMarks, isVictory: isVictory, setVictory: setVictory, setMemory: setMemory, MEMORY_CATEGORIES: MEMORY_CATEGORIES,
     getTemplates: getTemplates, getTemplate: getTemplate, getDayTemplates: getDayTemplates, dayTemplateFrom: dayTemplateFrom, applyDayTemplate: applyDayTemplate, repeatDay: repeatDay, saveTemplate: saveTemplate, deleteTemplate: deleteTemplate, templateFrom: templateFrom, repeatSheet: repeatSheet, getWeek: getWeek, saveWeek: saveWeek, isEmptyWeek: isEmptyWeek, normalizeTemplate: normalizeTemplate, normalizeMark: normalizeMark,
     sanitizeFeelings: sanitizeFeelings, sanitizeFeel: sanitizeFeel, sanitizeMoves: sanitizeMoves,
     feelingsOf: feelingsOf, emotionKey: emotionKey, emotionPalette: emotionPalette, emotionSuggestions: emotionSuggestions,

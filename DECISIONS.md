@@ -2,6 +2,11 @@
 
 Registro breve de decisiones de arquitectura y producto. Formato: contexto → decisión → consecuencias.
 
+## D59 · Mi año conserva victorias personales y recuerdos especiales (2026-10-08)
+**Pedido:** ampliar las victorias más allá de las metas, con primer dibujo, creaciones terminadas, primeras experiencias, encuentros, decisiones, retomar algo y días/hojas para recordar; diseño de papelería dentro de Mi año.
+**Decisión:** reutilizar marks y un único editor contextual. La persona puede elegir una victoria personal y sus palabras, guardar días/hojas como recuerdo, marcar una creación terminada o clasificar una actividad/repetición como especial. Done y partial generan momentos especiales; primera vez solo el primer registro. Los hitos no infieren mérito, emociones, vínculos ni descansos a partir de textos. Primer dibujo del año se deriva de dibujos guardados y colocados, enlazando su fuente. Mi año conserva sus partes victorias/recuerdos y sus permisos, presenta estrellas, papelitos con imagen opcional y agrupación por mes. Sin rankings, rachas ni dependencias nuevas.
+**Contrato:** copia v12 aditiva, IDB 5, cache v53. Nuevos tipos/category/note en marks; normalización, copia y nube en la sección anio existente. Fuente privada/borrada se filtra antes de producir contenido o miniaturas.
+
 ## D58 · Un poquito llena media barra amarilla; Progreso y pequeñas victorias (2026-10-08)
 **Contexto:** la dueña pidió que tres Un poquito se vean como 3/3 con media barra amarilla. Sumó renombrar Importante a Progreso y una estrella/victoria al alcanzar todas las veces, aunque el avance sea a la mitad, usando arte y efectos existentes.
 **Decisión:** separar el conteo entero de veces (done + partial) del avance ponderado (done + partial / 2). Barra verde para completas y amarilla para medios avances, con texto y progress accesible. Limitar cada meta flexible antes de agrupar; completas tienen prioridad sobre partial extra. Mantener el resto de los estados y la visibilidad D57. La estrella SVG existente dice Pequeña victoria cuando checked alcanza total, y aparece una sola vez con MC.motion y tokens (200 ms); sin loops ni efectos durante tecleo/panel abierto/movimiento reducido.

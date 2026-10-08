@@ -248,6 +248,13 @@
           else c.toast('Quedó entre tus pequeñas victorias.', { action: 'Ver', onAction: function () { location.hash = R.year(it.date.slice(0, 4)); } });
         });
       } });
+      if (MC.memories.allowed()) {
+        if (!it.virtual) {
+          items.push(MC.memories.item('activity', it.id, 'victoria', 'Elegir mi pequeña victoria…', { title: it.title, date: it.date }));
+          items.push(MC.memories.item('activity', it.id, 'recuerdo', 'Quiero recordarlo…', { title: it.title, date: it.date }));
+        }
+        items.push(MC.memories.item(it.routineId ? 'routine' : 'activity', it.routineId || it.id, 'especial', 'Esto es especial para mí…', { title: it.title, date: it.date }));
+      }
       items.push({ label: 'Pasar a mañana', icon: 'later', onSelect: function () { moveToDate(D.addDays(it.date, 1), 'Quedó anotado para mañana.'); } });
       items.push({ label: 'Pasar a otro día…', icon: 'calendario', onSelect: moveTo });
       items.push({ label: 'Cambiar el nombre', icon: 'edit', onSelect: startRename });

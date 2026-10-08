@@ -7,6 +7,8 @@
   var REFL = [['good', 'Qué me hizo bien'], ['hard', 'Algo difícil'], ['lovely', 'Algo lindo'], ['keep', 'Qué quiero guardar'], ['free', 'Más']];
 
   function build(all, opts) {
+    var memoryData = all;
+    all = M.activeOnly(all);
     var s = all.meta.settings;
     var inRange = function (k) { return k >= opts.from && k <= opts.to; };
     var days = all.days.filter(function (d) { return inRange(d.date); });
@@ -87,6 +89,14 @@
       doc.appendChild(h('section.p-sheet.p-routines', h('h2.p-h', 'Mis rutinas'),
         h('ul.p-list', all.routines.map(function (r) { return h('li', h('strong', r.title), ' — ' + MC.recurrence.describe(r) + (r.targetNote ? ' · ' + r.targetNote : '') + (r.archived ? ' (en pausa)' : '')); }))));
     }
+    if (opts.days || opts.pages) {
+      var fromYear = +opts.from.slice(0, 4), toYear = +opts.to.slice(0, 4);
+      for (var y = fromYear; y <= toYear; y++) {
+        var moments = MC.insights.victories(memoryData, String(y)).concat(MC.insights.moments(memoryData, String(y)).filter(function (m) { return !m.victory; })).filter(function (m) { return inRange(m.date) && (m.page ? opts.pages : opts.days); });
+        if (moments.length) doc.appendChild(h('section.p-sheet', h('h2.p-h', 'Victorias y recuerdos · ' + y),
+          h('ul.p-list', moments.map(function (m) { return h('li', D.shortLabel(m.date) + ' · ' + m.text); }))));
+      }
+    }
     return doc;
   }
 
@@ -152,12 +162,13 @@
     var go = h('button.label-btn', { type: 'button' }, MC.icon('print'), 'Preparar e imprimir');
     go.addEventListener('click', function () {
       if (!D.isValid(state.from) || !D.isValid(state.to) || state.from > state.to) { c.toast('Revisá las fechas: el inicio tiene que ser antes del final.'); return; }
-      M.activeEverything().then(function (all) {
+      M.everything().then(function (raw) {
+        var all = M.activeOnly(raw);
         if (state.range === 'all') {
           var ds = all.days.map(function (d) { return d.date; }).concat(all.activities.map(function (a) { return a.date; })).sort();
           state.from = ds[0] || today; state.to = ds[ds.length - 1] || today;
         }
-        printNow(all, state);
+        printNow(raw, state);
       });
     });
     page.appendChild(h('div.onboard__actions', go));

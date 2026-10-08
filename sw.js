@@ -3,13 +3,13 @@
    NO pasan por acá: viven en IndexedDB. Al cambiar cualquier archivo de SHELL, subir CACHE_VERSION. */
 'use strict';
 
-var CACHE_VERSION = 'mi-cuaderno-v52';
+var CACHE_VERSION = 'mi-cuaderno-v53';
 var SHELL = [
   './', 'index.html', 'manifest.webmanifest',
   'css/fonts.css', 'css/tokens.css', 'css/base.css', 'css/notebook.css', 'css/components.css', 'css/views.css', 'css/print.css',
   'js/core/ns.js', 'js/cloud.js', 'js/core/sections.js', 'js/core/media.js', 'js/core/history.js', 'js/core/dates.js', 'js/core/routes.js', 'js/core/recurrence.js', 'js/core/store.js', 'js/sync.js', 'js/core/theme.js', 'js/core/brush.js', 'js/core/templates.js', 'js/core/model.js', 'js/core/backup.js',
   'js/core/zip.js', 'js/core/exporters.js', 'js/core/insights.js',
-  'js/ui/icons.js', 'js/ui/stickers.js', 'js/ui/motion.js', 'js/ui/theme.js', 'js/ui/components.js', 'js/ui/access.js', 'js/ui/privacy.js', 'js/ui/repeat.js', 'js/ui/sheet.js', 'js/ui/activity.js', 'js/ui/images.js', 'js/ui/draw.js', 'js/ui/scrapbook.js', 'js/ui/scenes.js',
+  'js/ui/icons.js', 'js/ui/stickers.js', 'js/ui/motion.js', 'js/ui/theme.js', 'js/ui/components.js', 'js/ui/access.js', 'js/ui/memories.js', 'js/ui/privacy.js', 'js/ui/repeat.js', 'js/ui/sheet.js', 'js/ui/activity.js', 'js/ui/images.js', 'js/ui/draw.js', 'js/ui/scrapbook.js', 'js/ui/scenes.js',
   'js/views/cover.js', 'js/views/onboarding.js', 'js/views/today.js', 'js/views/calendar.js', 'js/views/week.js', 
   'js/views/pages.js', 'js/views/sheets.js', 'js/views/year.js', 'js/views/settings.js', 'js/views/print.js',
   'js/notify.js', 'js/pwa.js', 'js/app.js',

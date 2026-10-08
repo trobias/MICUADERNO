@@ -236,13 +236,13 @@
       if (M.isDeleted(m) || m.kind !== 'victoria') return;
       var date = null, text = '', page = null;
       if (m.sourceType === 'activity') { var a = acts[m.sourceId]; if (!a || M.isDeleted(a)) return; date = a.date; text = a.title; }
-      else if (m.sourceType === 'page') { var p = pages[m.sourceId]; if (!p || M.isDeleted(p)) return; date = M.pageDate(p); text = M.pageTitle(p); page = p.id; }
-      else if (m.sourceType === 'day') { date = m.sourceId; text = 'Este día'; }
+      else if (m.sourceType === 'page') { var p = pages[m.sourceId]; if (!p || M.isDeleted(p) || M.isPrivate(p, 'noReviews') || M.isPrivate(p, 'noMemory')) return; date = M.pageDate(p); text = M.pageTitle(p); page = p.id; }
+      else if (m.sourceType === 'day') { if (!days[m.sourceId]) return; date = m.sourceId; text = 'Este día'; }
       if (!date || date.slice(0, 4) !== year) return;
       var d = days[date];
-      if (d && (M.isDeleted(d) && m.sourceType === 'day')) return;
+      if (d && M.isDeleted(d)) return;
       if (d && (M.isPrivate(d, 'noReviews') || M.isPrivate(d, 'noMemory'))) return;
-      out.push({ id: m.id, date: date, text: text, sourceType: m.sourceType, sourceId: m.sourceId, page: page });
+      out.push({ id: m.id, date: date, text: m.note || (m.category && m.category !== 'personal' ? M.MEMORY_CATEGORIES[m.category] : text), detail: text, sourceType: m.sourceType, sourceId: m.sourceId, page: page, manual: true });
     });
     // D58: metas semanales alcanzadas, incluidas las hechas Un poquito. Lectura derivada, sin marcas nuevas.
     var weeks = {};
@@ -274,8 +274,82 @@
         out.push({ id: 'week:' + start + ':' + goal.key, date: date, week: start, text: goal.title + ' · ' + goal.checked + '/' + goal.total + (goal.partial ? ' · ' + goal.partial + ' un poquito' : ''), sourceType: 'week', page: null });
       });
     });
-    return out.sort(function (a, b) { return a.date < b.date ? 1 : a.date > b.date ? -1 : 0; });
+    moments(all, year).filter(function (m) { return m.victory; }).forEach(function (m) {
+      if (!out.some(function (w) { return w.manual && w.sourceType === m.sourceType && w.sourceId === m.sourceId && w.date === m.date; })) out.push(m);
+    });
+    return out.sort(function (a, b) { return a.date < b.date ? 1 : a.date > b.date ? -1 : a.id.localeCompare(b.id); });
   }
 
-  MC.insights = { compute: compute, period: period, periods: periods, byMonth: byMonth, victories: victories, MIN_SAMPLE: MIN_SAMPLE };
+  /** D59: contenido elegido o hitos concretos. Nunca interpreta texto ni premia emociones. */
+  function moments(all, year) {
+    var days = {}, pages = {}, acts = {}, images = {};
+    (all.days || []).forEach(function (d) { days[d.date] = d; });
+    (all.pages || []).forEach(function (p) { pages[p.id] = p; });
+    (all.activities || []).forEach(function (a) { acts[a.id] = a; });
+    (all.images || []).forEach(function (img) { if (!M.isDeleted(img)) images[img.id] = img; });
+    function hidden(src, auto) {
+      return !src || M.isDeleted(src) || M.isPrivate(src, 'noMemory') || M.isPrivate(src, 'noReviews') || (auto && M.isPrivate(src, 'noInsights'));
+    }
+    function source(type, id, auto) {
+      var src = type === 'day' ? days[id] : type === 'page' ? pages[id] : acts[id];
+      if (hidden(src, auto)) return null;
+      var date = type === 'page' ? M.pageDate(src) : src.date;
+      if (!D.isValid(date) || (days[date] && hidden(days[date], auto))) return null;
+      var placed = (src.stickers || []).map(function (s) { return typeof s.sticker === 'string' && s.sticker.slice(0, 4) === 'img:' ? images[s.sticker.slice(4)] : null; }).filter(Boolean);
+      return { date: date, detail: type === 'page' ? M.pageTitle(src) : type === 'activity' ? src.title : 'Un día que quiero guardar', page: type === 'page' ? id : null,
+        sourceType: type, sourceId: id, image: placed[0] || null, placed: placed };
+    }
+    var out = [];
+    function add(id, ctx, text, victory, origin) {
+      if (!ctx || ctx.date.slice(0, 4) !== year) return;
+      out.push(Object.assign({}, ctx, { id: id, text: text, victory: victory, origin: origin }));
+    }
+    (all.marks || []).forEach(function (m) {
+      if (M.isDeleted(m)) return;
+      var ctx;
+      if (m.kind === 'recuerdo' || m.kind === 'terminado') {
+        if (m.sourceType === 'routine') return;
+        ctx = source(m.sourceType, m.sourceId, m.kind === 'terminado');
+        add(m.id, ctx, m.note || (m.kind === 'terminado' ? 'Terminaste una creación' : ctx && ctx.detail), m.kind === 'terminado', m.kind === 'terminado' ? 'Creación terminada' : 'Elegido por vos');
+      } else if (m.kind === 'especial') {
+        if (m.sourceType === 'routine' && !(all.routines || []).some(function (r) { return r.id === m.sourceId && !M.isDeleted(r); })) return;
+        var rows = (all.activities || []).filter(function (a) { return !M.isDeleted(a) && M.countsAsDone(a.status) && (m.sourceType === 'routine' ? a.routineId === m.sourceId : m.sourceType === 'activity' && a.id === m.sourceId); })
+          .sort(function (a, b) { return a.date.localeCompare(b.date) || a.id.localeCompare(b.id); });
+        // Elegir la primera antes del filtro de privacidad evita atribuir una segunda primera vez.
+        if (m.category === 'first') rows = rows.slice(0, 1);
+        rows.forEach(function (a) {
+          ctx = source('activity', a.id, true);
+          add(m.id + ':' + a.id, ctx, m.note || M.MEMORY_CATEGORIES[m.category || 'personal'], true, a.status === 'partial' ? 'Un poquito también cuenta' : 'Momento especial');
+        });
+      }
+    });
+    // Las frases que ya eligió conservar siguen siendo recuerdos, con la imagen de su día si hay una.
+    (all.days || []).forEach(function (d) {
+      var text = d.reflection && typeof d.reflection.keep === 'string' ? d.reflection.keep.trim() : '';
+      if (text && !out.some(function (m) { return m.sourceType === 'day' && m.sourceId === d.date && !m.victory; })) add('keep:' + d.date, source('day', d.date, false), text, false, 'Qué quiero guardar');
+    });
+    // Solo dibujos colocados: las imágenes sin fuente visible nunca reaparecen por sorpresa.
+    var drawings = [];
+    ['day', 'page'].forEach(function (type) {
+      (type === 'day' ? all.days || [] : all.pages || []).forEach(function (src) {
+        var id = type === 'day' ? src.date : src.id;
+        var date = type === 'day' ? src.date : M.pageDate(src);
+        if (M.isDeleted(src) || !D.isValid(date)) return;
+        (src.stickers || []).forEach(function (s) {
+          var img = typeof s.sticker === 'string' && s.sticker.slice(0, 4) === 'img:' ? images[s.sticker.slice(4)] : null;
+          if (!img) return;
+          var savedDate = D.fromISO(img.createdAt);
+          if (img.kind === 'drawing' && savedDate && savedDate.slice(0, 4) === year && date.slice(0, 4) === year) drawings.push({ type: type, id: id, date: date, img: img });
+        });
+      });
+    });
+    drawings.sort(function (a, b) { return a.img.createdAt.localeCompare(b.img.createdAt) || a.date.localeCompare(b.date) || a.img.id.localeCompare(b.img.id); });
+    if (drawings.length) {
+      var first = drawings[0], ctx = source(first.type, first.id, true);
+      if (ctx) add('drawing:' + year, Object.assign({}, ctx, { image: first.img }), 'Tu primer dibujo guardado este año', true, 'Primer dibujo del año');
+    }
+    return out.sort(function (a, b) { return b.date.localeCompare(a.date) || a.id.localeCompare(b.id); });
+  }
+
+  MC.insights = { compute: compute, period: period, periods: periods, byMonth: byMonth, victories: victories, moments: moments, MIN_SAMPLE: MIN_SAMPLE };
 })(typeof window !== 'undefined' ? window : globalThis);

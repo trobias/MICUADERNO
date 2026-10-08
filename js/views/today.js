@@ -109,9 +109,19 @@
         h('div.day-head__tools',
           !isToday ? h('a.text-btn', { href: R.today() }, MC.icon('hoy'), 'Ir a hoy') : null,
           privacyEl = MC.privacy.button(day.privacy, openPrivacy, false, day.hide),
-          keepButton()),
+          keepButton(), memoryButton()),
         trashNotice = h('p.slip', { hidden: !M.isDeleted(day) }, 'Este día está en la papelera. Si lo editás, vuelve a tu cuaderno con lo que ya habías guardado.')
       );
+    }
+
+    function memoryButton() {
+      if (!MC.memories.allowed()) return null;
+      var b = h('button.text-btn.memory-btn', { type: 'button', 'aria-haspopup': 'menu' }, MC.icon('star'), 'Este día…');
+      b.addEventListener('click', function () {
+        c.menu(b, [MC.memories.item('day', date, 'recuerdo', 'Un día que quiero guardar…', { date: date, title: D.longLabel(date) }),
+          MC.memories.item('day', date, 'victoria', 'Mi pequeña victoria…', { date: date, title: D.longLabel(date) })], 'Recuerdos de este día');
+      });
+      return b;
     }
 
     /* “Guardar” del día (D45): que se repita (sus actividades), como plantilla de día, o usar una plantilla. */

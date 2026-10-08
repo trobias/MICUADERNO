@@ -5,7 +5,7 @@
   var D = MC.dates;
   var M = function () { return MC.model; };
 
-  var SCHEMA_VERSION = 11;
+  var SCHEMA_VERSION = 12;
   var APP_ID = 'mi-cuaderno';
 
   /* ---------- contrato v6 (A13, D34): retirar las formas viejas sin perder nada ---------- */
@@ -110,7 +110,9 @@
     // v10 (D55): metas semanales y planificación histórica. Aditiva: no inventa planes del pasado.
     10: function (data) { return data; },
     // v11 (D56): indicador de instalación única de actividades iniciales. No agrega rutinas al importar.
-    11: function (data) { return data; }
+    11: function (data) { return data; },
+    // D59: memorias por referencia, aditivas. No crea hitos ni fechas al importar.
+    12: function (data) { return data; }
   };
 
   function build(everything) {
@@ -162,12 +164,14 @@
     }
 
     var model = M();
+    var markedDays = {};
+    (data.marks || []).map(model.normalizeMark).filter(Boolean).forEach(function (m) { if (m.sourceType === 'day' && !model.isDeleted(m)) markedDays[m.sourceId] = true; });
     var seenDays = {};
     var days = (data.days || []).filter(function (d) {
       if (!d || !D.isValid(d.date) || seenDays[d.date]) return false;
       seenDays[d.date] = true;
       return true;
-    }).map(function (d) { return model.normalizeDay(d, d.date); }).filter(function (d) { return !model.isEmptyDay(d); });
+    }).map(function (d) { return model.normalizeDay(d, d.date); }).filter(function (d) { return !model.isEmptyDay(d) || markedDays[d.date] || model.isDeleted(d); });
 
     var seenIds = {};
     var activities = (data.activities || []).filter(function (a) {

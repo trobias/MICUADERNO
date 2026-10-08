@@ -28,6 +28,7 @@
   ];
 
   function toTXT(all) {
+    var memoryData = all;
     all = MC.model.activeOnly(all);
     var s = all.meta.settings;
     var byDay = {}; all.days.forEach(function (d) { byDay[d.date] = d; });
@@ -96,6 +97,17 @@
         lines.push('  ' + (r.kind === 'sheet' ? '(hoja) ' : '') + r.title + ' — ' + MC.recurrence.describe(r) + (r.targetNote ? ' · ' + r.targetNote : '') + (r.archived ? ' (en pausa)' : ''));
       });
     }
+    var years = {};
+    all.days.concat(all.activities).forEach(function (r) { if (D.isValid(r.date)) years[r.date.slice(0, 4)] = true; });
+    all.pages.forEach(function (p) { years[MC.model.pageDate(p).slice(0, 4)] = true; });
+    Object.keys(years).sort().forEach(function (year) {
+      var wins = MC.insights.victories(memoryData, year), memories = MC.insights.moments(memoryData, year).filter(function (m) { return !m.victory; });
+      if (!wins.length && !memories.length) return;
+      lines.push('MI AÑO · ' + year);
+      wins.forEach(function (m) { lines.push('  Pequeña victoria · ' + m.date + ' · ' + m.text); });
+      memories.forEach(function (m) { lines.push('  Recuerdo · ' + m.date + ' · ' + m.text); });
+      lines.push('');
+    });
     return lines.join('\n') + '\n';
   }
 

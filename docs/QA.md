@@ -1,5 +1,14 @@
 # QA cruzada (A12) — 05/10/2026
 
+## Actualización del 08/10/2026 · álbum anual y barras grandes (D59)
+
+- Copia v12 aditiva, IDB 5, cache v53. Nuevo script clásico memories.js en index y shell; ninguna dependencia/SQL nueva.
+- Unitarias: 170/170 en npm test final. Casos D59: IDs estables y compatibilidad, v11→v12 y referencia ida/vuelta en copia, category/note saneados, días vacíos elegidos, imágenes solo desde fuente visible, papelera/privacidad, primera vez entre años, partial/done y estados que no generan momentos, creación terminada, deduplicación manual y TXT con exclusiones. Reafirmar una victoria conserva las palabras elegidas.
+- E2E D59 enfocado aprobado en file:// 1366×900 y HTTP 375×812: victoria personal, repetición especial señalada antes de marcar Un poquito, hoja terminada, recuerdo con imagen/enlace, agrupación por mes, recarga sin duplicados, copia válida, barras individuales de al menos 16 px, sin overflow horizontal ni errores de consola. Primera recarga vuelve a la tapa, siguiendo el ritual existente; abrirla restaura la vista.
+- npm run check: sintaxis de 47 scripts, 169 unitarias al comenzar el gate y 68/68 recorridos Chromium aprobados; la quinta prueba nueva de exportación y el ajuste de conservación de palabras se validaron después con npm test (170/170) y node --check. npm run typecheck y npm run build: exit 0; build final tras el ajuste de modelo: exit 0. npm run e2e:cloud: 3/3 humo local. Revisión visual de barras y álbum en 1366/375 px con capturas sintéticas de Nicole, sin imágenes o datos reales.
+- Fuentes no compartidas no se renderizan y sin permiso de fotos no hay miniaturas. category/note se clasifican en anio como elecciones independientes. No se verificaron cuentas/dispositivos reales ni entrega autenticada de datos de producción; se mantiene D40.
+- Revisión final: miniaturas con dimensiones reservadas para evitar saltos al cargar. D59 repetido tras ese ajuste y conservación de palabras: 1/1 (file/HTTP, desktop/móvil); A8 anterior: 1/1. node --check year/model/e2e y build final: exit 0. Capturas revisadas de Progreso y Mi año en 1366/375 px.
+
 ## Actualización del 08/10/2026 · Medios avances y victorias (D58)
 
 - Base `main` en `80d1b33`. Copia **v11**, cache **v52**, IDB **5**, sin nueva persistencia ni SQL.

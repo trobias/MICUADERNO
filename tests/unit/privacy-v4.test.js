@@ -55,9 +55,9 @@ function v3Backup() {
   };
 }
 
-test('esquema: v11 conserva el contrato v6 y las migraciones anteriores', () => {
-  assert.equal(MC.backup.SCHEMA_VERSION, 11);
-  [4, 5, 6, 7, 8, 9, 10, 11].forEach((n) => assert.equal(typeof MC.backup.MIGRATIONS[n], 'function', 'migración ' + n));
+test('esquema: v12 conserva el contrato v6 y las migraciones anteriores', () => {
+  assert.equal(MC.backup.SCHEMA_VERSION, 12);
+  [4, 5, 6, 7, 8, 9, 10, 11, 12].forEach((n) => assert.equal(typeof MC.backup.MIGRATIONS[n], 'function', 'migración ' + n));
 });
 
 test('migración v3 → … → v6: una copia v3 real abre igual y sale con la versión actual', async () => {

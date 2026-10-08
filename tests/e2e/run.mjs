@@ -2887,6 +2887,83 @@ await test('objetivos semanales D58: tres un poquito llenan media barra amarilla
   }
 });
 
+await test('D59: victorias personales, momentos especiales y álbum con imágenes, copia y barras grandes (file/HTTP, desktop/375)', async () => {
+  for (const [url, viewport] of [[FILE_URL, { width: 1366, height: 900 }], [HTTP_URL, { width: 375, height: 812 }]]) {
+    const { page, errors, context } = await newPage(browser, { viewport, reducedMotion: 'reduce' });
+    await page.goto(url); await onboard(page);
+    await page.locator('.memory-btn').click();
+    await page.getByRole('menuitem', { name: 'Mi pequeña victoria…', exact: true }).click();
+    await page.locator('.memory-editor select').selectOption('rest');
+    await page.locator('.memory-editor textarea').fill('Me di tiempo para descansar');
+    await page.locator('.memory-editor').getByRole('button', { name: 'Guardar en Mi año', exact: true }).click();
+    await page.locator('.memory-editor').waitFor({ state: 'detached' });
+    await page.evaluate(async () => {
+      const M = MC.model, D = MC.dates;
+      const now = D.today();
+      await M.saveRoutine({ id: 'especial-nicole', title: 'Volver a dibujar', startDate: now, rule: { type: 'weeklyTarget', count: 3 } });
+      location.hash = MC.routes.day(now);
+    });
+    // La vista abierta se conserva; se vuelve por el router para cargar la nueva repetición.
+    await page.evaluate(() => { location.hash = MC.routes.week(); });
+    await page.waitForSelector('.week-progress__goals');
+    assert.ok(await page.locator('.week-progress__goal progress').first().evaluate(el => el.getBoundingClientRect().height) >= 16);
+    if (process.env.E2E_CAPTURE) await page.locator('.planner__cell--important').screenshot({ path: path.join(process.env.E2E_CAPTURE, 'progress-large-' + viewport.width + '.png') });
+    await page.evaluate(() => { location.hash = MC.routes.today(); });
+    const activity = page.locator('.activity', { hasText: 'Volver a dibujar' });
+    await activity.locator('button[aria-haspopup="menu"]').click();
+    await page.getByRole('menuitem', { name: 'Esto es especial para mí…', exact: true }).click();
+    await page.locator('.memory-editor select').selectOption('return');
+    await page.locator('.memory-editor').getByRole('button', { name: 'Guardar en Mi año', exact: true }).click();
+    await page.locator('.memory-editor').waitFor({ state: 'detached' });
+    await activity.locator('button[aria-haspopup="menu"]').click();
+    await page.getByRole('menuitemradio', { name: 'Hice un poquito', exact: true }).click();
+    const pageId = await page.evaluate(async () => {
+      const M = MC.model, date = MC.dates.today();
+      const cv = document.createElement('canvas'); cv.width = 240; cv.height = 160;
+      const ctx = cv.getContext('2d'); ctx.fillStyle = 'seagreen'; ctx.beginPath(); ctx.arc(120, 70, 42, 0, Math.PI * 2); ctx.fill();
+      const img = await M.saveImage({ id: 'dibujo-nicole', kind: 'drawing', name: 'Mi primer dibujo', src: cv.toDataURL(), w: 240, h: 160 });
+      const p = await M.savePage({ id: 'creacion-nicole', title: 'Un dibujo para guardar', date, stickers: [{ id: 'pegado', sticker: 'img:' + img.id, x: .5, y: .5 }] });
+      location.hash = MC.routes.page(p.id); return p.id;
+    });
+    await page.getByRole('button', { name: 'Opciones de la página', exact: true }).click();
+    await page.getByRole('menuitem', { name: 'Terminé esta creación…', exact: true }).click();
+    await page.locator('.memory-editor textarea').fill('Terminé mi dibujo');
+    await page.locator('.memory-editor').getByRole('button', { name: 'Guardar en Mi año', exact: true }).click();
+    await page.locator('.memory-editor').waitFor({ state: 'detached' });
+    await page.getByRole('button', { name: 'Opciones de la página', exact: true }).click();
+    await page.getByRole('menuitem', { name: 'Quiero recordarlo…', exact: true }).click();
+    await page.locator('.memory-editor textarea').fill('Un recuerdo con mi dibujo');
+    await page.locator('.memory-editor').getByRole('button', { name: 'Guardar en Mi año', exact: true }).click();
+    await page.locator('.memory-editor').waitFor({ state: 'detached' });
+    await page.evaluate(() => { location.hash = MC.routes.year(); });
+    await page.waitForSelector('.year-album').catch(async e => { console.log('D59 año:', JSON.stringify({ errors, url: page.url(), text: (await page.locator('body').innerText()).slice(-1000) })); throw e; });
+    assert.equal(await page.locator('.win', { hasText: 'Me di tiempo para descansar' }).count(), 1);
+    assert.equal(await page.locator('.win', { hasText: 'Volví a algo querido' }).count(), 1);
+    assert.equal(await page.locator('.win', { hasText: 'Terminé mi dibujo' }).count(), 1);
+    const memory = page.locator('.memory', { hasText: 'Un recuerdo con mi dibujo' });
+    assert.equal(await memory.locator('img').count(), 1);
+    assert.equal(await memory.locator('a').getAttribute('href'), await page.evaluate(id => MC.routes.page(id), pageId));
+    assert.equal(await page.locator('.year-album__month').count(), 2, 'un mes por cada sección del álbum');
+    if (process.env.E2E_CAPTURE) {
+      await page.waitForTimeout(400);
+      await page.locator('[data-year-part="victorias"] h2').scrollIntoViewIfNeeded();
+      await page.waitForTimeout(400);
+      await page.screenshot({ path: path.join(process.env.E2E_CAPTURE, 'memories-year-' + viewport.width + '.png') });
+      await page.locator('[data-year-part="recuerdos"] h2').scrollIntoViewIfNeeded();
+      await page.waitForTimeout(400);
+      await page.screenshot({ path: path.join(process.env.E2E_CAPTURE, 'memories-saved-' + viewport.width + '.png') });
+    }
+    await page.reload();
+    if (await page.locator('.cover__board').count()) await openCover(page);
+    await page.waitForSelector('.year-album');
+    assert.equal(await page.locator('.win', { hasText: 'Me di tiempo para descansar' }).count(), 1);
+    // La copia real, sin fixtures inventadas, conserva las referencias y los medios adjuntos.
+    assert.equal(await page.evaluate(async () => MC.backup.validate(JSON.stringify(MC.backup.build(await MC.model.everything()))).ok), true);
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+    assert.deepEqual(errors, []); await context.close();
+  }
+});
+
 await browser.close();
 server.close();
 const failed = results.filter((r) => !r[0]);

@@ -1,6 +1,6 @@
 # MI CUADERNO — Modelo de datos
 
-`schemaVersion: 11` · Base IndexedDB `mi-cuaderno` (versión IDB 5, incluido el store interno `outbox`). El contrato activo retira las formas viejas desde v6; las secciones v1–v6 de abajo registran la evolución histórica. D55 suma metas semanales y D56 su carga inicial, sin stores ni índices nuevos.
+`schemaVersion: 12` · Base IndexedDB `mi-cuaderno` (versión IDB 5, incluido el store interno `outbox`). El contrato activo retira las formas viejas desde v6; las secciones v1–v6 de abajo registran la evolución histórica. D55 suma metas semanales, D56 su carga inicial y D59 recuerdos por referencia, sin stores ni índices nuevos.
 
 **Uso activo desde A4:** `days.morning/evening.feelings` y `activities.feel.before/after` se escriben desde la interfaz. `MC.model.feelingsOf(slot, settings)` hace lectura dual: si `feelings` es array, lo respeta incluso vacío; si es `null`, convierte `mood` con `legacyMoodLabels` (o `moodLabels` de una copia vieja). `emotionKey` normaliza mayúsculas y tildes para deduplicar y para `settings.emotionColors`; conserva la palabra escrita para mostrarla. `emotionPalette` asigna ocho hilos por frecuencia de la vista, con prioridad a colores elegidos. `summarize` devuelve `morning`, `evening` y `feelings` como arrays de palabras; `mood` ya no es el dato visible. TXT/CSV/XLSX e impresión exportan las palabras y antes/después de actividades. El v5 sigue siendo **aditivo**; no reescribir `updatedAt` al leer ni retirar formas antiguas hasta A13.
 
@@ -20,7 +20,7 @@
 
 | key | value |
 |---|---|
-| `schemaVersion` | `11` |
+| `schemaVersion` | `12` |
 | `settings` | objeto Settings (abajo) |
 | `createdAt` | ISO del primer arranque |
 | `lastBackupAt` | ISO de la última copia descargada, o `null` |
@@ -183,7 +183,7 @@ Un sticker pegado la usa con `sticker: 'img:<id>'`. Si la imagen se manda a la p
 {
   app: 'mi-cuaderno',
   kind: 'backup',
-  schemaVersion: 11,
+  schemaVersion: 12,
   exportedAt: ISO,
   data: {
     meta: { createdAt, settings },
@@ -276,6 +276,8 @@ v5 es **aditiva** (D34): los stores y campos nuevos conviven con los viejos hast
 **Value** según el tipo: `text` → string · `list` → `[{ id, text }]` · `checks` → `[{ id, text, done }]` · `columns` → `{ [colId]: string }`.
 
 ### `marks` (keyPath `id`, índice `sourceId`) — referencias (D25.2; victorias en A8)
+
+D59 (08/10): copia v12 aditiva, IDB 5. Las referencias también admiten `sourceType: 'routine'` y `kind: 'recuerdo' | 'especial' | 'terminado'`, además de victoria. `category` opcional identifica primera vez, encuentro, decisión, retomar o una victoria personal; `note` opcional (200 caracteres) contiene las palabras elegidas por la persona. IDs estables por fuente y tipo, conservando el ID de las victorias anteriores. Una repetición especial genera recuerdos solo para ocurrencias done/partial; primera vez conserva solo la primera ocurrencia. No analiza el contenido ni interpreta emociones. Primer dibujo anual derivado de imágenes efectivamente colocadas en un día/hoja visible, con fuente y privacidad intactas. Sin store ni sección nuevos: marks sigue en anio. Migración v12 identidad, sin inventar fechas ni recuerdos históricos. Referencias editables/eliminables; las fuentes en papelera o excluidas de recuerdos/revisiones no aparecen. Los hitos automáticos también respetan noInsights.
 ```js
 { id: 'mrk_…', sourceType: 'activity' | 'day' | 'page', sourceId: '…', kind: 'victoria', deletedAt: ISO | null, createdAt: ISO | null }
 ```

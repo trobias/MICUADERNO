@@ -15,7 +15,8 @@
     M.everything().then(function (raw) {
       if (destroyed) return;
       var all = M.activeOnly(raw);
-      var wins = MC.insights.victories(Object.assign({}, all, { days: raw.days }), year);
+      var memoryData = Object.assign({}, all, { days: raw.days, pages: raw.pages });
+      var wins = MC.insights.victories(memoryData, year);
       // Misma cuenta que el calendario, sobre lo ya cargado. Sin rutinas: el año solo borda lo registrado.
       var sum = M.summarize(all.days, all.activities, { from: year + '-01-01', to: year + '-12-31' });
       var palette = M.emotionPalette(all.days.filter(function (d) { return d.date.slice(0, 4) === year; }), all.meta.settings);
@@ -114,43 +115,20 @@
       var pWins = part('victorias', right);
       pWins.appendChild(h('h2.t-display.notes-title', 'Pequeñas victorias'));
       if (!wins.length) {
-        pWins.appendChild(h('p.section__hint', 'Cuando algo te parezca una pequeña victoria, marcalo desde el menú de esa actividad o esa hoja: aparece acá, con su día.'));
+        pWins.appendChild(h('p.section__hint', 'Metas alcanzadas, tu primer dibujo y momentos elegidos por vos. Podés guardar una victoria desde una actividad, una hoja o “Este día…”.'));
       } else {
-        pWins.appendChild(h('ul.wins', wins.map(function (w) {
-          return h('li.win', MC.icon('star'),
-            h('a', { href: w.week ? R.week(w.week) : w.page ? R.page(w.page) : R.day(w.date) }, h('span.win__date', D.shortLabel(w.date)), h('span.win__text', w.text)));
-        })));
+        pWins.appendChild(h('p.section__hint', 'También cuentan los pequeños pasos y lo que tuvo significado para vos.'));
+        pWins.appendChild(memoryAlbum(wins, true));
       }
 
       // Lo que guardé es un repaso y un recuerdo: no muestra días marcados para quedar afuera (PV1) ni lo borrado.
-      var memories = all.days.filter(function (dd) {
-        return dd.date.slice(0, 4) === year && dd.reflection.keep.trim() &&
-          !M.isPrivate(dd, 'noReviews') && !M.isPrivate(dd, 'noMemory') && !M.isDeleted(dd);
-      }).reverse();
+      var memories = MC.insights.moments(memoryData, year).filter(function (m) { return !m.victory; });
       var pMem = part('recuerdos', right);
       pMem.appendChild(h('h2.t-display.notes-title', 'Lo que guardé'));
       if (!memories.length) {
-        pMem.appendChild(h('p.section__hint', 'Todavía no guardaste ningún recuerdo este año. Aparecen acá cuando completás “Qué quiero guardar” al cerrar un día.'));
+        pMem.appendChild(h('p.section__hint', 'Una frase, una foto o un día especial. Elegí “Quiero recordarlo” en una actividad u hoja, “Este día…” o escribí “Qué quiero guardar” al cerrar un día.'));
       } else {
-        var list = h('ul.memories');
-        var SHOWN = 6;
-        memories.forEach(function (dd, i) {
-          list.appendChild(h('li.memory', { style: { '--tilt': ((MC.hash(dd.date) % 5) - 2) * 0.5 + 'deg' } },
-            h('a.memory__link', { href: R.day(dd.date) },
-              h('span.memory__date', D.shortLabel(dd.date)),
-              h('span.memory__text', dd.reflection.keep.trim()))));
-          if (i >= SHOWN) list.lastChild.hidden = true;
-        });
-        pMem.appendChild(list);
-        if (memories.length > SHOWN) {
-          var more = h('button.text-btn', { type: 'button', 'aria-expanded': 'false' }, 'Ver los ' + memories.length + ' recuerdos');
-          more.addEventListener('click', function () {
-            MC.$$('.memory', list).forEach(function (li) { li.hidden = false; });
-            more.remove();
-            list.children[SHOWN].querySelector('a').focus();
-          });
-          pMem.appendChild(more);
-        }
+        pMem.appendChild(memoryAlbum(memories, false));
       }
     });
 
@@ -179,6 +157,38 @@
     }
 
     return { destroy: function () { destroyed = true; } };
+  }
+
+  /** Papelitos por mes: una fuente por momento, con imagen solo si pertenece a esa fuente visible. */
+  function memoryAlbum(entries, victory) {
+    var box = h('div.year-album'), groups = {}, hidden = [], links = [];
+    var list = h(victory ? 'ul.wins' : 'ul.memories', { id: MC.uid('album') });
+    entries.forEach(function (m, i) {
+      var key = m.date.slice(0, 7);
+      if (!groups[key]) {
+        var title = h('li.year-album__month', h('h3', D.capitalize(D.MONTHS[+m.date.slice(5, 7) - 1])));
+        groups[key] = title; list.appendChild(title);
+        if (i >= 6) { title.hidden = true; hidden.push(title); }
+      }
+      var href = m.week ? R.week(m.week) : m.page ? R.page(m.page) : R.day(m.date);
+      var link = h(victory ? 'a.win__link' : 'a.memory__link', { href: href },
+        m.image ? h('img.year-album__image', { src: m.image.src, alt: m.image.name, width: m.image.w, height: m.image.h, loading: 'lazy', decoding: 'async' }) : null,
+        h(victory ? 'span.win__date' : 'span.memory__date', D.shortLabel(m.date)),
+        h(victory ? 'span.win__text' : 'span.memory__text', m.text),
+        m.detail && m.detail !== m.text ? h('span.year-album__detail', m.detail) : null,
+        h('span.year-album__origin', m.origin || (m.week ? 'Meta semanal · los pequeños pasos cuentan' : 'Elegido por vos')));
+      var row = h(victory ? 'li.win' : 'li.memory', { dataset: { memoryId: m.id } }, victory ? MC.icon('star') : null, link);
+      links.push(link);
+      if (i >= 6) { row.hidden = true; hidden.push(row); }
+      list.appendChild(row);
+    });
+    box.appendChild(list);
+    if (hidden.length) {
+      var more = h('button.text-btn.year-album__more', { type: 'button', 'aria-controls': list.id, 'aria-expanded': 'false' }, 'Ver ' + (victory ? 'todas las victorias' : 'todos los recuerdos'));
+      more.addEventListener('click', function () { hidden.forEach(function (n) { n.hidden = false; }); more.remove(); links[6].focus(); });
+      box.appendChild(more);
+    }
+    return box;
   }
 
   /* ---------- cuentas por período (A8): semana, mes y año; solo números y palabras, sin valorar ---------- */

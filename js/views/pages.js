@@ -184,6 +184,13 @@
         if (!page.virtual) items.push({ label: isWin ? 'Ya no es una pequeña victoria' : 'Es una pequeña victoria', icon: 'star', onSelect: function () {
           M.setVictory('page', page.id, !isWin).then(function () { c.toast(isWin ? 'Ya no está entre tus pequeñas victorias.' : 'Quedó entre tus pequeñas victorias, en Mi año.'); });
         } });
+        if (!page.virtual && MC.memories.allowed()) {
+          items.push(MC.memories.item('page', page.id, 'victoria', 'Elegir mi pequeña victoria…', { title: M.pageTitle(page), date: M.pageDate(page) }));
+          items.push(MC.memories.item('page', page.id, 'recuerdo', 'Quiero recordarlo…', { title: M.pageTitle(page), date: M.pageDate(page) }));
+          items.push({ label: 'Terminé esta creación…', icon: 'check', onSelect: function () {
+            MC.memories.editor('page', page.id, 'terminado', { title: M.pageTitle(page), date: M.pageDate(page) });
+          } });
+        }
         items.push({ label: 'Privacidad de esta página…', icon: 'lock', onSelect: openPrivacy });
         items.push({ label: 'Borrar la página', icon: 'trash', onSelect: remove });
         c.menu(more, items, 'Opciones de la página');

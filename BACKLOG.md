@@ -102,11 +102,11 @@ Al empezar un ítem: pasarlo a NOW, leer `VISION.md` §0 y la decisión que lo c
 
 | # | Qué | Estado | Depende de | Notas / hoy |
 |---|---|---|---|---|
-| ME1 | **Referencias** (`MemoryReference`): marcar cualquier día, entrada, página, foto, carta o recuerdo sin copiar datos. [62] | NEXT | PV1 | El store `marks` ya existe y lo usan las victorias (A8); faltan otros tipos (favorito, marcador…). |
+| ME1 | Referencias a fotos individuales, cartas y otros elementos. [62] | NEXT | PV1 | D59 ya resuelve días, actividades, hojas, repeticiones especiales y recuerdos por marks. Quedan los elementos individuales y favoritos/marcadores. |
 | ME2 | **Favorito** (especial) y **marcador** (volver) como dos tipos. [10] | NEXT | ME1 | |
 | ME3 | **Marcadores físicos** que asoman del borde de la hoja, con colores-significado personalizables (rosa especial · amarillo volver · verde recuerdo lindo · lavanda importante). [10–11] | NEEDS DESIGN | ME2 | Convivir con los marcadores de navegación (D22) sin confundirlos. |
-| ME4 | **Pequeñas victorias**: que también se puedan marcar un día entero o una foto, y una página propia que las junte como papelitos. [39–40] | LATER | ME1 | Ya se marcan actividades y hojas y se ven en *Mi año* (A8). |
-| ME5 | **Recuerdos positivos**: taxonomía simple (lindo · especial · quiero recordarlo · victoria). [58] | NEXT | ME1 | “Qué quiero guardar” (`reflection.keep`) cuenta como recuerdo. |
+| ME4 | Marcar una foto individual como victoria, independiente de su día/hoja. [39–40] | LATER | ME1 | D59 completa días enteros, victorias personales y álbum anual por mes con imágenes de sus fuentes. |
+| ME5 | Favoritos lindos/positivos como categoría adicional. [58] | NEXT | ME1 | D59 ya completa especial, quiero recordarlo y victoria; conserva Qué quiero guardar. |
 | ME6 | **Abrime algo lindo ♡**: azar **solo** entre lo marcado lindo/especial/victoria/quiero recordar. [59] | NEXT | ME5, PV1 | Nunca una entrada cualquiera. |
 | ME7 | **Volver a mí** (nombre a elegir: *Mis recuerdos*, *Lo que fui guardando*, *Pedacitos de mí*…): recuerdos, fotos, victorias, frases, canciones, dibujos, cartas abiertas. Nunca pendientes ni estadísticas. [60–61] | NEEDS DESIGN | ME5, MD1 | |
 | ME8 | **Recuerdos suaves** (“Hace un mes escribiste esto ♡”) dentro del cuaderno, apagables; también “Un día como hoy”. [4] | NEXT | PV1, ME1 | Respeta privacidad por entrada y modo calma. |

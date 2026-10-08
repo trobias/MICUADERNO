@@ -1,5 +1,13 @@
 # MI CUADERNO — Cambios
 
+## 2026-10-08 · Un año de recuerdos y pequeñas victorias (D59, cache v53)
+
+- Álbum por mes con estrellas, papelitos, frases propias y miniaturas de fotos/dibujos colocados. Conserva metas semanales y Qué quiero guardar; enlaces a su día, hoja o semana y más entradas a elección.
+- Victorias personales: descanso, pedir ayuda, límites, animarse, cuidado y disfrute. Día especial desde “Este día…”, recuerdos desde actividad/hoja y creación terminada desde su hoja. Un mismo editor para elegir, cambiar o quitar.
+- Señalar actividades/repeticiones como especiales produce un momento al marcar Lo hice/Un poquito; primera vez guarda solo el primer registro. Primer dibujo anual automático con fuente visible. Sin interpretación de emociones ni rachas.
+- Barras individuales de Progreso ampliadas a 16 px; conservan amarillo/verde y cálculo D58.
+- Copia v12 aditiva, IDB 5, cache v53; referencias en anio, TXT e impresión. Sin dependencias o SQL nuevo. Verificación y límites en docs/QA.
+
 Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantiene. El porqué de cada decisión está en `DECISIONS.md` (Dn); lo que falta, en `ROADMAP.md`. Cada entrega que toca archivos de la app sube `CACHE_VERSION` en `sw.js` para que las PWA instaladas se actualicen.
 
 ## 2026-10-08 · Medio avance amarillo, Progreso y estrellas de victoria (D58, cache `v52`)

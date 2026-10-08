@@ -20,6 +20,9 @@ Test de identidad: si sacás el logo y cambiás el color, ¿sigue pareciendo un 
 - **Primer viewport actual:** cuaderno abierto; fecha grande, campo discreto para escribir cómo te sentiste y lista del día con casillas de punto cruz. Acción principal: escribir una palabra propia o marcar una actividad. A6 pondrá la semana planner al centro.
 - **Interacción firma:** marcar una actividad borda una ✕ en dos puntadas.
 
+### Mi año · álbum de momentos (D59)
+Victorias con estrella SVG existente, fondo de papel suavemente teñido de salvia y costura lateral; recuerdos en papel manteca con fotografía o dibujo opcional. Fechas discretas, títulos en Castoro, meses manuscritos y origen expresado en texto. Seis entradas al abrir; revelar el resto conserva foco. Una sola hojita contextual para elegir significado y frase opcional, con menús/diálogos existentes. Sin ranking, confeti, animaciones repetidas ni nuevas librerías; motion del cuaderno y movimiento reducido existentes. Las barras individuales de Progreso miden 16 px para leer con claridad el avance verde y amarillo.
+
 ## 2. Principios de composición
 
 1. **Una hoja, una intención.** Cada sección del día es un bloque de texto sobre renglones, no una card.

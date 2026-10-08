@@ -80,6 +80,8 @@ La dueña decidió el 05/10/2026: **nunca React**. El cuaderno queda en HTML + C
 
 ## Regla por entrega y evidencia
 
+**D59 (08/10):** álbum anual y editor común de recuerdos/victorias. Referencias v12 aditivas, IDB 5 y cache v53; source routine para actividad especial, frases/categorías opcionales, primer dibujo derivado con fuente visible. Día vacío elegido permanece en copia; privacidad/papelera y permisos existentes. Barras individuales de Progreso 16 px. Sin dependencias, infraestructura o cambios de orden NB.
+
 **Corrección del 08/10 (D58):** Progreso reemplaza el título Importante. Conteo entero done+partial y avance done+partial/2; amarillo para medios avances, verde para completas. Checked igual a total muestra estrella y victoria semanal derivada en Mi año, usando arte/motion existentes. Sin persistencia nueva: copia v11, IDB 5, cache v52. Conserva visibilidad D57, historia y permisos; no altera pendientes NB.
 
 **Regla vigente del 08/10 (D57):** agrupación por nombre con conteo N/M en Importante. Mes y semana ocultan únicamente Sin marcar, en cualquier fecha; los demás estados aparecen. Las casillas precargadas se mantienen en la página del día. Reemplaza la visibilidad de actividades de D18/D55; no altera hojas, datos guardados, historial ni pendientes NB. Copia v11, IDB 5, cache v51, sin migración nueva. Evidencia en `docs/QA.md`.

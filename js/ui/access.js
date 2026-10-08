@@ -33,6 +33,7 @@
   };
   // Partes de cada cuadro y su sección (para dejar solo para mirar lo que corresponde).
   var PARTS = [
+    ['.memory-btn', ['anio']],
     ['#q-morning, .closing__content > .feelings, #q-body', ['emociones']],
     ['.intention, #q-notes, .reflections, .day-head__tools .privacy-btn', ['escritura']],
     ['#q-list', ['actividades']],

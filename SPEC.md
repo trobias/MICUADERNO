@@ -1,5 +1,14 @@
 # MI CUADERNO — SPEC
 
+## Actualización D59 · victorias y recuerdos personales (08/10/2026)
+
+- Mi año conserva metas semanales D58 y suma primer dibujo anual guardado/colocado, creaciones elegidas como terminadas y momentos especiales. La persona señala una actividad o repetición una vez desde “Esto es especial para mí…”: primera vez, encuentro, decisión, retomar algo o significado propio. Solo Lo hice/Hice un poquito produce el momento; primera vez usa solo la primera ocurrencia, incluso entre años. No interpreta texto, emociones, pausas ni vínculos.
+- Actividad/hoja: “Elegir mi pequeña victoria…” permite elegir descanso, ayuda, límites, valentía, cuidado, disfrute o palabras propias. “Quiero recordarlo…” conserva una referencia y frase opcional. En el día, “Este día…” guarda una victoria o un día especial; puede ser un día vacío. En una hoja, “Terminé esta creación…” registra el cierre elegido por la persona, nunca por cantidad escrita.
+- El mismo editor permite cambiar o quitar la elección. Fotografías y dibujos colocados en un día/hoja elegidos aparecen como miniatura de esa fuente; no se recuperan imágenes privadas o sin una fuente visible. No hay elección de una foto individual separada de su día/hoja.
+- Álbum en las partes existentes Pequeñas victorias y Lo que guardé, agrupado por mes, seis entradas iniciales por parte y enlace para mostrar las demás. Cada papelito lleva a su día, hoja o semana. Conserva Qué quiero guardar y las referencias anteriores; privacidad de fuentes, papelera y permisos existentes, con notas/category en la sección anio. El primer dibujo es derivado, no duplica marks al recargar.
+- Barras individuales de Progreso de 16 px, con conteo N/M, verde completo y amarillo para medio avance. No cambia la visibilidad D57 de las casillas.
+- Copia v12 aditiva, IDB 5, cache v53. TXT e impresión incluyen victorias/recuerdos visibles; CSV/XLSX mantienen sus tablas actuales. Sin dependencias ni servicios nuevos.
+
 > Fuente funcional de verdad. Si el código y este documento no coinciden, uno de los dos está mal: arreglá el que corresponda y dejá constancia en `DECISIONS.md`.
 
 ## 1. Qué es
@@ -334,9 +343,9 @@ Catálogo actual: días desde que empezó el cuaderno; veces que escribió esta 
 
 Ver `DATA_MODEL.md` para esquema. Resumen:
 
-- **IndexedDB** (`mi-cuaderno`): `meta`, `days`, `activities`, `routines`, `pages`, `images`, `files`, `weeks`, `templates`, `marks` y el store interno `outbox`. Versión IDB 5 (NB2); esquema de copia v11 aditivo (D56), sin stores nuevos.
+- **IndexedDB** (`mi-cuaderno`): `meta`, `days`, `activities`, `routines`, `pages`, `images`, `files`, `weeks`, `templates`, `marks` y el store interno `outbox`. Versión IDB 5 (NB2); esquema de copia v12 aditivo (D59), sin stores nuevos.
 - **localStorage**: solo preferencias livianas de UI (última ruta, cantidad de aperturas de tapa, borrador transitorio). Nada importante vive solo ahí.
-- **Backup JSON**: `{ app: "mi-cuaderno", kind: "backup", schemaVersion: 11, exportedAt, data: {...} }`. Import valida estructura, aplica migraciones automáticas (`MIGRATIONS[v]`, incluidas v6 a v11), rechaza archivos de otra app o versiones futuras (> 11) con mensaje claro. Incluye elementos en papelera, marcas de `privacy`, emociones libres, semanas con su planificación, metas flexibles y duración, indicador de actividades iniciales, plantillas y marcas. Después del contrato v6, Ajustes ofrece “Descargar la copia de antes”.
+- **Backup JSON**: `{ app: "mi-cuaderno", kind: "backup", schemaVersion: 12, exportedAt, data: {...} }`. Import valida estructura, aplica migraciones automáticas (`MIGRATIONS[v]`, incluidas v6 a v12), rechaza archivos de otra app o versiones futuras (> 12) con mensaje claro. Incluye elementos en papelera, marcas de `privacy`, emociones libres, semanas con su planificación, metas flexibles y duración, indicador de actividades iniciales, plantillas y marcas (victorias, recuerdos, especiales y creaciones terminadas). Después del contrato v6, Ajustes ofrece “Descargar la copia de antes”.
 - **Restaurar = reemplazar** (con advertencia y opción de descargar la copia actual antes). No hay “merge” en v1 para evitar duplicados ambiguos.
 - **Papelera y retención (DA1):** borrado suave universal con purga automática según `settings.trashRetentionDays` (default 30 días) y vaciado manual.
 - **TXT**: diario legible, día por día.
@@ -413,7 +422,7 @@ skills/               colección de skills (no es parte de la app)
 
 ## 20. Estrategia de pruebas
 
-- **Unit (node:test):** fechas, recurrencias (incluye 29/02, día 31, n-ésimo día, intervalos, temporales y metas flexibles), materialización de rutinas, progreso diario/semanal e historial de planes, instalación única de actividades iniciales y reintentos, validación y migración de backups (v1→…→v11, contrato v6 puro, v10/v11 aditivas, rechazo de versiones más nuevas), plantillas y bloques de hojas, cuentas del año y victorias, motor de temas (AA), pinceles y balde, historial de deshacer/rehacer (`MC.history`: límites, reversión, eventos), papelera (DA1: soft-delete, retención, purga, restauración), privacidad emocional (PV1: exclusión en insights y recuerdos), CSV (escapes), ZIP/XLSX (estructura válida), insights (umbrales, redacción no causal).
+- **Unit (node:test):** fechas, recurrencias (incluye 29/02, día 31, n-ésimo día, intervalos, temporales y metas flexibles), materialización de rutinas, progreso diario/semanal e historial de planes, instalación única de actividades iniciales y reintentos, validación y migración de backups (v1→…→v12, contrato v6 puro, v10/v11/v12 aditivas, rechazo de versiones más nuevas), plantillas y bloques de hojas, cuentas del año y victorias, motor de temas (AA), pinceles y balde, historial de deshacer/rehacer (`MC.history`: límites, reversión, eventos), papelera (DA1: soft-delete, retención, purga, restauración), privacidad emocional (PV1: exclusión en insights y recuerdos), CSV (escapes), ZIP/XLSX (estructura válida), insights (umbrales, redacción no causal).
 - **E2E (Playwright/Chromium):** primera apertura → onboarding → registrar ánimo → actividades con estados → recargar y ver persistencia → rutina que aparece → calendario → exportar JSON → borrar → restaurar → datos de vuelta. En `file://` y en `http://` (SW registrado, offline con red cortada). Viewports 375×812, 820×1180, 1440×900.
 - **QA visual:** capturas desktop + mobile revisadas contra DESIGN.md; detector de `impeccable` una vez al final.
 

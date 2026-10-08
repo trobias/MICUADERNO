@@ -224,7 +224,9 @@ a.months__year { text-decoration: none; padding: 4px 6px; border-radius: 6px; }
 .week-progress__victory svg { width: 18px; height: 18px; color: var(--progress-partial); fill: var(--butter); flex: none; }
 .week-progress p { margin: 0; }
 .week-progress__actions { flex: none; }
-.week-progress__goal .week-progress__bar { height: var(--s-1); }
+.week-progress__goal .week-progress__bar { height: var(--s-4); border-color: var(--ink-soft); }
+.week-progress__goal { padding-bottom: var(--s-2); }
+.week-progress__goal-count { font-size: var(--fs-sm); font-variant-numeric: tabular-nums; }
 .planner__important-notes { border-top: 1px dashed var(--rule-strong); padding-top: var(--s-2); }
 .week-day__progress { margin-top: auto; font-variant-numeric: tabular-nums; }
 @media (forced-colors: active) {
@@ -460,6 +462,28 @@ a.months__year { text-decoration: none; padding: 4px 6px; border-radius: 6px; }
 }
 .memory__date { font-family: var(--font-hand); font-size: 1.3rem; line-height: 1; color: var(--ink-soft); }
 .memory__text { font-family: var(--font-text); font-style: italic; }
+
+/* D59: los recuerdos forman una colección de papeles, con el mes escrito en el margen. */
+.year-album { margin-top: var(--s-5); }
+.year-album .wins, .year-album .memories { gap: var(--s-4); }
+.year-album__month { padding-top: var(--s-4); border-top: 1px dashed var(--paper-edge); }
+.year-album__month h3 { font-family: var(--font-hand); font-size: var(--fs-xl); font-weight: 400; color: var(--ink-soft); }
+.year-album .win { position: relative; align-items: start; gap: var(--s-3); grid-template-columns: var(--s-5) minmax(0, 1fr); }
+.year-album .win > svg { width: var(--s-5); height: var(--s-5); align-self: start; margin-top: var(--s-4); color: var(--progress-partial); fill: var(--butter); }
+.year-album .win a { display: grid; gap: var(--s-2); padding: var(--s-4); border-left: 2px dashed var(--sage); background: color-mix(in srgb, var(--sage) 12%, var(--paper)); }
+.year-album .win__text { font-size: var(--fs-lg); line-height: 1.4; }
+.year-album .memory__link { clip-path: none; box-shadow: none; border-bottom: 1px solid var(--paper-edge); padding: var(--s-5); gap: var(--s-2); }
+.year-album__image { width: 100%; max-height: 200px; object-fit: contain; background: var(--paper); padding: var(--s-2); border: 1px solid var(--paper-edge); }
+.year-album__detail { font-family: var(--font-text); color: var(--ink-soft); overflow-wrap: anywhere; }
+.year-album__origin { font-family: var(--font-ui); font-size: var(--fs-xs); color: var(--ink-soft); }
+.year-album__more { margin-top: var(--s-4); }
+.year-album .memory__text, .year-album .win__text { white-space: pre-wrap; overflow-wrap: anywhere; }
+.memory-editor .field { display: grid; gap: var(--s-2); margin-block: var(--s-4); }
+.memory-editor select { width: 100%; min-height: 44px; background: var(--paper); color: var(--ink); }
+@media (forced-colors: active) {
+  .year-album .win a, .year-album .memory__link { border: 1px solid CanvasText; }
+  .year-album .win > svg { fill: none; color: CanvasText; }
+}
 
 /* ---------- Ajustes ---------- */
 .settings-title { font-size: var(--fs-2xl); margin-bottom: var(--s-6); }
