@@ -703,3 +703,7 @@ Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantien
 ### 08/10/2026 · Project Folder (D62)
 
 - Mis hojas se agrupa por mes en carpetas desplegables con hojas pastel; la más reciente abre de entrada, enlaces reales y teclado nativo, sin colecciones nuevas.
+
+### 08/10/2026 · Card Folder (D62)
+
+- Victorias y recuerdos del año dentro de bolsillos pastel con nota desplegable; mantiene fuentes, enlaces, privacidad y selección existentes.

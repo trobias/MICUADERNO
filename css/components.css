@@ -176,6 +176,12 @@
 .paper-folder__hint { font-family: var(--font-ui); font-size: var(--fs-xs); color: var(--ink-soft); }
 .paper-folder[open] .paper-folder__hint { visibility: hidden; }
 .paper-folder__body { padding: var(--s-2) var(--s-3); border-inline: 1px dashed var(--rule-strong); }
+.paper-pocket { min-width: 0; flex: 1; width: 100%; padding: var(--s-3) var(--s-3) 0; background: color-mix(in srgb, var(--blush) 26%, var(--paper)); border-radius: 4px 4px 10px 10px; }
+.paper-pocket__seam { min-height: 44px; display: flex; align-items: center; gap: var(--s-2); padding: var(--s-2); font-family: var(--font-hand); font-size: var(--fs-lg); border-bottom: 1px dashed var(--ink-faint); cursor: pointer; }
+.paper-pocket__note { margin-top: var(--s-3); padding: var(--s-3); background: var(--paper); box-shadow: var(--shadow-note); transform: translateY(calc(-4px * var(--move))); transition: transform var(--dur-ui) var(--ease-out); }
+.paper-pocket__note :is(.win__link, .memory__link) { display: grid; width: 100%; }
+@media (hover: hover) and (pointer: fine) { .paper-pocket:focus-within .paper-pocket__note, .paper-pocket:hover .paper-pocket__note { transform: translateY(calc(-8px * var(--move))); } }
+@media (prefers-reduced-motion: reduce) { .paper-pocket__note, .paper-pocket:hover .paper-pocket__note, .paper-pocket:focus-within .paper-pocket__note { transform: none; transition: none; } }
 @media (prefers-reduced-motion: reduce) { .paper-folder__peek, .paper-folder[open] .paper-folder__peek { transform: none; transition: none; } }
 .stitch-box {
   position: relative;

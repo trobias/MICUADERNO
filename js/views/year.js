@@ -177,7 +177,8 @@
         h(victory ? 'span.win__text' : 'span.memory__text', m.text),
         m.detail && m.detail !== m.text ? h('span.year-album__detail', m.detail) : null,
         h('span.year-album__origin', m.origin || (m.week ? 'Meta semanal · los pequeños pasos cuentan' : 'Elegido por vos')));
-      var row = h(victory ? 'li.win' : 'li.memory', { dataset: { memoryId: m.id } }, victory ? MC.icon('star') : null, link);
+      var row = h(victory ? 'li.win' : 'li.memory', { dataset: { memoryId: m.id } }, victory ? MC.icon('star') : null,
+        c.paperPocket((victory ? 'Victoria' : 'Recuerdo') + ' · ' + D.shortLabel(m.date), link));
       links.push(link);
       if (i >= 6) { row.hidden = true; hidden.push(row); }
       list.appendChild(row);

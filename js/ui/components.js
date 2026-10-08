@@ -95,6 +95,10 @@
       h('div.paper-folder__body', content));
   };
 
+  c.paperPocket = function (title, content) {
+    return h('details.paper-pocket', { open: true }, h('summary.paper-pocket__seam', title), h('div.paper-pocket__note', content));
+  };
+
   /** Dónde colgar menús y avisos: dentro del diálogo abierto de más arriba (si no, quedan inertes debajo). */
   c.layer = function () {
     var open = MC.$$('dialog[open]');

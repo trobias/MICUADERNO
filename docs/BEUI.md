@@ -17,3 +17,4 @@ Las animaciones respetan Ajustes, movimiento reducido del sistema y teclado.
 | Swipeable List | Deslizar una actividad hacia la izquierda revela su menú completo; nunca marca ni borra, conserva scroll vertical, teclado y permisos. |
 | Bottom Sheet | Diálogos nativos como hojas inferiores en celular, manija para cerrar, alternativa visible y Escape; foco modal nativo y movimiento reducido. |
 | Project Folder | Mis hojas se agrupa por mes en carpetas desplegables con hojas pastel; la más reciente abre de entrada, enlaces reales y teclado nativo, sin colecciones nuevas. |
+| Card Folder | Victorias y recuerdos del año dentro de bolsillos pastel con nota desplegable; mantiene fuentes, enlaces, privacidad y selección existentes. |
