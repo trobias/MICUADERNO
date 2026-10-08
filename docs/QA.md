@@ -1,5 +1,17 @@
 # QA cruzada (A12) — 05/10/2026
 
+## Actualización del 08/10/2026 · Objetivos dentro de Importante (D56)
+
+- Base `main` en `6caaac7` (D55 ya pusheado). Copia **v11**, cache **v50**, IDB **5**. No cambia la cuenta de D55 ni el historial; cambia la presentación y agrega instalación única de cinco rutinas comunes.
+- Pruebas específicas en `file://` a **1366×900** y HTTP a **375×812**: cinco predeterminadas, **15** oportunidades, todas las barras dentro de Importante y ninguna encima de la grilla, teclado Espacio, barra de Caminar 1/3, cambio de nombre/meta/frecuencia a 2, borrado de Bici, alta de Leer, recarga sin reinstalar Bici, conservación de Importante y semana siguiente vacía de marcas. Sin errores de consola ni scroll horizontal.
+- Unitarias: instalación concurrente en una pestaña, equivalencias existentes sin modificar reglas/pausa/papelera, edición y purga sin reaparición, copia/restauración, reintento tras escritura interrumpida sin duplicar ni pisar lo editado, bienvenida/invitada sin instalación y ausencia de oportunidades nuevas en semanas pasadas. Migración v10→v11 no instala rutinas.
+- La matriz de permisos D51 incorpora Semana ver/Repeticiones editar/Actividades ver, Semana editar/Repeticiones ver/Actividades editar y Repeticiones editar sin Semana. Anotaciones y controles de objetivos conservan permisos separados dentro de la misma celda.
+- `npm run typecheck` y `npm run build`: exit 0. `npm run e2e:cloud`: **3/3** comprobaciones locales aprobadas. `npm run test:cloud`: **14 aprobadas y 1 omitida**, RLS sin Postgres local.
+- Revisión visual de escritorio y 375px: barras finas, nombres y conteos visibles, lápices con área de 44px, controles de alta plegados y notas manuales conservadas. Capturas locales de QA con registros sintéticos de Nicole, sin datos de Production.
+- Primer gate: **159/159 unitarias**, **64/65 E2E**. Se reprodujo el fallo del recorrido de borrado de páginas: esperaba el modo Decorar, activo antes de cerrar la bandeja; su cierre tomaba el foco después de que el test lo intentara mover. Ahora espera el sticker colocado. El recorrido específico pasó en file, HTTP y táctil. **Control completo final `npm run check`: exit 0, sintaxis del shell, 159/159 unitarias y 65/65 recorridos E2E aprobados.**
+
+**Límites:** pruebas locales en Chromium, API simulada en la matriz compartida y humo local de Next; sin verificación de Production, dos cuentas/dispositivos reales, RLS remota o lectores de pantalla. La carga inicial empieza en la semana actual y respeta configuraciones existentes; una invitada ve lo que la dueña ya guardó, nunca instala actividades por mirar. No se instalaron dependencias, servicios ni credenciales.
+
 ## Actualización del 07/10/2026 · Objetivos semanales (D55, entrega local)
 
 - Integrado sobre `main` en `9d5f885`, conservando sus 13 commits de plantillas, emociones, permisos y sincronización. D55 suma la migración v10 después de v7–v9 y cache v49 después de v48. La matriz D51 también abre los objetivos para comprobar el permiso del botón de programar; una invitada sin Repeticiones no lo ve y mirar nunca escribe el plan.

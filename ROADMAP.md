@@ -4,7 +4,7 @@ Estado al 05/10/2026: **la etapa A del plan nuevo está completa** (A0–A13) y 
 
 ## Ruta aprobada ahora
 
-Pedido del 07/10 (D55), implementado localmente: checklist semanal automático, metas fijas/flexibles, duración opcional, progreso diario/semanal e historial. Cache v49, copia v10, IndexedDB 5. Se valida con el gate y la QA específica de `docs/QA.md`; no implica publicación de estos cambios.
+Pedido del 07/10 (D55) publicado en main (`6caaac7`) y ajuste del 08/10 (D56): checklist automático, metas fijas/flexibles e historial; las barras se mueven a Importante, una por actividad, con cinco actividades iniciales totalmente configurables. Cache v50, copia v11, IndexedDB 5. Se valida con el gate y la QA específica de `docs/QA.md`; Production requiere verificación aparte.
 
 | Tramo | Estado | Resultado |
 |---|---|---|

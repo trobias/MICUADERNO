@@ -96,7 +96,7 @@ test('copia v10 conserva planificación y duración; v9 migra sin fabricar histo
   const table = MC.exporters.routinesTable(await M.everything());
   assert.equal(table[0].at(-1), 'duracion_meta');
   assert.equal(table[1].at(-1), '1 hora por día');
-  assert.equal(backup.schemaVersion, 10);
+  assert.equal(backup.schemaVersion, MC.backup.SCHEMA_VERSION);
   const v = MC.backup.validate(JSON.stringify(backup));
   assert.equal(v.ok, true, v.error);
   assert.equal(v.payload.routines[0].targetNote, '1 hora por día');
@@ -104,7 +104,7 @@ test('copia v10 conserva planificación y duración; v9 migra sin fabricar histo
   const old = MC.backup.validate({ ...backup, schemaVersion: 9, data: { ...backup.data, weeks: [] } });
   assert.equal(old.ok, true);
   assert.deepEqual(old.payload.weeks, []);
-  assert.equal(MC.backup.validate({ ...backup, schemaVersion: 11 }).ok, false);
+  assert.equal(MC.backup.validate({ ...backup, schemaVersion: MC.backup.SCHEMA_VERSION + 1 }).ok, false);
 });
 
 test('mirar como invitada no crea ni actualiza planes, ni siquiera con permiso de editar actividades', async () => {

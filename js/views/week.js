@@ -19,6 +19,7 @@
     var week = null;
     var plan = null, progressBox = null, progressSeq = 0;
     var dailyCounts = {};
+    var goalRows = Object.create(null), editableRoutines = Object.create(null);
     var saved = c.savedNote();
     var page = h('section.page.cal-page.planner-page', { 'aria-label': 'Mi semana' });
     main.appendChild(h('div.spread.spread--single', page));
@@ -46,8 +47,11 @@
       return recovered;
     }
 
-    var ready = Promise.all([M.getRoutines(), M.daysInRange(start, end), M.getPages(), M.getWeek(start)]).then(function (r) {
+    var ready = M.ensureWeeklyDefaults().then(function () {
+      return Promise.all([M.getRoutines(), M.daysInRange(start, end), M.getPages(), M.getWeek(start)]);
+    }).then(function (r) {
       var routines = r[0];
+      routines.forEach(function (r) { editableRoutines[r.id] = r; });
       var byDay = {};
       r[1].forEach(function (d) { byDay[d.date] = d; });
       var pagesByDay = M.summarize([], [], { from: start, to: end, pages: r[2] });
@@ -60,7 +64,6 @@
         var palette = M.emotionPalette(r[1], M.settings());
         page.appendChild(head());
         progressBox = progressSection();
-        page.appendChild(progressBox);
         var grid = h('div.planner', { role: 'list', 'aria-label': 'Semana del ' + D.longLabel(start) + ' al ' + D.longLabel(end) });
         grid.appendChild(importantCell());
         D.range(start, end).forEach(function (k, i) {
@@ -70,7 +73,7 @@
         page.appendChild(grid);
         page.appendChild(MC.views.calendar.parts.legend(null, palette, { week: true }));
         page.appendChild(h('div.planner__foot', saved));
-        // La barra y el comienzo de la semana quedan visibles también en el celular.
+        // Importante contiene las barras y queda al principio también en el celular.
         return refreshProgress();
       });
     });
@@ -78,15 +81,17 @@
     function progressSection() {
       var add = h('button.text-btn', { type: 'button' }, MC.icon('plus'), 'Programar actividad');
       add.addEventListener('click', function () {
-        MC.repeat.editor(null, null, { date: today >= start && today <= end ? today : start, rule: { type: 'weekdays', days: [1, 2, 3, 4, 5] } });
+        MC.repeat.editor(null, null, { date: start, rule: { type: 'weekdays', days: [1, 2, 3, 4, 5] } });
       });
       return h('section.week-progress', { 'aria-labelledby': 'week-progress-title' },
-        h('div.week-progress__head', h('h2.planner__title', { id: 'week-progress-title' }, 'Progreso semanal'), h('span.week-progress__percent')),
+        h('div.week-progress__head', h('h3', { id: 'week-progress-title' }, 'Progreso semanal'), h('span.week-progress__percent')),
         h('progress.week-progress__bar', { max: 100, value: 0, 'aria-label': 'Progreso semanal' }),
         h('p.week-progress__count.t-meta', { 'aria-live': 'polite', 'aria-atomic': 'true' }),
+        h('ul.week-progress__goals'),
         h('details.week-progress__details', { dataset: { focus: 'goals' } },
-          h('summary', 'Ver objetivos y organizar'), h('ul.week-progress__goals'),
-          h('p.t-meta', 'Las metas flexibles se cuentan por semana; cada día que marcás cuenta una vez.'), add));
+          h('summary', 'Organizar actividades'),
+          h('p.t-meta', 'Podés cambiar nombre, frecuencia, días y meta con el lápiz, o borrar una actividad desde su editor. Las casillas de los días actualizan estas barras.'), add,
+          h('p.t-meta', h('a', { href: R.sheets() }, 'Ver lo que se repite'))));
     }
 
     function refreshProgress() {
@@ -99,13 +104,46 @@
         bar.setAttribute('aria-valuetext', p.total ? p.done + ' de ' + p.total + ' actividades completadas' : 'Sin actividades programadas');
         progressBox.querySelector('.week-progress__count').textContent = p.total ? p.done + ' de ' + p.total + ' actividades completadas' : 'Todavía no hay actividades programadas para esta semana.';
         var ul = progressBox.querySelector('.week-progress__goals');
-        MC.clear(ul);
-        p.goals.forEach(function (g) {
-          ul.appendChild(h('li.week-progress__goal',
-            h('span', g.routineId ? h('a', { href: R.routine(g.routineId) }, g.title) : g.title,
-              g.targetNote ? h('span.t-meta', ' · ' + g.targetNote) : null),
-            h('span.t-meta', g.done + ' de ' + g.total + (g.done === g.total ? ' · completo' : '') + (g.flexible ? ' · días a elección' : ''))));
+        var present = Object.create(null);
+        var defaults = M.weeklyDefaults(start);
+        function goalOrder(g) {
+          var key = M.emotionKey(g.title.replace(/\s+/g, ' '));
+          var i = defaults.findIndex(function (r) {
+            return r.id === g.routineId || M.emotionKey(r.title) === key ||
+              (r.id === 'weekly-default-design' && key === 'practicar diseno');
+          });
+          return i < 0 ? defaults.length : i;
+        }
+        p.goals.sort(function (a, b) {
+          return goalOrder(a) - goalOrder(b);
         });
+        p.goals.forEach(function (g) {
+          var key = g.routineId || g.id;
+          present[key] = true;
+          var row = goalRows[key];
+          if (!row) {
+            var edit = null, routine = editableRoutines[g.routineId];
+            if (routine) {
+              var button = h('button.icon-btn', { type: 'button', 'aria-label': 'Editar actividad: ' + g.title, dataset: { focus: 'goal:' + key } }, MC.icon('edit'));
+              button.addEventListener('click', function () {
+                MC.repeat.editor(routine, null, { hint: end < today ? 'Esta semana conserva su plan. Los cambios de frecuencia se aplican a las semanas actuales y futuras.' : null });
+              });
+              edit = h('span.week-progress__actions', button);
+            }
+            row = h('li.week-progress__goal',
+              h('div.week-progress__goal-head',
+                h('span.week-progress__label', h('span.week-progress__name', g.title), h('span.week-progress__goal-count.t-meta')), edit),
+              h('progress.week-progress__bar', { max: g.total, value: 0, 'aria-label': 'Progreso semanal de ' + g.title }),
+              g.targetNote ? h('p.t-meta', g.targetNote) : null);
+            goalRows[key] = row;
+            ul.appendChild(row);
+          }
+          row.querySelector('.week-progress__goal-count').textContent = g.done + ' de ' + g.total + (g.done === g.total ? ' · completo' : '') + (g.flexible ? ' · días a elección' : '');
+          var goalBar = row.querySelector('progress');
+          goalBar.max = g.total; goalBar.value = g.done;
+          goalBar.setAttribute('aria-valuetext', g.done + ' de ' + g.total + ' completadas esta semana');
+        });
+        Object.keys(goalRows).forEach(function (key) { if (!present[key]) { goalRows[key].remove(); delete goalRows[key]; } });
         Object.keys(dailyCounts).forEach(function (k) {
           var day = p.daily[k];
           dailyCounts[k].textContent = day.total ? day.done + ' de ' + day.total + ' completadas' : 'Sin actividades con día fijo';
@@ -168,7 +206,8 @@
       if (!week.important.length || week.important[week.important.length - 1].text.trim()) week.important.push({ id: MC.uid('imp'), text: '', done: false });
       week.important.forEach(function (it) { ul.appendChild(row(it)); });
       return h('section.planner__cell.planner__cell--important', { role: 'listitem', 'aria-labelledby': 'pl-important' },
-        h('h2.planner__title', { id: 'pl-important' }, 'Importante'), ul);
+        h('h2.planner__title', { id: 'pl-important' }, 'Importante'), progressBox,
+        h('div.planner__important-notes', { 'aria-label': 'Anotaciones importantes' }, ul));
     }
 
     /* ---------- Notas de la semana ---------- */

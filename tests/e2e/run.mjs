@@ -43,7 +43,14 @@ async function openCover(page) {
   await cover.waitFor({ state: 'detached', timeout: 4000 });
 }
 
-async function onboard(page, name = 'Nicole') {
+async function onboard(page, name = 'Nicole', { weeklyDefaults = false } = {}) {
+  // Las pruebas de datos manuales usan un cuaderno que ya resolvió su carga inicial.
+  // D56 se prueba aparte con los cinco valores de fábrica reales y sin este ajuste.
+  if (!weeklyDefaults) {
+    await page.waitForFunction(() => window.MC && MC.store.kind());
+    await page.evaluate(() => MC.model.saveSettings({ weeklyDefaultsInstalled: true }));
+    await page.reload();
+  }
   await openCover(page);
   await page.fill('#ob-name', name);
   await page.click('button:has-text("Seguir")');
@@ -1994,6 +2001,8 @@ await test('páginas: después de borrar, el índice responde siempre (decorando
     await page.click('button:has-text("Pegar un sticker")');
     await page.click('dialog.sheet .sticker-pick >> nth=0');
     await page.waitForSelector('.free-page.is-decorating');
+    // Decorar se activa al abrir la bandeja; esperar el sticker, cuyo onClose también toma el foco.
+    await page.waitForSelector('.free-page .sticker');
     await page.locator('button[aria-label="Opciones de la página"]').focus();
     await page.keyboard.press('Enter');
     await page.click('.menu__item:has-text("Borrar la página")');
@@ -2481,9 +2490,9 @@ await test('nube: la psicóloga abre el cuaderno de Nicole, edita lo permitido y
   await context.route('**/api/auth/logout', (route) => { loggedOut = true; return route.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":true}' }); });
   await page.click('#panel-close');
   await page.waitForFunction(() => !document.getElementById('panel').open);
-  // La semana de fondo: sin permiso de Semana, Importante y Notas no se muestran; actividades solo para mirar.
+  // Sin permiso de Semana, las anotaciones de Importante y Notas no se muestran; las barras dependen de Actividades/Repeticiones.
   await page.waitForSelector('.planner');
-  assert.equal(await page.evaluate(() => [...document.querySelectorAll('.planner__cell--important, .planner__cell--notes')].every((el) => el.hidden)), true);
+  assert.equal(await page.evaluate(() => [...document.querySelectorAll('.planner__important-notes, .planner__cell--notes')].every((el) => el.hidden)), true);
   assert.equal(await page.evaluate(() => [...document.querySelectorAll('.week-day .add-activity input')].every((el) => el.readOnly)), true);
   assert.equal(await page.locator('.week-progress__details').isVisible(), false, 'sin permiso de repeticiones no se ofrece programar actividades');
   await page.click('.guest-note__out');
@@ -2515,6 +2524,9 @@ await test('nube (D51): matriz de permisos — en cada cuadro, nada editable fue
     { hojas: 'ver' },
     { hojas: 'editar', repeticiones: 'ver' },
     { semana: 'editar', actividades: 'ver' },
+    { semana: 'ver', repeticiones: 'editar', actividades: 'ver' },
+    { semana: 'editar', repeticiones: 'ver', actividades: 'editar' },
+    { repeticiones: 'editar' },
     { anio: 'ver', ajustes: 'ver', fotos: 'ver' },
     Object.fromEntries(ALL.map((x) => [x, 'ver'])),
     Object.fromEntries(ALL.map((x) => [x, 'editar']))
@@ -2615,8 +2627,9 @@ await test('objetivos semanales: 5 + 5 + 3, casillas, recarga e historial (file 
     await page.waitForSelector('.week-progress__count:has-text("0 de 13")');
     assert.equal(await page.locator('.week-day').count(), 7);
     assert.equal(await page.locator('.week-progress__details').getAttribute('open'), null);
-    const order = await page.evaluate(() => document.querySelector('.week-progress').getBoundingClientRect().top < document.querySelector('.week-day').getBoundingClientRect().top);
-    assert.equal(order, true, 'barra antes del lunes');
+    assert.equal(await page.locator('.planner__cell--important .week-progress').count(), 1, 'progreso dentro de Importante');
+    assert.equal(await page.locator('.planner-page > .week-progress').count(), 0, 'sin barra encima de la grilla');
+    assert.equal(await page.locator('.week-progress__goal progress').count(), 3, 'una barra visible por objetivo');
     assert.equal(await page.locator('.week-day').nth(5).locator('.activity').count(), 1, 'el sábado ofrece caminar, sin trabajo ni diseño');
     await page.locator('.week-progress__details > summary').click();
     await page.waitForSelector('.week-progress__goal:has-text("Caminar"):has-text("0 de 3")');
@@ -2670,6 +2683,55 @@ await test('objetivos semanales: formulario flexible, meta opcional y validació
   await page.waitForSelector('.week-day .activity:has-text("Caminar")');
   assert.deepEqual(errors, []);
   await context.close();
+});
+
+await test('objetivos semanales D56: cinco predeterminadas en Importante, barras propias, editar, borrar y crear (file y HTTP, desktop y móvil)', async () => {
+  for (const [url, viewport] of [[FILE_URL, { width: 1366, height: 900 }], [HTTP_URL, { width: 375, height: 812 }]]) {
+    const { page, errors, context } = await newPage(browser, { viewport, reducedMotion: 'reduce' });
+    await page.goto(url); await onboard(page, 'Nicole', { weeklyDefaults: true });
+    await page.evaluate(() => MC.model.saveSettings({ showCover: false, motion: 'ninguna', motionChosen: true }));
+    await page.click('#panel-close');
+    const note = page.locator('.planner__cell--important');
+    await note.locator('.week-progress__count:has-text("0 de 15")').waitFor();
+    assert.deepEqual(await note.locator('.week-progress__name').allTextContents(), ['Trabajar', 'Caminar', 'Practica Diseño', 'Salir con una amiga', 'Bici']);
+    assert.equal(await note.locator('.week-progress__goal progress').count(), 5);
+    assert.equal(await page.locator('.planner-page > .week-progress').count(), 0);
+    assert.equal(await note.locator('.week-progress__details').getAttribute('open'), null);
+    await note.locator('input[aria-label="Importante"]').fill('Preparar la semana');
+    await note.locator('input[aria-label="Importante"]').blur();
+    const walk = page.locator('.week-day').nth(2).locator('.activity').filter({ has: page.locator('.activity__title', { hasText: 'Caminar' }) }).locator('.stitch-box');
+    await walk.focus(); await walk.press('Space');
+    await note.locator('.week-progress__count:has-text("1 de 15")').waitFor();
+    const walkBar = note.locator('.week-progress__goal:has-text("Caminar") progress');
+    assert.equal(await walkBar.getAttribute('value'), '1');
+    assert.equal(await walkBar.getAttribute('max'), '3');
+    await note.getByRole('button', { name: 'Editar actividad: Caminar', exact: true }).click();
+    assert.equal(await page.locator('#rt-count').inputValue(), '3');
+    await page.fill('#rt-title', 'Caminar un rato'); await page.fill('#rt-count', '2'); await page.fill('#rt-target-note', '30 minutos');
+    await page.getByRole('button', { name: 'Guardar', exact: true }).click();
+    await note.locator('.week-progress__count:has-text("1 de 14")').waitFor();
+    await note.locator('.week-progress__goal:has-text("Caminar un rato"):has-text("30 minutos")').waitFor();
+    await note.getByRole('button', { name: 'Editar actividad: Bici', exact: true }).click();
+    await page.getByRole('button', { name: 'Borrar', exact: true }).click();
+    await page.getByRole('button', { name: 'Mandar a la papelera', exact: true }).click();
+    await note.locator('.week-progress__count:has-text("1 de 13")').waitFor();
+    await note.locator('.week-progress__details > summary').click();
+    await note.getByRole('button', { name: 'Programar actividad' }).click();
+    await page.fill('#rt-title', 'Leer'); await page.selectOption('#rt-freq', 'weeklyTarget'); await page.fill('#rt-count', '2');
+    await page.getByRole('button', { name: 'Que se repita', exact: true }).click();
+    await note.locator('.week-progress__count:has-text("1 de 15")').waitFor();
+    await page.reload();
+    await note.locator('.week-progress__count:has-text("1 de 15")').waitFor();
+    assert.equal(await note.locator('.week-progress__name:has-text("Bici")').count(), 0, 'borrar no reinstala el valor de fábrica');
+    assert.equal(await note.locator('.week-progress__goal:has-text("Leer") progress').getAttribute('max'), '2');
+    assert.equal(await note.locator('input[aria-label="Importante"]').first().inputValue(), 'Preparar la semana');
+    await page.getByRole('link', { name: 'Semana siguiente', exact: true }).click();
+    await note.locator('.week-progress__count:has-text("0 de 15")').waitFor();
+    await page.getByRole('link', { name: 'Semana anterior', exact: true }).click();
+    await note.locator('.week-progress__count:has-text("1 de 15")').waitFor();
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+    assert.deepEqual(errors, []); await context.close();
+  }
 });
 
 await browser.close();

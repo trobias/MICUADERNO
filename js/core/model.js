@@ -46,7 +46,8 @@
       theme: null,                // v5 (D30): colores propios; null = la tela de la tapa (paso A9)
       emotionColors: {},          // v5 (D28): color elegido por emoción, { clave: '#RRGGBB' } (paso A4)
       hiddenDefaults: { feelings: [], templates: [] }, // v8 (D52): emociones de base y plantillas de fábrica que la persona sacó
-      hideYear: []                // v9 (D53): partes de Mi año que no ven quienes miran el cuaderno
+      hideYear: [],               // v9 (D53): partes de Mi año que no ven quienes miran el cuaderno
+      weeklyDefaultsInstalled: false // v11 (D56): las actividades iniciales se agregan una sola vez
     };
   }
 
@@ -104,7 +105,7 @@
     // Se respeta un nivel elegido. “Ninguna” nunca fue de fábrica: siempre fue una elección. Los viejos
     // valores de fábrica sin elección (“suaves”, o “reducidas” por el sistema) pasan a “completas” (D23).
     if (MOTION.indexOf(saved.motion) !== -1 && (saved.motionChosen === true || saved.motion === 'ninguna')) { out.motion = saved.motion; out.motionChosen = true; }
-    ['scenes', 'showCover', 'onboarded', 'notifyAsked'].forEach(function (k) {
+    ['scenes', 'showCover', 'onboarded', 'notifyAsked', 'weeklyDefaultsInstalled'].forEach(function (k) {
       if (typeof saved[k] === 'boolean') out[k] = saved[k];
     });
     if ([0, 7, 14, 30].indexOf(saved.backupEveryDays) !== -1) out.backupEveryDays = saved.backupEveryDays;
@@ -553,6 +554,43 @@
   function deleteRoutine(id) {
     // El historial ya marcado queda como actividades sueltas (routineId se conserva; se muestra aunque la rutina no exista).
     return captureActivityWeeks().then(function () { return sendToTrash('routines', id); });
+  }
+
+  /* D56: son rutinas comunes, editables y borrables. El indicador viaja en Ajustes y en la copia;
+     no se vuelven a instalar después de borrarlas o purgarlas. Los ids estables permiten reintentar
+     una instalación interrumpida sin duplicar ni pisar una rutina que la persona ya modificó. */
+  function weeklyDefaults(date) {
+    var start = D.startOfWeek(D.isValid(date) ? date : D.today());
+    return [
+      { id: 'weekly-default-work', title: 'Trabajar', rule: { type: 'weekdays', days: [1, 2, 3, 4, 5] }, targetNote: 'Según planificación' },
+      { id: 'weekly-default-walk', title: 'Caminar', rule: { type: 'weeklyTarget', count: 3 } },
+      { id: 'weekly-default-design', title: 'Practica Diseño', rule: { type: 'weekdays', days: [1, 2, 3, 4, 5] }, targetNote: '1 hora por día' },
+      { id: 'weekly-default-friend', title: 'Salir con una amiga', rule: { type: 'weeklyTarget', count: 1 } },
+      { id: 'weekly-default-bike', title: 'Bici', rule: { type: 'weeklyTarget', count: 1 } }
+    ].map(function (r) { return normalizeRoutine(Object.assign(r, { startDate: start })); });
+  }
+
+  var installingWeeklyDefaults = null;
+  function ensureWeeklyDefaults() {
+    if (!settings().onboarded || (MC.cloud && MC.cloud.mode === 'guest')) return Promise.resolve();
+    if (installingWeeklyDefaults) return installingWeeklyDefaults;
+    installingWeeklyDefaults = getMeta('settings', null).then(function (saved) {
+      if (saved && saved.weeklyDefaultsInstalled === true) return;
+      return S().getAll('routines').then(function (rows) {
+        var missing = weeklyDefaults().filter(function (r) {
+          var key = emotionKey(r.title);
+          return !rows.some(function (old) {
+            var oldKey = emotionKey(str(old.title).replace(/\s+/g, ' '));
+            return old.id === r.id || (old.kind !== 'sheet' && (oldKey === key ||
+              (r.id === 'weekly-default-design' && oldKey === 'practicar diseno')));
+          });
+        });
+        return captureActivityWeeks().then(function () {
+          return missing.reduce(function (p, r) { return p.then(function () { stamp(r); return S().put('routines', r); }); }, Promise.resolve());
+        }).then(function () { return saveSettings({ weeklyDefaultsInstalled: true }); });
+      });
+    });
+    return installingWeeklyDefaults.then(function (v) { installingWeeklyDefaults = null; return v; }, function (err) { installingWeeklyDefaults = null; throw err; });
   }
 
   /* ---------- páginas ---------- */
@@ -1415,6 +1453,7 @@
     normalizeFile: normalizeFile, filesFor: filesFor, addFile: addFile, deleteFile: deleteFile, MAX_FILE: MAX_FILE,
     activitiesInRange: activitiesInRange,
     normalizeRoutine: normalizeRoutine, getRoutines: getRoutines, saveRoutine: saveRoutine, deleteRoutine: deleteRoutine,
+    weeklyDefaults: weeklyDefaults, ensureWeeklyDefaults: ensureWeeklyDefaults,
     normalizePage: normalizePage, getPages: getPages, getPage: getPage, savePage: savePage, deletePage: deletePage,
     sanitizeBlocks: sanitizeBlocks, sanitizeValues: sanitizeValues, BLOCK_TYPES: BLOCK_TYPES,
     normalizeWeek: normalizeWeek, activityPlan: activityPlan, ensureActivityPlan: ensureActivityPlan, weeklyProgress: weeklyProgress, getWeeklyProgress: getWeeklyProgress,

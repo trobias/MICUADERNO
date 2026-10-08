@@ -1,6 +1,6 @@
 # MI CUADERNO — Modelo de datos
 
-`schemaVersion: 10` · Base IndexedDB `mi-cuaderno` (versión IDB 5, incluido el store interno `outbox`). El contrato activo retira las formas viejas desde v6; las secciones v1–v6 de abajo registran la evolución histórica. D55 suma metas semanales sin stores ni índices nuevos.
+`schemaVersion: 11` · Base IndexedDB `mi-cuaderno` (versión IDB 5, incluido el store interno `outbox`). El contrato activo retira las formas viejas desde v6; las secciones v1–v6 de abajo registran la evolución histórica. D55 suma metas semanales y D56 su carga inicial, sin stores ni índices nuevos.
 
 **Uso activo desde A4:** `days.morning/evening.feelings` y `activities.feel.before/after` se escriben desde la interfaz. `MC.model.feelingsOf(slot, settings)` hace lectura dual: si `feelings` es array, lo respeta incluso vacío; si es `null`, convierte `mood` con `legacyMoodLabels` (o `moodLabels` de una copia vieja). `emotionKey` normaliza mayúsculas y tildes para deduplicar y para `settings.emotionColors`; conserva la palabra escrita para mostrarla. `emotionPalette` asigna ocho hilos por frecuencia de la vista, con prioridad a colores elegidos. `summarize` devuelve `morning`, `evening` y `feelings` como arrays de palabras; `mood` ya no es el dato visible. TXT/CSV/XLSX e impresión exportan las palabras y antes/después de actividades. El v5 sigue siendo **aditivo**; no reescribir `updatedAt` al leer ni retirar formas antiguas hasta A13.
 
@@ -20,7 +20,7 @@
 
 | key | value |
 |---|---|
-| `schemaVersion` | `10` |
+| `schemaVersion` | `11` |
 | `settings` | objeto Settings (abajo) |
 | `createdAt` | ISO del primer arranque |
 | `lastBackupAt` | ISO de la última copia descargada, o `null` |
@@ -40,6 +40,7 @@
   scenes: true,                   // escenas ocasionales
   showCover: true,                // mostrar la tapa al abrir
   onboarded: false,
+  weeklyDefaultsInstalled: false, // v11 (D56): instalación única; conserva borrados y cambios de las actividades iniciales
   backupEveryDays: 14,            // 0 = nunca recordar
   trashRetentionDays: 30,         // DA1 (v4): días de retención en papelera antes de vaciar automáticamente (default 30; 0 = conservar siempre)
   notify: {
@@ -182,7 +183,7 @@ Un sticker pegado la usa con `sticker: 'img:<id>'`. Si la imagen se manda a la p
 {
   app: 'mi-cuaderno',
   kind: 'backup',
-  schemaVersion: 10,
+  schemaVersion: 11,
   exportedAt: ISO,
   data: {
     meta: { createdAt, settings },
@@ -348,6 +349,13 @@ B5 (D38, migración `20261005090000`): `profiles.has_notebook` (quien tiene cuad
 `MC.sections.split(store, registro)` decide las partes: los campos de identidad, fechas, papelera y privacidad van en todas; el resto según el mapa (por ejemplo `days.morning/evening/energy/sleep` → `emociones`, lo demás del día → `escritura`; `activities.feel` → `emociones`). Un campo nuevo cae en la sección por defecto de su store.
 
 ## Migraciones
+
+### Esquema v11 · actividades iniciales (08/10/2026, D56)
+
+- `settings.weeklyDefaultsInstalled: boolean`, `false` si falta o no es booleano. Se escribe `true` después de instalar las actividades iniciales, viaja en Ajustes y en la copia. `MIGRATIONS[11]` es aditiva: importar nunca fabrica rutinas ni historia.
+- `M.weeklyDefaults(fecha)` define cinco rutinas comunes con IDs `weekly-default-*` y comienzo el lunes actual: Trabajar 5, Caminar 3, Practica Diseño 5, Salir con una amiga 1 y Bici 1. Diseño lleva «1 hora por día». Todos los campos se editan con el editor habitual; no son actividades de cumplimiento guardadas.
+- `M.ensureWeeklyDefaults()` instala una sola vez tras la bienvenida, solo en cuaderno propio/local. Reutiliza nombres equivalentes, ignorando mayúsculas/tildes y aceptando «Practicar diseño», incluso en pausa o papelera. Conserva IDs existentes en reintentos. El indicador evita volver a crear una rutina renombrada o purgada; no se guardan contadores ni porcentajes.
+- Antes de agregar rutinas captura la planificación previa de semanas con registros. No escribe semanas anteriores con las actividades nuevas. Esquema de copia **11**, IndexedDB **5**, sin SQL, stores ni índices nuevos.
 
 ### Esquema v10 · objetivos semanales (07/10/2026, D55)
 

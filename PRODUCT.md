@@ -47,7 +47,7 @@ No real user content. All sample data in tests is synthetic. No testimonials or 
 
 ## Product Principles
 
-Since D55, the weekly planner includes automatic activity checklists, fixed weekdays and flexible weekly targets, optional duration notes, and descriptive daily/weekly counts. Progress measures completed scheduled opportunities; it never ranks people or emotions. Goal details and scheduling controls stay in a closed disclosure. Closed weeks retain their plan and dated records. The notebook remains classic JavaScript (D42).
+Since D55, the weekly planner includes automatic activity checklists, fixed weekdays and flexible weekly targets, optional duration notes, and descriptive daily/weekly counts. D56 places progress inside the Important note, with a visible weekly bar per activity and five editable initial activities. Pencil controls open the existing editor; scheduling stays in a closed disclosure. Initial activities are installed once, never reappear after deletion, and never overwrite existing equivalents. Progress measures completed scheduled opportunities; it never ranks people or emotions. Closed weeks retain their plan and dated records. The notebook remains classic JavaScript (D42).
 
 1. The notebook is the interface: every surface is paper, tab, sticker or ink.
 2. Kind always: no failure language, no guilt mechanics.

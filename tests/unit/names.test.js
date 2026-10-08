@@ -24,5 +24,5 @@ function walk(dir, out) {
 test('el nombre de ejemplo es Nicole en todo el repo', () => {
   const hits = walk(ROOT, []).filter((p) => NOT_THIS.test(fs.readFileSync(p, 'utf8')));
   assert.deepEqual(hits.map((p) => path.relative(ROOT, p)), []);
-  assert.match(fs.readFileSync(path.join(ROOT, 'tests/e2e/run.mjs'), 'utf8'), /onboard\(page, name = 'Nicole'\)/);
+  assert.match(fs.readFileSync(path.join(ROOT, 'tests/e2e/run.mjs'), 'utf8'), /onboard\(page, name = 'Nicole'(?:,|\))/);
 });

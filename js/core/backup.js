@@ -5,7 +5,7 @@
   var D = MC.dates;
   var M = function () { return MC.model; };
 
-  var SCHEMA_VERSION = 10;
+  var SCHEMA_VERSION = 11;
   var APP_ID = 'mi-cuaderno';
 
   /* ---------- contrato v6 (A13, D34): retirar las formas viejas sin perder nada ---------- */
@@ -108,7 +108,9 @@
     // v9 (D53, aditiva): días y hojas pueden traer `hide` (qué no ven quienes miran) y los ajustes `hideYear`.
     9: function (data) { return data; },
     // v10 (D55): metas semanales y planificación histórica. Aditiva: no inventa planes del pasado.
-    10: function (data) { return data; }
+    10: function (data) { return data; },
+    // v11 (D56): indicador de instalación única de actividades iniciales. No agrega rutinas al importar.
+    11: function (data) { return data; }
   };
 
   function build(everything) {

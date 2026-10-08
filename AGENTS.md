@@ -108,6 +108,7 @@ skills/                 colección de skills del proyecto (no es parte de la app
 ## Archivos críticos
 
 - Objetivos semanales (D55, copia v10, IndexedDB 5): `weeklyTarget` cuenta `count` oportunidades por semana, nunca siete pendientes. Solo `done` completa el objetivo. `weeks.activityPlan` conserva la planificación de semanas cerradas; usar `ensureActivityPlan`/`weeklyProgress`/`getWeeklyProgress` e `itemsForDay(fecha, rutinas, plan)` para sus casillas. El plan pertenece a `repeticiones`, separado de Importante/Notas (`semana`). En la semana se muestran casillas pasadas para completar el registro; D18 sigue ocultando pendientes en el mes. No reemplazar el plan al guardar un borrador de Notas.
+- D56 (copia v11, cache v50, IDB 5): las barras viven dentro de Importante, una visible por actividad; el lápiz reutiliza `MC.repeat.editor`. `ensureWeeklyDefaults` agrega cinco rutinas comunes una sola vez desde el lunes actual; `settings.weeklyDefaultsInstalled` evita reinstalarlas tras borrar/purgar y se conserva en copia/nube. Reutilizar equivalentes existentes, nunca alterar sus reglas ni instalar valores en invitadas. Separar `.planner__important-notes` (Semana) de barras (Actividades/Repeticiones) y controles (Repeticiones). El indicador no se instala desde una migración de copia.
 
 - `js/core/store.js` + `js/core/backup.js`: tocar con cuidado; cualquier cambio de forma de datos exige migración y subir `SCHEMA_VERSION` (ver DATA_MODEL.md).
 - `js/core/recurrence.js`: cubierto por tests; agregá casos antes de cambiar.

@@ -198,18 +198,25 @@ a.months__year { text-decoration: none; padding: 4px 6px; border-radius: 6px; }
 .add-activity--compact svg { width: 16px; height: 16px; }
 .planner__foot { display: flex; justify-content: flex-end; margin-top: var(--s-2); min-height: 24px; }
 
-/* El progreso es una línea de hilo sobre la hoja, con las cuentas en texto. */
-.week-progress { margin-block: var(--s-4) var(--s-5); display: grid; gap: var(--s-2); }
+/* Las barras son líneas de hilo dentro de Importante, con las cuentas en texto. */
+.week-progress { display: grid; gap: var(--s-2); margin-bottom: var(--s-3); }
 .week-progress__head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-3); }
+.week-progress__head h3 { font-family: var(--font-ui); font-size: var(--fs-sm); font-weight: 400; }
 .week-progress__percent { font-family: var(--font-ui); font-variant-numeric: tabular-nums; }
 .week-progress__bar { display: block; width: 100%; height: var(--s-2); border: 1px solid var(--ink-soft); border-radius: var(--radius-note); overflow: hidden; background: var(--paper-shade); color: var(--thread-done); accent-color: var(--thread-done); }
 .week-progress__bar::-webkit-progress-bar { background: var(--paper-shade); }
 .week-progress__bar::-webkit-progress-value { background: var(--thread-done); }
 .week-progress__bar::-moz-progress-bar { background: var(--thread-done); }
 .week-progress__details > summary { font-family: var(--font-ui); font-size: var(--fs-sm); min-height: 44px; padding-block: var(--s-3); cursor: pointer; }
-.week-progress__goals { display: grid; gap: var(--s-2); margin-bottom: var(--s-3); }
-.week-progress__goal { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--s-1) var(--s-3); padding-bottom: var(--s-2); border-bottom: 1px dashed var(--rule-strong); overflow-wrap: anywhere; }
-.week-progress__goal a { color: inherit; text-underline-offset: 3px; }
+.week-progress__goals { display: grid; gap: var(--s-3); margin-top: var(--s-2); }
+.week-progress__goal { display: grid; gap: var(--s-1); overflow-wrap: anywhere; }
+.week-progress__goal-head { display: flex; align-items: center; justify-content: space-between; gap: var(--s-2); min-height: 44px; }
+.week-progress__label { display: grid; gap: var(--s-1); }
+.week-progress__name { font-family: var(--font-text); }
+.week-progress p { margin: 0; }
+.week-progress__actions { flex: none; }
+.week-progress__goal .week-progress__bar { height: var(--s-1); }
+.planner__important-notes { border-top: 1px dashed var(--rule-strong); padding-top: var(--s-2); }
 .week-day__progress { margin-top: auto; font-variant-numeric: tabular-nums; }
 @media (forced-colors: active) {
   .week-progress__bar { color: Highlight; border-color: CanvasText; forced-color-adjust: none; }

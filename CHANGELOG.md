@@ -2,6 +2,16 @@
 
 Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantiene. El porqué de cada decisión está en `DECISIONS.md` (Dn); lo que falta, en `ROADMAP.md`. Cada entrega que toca archivos de la app sube `CACHE_VERSION` en `sw.js` para que las PWA instaladas se actualicen.
 
+## 2026-10-08 · Barras y actividades configurables dentro de Importante (D56, cache `v50`)
+
+- El progreso pasa a la nota Importante: resumen semanal y una barra visible propia por actividad, sin barra encima de la grilla. Las notas y casillas manuales se conservan debajo y no se cuentan como actividades.
+- Precargadas una sola vez: Trabajar y Practica Diseño de lunes a viernes (diseño: 1 hora por día), Caminar 3 veces, Salir con una amiga y Bici 1 vez cada una, con días a elección. El lápiz permite definir nombre, frecuencia, días, duración/meta y vigencia, o borrar. «Organizar actividades» permite crear y acceder a las repeticiones.
+- No duplica rutinas equivalentes existentes ni cambia sus reglas, pausa o papelera; reconoce «Practicar diseño». Borrar/purgar no reinstala una inicial. La nueva semana renueva las oportunidades y el historial D55 se mantiene.
+- `weeklyDefaultsInstalled` viaja en settings, copia v11 y nube; migración aditiva, IDB 5 sin stores nuevos. Una invitada nunca instala actividades. Los permisos de notas, barras y controles se aplican por separado dentro de Importante.
+- Pruebas de instalación, reintento interrumpido, equivalencias, edición/purga/copia y ausencia de historia fabricada; E2E con teclado, edición, borrado, alta, recarga y semanas, en file y HTTP a 1366px/375px. Se amplía la matriz de permisos mezclados. Resultados y límites en `docs/QA.md`.
+- Se corrige la espera del test anterior de borrado de páginas: el modo Decorar se activa antes de que termine la bandeja; ahora espera el sticker colocado antes de usar el teclado. Mantiene todas las comprobaciones, sin cambiar la función de stickers.
+- Actualizados AGENTS, BACKLOG, DATA_MODEL, DECISIONS, DESIGN, HANDOFF, MIGRATION_PLAN, PRODUCT, README, ROADMAP, SPEC, docs/NUBE y docs/QA. Sin dependencias nuevas ni cambios de infraestructura.
+
 ## 2026-10-07 · Actividades automáticas y objetivos semanales (verificado localmente, cache `v49`)
 
 **Para quien lo usa**
