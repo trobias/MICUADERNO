@@ -6,6 +6,16 @@ Son implementaciones propias para el cuaderno clásico inspiradas en las interac
 Se reutilizan rutas, permisos, guardado y tokens; sin recursos externos durante el uso.
 Las animaciones respetan Ajustes, movimiento reducido del sistema y teclado.
 
+## Datos, permisos y límites
+
+- Copia v13/IDB 5: solo `routines.order` opcional agrega datos. Reordenar no fusiona actividades ni reemplaza planes históricos. Las migraciones anteriores son aditivas; nube y copia conservan el orden.
+- `MC.c` reutiliza componentes existentes; `js/ui/viewer.js` contiene visor/collage, `js/core/search.js` el índice puro y `js/ui/search.js` su interfaz y limpieza. Scripts clásicos presentes en index y SHELL; cache v78.
+- Controles `data-browse="1"` solo navegan, filtran o descargan fuentes ya visibles. No permiten guardar en secciones de lectura; reordenar comprueba permiso de Repeticiones también antes de escribir.
+- Búsqueda efímera de texto, fechas y emociones; no busca contenido binario de adjuntos ni crea colecciones. En invitadas no recompone recuerdos derivados y solo indexa secciones/partes recibidas. Cerrar/destrozar la búsqueda libera su índice y sus suscripciones.
+- El collage es progresivo por tandas, no un virtualizador ni auto-scroll. Mosaico descriptivo, sin puntaje. PIN visual de seis casillas, no un nuevo servicio OTP. Gestos de actividad revelan el menú, sin arrastrar actividades entre fechas.
+- Cola: conserva cada éxito, reintenta únicamente el error y deja afuera lo pendiente al cerrar. Un archivo ya en proceso puede terminar. No cambia tiempos de descarga, caché privada de invitadas ni sincronización de medios.
+- La adaptación no instala paquetes ni copia el registry de Be UI. Su referencia visual es el catálogo público; no integra componentes Pro.
+
 ## Componentes entregados
 
 | Componente | Uso y contrato |

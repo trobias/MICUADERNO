@@ -18,4 +18,6 @@ test('buscar: acentos, rangos, papelera y privacidad en la fuente', () => {
   assert.equal(MC.search.query(guest, 'tranquila').length, 1);
   const limited = MC.search.build(raw, { guest: true, allowed: ['emociones'] });
   assert.equal(MC.search.query(limited, 'diseño').length, 0);
+  const onlyActivity = MC.search.build({ days: [], pages: [], activities: [{ id: 'act-nicole', date: day.date, title: 'Caminar', status: 'done' }], marks: [{ id: 'recuerdo-nicole', kind: 'recuerdo', sourceType: 'activity', sourceId: 'act-nicole', note: 'Un paseo para guardar' }] });
+  assert.equal(MC.search.query(onlyActivity, 'paseo', { type: 'memory' }).length, 1, 'un recuerdo de actividad también se indexa sin una página del día escrita');
 });

@@ -6,7 +6,7 @@
 sin inventar timestamps ni reordenar datos históricos. Varias repeticiones agrupadas pueden compartir
 la posición. Viaja por Repeticiones, con su registro; no modifica actividadPlan ni las fechas/estados.
 
-`schemaVersion: 12` · Base IndexedDB `mi-cuaderno` (versión IDB 5, incluido el store interno `outbox`). El contrato activo retira las formas viejas desde v6; las secciones v1–v6 de abajo registran la evolución histórica. D55 suma metas semanales, D56 su carga inicial y D59 recuerdos por referencia, sin stores ni índices nuevos.
+`schemaVersion: 13` · Base IndexedDB `mi-cuaderno` (versión IDB 5, incluido el store interno `outbox`). El contrato activo retira las formas viejas desde v6; las secciones v1–v6 de abajo registran la evolución histórica. D55 suma metas semanales, D56 su carga inicial y D59 recuerdos por referencia, sin stores ni índices nuevos.
 
 **Uso activo desde A4:** `days.morning/evening.feelings` y `activities.feel.before/after` se escriben desde la interfaz. `MC.model.feelingsOf(slot, settings)` hace lectura dual: si `feelings` es array, lo respeta incluso vacío; si es `null`, convierte `mood` con `legacyMoodLabels` (o `moodLabels` de una copia vieja). `emotionKey` normaliza mayúsculas y tildes para deduplicar y para `settings.emotionColors`; conserva la palabra escrita para mostrarla. `emotionPalette` asigna ocho hilos por frecuencia de la vista, con prioridad a colores elegidos. `summarize` devuelve `morning`, `evening` y `feelings` como arrays de palabras; `mood` ya no es el dato visible. TXT/CSV/XLSX e impresión exportan las palabras y antes/después de actividades. El v5 sigue siendo **aditivo**; no reescribir `updatedAt` al leer ni retirar formas antiguas hasta A13.
 
@@ -26,7 +26,7 @@ la posición. Viaja por Repeticiones, con su registro; no modifica actividadPlan
 
 | key | value |
 |---|---|
-| `schemaVersion` | `12` |
+| `schemaVersion` | `13` |
 | `settings` | objeto Settings (abajo) |
 | `createdAt` | ISO del primer arranque |
 | `lastBackupAt` | ISO de la última copia descargada, o `null` |
@@ -119,6 +119,7 @@ Unicidad lógica: para ocurrencias de rutina, a lo sumo una actividad por `(rout
   endDate: 'AAAA-MM-DD' | null,
   moment: 'manana' | 'tarde' | 'noche' | null,
   archived: false,                // pausada
+  order: number | null,          // v13: posición opcional 0..10000; metas agrupadas comparten posición
   targetNote: '',                 // duración/meta opcional; texto de hasta 120 caracteres (v10)
   deletedAt: ISO | null,          // DA1 (v4): instante de envío a la papelera (null o ausente = activo)
   createdAt, updatedAt
@@ -189,7 +190,7 @@ Un sticker pegado la usa con `sticker: 'img:<id>'`. Si la imagen se manda a la p
 {
   app: 'mi-cuaderno',
   kind: 'backup',
-  schemaVersion: 12,
+  schemaVersion: 13,
   exportedAt: ISO,
   data: {
     meta: { createdAt, settings },

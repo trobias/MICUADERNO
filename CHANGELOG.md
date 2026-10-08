@@ -1,5 +1,12 @@
 # MI CUADERNO — Cambios
 
+### 08/10/2026 · Verificación de las interacciones D62
+
+- Correcciones de integración: visor desde los bolsillos, leyenda compacta del mosaico, búsqueda actualizada con datos guardados y recuerdos de actividades sin día escrito, foco del PIN y cierre del filtro de fechas.
+- La cola admite errores síncronos/asíncronos; reintentar no repite éxitos y cerrar detiene lo pendiente incluso si el archivo actual termina en ese instante. Ordenar vuelve a comprobar el permiso de Repeticiones antes de guardar.
+- La primera página del día espera las cinco rutinas iniciales; no altera reglas de invitadas ni planes históricos. Cache v78; copia v13 aditiva/IDB 5.
+- Recorridos nuevos y documentación de contratos en `docs/BEUI.md`, SPEC, DESIGN, DATA_MODEL, AGENTS, HANDOFF, ROADMAP, BACKLOG y NUBE; evidencia y límites en `docs/QA.md`.
+
 ## 2026-10-08 · Skeleton loader and reveal al abrir (D61, cache v57)
 
 - Las casillas de la espera pulsan suavemente; el calendario listo aparece con un fundido de 260 ms. Adaptación CSS/JS clásica de Skeleton loader and reveal de transitions.dev, sin dependencias nuevas y con la mariposa/favicon D60.

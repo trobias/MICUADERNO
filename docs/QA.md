@@ -1,5 +1,16 @@
 # QA cruzada (A12) — 05/10/2026
 
+## Actualización del 08/10/2026 · Interacciones de papelería (D62, cache v78)
+
+- Selección de 19 componentes, cada uno en un commit; adaptación propia en JS/CSS clásicos, sin instalaciones. Mapa en `docs/BEUI.md`. Copia v13 aditiva por orden de rutinas; IndexedDB 5.
+- `npm run check` aprobado: sintaxis de **50** scripts, **172/172** unitarias y **77/77** recorridos de Chromium. Incluye file/HTTP, móvil, offline, copias/historial, motion y matriz de permisos. La matriz D51 distingue controles concretos de lectura (búsqueda/filtros/mosaico/visor/descarga) de edición; las demás comprobaciones siguen vigentes.
+- Nuevos D62 **4/4**: carpetas y búsqueda con tildes, privacidad y actualización; fotos desde bolsillo y collage, zoom/restablecer/foco al cerrar, períodos y mosaico con flechas (1280 y 375 px); reordenar con teclado, recarga, límites menos/más y diálogo móvil; cola con error síncrono, reintento sin duplicar éxitos y cierre mientras termina el archivo actual.
+- `npm run typecheck` y `npm run build` aprobados. `npm run e2e:cloud` **3/3**: shell/CSP, entrada a 375 px y API sin sesión. El ingreso comprueba máscara, borrado, entrada completa, validez, selección de casilla y edición del PIN en el único campo real. No cambia contratos de autenticación.
+- Revisión visual en navegador y capturas sintéticas del año a 1280 y 375 px: bolsillos pastel, fotos y leyenda compacta, sin desborde horizontal. El menú de decorar muestra sus cuatro acciones; la página del día muestra sus cinco rutinas al entrar. Capturas reproducibles con `E2E_CAPTURE`; no contienen datos reales del cuaderno.
+- La primera corrida completa dejó **72/73**: la matriz antigua trataba filtros de lectura como edición. La primera corrida enfocada detectó además errores de fixture/espera nativa. Se corrigieron esos casos, el visor que perdía su lista al añadir collage y una carrera real al cerrar la cola. Corridas finales completas y enfocadas en verde; no se omiten recorridos.
+- Revisión de motion: puntadas/contadores/confirmación interrumpibles, tokens y guardas de Ajustes/sistema, sin loops nuevos. Las carpetas neutralizan desplazamiento/rotación en Reducidas/Ninguna; el PIN respeta el sistema reducido. No se midieron todos los gestos en un dispositivo físico.
+- Límites: nube comprobada con servidor Next local y fixtures de permisos; no se usaron sesiones ni datos reales de la psicóloga. No se mide ni optimiza la espera de unos 20 s, no se verifica Production y no se cambia la descarga/sincronización. La búsqueda no indexa binarios ni colecciones; el collage carga por tandas y los gestos de actividad solo abren opciones.
+
 ## Actualización del 08/10/2026 · Skeleton loader and reveal (D61, cache v57)
 
 - Adaptación de la receta de transitions.dev: pulso real de opacidad 1 → 0.5 en las casillas; el texto mantiene opacidad 1. Cruce de capas de 260 ms al llegar el calendario listo, sin espera mínima. Conserva mariposa y favicon D60.

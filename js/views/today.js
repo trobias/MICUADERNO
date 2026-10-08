@@ -60,7 +60,7 @@
     main.appendChild(spread);
 
     var pagesToday = [];
-    Promise.all([M.getDay(date, { includeDeleted: true }), M.itemsForDay(date), M.pagesOn(date)]).then(function (res) {
+    M.ensureWeeklyDefaults().then(function () { return Promise.all([M.getDay(date, { includeDeleted: true }), M.itemsForDay(date), M.pagesOn(date)]); }).then(function (res) {
       if (destroyed) return;
       day = recoverDraft(res[0]);
       items = res[1];

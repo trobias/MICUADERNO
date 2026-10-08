@@ -36,7 +36,7 @@
     });
     // Los recuerdos derivados solo se indexan en el cuaderno propio: nunca recomponer partes privadas para una invitada.
     if (can('anio') && !opts.guest) {
-      var years = Array.from(new Set((raw.days || []).map(function (d) { return d.date.slice(0, 4); }).concat((raw.pages || []).map(function (p) { return M.pageDate(p).slice(0, 4); }))));
+      var years = Array.from(new Set((raw.days || []).map(function (d) { return d.date.slice(0, 4); }).concat((raw.pages || []).map(function (p) { return M.pageDate(p).slice(0, 4); }), (raw.activities || []).map(function (a) { return a.date.slice(0, 4); }))));
       years.forEach(function (year) { MC.insights.moments(raw, year).forEach(function (m) {
         add('memory', m.text, m.text + ' ' + (m.detail || ''), m.date, m.page ? R.page(m.page) : R.day(m.date));
       }); });

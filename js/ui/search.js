@@ -3,7 +3,7 @@
   'use strict';
   var MC = root.MC, h = MC.h, M = MC.model, c = MC.c;
   c.notebookSearch = function () {
-    var id = MC.uid('buscar'), alive = true, seq = 0, entries = null;
+    var id = MC.uid('buscar'), alive = true, seq = 0, entries = null, timer = null;
     var input = h('input.input', { id: id, type: 'search', maxlength: 160, placeholder: 'Una palabra, emoción o actividad…', 'aria-label': 'Buscar en mi cuaderno', dataset: { browse: '1' } });
     var list = h('ol.notebook-search__results'), status = h('p.t-meta', { role: 'status' });
     var type = h('select.select', { 'aria-label': 'Tipo de resultado', dataset: { browse: '1' } },
@@ -32,9 +32,10 @@
         entries = MC.search.build(raw, { guest: MC.access.guest(), allowed: MC.sections.ids().filter(function (s) { return !!MC.access.level([s]); }) }); paint();
       }, function () { if (alive && current === seq) status.textContent = 'No se pudo preparar la búsqueda. Cerrala y volvé a abrirla para reintentar.'; });
     }
-    details.addEventListener('toggle', function () { if (details.open) load(); else { seq++; entries = null; MC.clear(list); } });
+    details.addEventListener('toggle', function () { if (details.open) load(); else { clearTimeout(timer); seq++; entries = null; MC.clear(list); } });
     input.addEventListener('input', paint); [type, from, to].forEach(function (el) { el.addEventListener('change', paint); });
-    details.destroy = function () { alive = false; seq++; entries = null; };
+    var off = MC.on('store:changed', function () { if (alive && details.open) { clearTimeout(timer); timer = setTimeout(load, 200); } });
+    details.destroy = function () { alive = false; clearTimeout(timer); off(); seq++; entries = null; };
     return details;
   };
 })(window);

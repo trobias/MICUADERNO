@@ -1,5 +1,7 @@
 # MI CUADERNO en la nube: Vercel + Supabase (etapa B, base)
 
+**D62 · ingreso:** `app/entrar/pin-input.tsx` muestra seis casillas enmascaradas sobre un único input password nativo. Permite pegado, borrado y gestor de contraseñas; mantiene `current-password`, validación de seis números, formulario y `/api/auth/login`. No agrega autenticación OTP ni cambia credenciales, permisos, sesiones o servicios. `data-browse` deja utilizar filtros/visor en cuadernos de lectura; nunca habilita guardado. La única forma nueva sincronizada es `routines.order` opcional, en la sección repeticiones ya existente.
+
 **Apertura D61 (cache v57):** agrega pulso de skeleton y reveal de 260 ms cuando el calendario está listo, adaptado de transitions.dev sin dependencias nuevas. Motion recordado por persona antes de esperar base/nube; sistema reducido o Reducidas/Ninguna: estático. Conserva la carga completa y los fallos/permisos D60/D38. No mide ni optimiza la latencia real.
 
 **Apertura D60 (cache v56):** el shell inicial muestra mariposa y «Cargando el cuaderno…» hasta tener el primer calendario listo. Una descarga inicial fallida de invitada mantiene la hoja y ofrece reintentar; no abre memoria vacía como si el cuaderno estuviera listo. Los permisos y la carga completa D38 se conservan. Es feedback de espera, sin medición o mejora de latencia de Production.

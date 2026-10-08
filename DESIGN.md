@@ -2,6 +2,8 @@
 
 > Reglas visuales, de interacción y de motion. Si una decisión no está acá, se decide en coherencia con §1 y se agrega acá.
 
+**D62 · interacciones de papelería:** referencias de Be UI reinterpretadas con los tokens existentes: hojas salvia/manteca/rosa/lavanda, carpetas por mes, bolsillos con notas y controles discretos plegados. Las casillas mantienen sus estados; los contadores muestran siempre el valor real. Menos/más conserva entrada editable; arrastre y gesto tienen alternativa visible de teclado/toque. En móvil los diálogos se apoyan abajo, conservando cierre y foco nativos. Filtros se cierran al aplicarse. Visor: foto protagonista, miniaturas y zoom explícito; collage solo al abrirlo y por tandas. Mosaico neutro, con texto y glifos de escritura/victoria, nunca niveles que juzguen a la persona. Sin movimiento inicial ni loops nuevos, sin animar guardado/contadores mientras se escribe; sistema reducido y Ajustes mandan. Contratos y destinos en `docs/BEUI.md`.
+
 ## 1. Esencia
 
 **Un diario de tela, bordado a mano, que se abre sobre la mesa.**

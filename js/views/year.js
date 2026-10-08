@@ -231,7 +231,7 @@
       list.appendChild(row);
     });
     box.appendChild(list);
-    var photos = c.photoAlbum(entries); if (photos) box.appendChild(photos);
+    var collage = c.photoAlbum(entries); if (collage) box.appendChild(collage);
     if (hidden.length) {
       var more = h('button.text-btn.year-album__more', { type: 'button', 'aria-controls': list.id, 'aria-expanded': 'false' }, 'Ver ' + (victory ? 'todas las victorias' : 'todos los recuerdos'));
       more.addEventListener('click', function () { hidden.forEach(function (n) { n.hidden = false; }); more.remove(); links[6].focus(); });

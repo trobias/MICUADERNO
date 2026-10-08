@@ -139,6 +139,7 @@
         if (!orderBox.firstChild) {
           var sortable = p.goals.filter(function (g) { return g.routineIds.length; });
           if (sortable.length > 1) orderBox.appendChild(c.sortableList(sortable, function (ordered) {
+            if (MC.access.guest() && MC.access.level(['repeticiones']) !== 'editar') return Promise.reject(new Error('Solo para mirar.'));
             return M.getRoutines().then(function (latest) {
               return ordered.reduce(function (promise, goal, i) { return promise.then(function () {
                 return Promise.all(goal.routineIds.map(function (id) {

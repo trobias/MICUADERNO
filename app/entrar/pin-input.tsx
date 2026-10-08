@@ -19,6 +19,13 @@ export default function PinInput({ inputRef }: { inputRef: RefObject<HTMLInputEl
         <input ref={inputRef} name="pin" type="password" inputMode="numeric" autoComplete="current-password"
           aria-label="PIN de 6 números" pattern="\d{6}" maxLength={6} required
           onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
+          onClick={(e) => {
+            if (!e.detail) return;
+            const field = e.currentTarget, rect = field.getBoundingClientRect();
+            const slot = Math.max(0, Math.min(5, Math.floor((e.clientX - rect.left) / rect.width * 6)));
+            const at = Math.min(slot, field.value.length);
+            field.setSelectionRange(at, at); setPosition(at);
+          }}
           onSelect={(e) => setPosition(e.currentTarget.selectionStart ?? e.currentTarget.value.length)}
           onChange={(e) => { setLength(e.currentTarget.value.length); setPosition(e.currentTarget.selectionStart ?? e.currentTarget.value.length); }} />
       </span>

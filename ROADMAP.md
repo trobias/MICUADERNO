@@ -1,5 +1,7 @@
 # MI CUADERNO — Roadmap
 
+**Entrega D62 (08/10/2026):** selección aprobada de 19 interacciones de papelería integrada en el stack actual; [mapa](docs/BEUI.md) y [verificación](docs/QA.md). Copia v13 aditiva por orden de repeticiones. No reabre la etapa C ni cambia la secuencia de nube.
+
 Estado al 05/10/2026: **la etapa A del plan nuevo está completa** (A0–A13) y la base de la nube está publicada (`https://micuaderno-five.vercel.app`, Nicole ya tiene su cuenta) con cuadernos compartidos (D38). Fotos en la nube (NB1, D43) y cola firme (NB2, D44) hechas; quedan NB4 (espera respuesta) y NB5. Lo que falta de la nube está en `BACKLOG.md` (sección NB); la etapa C (React) quedó descartada (D42) y en [`docs/EVALUACION_BC.md`](docs/EVALUACION_BC.md); el orden y los criterios, en [`MIGRATION_PLAN.md`](MIGRATION_PLAN.md). La tabla de fases históricas más abajo conserva la visión anterior como referencia de ideas: **no es el orden de implementación actual**. Lo visible hoy está en `SPEC.md` y lo entregado por commit, en `CHANGELOG.md`.
 
 ## Ruta aprobada ahora

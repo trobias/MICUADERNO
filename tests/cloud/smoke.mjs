@@ -66,6 +66,23 @@ try {
     const font = await page.evaluate(() => getComputedStyle(document.querySelector('h1')).fontFamily);
     assert.match(font, /Young Serif/);
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'sin scroll horizontal a 375px');
+    const pin = page.locator('input[name="pin"]');
+    await pin.fill('583');
+    assert.equal(await page.locator('.pin-entry__dot').count(), 3);
+    await pin.press('Control+A'); await pin.press('Backspace');
+    assert.equal(await page.locator('.pin-entry__dot').count(), 0);
+    // Pegado completo y edición usan el mismo campo real, sin exponer dígitos en las casillas.
+    await pin.fill('583927');
+    assert.equal(await pin.inputValue(), '583927');
+    assert.equal(await page.locator('.pin-entry__dot').count(), 6);
+    assert.equal(await pin.evaluate(el => el.validity.valid), true);
+    assert.equal(await page.locator('.pin-entry__cells').getAttribute('aria-hidden'), 'true');
+    assert.equal(await page.locator('.pin-entry__cells').textContent(), '');
+    const pinBox = await pin.boundingBox();
+    await pin.click({ position: { x: pinBox.width / 4, y: pinBox.height / 2 } });
+    assert.equal(await pin.evaluate(el => el.selectionStart), 1, 'tocar la segunda casilla permite editar ese lugar');
+    await pin.press('Delete'); await pin.press('8');
+    assert.equal(await pin.inputValue(), '583927');
     await page.goto(BASE + '/preparar');
     assert.match(await page.textContent('main'), /falta conectar la base/);
     assert.deepEqual(errors, []);

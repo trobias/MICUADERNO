@@ -19,7 +19,7 @@ async function test(name, fn) {
   if (process.env.E2E_GREP && !name.toLowerCase().includes(process.env.E2E_GREP.toLowerCase())) return;
   const t0 = Date.now();
   try { await fn(); results.push([true, name, Date.now() - t0]); console.log(`  ✓ ${name}`); }
-  catch (e) { results.push([false, name]); console.log(`  ✗ ${name}\n    ${String(e && e.stack || e).split('\n').slice(0, 4).join('\n    ')}`); }
+  catch (e) { results.push([false, name]); console.log(`  ✗ ${name}\n    ${String(e && e.stack || e).split('\n').slice(0, 8).join('\n    ')}`); }
 }
 
 function watchErrors(page) {
@@ -2561,6 +2561,8 @@ await test('nube (D51): matriz de permisos — en cada cuadro, nada editable fue
         // Mirar más (desplegar) y elegir qué período ver tampoco cambian nada; Mi año solo lee.
         if (c.hasAttribute('aria-expanded') && !c.hasAttribute('aria-haspopup')) return;
         if (c.matches('.stitch-cell, .year-page .choice, .year-notes .choice')) return;
+        // D62: filtros e índices de lectura no escriben ni conceden permisos de edición.
+        if (c.dataset.browse === '1' && (c.closest('.record-calendar, .date-range, .notebook-search, .photo-album') || c.matches('.year-album__photo, .attachment__open, .attachment__download'))) return;
         const zone = c.closest('[data-access]');
         const lv = zone ? zone.dataset.access : 'sin-parte';
         if (lv === 'editar') return;
@@ -3151,6 +3153,136 @@ await test('D61: Ninguna y Reducidas se recuerdan antes de abrir la base y conse
       assert.deepEqual(errors, []);
     } finally { await context.close(); }
   }
+});
+
+await test('D62: carpetas y búsqueda local con tildes, privacidad y actualización en vivo', async () => {
+  const { page, context, errors } = await newPage(browser);
+  try {
+    await page.goto(FILE_URL); await onboard(page);
+    await page.evaluate(async () => {
+      const M = MC.model, today = MC.dates.today();
+      await M.savePage({ id: 'hoja-nicole', title: 'Mi práctica de diseño', date: today, blocks: [{ id: 'texto', type: 'text' }], values: { texto: 'Un dibujo en el cuaderno' } });
+      await M.savePage({ id: 'otra-hoja-nicole', title: 'Una hoja anterior', date: MC.dates.addDays(today, -60) });
+      const day = M.emptyDay(MC.dates.addDays(today, -1)); day.notes = 'Diseño solo para mí'; day.privacy = { noMemory: true }; await M.saveDay(day);
+      location.hash = MC.routes.sheets();
+    });
+    await page.waitForSelector('.paper-folder');
+    assert.equal(await page.locator('.paper-folder').count(), 2);
+    assert.equal(await page.locator('.paper-folder').first().getAttribute('open'), '');
+    await page.locator('.notebook-search > summary').click();
+    await page.getByRole('searchbox', { name: 'Buscar en mi cuaderno' }).fill('practica diseno');
+    await page.locator('.notebook-search__results a:has-text("Mi práctica de diseño")').waitFor();
+    assert.equal(await page.locator('.notebook-search__results li').count(), 1);
+    await page.getByRole('searchbox', { name: 'Buscar en mi cuaderno' }).fill('solo para');
+    await page.waitForFunction(() => document.querySelector('.notebook-search [role="status"]').textContent === '0 resultados');
+    await page.evaluate(() => MC.model.savePage({ id: 'nueva-hoja-nicole', title: 'Un paseo', date: MC.dates.today() }));
+    await page.getByRole('searchbox', { name: 'Buscar en mi cuaderno' }).fill('paseo');
+    await page.locator('.notebook-search__results a:has-text("Un paseo")').waitFor();
+    await page.locator('.paper-folder').last().locator('summary').focus(); await page.keyboard.press('Enter');
+    assert.equal(await page.locator('.paper-folder').last().locator('a:has-text("Una hoja anterior")').isVisible(), true);
+    assert.deepEqual(errors, []);
+  } finally { await context.close(); }
+});
+
+await test('D62: fotos del año, zoom, período y mosaico accesibles en escritorio y 375px', async () => {
+  for (const width of [1280, 375]) {
+    const { page, context, errors } = await newPage(browser, { viewport: { width, height: 860 }, hasTouch: width === 375 });
+    try {
+      await page.goto(HTTP_URL); await onboard(page);
+      const today = await page.evaluate(async () => {
+        const M = MC.model, today = MC.dates.today(), cv = document.createElement('canvas'); cv.width = 240; cv.height = 180;
+        const ctx = cv.getContext('2d'); ctx.fillStyle = 'lavender'; ctx.fillRect(0, 0, 240, 180); ctx.fillStyle = 'seagreen'; ctx.beginPath(); ctx.arc(120, 90, 40, 0, Math.PI * 2); ctx.fill();
+        const im = await M.saveImage({ id: 'foto-nicole', kind: 'upload', name: 'Mi foto', src: cv.toDataURL(), w: 240, h: 180 });
+        const day = M.emptyDay(today); day.notes = 'Un paseo tranquilo'; day.reflection.keep = 'Un momento con mi foto'; day.stickers = [{ id: 'pegado', sticker: 'img:' + im.id, x: .5, y: .5 }]; await M.saveDay(day);
+        const earlier = M.emptyDay(today.slice(0, 4) + '-01-02'); earlier.reflection.keep = 'Mi recuerdo de enero'; await M.saveDay(earlier);
+        location.hash = MC.routes.year(); return today;
+      });
+      await page.waitForSelector('.year-album__photo');
+      await page.locator('.year-album__photo').first().click();
+      await page.waitForSelector('dialog.image-viewer[open]');
+      await page.getByRole('button', { name: 'Acercar foto', exact: true }).click();
+      assert.match(await page.locator('.image-viewer__photo').evaluate(el => el.style.transform), /scale\(1.5\)/);
+      await page.getByRole('button', { name: 'Ver completa', exact: true }).click();
+      assert.match(await page.locator('.image-viewer__photo').evaluate(el => el.style.transform), /scale\(1\)/);
+      await page.keyboard.press('Escape'); await page.locator('dialog.image-viewer').waitFor({ state: 'detached' });
+      assert.equal(await page.locator('.year-album__photo').first().evaluate(el => el === document.activeElement), true);
+      await page.locator('.photo-album > summary').click();
+      await page.locator('.photo-collage__item').first().waitFor();
+      assert.equal(await page.locator('.photo-collage__item').count(), 1);
+      await page.locator('.photo-collage__open').click(); await page.waitForSelector('dialog.image-viewer[open]'); await page.keyboard.press('Escape');
+      await page.locator('.date-range > summary').click();
+      await page.getByLabel('Desde', { exact: true }).fill(today); await page.getByLabel('Hasta', { exact: true }).fill(today);
+      await page.getByRole('button', { name: 'Ver período', exact: true }).click();
+      assert.equal(await page.locator('.memory').count(), 1);
+      await page.locator('.date-range > summary').click(); await page.getByRole('button', { name: 'Todo el año', exact: true }).click();
+      assert.equal(await page.locator('.memory').count(), 2);
+      await page.locator('.record-calendar > summary').click();
+      assert.equal(await page.locator('.record-calendar > .t-meta svg').first().evaluate(el => el.getBoundingClientRect().width), 16);
+      const cell = page.locator('.record-calendar [data-date]').first(); await cell.focus(); await page.keyboard.press('ArrowRight');
+      assert.equal(await page.locator('.record-calendar [data-date]').nth(7).evaluate(el => el === document.activeElement), true);
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+      if (process.env.E2E_CAPTURE) {
+        await page.locator('[data-year-part="recuerdos"]').scrollIntoViewIfNeeded();
+        await page.screenshot({ path: path.join(process.env.E2E_CAPTURE, 'beui-year-' + width + '.png') });
+      }
+      assert.deepEqual(errors, []);
+    } finally { await context.close(); }
+  }
+});
+
+await test('D62: metas ordenadas por teclado, límites del contador y hoja inferior móvil', async () => {
+  const { page, context, errors } = await newPage(browser, { viewport: { width: 375, height: 860 }, hasTouch: true });
+  try {
+    await page.goto(HTTP_URL); await onboard(page, 'Nicole', { weeklyDefaults: true });
+    await page.click('#panel-close'); await page.waitForSelector('.week-progress__details');
+    await page.locator('.week-progress__details > summary').click();
+    const handles = page.locator('.sortable-list__handle'), first = await handles.first().textContent();
+    await handles.first().focus(); await page.keyboard.press('ArrowDown');
+    await page.waitForFunction(first => document.querySelectorAll('.sortable-list__handle')[1].textContent === first, first);
+    assert.equal(await handles.nth(1).evaluate(el => el === document.activeElement), true);
+    await page.reload(); await openCover(page); await page.waitForSelector('.week-progress__details');
+    await page.locator('.week-progress__details > summary').click(); assert.equal(await handles.nth(1).textContent(), first);
+    await page.getByRole('button', { name: 'Editar actividad: Caminar', exact: true }).click();
+    assert.equal(await page.locator('dialog.sheet--mobile-bottom[open]').count(), 1);
+    await page.getByRole('button', { name: 'Aumentar veces por semana', exact: true }).click();
+    assert.equal(await page.locator('#rt-count').inputValue(), '4');
+    await page.locator('#rt-count').fill('7'); assert.equal(await page.getByRole('button', { name: 'Aumentar veces por semana', exact: true }).isDisabled(), true);
+    await page.locator('#rt-count').fill('1'); assert.equal(await page.getByRole('button', { name: 'Reducir veces por semana', exact: true }).isDisabled(), true);
+    await page.keyboard.press('Escape'); await page.locator('#rt-count').waitFor({ state: 'detached' });
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+    assert.deepEqual(errors, []);
+  } finally { await context.close(); }
+});
+
+await test('D62: cola de archivos reintenta errores sin duplicar y cerrar respeta lo pendiente', async () => {
+  const { page, context, errors } = await newPage(browser);
+  try {
+    await page.goto(FILE_URL); await onboard(page);
+    await page.evaluate(() => {
+      window.__attempts = {}; window.__saved = null;
+      const files = ['primero.txt', 'segundo.txt'].map(name => new File(['Nicole'], name));
+      MC.images.fileQueue(files, file => {
+        const n = window.__attempts[file.name] = (window.__attempts[file.name] || 0) + 1;
+        if (file.name === 'segundo.txt' && n === 1) throw new Error('Probá de nuevo');
+        return { name: file.name };
+      }, 'Agregar archivos').then(saved => { window.__saved = saved; });
+    });
+    const retry = page.getByRole('button', { name: 'Reintentar', exact: true }); await retry.waitFor(); await page.waitForFunction(() => !document.querySelector('.file-queue button:not([hidden])').disabled);
+    assert.equal(await page.locator('.file-queue__progress').getAttribute('value'), '1');
+    await retry.click(); await page.waitForFunction(() => !!window.__saved);
+    assert.deepEqual(await page.evaluate(() => window.__attempts), { 'primero.txt': 1, 'segundo.txt': 2 });
+    assert.equal(await page.evaluate(() => window.__saved.length), 2);
+    await page.evaluate(() => {
+      window.__saved = null; window.__attempts = [];
+      MC.images.fileQueue(['primero', 'segundo'].map(name => new File(['Nicole'], name)), file => {
+        window.__attempts.push(file.name); return new Promise(resolve => { window.__finishFile = () => resolve({ name: file.name }); });
+      }, 'Agregar archivos').then(saved => { window.__saved = saved; });
+    });
+    await page.waitForFunction(() => typeof window.__finishFile === 'function');
+    await page.keyboard.press('Escape'); await page.evaluate(() => window.__finishFile()); await page.waitForFunction(() => !!window.__saved);
+    assert.deepEqual(await page.evaluate(() => window.__attempts), ['primero']); assert.equal(await page.evaluate(() => window.__saved.length), 1);
+    assert.deepEqual(errors, []);
+  } finally { await context.close(); }
 });
 
 await browser.close();

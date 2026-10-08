@@ -31,8 +31,6 @@
   c.stepper = function (input, label) {
     var less = h('button.icon-btn', { type: 'button', 'aria-label': 'Reducir ' + label }, MC.icon('minus'));
     var more = h('button.icon-btn', { type: 'button', 'aria-label': 'Aumentar ' + label }, MC.icon('plus'));
-    // El sprite no requiere un ícono nuevo para el signo menos.
-    MC.clear(less); less.appendChild(h('span', { 'aria-hidden': 'true' }, '−'));
     function paint() {
       less.disabled = input.disabled || Number(input.value) <= Number(input.min);
       more.disabled = input.disabled || Number(input.value) >= Number(input.max);
@@ -117,6 +115,7 @@
       }
       error.textContent = ''; opts.onChange(from.value, to.value);
       details.querySelector('summary').textContent = 'Período: ' + MC.dates.shortLabel(from.value) + ' al ' + MC.dates.shortLabel(to.value);
+      details.open = false;
     }
     apply.addEventListener('click', choose);
     reset.addEventListener('click', function () { from.value = opts.min; to.value = opts.max; choose(); });

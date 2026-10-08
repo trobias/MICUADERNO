@@ -12,6 +12,7 @@
     ajustes: '<path d="M6.5 4h11M6.5 20h11"/><path d="M8 4v16M16 4v16"/><path d="M8 7.5l8 2.3M8 11.3l8 2.3M8 15.1l8 2.3"/>',
     plus: '<path d="M12 5v14M5 12h14"/>',
     minus: '<path d="M5 12h14"/>',
+    search: '<circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/>',
     'arrow-left': '<path d="M14.5 6 8.5 12l6 6"/>',
     'arrow-right': '<path d="M9.5 6l6 6-6 6"/>',
     more: '<path d="M6 12h.01M12 12h.01M18 12h.01" stroke-width="3"/>',

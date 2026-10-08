@@ -31,14 +31,14 @@
       function run() {
         running = true; entries.forEach(function (e) { e.retry.disabled = true; });
         entries.reduce(function (p, entry) { return p.then(function () {
-          if (closed || entry.state !== 'pending') return;
+          if (closed || !dlg.el.open || entry.state !== 'pending') return;
           entry.state = 'processing'; entry.note.textContent = 'Preparando…'; entry.retry.hidden = true;
-          return process(entry.file, function (message) { entry.note.textContent = message; }).then(function (result) {
+          return Promise.resolve().then(function () { return process(entry.file, function (message) { entry.note.textContent = message; }); }).then(function (result) {
             entry.state = 'done'; entry.note.textContent = 'Guardado'; if (result) saved.push(result); paint();
-          }, function (error) { entry.state = 'failed'; entry.note.textContent = error.message || 'No se pudo guardar. Probá de nuevo.'; entry.retry.hidden = false; paint(); });
+          }, function (error) { entry.state = 'failed'; entry.note.textContent = error && error.message || 'No se pudo guardar. Probá de nuevo.'; entry.retry.hidden = false; paint(); });
         }); }, Promise.resolve()).then(function () {
           running = false; entries.forEach(function (e) { e.retry.disabled = false; });
-          if (closed) { resolve(saved); return; }
+          if (closed || !dlg.el.open) { resolve(saved); return; }
           if (entries.every(function (e) { return e.state === 'done'; })) dlg.close();
           else status.textContent += '. Podés reintentar los que quedaron pendientes.';
         });
@@ -152,7 +152,7 @@
         h('span.attachment__name', f.name), h('span.attachment__size', sizeLabel(f.size)));
       open.dataset.browse = '1';
       open.addEventListener('click', function () { if (isImg) c.imageViewer([{ src: f.data, name: f.name }], 0); else MC.download(f.name, dataToBlob(f.data, f.type), f.type); });
-      var download = h('button.icon-btn', { type: 'button', 'aria-label': 'Descargar ' + f.name, dataset: { browse: '1' } }, MC.icon('download'));
+      var download = h('button.icon-btn.attachment__download', { type: 'button', 'aria-label': 'Descargar ' + f.name, dataset: { browse: '1' } }, MC.icon('download'));
       download.addEventListener('click', function () { MC.download(f.name, dataToBlob(f.data, f.type), f.type); });
       var more = [];
       if (isImg && opts.onSticker) {
