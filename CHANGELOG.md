@@ -735,3 +735,7 @@ Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantien
 ### 08/10/2026 · Bloom Menu (D62)
 
 - Un más en la barra de decorar despliega Anotar, Foto, Sticker y Dibujo en cuatro pétalos pastel; reutiliza menú accesible y acciones existentes.
+
+### 08/10/2026 · Morphing Search (D62)
+
+- Búsqueda plegada en Mis hojas, índice efímero de texto y emociones, filtros por tipo/fecha, enlaces y exclusión de papelera, fuentes privadas y secciones no permitidas.

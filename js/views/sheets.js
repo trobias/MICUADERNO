@@ -8,6 +8,7 @@
 
   function render(main, params) {
     var destroyed = false;
+    var search = null;
     var today = D.today();
     var focusId = params && params.focus || null; // llegó desde “Ver lo que se repite”: mostrarla resaltada
     var left = h('section.page.page--margin.index-page');
@@ -26,9 +27,11 @@
     /* ---------- índice de hojas ---------- */
     function paintIndex(pages) {
       MC.clear(left);
+      if (search) search.destroy();
       var add = h('button.label-btn', { type: 'button' }, MC.icon('plus'), 'Nueva hoja');
       add.addEventListener('click', function () { MC.views.pages.newPage(); });
       left.appendChild(h('header.page-head', h('h1.t-display', 'Mis hojas'), add));
+      search = c.notebookSearch(); left.appendChild(search);
       if (!pages.length) {
         left.appendChild(c.empty('Todavía no hay hojas. Una lista, una carta, lo que quieras: esta parte del cuaderno es libre.', 'libro'));
         return;
@@ -118,7 +121,7 @@
     }
 
     load();
-    return { destroy: function () { destroyed = true; }, refresh: load };
+    return { destroy: function () { destroyed = true; if (search) search.destroy(); }, refresh: load };
   }
 
   MC.views = MC.views || {};

@@ -1,0 +1,21 @@
+'use strict';
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const vm = require('node:vm'), fs = require('node:fs'), path = require('node:path');
+const { load, ROOT } = require('./_load');
+const MC = load();
+vm.runInThisContext(fs.readFileSync(path.join(ROOT, 'js/core/search.js'), 'utf8'));
+test('buscar: acentos, rangos, papelera y privacidad en la fuente', () => {
+  const day = { ...MC.model.emptyDay('2026-10-08'), notes: 'Nicole practicó diseño', morning: { feelings: ['tranquila'] } };
+  const hidden = { ...day, date: '2026-10-09', notes: 'oculto', privacy: { noMemory: true } };
+  const raw = { days: [day, hidden], activities: [{ id: 'Nicole', date: hidden.date, title: 'oculto' }], pages: [], meta: { settings: MC.model.defaultSettings() } };
+  const index = MC.search.build(raw);
+  assert.equal(MC.search.query(index, 'practico diseno').length, 1);
+  assert.equal(MC.search.query(index, 'oculto').length, 0);
+  assert.equal(MC.search.query(index, 'diseño', { from: '2026-10-09' }).length, 0);
+  const guest = MC.search.build({ ...raw, days: [{ ...day, hide: { fields: ['notes'] } }] }, { guest: true, allowed: ['escritura', 'emociones'] });
+  assert.equal(MC.search.query(guest, 'diseño').length, 0);
+  assert.equal(MC.search.query(guest, 'tranquila').length, 1);
+  const limited = MC.search.build(raw, { guest: true, allowed: ['emociones'] });
+  assert.equal(MC.search.query(limited, 'diseño').length, 0);
+});

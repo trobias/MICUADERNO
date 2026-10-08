@@ -25,3 +25,4 @@ Las animaciones respetan Ajustes, movimiento reducido del sistema y teclado.
 | Tabs | Señalador pastel entre Mes y Semana, movimiento breve solo al cambiar con puntero; botones nativos, estados accesibles y preferencias de movimiento. |
 | Color Selector | Muestras con nombre y selección marcada para colores propios; radios nativos, teclado y selectores/códigos personalizados conservados. |
 | Bloom Menu | Un más en la barra de decorar despliega Anotar, Foto, Sticker y Dibujo en cuatro pétalos pastel; reutiliza menú accesible y acciones existentes. |
+| Morphing Search | Búsqueda plegada en Mis hojas, índice efímero de texto y emociones, filtros por tipo/fecha, enlaces y exclusión de papelera, fuentes privadas y secciones no permitidas. |

@@ -205,6 +205,16 @@ dialog.image-viewer { width: min(960px, calc(100% - 24px)); }
 .date-range > summary { cursor: pointer; min-height: 36px; font-family: var(--font-text); }
 .date-range__fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-3); }
 .date-range__fields .input { min-width: 0; width: 100%; }
+.notebook-search { margin-block: var(--s-4); border-bottom: 1px dashed var(--rule-strong); padding-block: var(--s-2); }
+.notebook-search > summary { display: flex; align-items: center; gap: var(--s-2); min-height: 44px; cursor: pointer; font-family: var(--font-text); }
+.notebook-search > summary svg { width: 20px; height: 20px; }
+.notebook-search[open] > .input { width: 100%; margin-block: var(--s-2); }
+.notebook-search__filters summary { cursor: pointer; min-height: 36px; font-size: var(--fs-sm); }
+.notebook-search__fields { display: flex; flex-wrap: wrap; gap: var(--s-2); }
+.notebook-search__fields > * { min-width: 0; flex: 1 1 120px; }
+.notebook-search__results { list-style: none; padding: 0; }
+.notebook-search__results li { padding-block: var(--s-3); border-bottom: 1px solid var(--rule); overflow-wrap: anywhere; }
+.notebook-search__results a { font-family: var(--font-text); font-size: var(--fs-md); }
 .record-calendar { margin-block: var(--s-4); }
 .record-calendar > summary { cursor: pointer; min-height: 44px; font-family: var(--font-text); }
 .heat-calendar { display: flex; gap: 3px; max-width: 100%; overflow-x: auto; padding: 4px 4px var(--s-3); }
