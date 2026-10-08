@@ -123,6 +123,19 @@
     return details;
   };
 
+  c.colorSelector = function (input, colors, label) {
+    var name = MC.uid('paleta'), group = h('div.color-selector', { role: 'radiogroup', 'aria-label': label });
+    colors.forEach(function (color) {
+      var radio = h('input.sr-only', { type: 'radio', name: name, value: color.value, 'aria-label': color.label });
+      radio.addEventListener('change', function () {
+        input.value = color.value; input.dispatchEvent(new Event('input', { bubbles: true })); input.dispatchEvent(new Event('change', { bubbles: true })); group.update();
+      });
+      group.appendChild(h('label.color-selector__choice', radio, h('span.color-selector__swatch', { 'aria-hidden': 'true', style: { background: color.value } }), h('span', color.label)));
+    });
+    group.update = function () { MC.$$('input', group).forEach(function (radio) { radio.checked = radio.value.toLowerCase() === input.value.toLowerCase(); }); };
+    input.addEventListener('input', group.update); input.addEventListener('change', group.update); group.update(); return group;
+  };
+
   /** Dónde colgar menús y avisos: dentro del diálogo abierto de más arriba (si no, quedan inertes debajo). */
   c.layer = function () {
     var open = MC.$$('dialog[open]');

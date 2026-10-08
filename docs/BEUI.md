@@ -23,3 +23,4 @@ Las animaciones respetan Ajustes, movimiento reducido del sistema y teclado.
 | Date Range Picker | Selector opcional Desde/Hasta filtra los álbumes del año con validación de rango y vuelta al año completo; filtros de lectura no persistidos. |
 | Heat Calendar | Mosaico anual opcional de escritura y victorias, con días neutrales, fecha local, nombres accesibles, flechas y enlace al día; dentro de la parte mapa. |
 | Tabs | Señalador pastel entre Mes y Semana, movimiento breve solo al cambiar con puntero; botones nativos, estados accesibles y preferencias de movimiento. |
+| Color Selector | Muestras con nombre y selección marcada para colores propios; radios nativos, teclado y selectores/códigos personalizados conservados. |

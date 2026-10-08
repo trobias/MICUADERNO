@@ -727,3 +727,7 @@ Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantien
 ### 08/10/2026 · Tabs (D62)
 
 - Señalador pastel entre Mes y Semana, movimiento breve solo al cambiar con puntero; botones nativos, estados accesibles y preferencias de movimiento.
+
+### 08/10/2026 · Color Selector (D62)
+
+- Muestras con nombre y selección marcada para colores propios; radios nativos, teclado y selectores/códigos personalizados conservados.

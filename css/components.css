@@ -163,6 +163,12 @@
 .adaptive-stepper .input--num { width: 4.5rem; text-align: center; background: var(--paper); font-variant-numeric: tabular-nums; }
 .adaptive-stepper .icon-btn { color: var(--ink); }
 .adaptive-stepper .icon-btn:disabled { opacity: .4; cursor: default; }
+.color-selector { display: flex; flex-wrap: wrap; gap: var(--s-2); flex-basis: 100%; grid-column: 1 / -1; padding-block: var(--s-2); }
+.color-selector__choice { position: relative; display: grid; justify-items: center; gap: 4px; width: 68px; padding: 4px; font-family: var(--font-ui); font-size: var(--fs-xs); text-align: center; cursor: pointer; }
+.color-selector__swatch { display: block; width: 30px; height: 30px; border: 1px solid var(--ink-faint); border-radius: 50%; transition: transform var(--dur-press) var(--ease-out); }
+.color-selector input:checked + .color-selector__swatch { outline: 2px solid var(--ink); outline-offset: 3px; transform: scale(calc(1 + .06 * var(--move))); }
+.color-selector input:focus-visible + .color-selector__swatch { outline: 3px solid var(--focus); outline-offset: 4px; }
+@media (prefers-reduced-motion: reduce) { .color-selector__swatch { transition: none; transform: none !important; } }
 .sortable-list { list-style: none; padding: 0; margin: var(--s-3) 0; }
 .sortable-list li { display: flex; align-items: center; gap: var(--s-1); border-bottom: 1px dashed var(--rule); }
 .sortable-list__handle { flex: 1; min-width: 0; justify-content: flex-start; text-align: left; cursor: grab; }

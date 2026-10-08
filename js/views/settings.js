@@ -79,14 +79,16 @@
       var id = 'st-th-' + key;
       var swatch = h('input', { type: 'color', id: id, value: value || '#FFFFFF' }); // color-ok: valor inicial del selector nativo
       var code = h('input.input.theme-code', { type: 'text', value: value || '', maxlength: 7, placeholder: '#RRGGBB', 'aria-label': 'Código de ' + text.toLowerCase() });
+      var colors = T.PRESETS.slice(0, 6).map(function (p) { return { label: p.label, value: key === 'paper' ? p.paper : key === 'ink' ? p.ink : key.indexOf('acc') === 0 ? p.accents[+key.slice(3)] : p.cloth }; });
+      var palette = c.colorSelector(swatch, colors, 'Muestras para ' + text.toLowerCase());
       swatch.addEventListener('input', function () { code.value = swatch.value.toUpperCase(); code.removeAttribute('aria-invalid'); onSet(code.value); });
       code.addEventListener('change', function () {
         var v = code.value.trim();
         if (!/^#[0-9a-fA-F]{6}$/.test(v)) { code.setAttribute('aria-invalid', 'true'); return; }
         code.removeAttribute('aria-invalid');
-        code.value = v.toUpperCase(); swatch.value = v; onSet(code.value);
+        code.value = v.toUpperCase(); swatch.value = v; palette.update(); onSet(code.value);
       });
-      return h('div.theme-field', h('label', { for: id }, text), swatch, code);
+      return h('div.theme-field', h('label', { for: id }, text), swatch, code, palette);
     }
     function base() {
       if (theme) { theme.preset = 'propio'; return theme; }
