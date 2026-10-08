@@ -5,6 +5,28 @@
   var h = MC.h;
   var c = MC.c = {};
 
+  /** Contador que rueda al cambiar; el texto accesible siempre es el valor real. */
+  c.rollText = function (el, text) {
+    text = String(text);
+    if (el.textContent === text) return;
+    var previous = el.dataset.counterText;
+    el.dataset.counterText = text;
+    (el._counterAnimations || []).forEach(function (a) { a.cancel(); });
+    MC.clear(el); el.classList.add('rolling-value');
+    var current = h('span.rolling-value__current', text);
+    el.appendChild(current);
+    el._counterAnimations = [];
+    var active = document.activeElement;
+    if (!previous || !MC.motion.allows('move') || MC.motion.systemReduced() || document.hidden ||
+        active && /^(INPUT|TEXTAREA)$/.test(active.tagName) || !current.animate) return;
+    var old = h('span.rolling-value__old', { 'aria-hidden': 'true' }, previous);
+    el.appendChild(old);
+    var opts = { duration: MC.motion.duration('ui'), easing: getComputedStyle(document.documentElement).getPropertyValue('--ease-out').trim() };
+    el._counterAnimations = [current.animate([{ opacity: 0, transform: 'translateY(40%)' }, { opacity: 1, transform: 'none' }], opts),
+      old.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(-40%)' }], opts)];
+    el._counterAnimations[1].finished.then(function () { old.remove(); }, function () { old.remove(); });
+  };
+
   /** Dónde colgar menús y avisos: dentro del diálogo abierto de más arriba (si no, quedan inertes debajo). */
   c.layer = function () {
     var open = MC.$$('dialog[open]');

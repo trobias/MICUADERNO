@@ -11,3 +11,4 @@ Las animaciones respetan Ajustes, movimiento reducido del sistema y teclado.
 | Componente | Uso y contrato |
 | --- | --- |
 | Checkbox | Puntadas interrumpibles, estados completos y parciales, sin movimiento del sistema reducido; conserva casillas y datos existentes. |
+| Number Animation | Contadores N/M y porcentaje ruedan al cambiar; texto accesible real, sin animación inicial, durante escritura ni con movimiento reducido. |

@@ -152,6 +152,9 @@
 .feeling-mark { display: inline-flex; align-items: center; gap: 5px; min-width: 0; color: var(--ink); font-size: var(--fs-xs); overflow-wrap: anywhere; }
 
 /* ---------- Casilla de punto cruz ---------- */
+.rolling-value { position: relative; display: inline-block; overflow: hidden; vertical-align: bottom; font-variant-numeric: tabular-nums; }
+.rolling-value__current { display: block; }
+.rolling-value__old { position: absolute; inset: 0; pointer-events: none; }
 .stitch-box {
   position: relative;
   flex: none;

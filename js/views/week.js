@@ -113,7 +113,7 @@
       var seq = ++progressSeq;
       return M.getWeeklyProgress(start, plan).then(function (p) {
         if (destroyed || !progressBox || seq !== progressSeq) return;
-        progressBox.querySelector('.week-progress__percent').textContent = p.total ? p.percent + '%' : '—';
+        c.rollText(progressBox.querySelector('.week-progress__percent'), p.total ? p.percent + '%' : '—');
         var bar = progressBox.querySelector('progress');
         updateMeter(bar, p, 100);
         if (!p.total) bar.setAttribute('aria-valuetext', 'Sin actividades programadas');
@@ -164,7 +164,7 @@
             goalRows[key] = row;
             ul.appendChild(row);
           }
-          row.querySelector('.week-progress__goal-count').textContent = g.checked + '/' + g.total + (g.done === g.total ? ' · completo' : '') + (g.flexible ? ' · días a elección' : '');
+          c.rollText(row.querySelector('.week-progress__goal-count'), g.checked + '/' + g.total + (g.done === g.total ? ' · completo' : '') + (g.flexible ? ' · días a elección' : ''));
           var goalBar = row.querySelector('progress');
           updateMeter(goalBar, g, g.total);
           var victory = row.querySelector('.week-progress__victory');
