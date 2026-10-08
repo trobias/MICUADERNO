@@ -2,6 +2,11 @@
 
 Registro breve de decisiones de arquitectura y producto. Formato: contexto → decisión → consecuencias.
 
+## D57 · Una barra por nombre y calendarios sin actividades Sin marcar (2026-10-08)
+**Contexto:** la dueña pidió que tres Trabajar aparezcan juntos como 0/3. Su corrección final indica ocultar únicamente Sin marcar en ambos calendarios, en todas las fechas, y mostrar los demás estados, incluyendo Hoy no salió y Lo dejo para otro día. Esta indicación reemplaza su respuesta anterior de ocultarlos solo en días pasados.
+**Decisión:** agrupar las metas por nombre normalizado al calcular, sumando oportunidades reales y conservando el límite individual de cada meta flexible. No fusionar ni alterar registros. La barra muestra N/M; si reúne varias repeticiones, el lápiz permite elegir cuál editar. Mes y semana usan una única regla `calendarVisible`: todo estado registrado salvo pending. La página del día conserva todas las casillas precargadas para marcar. Las oportunidades sin marcar siguen en el denominador semanal.
+**Consecuencias:** D57 reemplaza la visibilidad de actividades de D18/D55, sin cambiar las hojas, los estados, la planificación histórica, privacidad ni permisos. El mes agrega marcas accesibles para postponed y skipped. Copia v11, IDB 5, cache v51: no hay nueva forma persistida ni migración SQL. Pruebas de agrupación, estados en pasado/hoy/futuro, recarga, edición de varias repeticiones y móvil.
+
 ## D56 · Objetivos dentro de Importante y actividades iniciales configurables (2026-10-08)
 **Contexto:** la dueña corrigió la posición de D55 con un dibujo: las barras van dentro de la nota Importante, una por actividad. Pidió Trabajar, Caminar, Practica Diseño, Salir con una amiga y Bici precargadas; confirmó una vez por semana para las últimas dos y que todo se pueda definir.
 **Decisión:** quitar la barra exterior. Importante contiene un resumen semanal compacto y cinco barras siempre visibles, con conteo textual y lápiz para editar nombre, frecuencia, días, duración y vigencia mediante el editor existente (también permite borrar). «Organizar actividades», cerrado al abrir, permite crear y acceder a todas las repeticiones. Las anotaciones manuales de Importante siguen debajo; sus casillas no entran en la cuenta.

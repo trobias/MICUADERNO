@@ -409,7 +409,7 @@ await test('calendario, semana y año muestran lo registrado; teclado en el mes'
   await context.close();
 });
 
-await test('el calendario reúne todo: rutinas planeadas, páginas del día y el año sin falsos puntos', async () => {
+await test('el calendario reúne lo registrado, oculta sin marcar y conserva páginas del día y el año', async () => {
   const { page, errors, context } = await newPage(browser);
   await page.goto(FILE_URL);
   await onboard(page);
@@ -428,8 +428,8 @@ await test('el calendario reúne todo: rutinas planeadas, páginas del día y el
   const TOMORROW = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   await goto(page, '#/calendario/mes/' + TOMORROW.slice(0, 7));
   const next = page.locator(`.day-cell[data-date="${TOMORROW}"]`);
-  assert.equal((await next.locator('.mark--planned').textContent()).trim(), '1');
-  assert.match(await next.getAttribute('aria-label'), /una cosa planeada/);
+  assert.equal(await next.locator('.mark--planned').count(), 0);
+  assert.doesNotMatch(await next.getAttribute('aria-label'), /una cosa planeada|Estirar/);
   await goto(page, '#/calendario/mes/' + TODAY.slice(0, 7));
   const cell = page.locator(`.day-cell[data-date="${TODAY}"]`);
   assert.equal(await cell.locator('.mark--page').count(), 1, 'marca de página en hoy');
@@ -547,8 +547,8 @@ await test('las secciones se conectan: rutina ↔ calendario, página → día, 
   assert.equal(await page.locator('#panel').evaluate((d) => d.open), false, 'se cerró el cuadro');
   assert.match(page.url(), new RegExp('/rutina/' + ids.routine + '$'));
   const todayCell = page.locator(`.day-cell[data-date="${TODAY}"]`);
-  assert.equal(await todayCell.getAttribute('data-routine'), 'due');
-  assert.match(await todayCell.getAttribute('aria-label'), /toca «Estirar»/);
+  assert.equal(await todayCell.getAttribute('data-routine'), null);
+  assert.doesNotMatch(await todayCell.getAttribute('aria-label'), /toca «Estirar»/);
   await goto(page, `#/calendario/mes/${Y.slice(0, 7)}/rutina/${ids.routine}`);
   assert.equal(await page.locator(`.day-cell[data-date="${Y}"]`).getAttribute('data-routine'), 'done');
   const before = page.locator(`.day-cell[data-date="${add(TODAY, -2)}"]`);
@@ -716,12 +716,15 @@ await test('A6 y D55: semana-planner editable, casillas históricas, Importante 
   const order = await page.$$eval('#main .planner > *', (els) => els.map((e) => e.dataset.date ? 'dia' : e.querySelector('h2').textContent));
   assert.deepEqual(order, ['Importante', 'dia', 'dia', 'dia', 'dia', 'dia', 'dia', 'dia', 'Notas']);
   assert.match(await page.textContent('#main h1'), /Mi semana/);
-  // Anotar en el día de hoy desde la semana y marcarlo ahí mismo, sin abrir nada.
+  // Anotar en la semana conserva el borrador sin marcar; la página del día ofrece su casilla.
   const todayCell = `#main .week-day[data-date="${TODAY}"]`;
   await page.fill(`${todayCell} .add-activity input`, 'turno con la dentista');
   await page.press(`${todayCell} .add-activity input`, 'Enter');
-  await page.waitForSelector(`${todayCell} .activity:has-text("turno con la dentista")`);
-  await page.click(`${todayCell} .activity:has-text("turno con la dentista") .stitch-box`);
+  await page.waitForFunction(async () => (await MC.model.itemsForDay(MC.dates.today())).some(a => a.title === 'turno con la dentista'));
+  assert.equal(await page.locator(`${todayCell} .activity:has-text("turno con la dentista")`).count(), 0);
+  await page.locator(`${todayCell} .week-day__head`).click();
+  await page.locator('section[aria-labelledby="q-list"] .activity:has-text("turno con la dentista") .stitch-box').click();
+  await page.click('#panel-close');
   await page.waitForSelector(`${todayCell} .activity[data-status="done"]:has-text("turno con la dentista")`);
   assert.equal(await page.evaluate(() => document.getElementById('panel').open), false, 'no se abrió ningún cuadro');
   // Importante y Notas son de la semana.
@@ -745,12 +748,13 @@ await test('A6 y D55: semana-planner editable, casillas históricas, Importante 
   const imp = await page.$$eval('#main .planner__check', (els) => els.map((e) => [e.querySelector('input').value, e.querySelector('.stitch-box').dataset.status]));
   assert.deepEqual(imp.slice(0, 2), [['pagar la luz', 'done'], ['regalo de cumple', 'pending']]);
   // Lo que pasó afuera mientras se escribía ya está en su día.
-  await page.waitForSelector(`${todayCell} .activity:has-text("algo de otra pestaña")`);
+  assert.equal(await page.locator(`${todayCell} .activity:has-text("algo de otra pestaña")`).count(), 0);
+  assert.equal(await page.evaluate(async (k) => (await MC.model.itemsForDay(k)).some(a => a.title === 'algo de otra pestaña'), TODAY), true);
   // D55: una semana pasada conserva sus casillas para completar registros después.
   const past = add(TODAY, -7);
   await goto(page, '#/calendario/semana/' + past);
   await page.waitForSelector(`#main .week-day[data-date="${past}"]`);
-  assert.equal(await page.locator('#main .activity:has-text("Estirar")').count(), 7, 'las siete oportunidades históricas siguen siendo editables');
+  assert.equal(await page.locator('#main .activity:has-text("Estirar")').count(), 0, 'las oportunidades sin marcar no aparecen en el calendario');
   await page.fill(`#main .week-day[data-date="${past}"] .add-activity input`, 'caminé por el río');
   await page.press(`#main .week-day[data-date="${past}"] .add-activity input`, 'Enter');
   await page.waitForSelector(`#main .week-day[data-date="${past}"] .activity[data-status="done"]:has-text("caminé por el río")`);
@@ -2630,17 +2634,20 @@ await test('objetivos semanales: 5 + 5 + 3, casillas, recarga e historial (file 
     assert.equal(await page.locator('.planner__cell--important .week-progress').count(), 1, 'progreso dentro de Importante');
     assert.equal(await page.locator('.planner-page > .week-progress').count(), 0, 'sin barra encima de la grilla');
     assert.equal(await page.locator('.week-progress__goal progress').count(), 3, 'una barra visible por objetivo');
-    assert.equal(await page.locator('.week-day').nth(5).locator('.activity').count(), 1, 'el sábado ofrece caminar, sin trabajo ni diseño');
+    assert.equal(await page.locator('.week-day').nth(5).locator('.activity').count(), 0, 'las opciones sin marcar quedan en la página del día');
     await page.locator('.week-progress__details > summary').click();
-    await page.waitForSelector('.week-progress__goal:has-text("Caminar"):has-text("0 de 3")');
+    await page.waitForSelector('.week-progress__goal:has-text("Caminar"):has-text("0/3")');
     async function mark(day, title, key = false) {
-      const box = page.locator('.week-day').nth(day).locator('.activity').filter({ has: page.locator('.activity__title', { hasText: title }) }).locator('.stitch-box');
+      await page.locator('.week-day').nth(day).locator('.week-day__head').click();
+      const box = page.locator('section[aria-labelledby="q-list"] .activity').filter({ has: page.locator('.activity__title', { hasText: title }) }).locator('.stitch-box');
       if (key) { await box.focus(); await box.press('Space'); } else await box.click();
+      await page.waitForFunction(async ([title]) => (await MC.model.itemsForDay(MC.routes.parse(location.hash).params.date)).some(a => a.title === title && !a.virtual), [title]);
+      await page.click('#panel-close');
     }
     await mark(0, 'Caminar', true);
     await page.waitForSelector('.week-progress__count:has-text("1 de 13")');
     await mark(2, 'Caminar'); await mark(6, 'Caminar');
-    await page.waitForSelector('.week-progress__goal:has-text("Caminar"):has-text("3 de 3 · completo")');
+    await page.waitForSelector('.week-progress__goal:has-text("Caminar"):has-text("3/3 · completo")');
     await page.waitForSelector('.week-progress__percent:has-text("23%")');
     await mark(1, 'Caminar');
     await page.waitForSelector('.week-progress__count:has-text("3 de 13")');
@@ -2650,7 +2657,8 @@ await test('objetivos semanales: 5 + 5 + 3, casillas, recarga e historial (file 
     await page.waitForSelector('.week-progress__count:has-text("12 de 13")');
     await page.reload();
     await page.waitForSelector('.week-progress__count:has-text("12 de 13")');
-    assert.equal(await page.locator('.week-day').nth(0).locator('.activity:has-text("Trabajar")').getAttribute('data-status'), 'pending');
+    assert.equal(await page.locator('.week-day').nth(0).locator('.activity:has-text("Trabajar")').count(), 0);
+    assert.equal(await page.evaluate(async k => (await MC.model.itemsForDay(k)).find(a => a.title === 'Trabajar').status, start), 'pending');
     await page.evaluate(async () => {
       const r = (await MC.model.getRoutines()).find((r) => r.id === 'rut_caminar');
       await MC.model.saveRoutine({ ...r, rule: { type: 'weeklyTarget', count: 5 } });
@@ -2680,7 +2688,8 @@ await test('objetivos semanales: formulario flexible, meta opcional y validació
   await page.fill('#rt-count', '3'); await page.fill('#rt-target-note', '3 caminatas');
   await page.getByRole('button', { name: 'Que se repita', exact: true }).click();
   await page.waitForFunction(async () => (await MC.model.getRoutines()).some((r) => r.rule.type === 'weeklyTarget' && r.rule.count === 3 && r.targetNote === '3 caminatas'));
-  await page.waitForSelector('.week-day .activity:has-text("Caminar")');
+  await page.waitForSelector('.week-progress__goal:has-text("Caminar"):has-text("0/3")');
+  assert.equal(await page.locator('.week-day .activity:has-text("Caminar")').count(), 0);
   assert.deepEqual(errors, []);
   await context.close();
 });
@@ -2699,8 +2708,11 @@ await test('objetivos semanales D56: cinco predeterminadas en Importante, barras
     assert.equal(await note.locator('.week-progress__details').getAttribute('open'), null);
     await note.locator('input[aria-label="Importante"]').fill('Preparar la semana');
     await note.locator('input[aria-label="Importante"]').blur();
-    const walk = page.locator('.week-day').nth(2).locator('.activity').filter({ has: page.locator('.activity__title', { hasText: 'Caminar' }) }).locator('.stitch-box');
+    await page.locator('.week-day').nth(2).locator('.week-day__head').click();
+    const walk = page.locator('section[aria-labelledby="q-list"] .activity').filter({ has: page.locator('.activity__title', { hasText: 'Caminar' }) }).locator('.stitch-box');
     await walk.focus(); await walk.press('Space');
+    await page.waitForSelector('section[aria-labelledby="q-list"] .activity[data-status="done"]:has-text("Caminar")');
+    await page.click('#panel-close');
     await note.locator('.week-progress__count:has-text("1 de 15")').waitFor();
     const walkBar = note.locator('.week-progress__goal:has-text("Caminar") progress');
     assert.equal(await walkBar.getAttribute('value'), '1');
@@ -2729,6 +2741,66 @@ await test('objetivos semanales D56: cinco predeterminadas en Importante, barras
     await note.locator('.week-progress__count:has-text("0 de 15")').waitFor();
     await page.getByRole('link', { name: 'Semana anterior', exact: true }).click();
     await note.locator('.week-progress__count:has-text("1 de 15")').waitFor();
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+    assert.deepEqual(errors, []); await context.close();
+  }
+});
+
+await test('objetivos semanales D57: una barra Trabajar 0/3 y calendarios muestran todos los estados salvo sin marcar (file y HTTP, desktop y móvil)', async () => {
+  for (const [url, viewport] of [[FILE_URL, { width: 1366, height: 900 }], [HTTP_URL, { width: 375, height: 812 }]]) {
+    const { page, errors, context } = await newPage(browser, { viewport, reducedMotion: 'reduce' });
+    await page.goto(url); await onboard(page);
+    const dates = await page.evaluate(async () => {
+      const M = MC.model, D = MC.dates, today = D.today(), start = D.startOfWeek(today);
+      await M.saveSettings({ showCover: false, motion: 'ninguna', motionChosen: true });
+      for (const [n, title] of ['Trabajar', ' TRABAJAR ', 'trabajar'].entries()) await M.addActivity(D.addDays(start, n), title);
+      const dates = [-7, 0, 7].map(n => D.addDays(today, n));
+      for (const date of dates) for (const status of M.STATUSES) {
+        const a = await M.addActivity(date, 'Estado ' + status);
+        if (status !== 'pending') await M.setStatus(a, status);
+      }
+      location.hash = MC.routes.week(today); return dates;
+    });
+    const work = page.locator('.week-progress__goal').filter({ has: page.locator('.week-progress__name', { hasText: /^Trabajar$/i }) });
+    await work.locator('.week-progress__goal-count:has-text("0/3")').waitFor();
+    assert.equal(await work.count(), 1);
+    for (const date of dates) {
+      await page.evaluate(k => { location.hash = MC.routes.week(k); }, date);
+      const day = page.locator(`.week-day[data-date="${date}"]`);
+      await day.locator('.activity[data-status="skipped"]').waitFor();
+      assert.deepEqual((await day.locator('.activity').evaluateAll(nodes => nodes.map(n => n.dataset.status))).sort(), ['done', 'partial', 'postponed', 'skipped']);
+      assert.equal(await page.locator('.week-day .activity[data-status="pending"]').count(), 0);
+      await page.evaluate(k => { location.hash = MC.routes.month(MC.dates.monthKey(k)); }, date);
+      const cell = page.locator(`.day-cell[data-date="${date}"]`);
+      await cell.locator('.mark--skipped').waitFor();
+      assert.equal(await cell.locator('.mark--postponed').count(), 1);
+      const label = await cell.getAttribute('aria-label');
+      for (const status of ['Lo hice', 'Hice un poquito', 'Lo dejo para otro día', 'Hoy no salió']) assert.ok(label.includes(status), label);
+      assert.doesNotMatch(label, /Estado pending|Sin marcar/);
+      assert.equal(await cell.locator('.mark--planned').count(), 0);
+    }
+    await page.evaluate(() => { location.hash = MC.routes.week(MC.dates.today()); });
+    await work.locator('.week-progress__goal-count:has-text("0/3")').waitFor();
+    await page.locator('.week-day').nth(0).locator('.week-day__head').click();
+    await page.locator('section[aria-labelledby="q-list"] .activity:has-text("Trabajar") .stitch-box').first().press('Space');
+    await page.waitForSelector('section[aria-labelledby="q-list"] .activity[data-status="done"]:has-text("Trabajar")');
+    await page.click('#panel-close');
+    await work.locator('.week-progress__goal-count:has-text("1/3")').waitFor();
+    await page.reload(); await work.locator('.week-progress__goal-count:has-text("1/3")').waitFor();
+    assert.equal(await work.count(), 1);
+    await page.evaluate(async () => {
+      const M = MC.model, D = MC.dates, start = D.startOfWeek(D.today());
+      await M.saveRoutine({ id: 'read-a', title: 'Leer', rule: { type: 'once', date: start }, startDate: start });
+      await M.saveRoutine({ id: 'read-b', title: 'Leer', rule: { type: 'once', date: D.addDays(start, 1) }, startDate: start });
+    });
+    await page.getByRole('button', { name: 'Editar actividad: Leer', exact: true }).click();
+    await page.waitForSelector('dialog.sheet:has-text("Configurar Leer")');
+    assert.equal(await page.locator('dialog.sheet .week-progress__goals button').count(), 2);
+    await page.locator('dialog.sheet .week-progress__goals button').first().click();
+    await page.waitForSelector('#rt-title');
+    assert.equal(await page.locator('#rt-title').inputValue(), 'Leer');
+    await page.getByRole('button', { name: 'Cancelar', exact: true }).click();
+    assert.equal(await page.evaluate(async () => (await MC.model.getRoutines()).filter(r => r.title === 'Leer').length), 2);
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
     assert.deepEqual(errors, []); await context.close();
   }

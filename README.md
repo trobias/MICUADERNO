@@ -16,7 +16,7 @@ Un diario personal con forma de cuaderno de tela bordado: podés escribir cómo 
 
 ## Cuidar tus datos
 
-**Actividades y hábitos:** en **Mi semana → Importante** están el progreso semanal y una barra por actividad. Vienen precargadas Trabajar (lunes a viernes), Caminar (3 veces), Practica Diseño (lunes a viernes, 1 hora por día), Salir con una amiga y Bici (1 vez cada una). Podés definir todo: el lápiz permite cambiar nombre, frecuencia, días, meta o borrar; «Organizar actividades → Programar actividad» permite crear otras. Se cargan solas en los días y después solo marcás sus casillas. Cada lunes empieza una semana nueva; las anteriores conservan marcas y planificación. Los valores de fábrica no vuelven después de borrarlos (D55, D56).
+**Actividades y hábitos:** en **Mi semana → Importante** están el progreso semanal y una barra por nombre: tres Trabajar se ven juntos como **0/3**. Vienen precargadas Trabajar (lunes a viernes), Caminar (3 veces), Practica Diseño (lunes a viernes, 1 hora por día), Salir con una amiga y Bici (1 vez cada una). Podés definir todo con el lápiz: nombre, frecuencia, días, meta o borrar; «Organizar actividades → Programar actividad» permite crear otras. Abrí un día y marcá sus casillas precargadas. El mes y la semana ocultan únicamente **Sin marcar**, también hoy y en el futuro; todos los demás estados aparecen, incluidos **Hoy no salió** y **Lo dejo para otro día**. Cada lunes empieza una semana nueva; las anteriores conservan marcas y planificación. Los valores de fábrica no vuelven después de borrarlos (D55–D57).
 
 - **Ajustes → Mis datos → Guardar una copia (.json)**: una copia completa. El cuaderno te lo recuerda de vez en cuando.
 - **Abrir una copia…** restaura esa copia (avisa antes de reemplazar lo que hay).

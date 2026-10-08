@@ -46,7 +46,7 @@
     if (!routine) return h('div.routine-filter', h('p.routine-filter__text', 'Esa rutina ya no está en el cuaderno.'), off);
     return h('div.routine-filter',
       h('span.mark-routine', { 'aria-hidden': 'true' }, MC.icon('rutinas')),
-      h('p.routine-filter__text', 'Días de ', h('strong', '«' + routine.title + '»'), ': los que tocan de hoy en adelante y los que ya hiciste.'),
+      h('p.routine-filter__text', 'Días de ', h('strong', '«' + routine.title + '»'), ': los que tienen un estado registrado.'),
       h('a.text-btn', { href: R.routine(routine.id) }, 'Ver lo que se repite'),
       off);
   }
@@ -62,7 +62,7 @@
     var destroyed = false;
 
     // `ready` avisa cuando el mes está dibujado (app.js lo usa para cambiarlo sin parpadeo).
-    var ready = Promise.all([M.summaryRange(grid[0], grid[grid.length - 1]), routineId ? M.getRoutines() : null]).then(function (res) {
+    var ready = Promise.all([M.summaryRange(grid[0], grid[grid.length - 1], { recordedOnly: true }), routineId ? M.getRoutines() : null]).then(function (res) {
       if (destroyed) return;
       var sum = res[0];
       var palette = M.emotionPalette(Object.keys(sum).map(function (k) { return sum[k]; }), M.settings());
@@ -87,27 +87,23 @@
           var parts = [D.parse(key).d + ' de ' + D.MONTHS[D.parse(key).m - 1]];
           if (key === today) parts.push('hoy');
           if (info && info.feelings.length) parts.push('te sentiste ' + info.feelings.join(', '));
-          // Pasado: solo lo hecho (sin cuentas de lo que quedó). Hoy y adelante: lo planeado, rutinas incluidas.
-          var ahead = key >= today;
-          var planned = ahead && info ? info.pending : 0;
+          // D57: se muestran todos los estados salvo Sin marcar, tanto antes como hoy y después.
           var pages = info ? info.pages : [];
           if (info && info.done) parts.push(info.done === 1 ? 'una cosa hecha' : info.done + ' cosas hechas');
-          if (planned) parts.push(planned === 1 ? 'una cosa planeada' : planned + ' cosas planeadas');
           if (info && info.wrote) parts.push('escribiste');
           if (info && info.memory) parts.push('guardaste un recuerdo');
           if (pages.length) parts.push((pages.length === 1 ? 'una página: ' : pages.length + ' páginas: ') + pages.map(function (pg) { return '«' + M.pageTitle(pg) + '»'; }).join(', '));
           // Lo que se lee en la celda: hilitos del color de su marcador (Agenda rubor, Rutinas salvia, Páginas lavanda).
-          // De hoy en adelante, lo que falta; para atrás, solo lo hecho (D18).
-          var shown = info ? info.items.filter(function (it) { return ahead ? it.status === 'pending' : M.countsAsDone(it.status); }) : [];
+          var shown = info ? info.items.filter(M.calendarVisible) : [];
           shown.sort(function (a, b) { return (a.kind === 'own' ? 0 : 1) - (b.kind === 'own' ? 0 : 1); });
-          if (shown.length) parts.push((ahead ? 'para hacer: ' : 'hiciste: ') + shown.slice(0, 4).map(function (it) { return it.title; }).join(', ') + (shown.length > 4 ? ' y más' : ''));
-          var lineItems = shown.map(function (it) { return { kind: it.kind, title: it.title }; })
+          if (shown.length) parts.push('actividades: ' + shown.slice(0, 4).map(function (it) { return it.title + ' (' + M.STATUS_LABEL[it.status] + ')'; }).join(', ') + (shown.length > 4 ? ' y más' : ''));
+          var lineItems = shown.map(function (it) { return { kind: it.kind, title: it.title, status: it.status }; })
             .concat(pages.map(function (pg) { return { kind: 'page', title: M.pageTitle(pg) }; }));
-          // Con una rutina elegida: lo que ya se hizo, y de hoy en adelante los días que toca (nunca lo que no se hizo, D18).
+          // Con una rutina elegida, también los estados Hoy no salió y Lo dejo para otro día.
           var rStatus = routine && info ? info.byRoutine[routine.id] : null;
-          var rMark = !rStatus ? null : M.countsAsDone(rStatus) ? 'done' : ahead ? 'due' : null;
+          var rMark = !rStatus || rStatus === 'pending' ? null : M.countsAsDone(rStatus) ? 'done' : rStatus;
           if (rMark === 'done') parts.push((rStatus === 'partial' ? 'hiciste un poquito de «' : 'hiciste «') + routine.title + '»');
-          if (rMark === 'due') parts.push('toca «' + routine.title + '»');
+          if (rMark === 'postponed' || rMark === 'skipped') parts.push('«' + routine.title + '»: ' + M.STATUS_LABEL[rStatus]);
           var btn = h('button.day-cell', {
             type: 'button', role: 'gridcell', tabindex: '-1',
             'aria-label': parts.join(', '), 'aria-selected': String(key === marked),
@@ -118,9 +114,11 @@
             info && info.feelings.length ? h('span.day-cell__feelings', info.feelings.slice(0, 2).map(function (f) { return c.feelingMark(f, palette); }),
               info.feelings.length > 2 ? h('span.t-meta', '+' + (info.feelings.length - 2)) : null) : null,
             lineItems.length ? h('span.day-cell__lines', { 'aria-hidden': 'true' },
-              lineItems.slice(0, 3).map(function (l) { return h('span.cell-line', { dataset: { kind: l.kind } }, l.title); }),
+              lineItems.slice(0, 3).map(function (l) { return h('span.cell-line', { dataset: { kind: l.kind } }, l.status ? c.statusMark(l.status) : null, l.title); }),
               lineItems.length > 3 ? h('span.cell-line.cell-line--more', '+' + (lineItems.length - 3) + ' más') : null) : null,
-            dayMarks({ wrote: info && info.wrote, memory: info && info.memory, done: info ? info.done : 0, planned: planned, pages: pages.length, routine: !!rMark }),
+            dayMarks({ wrote: info && info.wrote, memory: info && info.memory, done: info ? info.done : 0,
+              postponed: shown.filter(function (it) { return it.status === 'postponed'; }).length,
+              skipped: shown.filter(function (it) { return it.status === 'skipped'; }).length, pages: pages.length, routine: !!rMark }),
             key === marked ? h('span.day-cell__ribbon', { 'aria-hidden': 'true' }) : null);
           // Tocar un día abre su página en el cuadro desplegable.
           btn.addEventListener('click', function () { MC.ui.set('calSelected', key); location.hash = R.day(key); });
@@ -165,6 +163,8 @@
     memory: '<path class="mark__fill" d="M12 3.6l2.5 5.1 5.6.8-4 3.9 1 5.6L12 16.4l-5.1 2.6 1-5.6-4-3.9 5.6-.8z"/>',
     done: '<path d="M6.5 6.5 17.5 17.5M17.5 6.5 6.5 17.5"/>',
     planned: '<rect x="5" y="5" width="14" height="14" rx="3"/><path class="mark__dash" d="M8.5 12h7"/>',
+    postponed: '<path d="M5 12h14m-6-6 6 6-6 6"/>',
+    skipped: '<circle cx="12" cy="12" r="2.5"/>',
     page: '<path d="M7 3.8h7.2L18 7.6v12.6H7z"/><path d="M14 3.8v4h4M9.6 12h5.6M9.6 15.4h4"/>',
     routine: '<path d="M18.5 9.5A7 7 0 0 0 6 8M5.5 14.5A7 7 0 0 0 18 16"/><path d="M6 4.5V8h3.5M18 19.5V16h-3.5"/>'
   };
@@ -173,13 +173,15 @@
       h('span.mark__badge', { html: '<svg viewBox="0 0 24 24" focusable="false">' + MARK_ART[kind] + '</svg>' }),
       n ? h('span.mark__n', String(n)) : null);
   }
-  /** Las marcas de un día: { wrote, memory, done, planned, pages, routine }. */
+  /** Las marcas de un día: { wrote, memory, done, planned, postponed, skipped, pages, routine }. */
   function dayMarks(o) {
     return h('span.day-cell__marks',
       o.wrote ? markBadge('wrote') : null,
       o.memory ? markBadge('memory') : null,
       o.done ? markBadge('done', o.done) : null,
       o.planned ? markBadge('planned', o.planned) : null,
+      o.postponed ? markBadge('postponed', o.postponed) : null,
+      o.skipped ? markBadge('skipped', o.skipped) : null,
       o.pages ? markBadge('page', o.pages > 1 ? o.pages : 0) : null,
       o.routine ? markBadge('routine') : null);
   }
@@ -193,7 +195,8 @@
       h('li', markBadge('wrote'), 'escribiste'),
       h('li', markBadge('memory'), 'recuerdo'),
       h('li', markBadge('done'), 'hecho'),
-      h('li', markBadge('planned'), opts.week ? 'planeado' : 'planeado (también lo que se repite)'),
+      h('li', markBadge('postponed'), 'lo dejo para otro día'),
+      h('li', markBadge('skipped'), 'hoy no salió'),
       h('li', markBadge('page'), 'hoja'),
       opts.week ? null : h('li.legend-line', h('span.cell-line', { dataset: { kind: 'own' } }), 'algo anotado'),
       opts.week ? null : h('li.legend-line', h('span.cell-line', { dataset: { kind: 'routine' } }), 'lo que se repite'),

@@ -1,5 +1,16 @@
 # QA cruzada (A12) — 05/10/2026
 
+## Actualización del 08/10/2026 · Agrupación y visibilidad final (D57)
+
+- Base `main` en `e9cd5a2` (D56 ya pusheado). Copia **v11**, cache **v51**, IDB **5**; sin cambio persistente ni SQL.
+- Unitarias específicas: tres Trabajar sueltos → una barra 0/3 y luego 1/3; combinación de varias repeticiones y actividades propias por nombre con límites flexibles intactos; filtro de los cinco estados, hojas conservadas y resumen general sin alterar. **162/162 unitarias aprobadas**.
+- Cuatro recorridos de objetivos aprobados en la ejecución específica. D57 verifica mes y semana en pasado/hoy/futuro con los cuatro estados visibles y pending oculto; barra agrupada, marca por teclado desde la página del día, recarga y elección de la repetición a editar. `file://` a **1366×900** y HTTP a **375×812**, sin errores de consola ni scroll horizontal. D55/D56 conservan historial, frecuencias, alta, edición y borrado; las pruebas marcan ahora desde la página del día.
+- `npm run typecheck` y `npm run build`: exit 0. `npm run e2e:cloud`: **3/3** comprobaciones locales aprobadas. `npm run test:cloud`: **14 aprobadas y 1 omitida**, RLS sin Postgres local.
+- Capturas de mes y semana en escritorio y 375px con registros sintéticos de Nicole: barras dentro de Importante, conteos N/M, sin filas Sin marcar ni desbordamiento. Mes con glifos de parcial/otro día/hoy no salió y leyenda correspondiente.
+- **Control completo `npm run check`: sintaxis aprobada (46 scripts), 162/162 unitarias y 66/66 recorridos E2E aprobados.** Tipos, build y humo de Next también aprobados. No hay script de lint adicional en el proyecto.
+
+**Límites:** QA local de Chromium y humo local de Next; sin verificación de Production, RLS remota, cuentas/dispositivos reales, Firefox/Safari ni lectores de pantalla. Ocultar no borra registros; Sin marcar permanece en la página del día y en las oportunidades semanales.
+
 ## Actualización del 08/10/2026 · Objetivos dentro de Importante (D56)
 
 - Base `main` en `6caaac7` (D55 ya pusheado). Copia **v11**, cache **v50**, IDB **5**. No cambia la cuenta de D55 ni el historial; cambia la presentación y agrega instalación única de cinco rutinas comunes.

@@ -2,6 +2,13 @@
 
 Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantiene. El porqué de cada decisión está en `DECISIONS.md` (Dn); lo que falta, en `ROADMAP.md`. Cada entrega que toca archivos de la app sube `CACHE_VERSION` en `sw.js` para que las PWA instaladas se actualicen.
 
+## 2026-10-08 · Actividades agrupadas y calendarios sin Sin marcar (D57, cache `v51`)
+
+- Una barra por nombre en Importante: tres Trabajar aparecen como **0/3**, una hecha cambia a **1/3**. Agrupa actividades sueltas y repeticiones equivalentes, sin modificar sus registros ni reglas, respetando el límite de cada meta flexible.
+- Mes y semana ocultan únicamente **Sin marcar**, tanto en pasado como hoy y futuro. **Lo hice**, **Hice un poquito**, **Lo dejo para otro día** y **Hoy no salió** se mantienen visibles, con glifo y texto accesible.
+- Las casillas precargadas siguen disponibles al abrir el día. Las oportunidades sin marcar siguen en el denominador semanal y el historial se conserva. El lápiz permite elegir qué repetición configurar cuando varias comparten nombre.
+- Copia v11 e IndexedDB 5 sin migración nueva: solo cambia una lectura derivada. Documentación y pruebas actualizadas; resultados y límites en `docs/QA.md`.
+
 ## 2026-10-08 · Barras y actividades configurables dentro de Importante (D56, cache `v50`)
 
 - El progreso pasa a la nota Importante: resumen semanal y una barra visible propia por actividad, sin barra encima de la grilla. Las notas y casillas manuales se conservan debajo y no se cuentan como actividades.

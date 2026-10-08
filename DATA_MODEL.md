@@ -350,6 +350,12 @@ B5 (D38, migración `20261005090000`): `profiles.has_notebook` (quien tiene cuad
 
 ## Migraciones
 
+### Lecturas derivadas · agrupación y calendarios (08/10/2026, D57)
+
+- `weeklyProgress.goals` agrupa por `weeklyActivityKey(title)`: ignora mayúsculas, tildes y espacios repetidos, y reconoce Practica/Practicar Diseño. Cada grupo suma `done`, `total` y `recorded` después de limitar cada meta flexible; conserva las fechas, `routineIds` y `targetNotes` de sus componentes para configurar cada repetición. No fusiona actividades ni planes guardados.
+- `calendarVisible(item)` admite done, partial, postponed y skipped, y excluye únicamente pending. `summaryRange(desde, hasta, { recordedOnly: true })` aplica ese filtro a actividades reales y omite sus ocurrencias virtuales; las hojas mantienen su lógica. La lectura general sin esa opción sigue incluyendo pendientes para otros consumidores. La página del día no se filtra.
+- Solo cambia presentación y cálculo derivado: copia **v11**, IndexedDB **5**, sin campos persistentes ni migración nuevos. Cache **v51**.
+
 ### Esquema v11 · actividades iniciales (08/10/2026, D56)
 
 - `settings.weeklyDefaultsInstalled: boolean`, `false` si falta o no es booleano. Se escribe `true` después de instalar las actividades iniciales, viaja en Ajustes y en la copia. `MIGRATIONS[11]` es aditiva: importar nunca fabrica rutinas ni historia.

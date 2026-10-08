@@ -118,6 +118,9 @@ a.months__year { text-decoration: none; padding: 4px 6px; border-radius: 6px; }
 .mark--done { --mark: var(--thread-done-text); }
 .mark--done svg { stroke-width: 3; }
 .mark--planned { --mark: var(--ink-soft); }
+.mark--postponed { --mark: var(--thread-later); }
+.mark--skipped { --mark: var(--ink-soft); }
+.mark--skipped svg { fill: currentColor; }
 .mark--planned .mark__dash { stroke-dasharray: 2 2; }
 .mark--page { --mark: var(--thread-later); }
 .mark--routine { --mark: var(--thread-done-text); }

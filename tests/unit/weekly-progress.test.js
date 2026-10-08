@@ -132,3 +132,40 @@ test('el plan compartido usa el permiso de repeticiones y no filtra títulos al 
   assert.equal(parts.find((p) => p.section === 'repeticiones').data.activityPlan.length, 3);
   assert.deepEqual(S.merge(parts), w);
 });
+
+test('tres Trabajar con ids distintos comparten una barra 0/3; marcar uno actualiza a 1/3', () => {
+  const acts = ['Trabajar', ' TRABAJAR ', 'trabajar'].map((title, n) => ({ id: 'work-' + n, title, date: D.addDays(START, n), status: 'pending' }));
+  let p = M.weeklyProgress(START, [], acts);
+  assert.equal(p.goals.length, 1);
+  assert.deepEqual([p.goals[0].done, p.goals[0].total, p.total], [0, 3, 3]);
+  acts[0].status = 'done'; p = M.weeklyProgress(START, [], acts);
+  assert.deepEqual([p.goals[0].done, p.goals[0].total, p.percent], [1, 3, 33]);
+});
+
+test('agrupa rutinas y actividades sueltas por nombre, conservando todas las reglas y sus límites', () => {
+  const rs = [routine('walk-a', { type: 'weeklyTarget', count: 3 }, { title: 'Caminar' }),
+    routine('walk-b', { type: 'once', date: START }, { title: 'CAMINAR' })];
+  const plan = M.activityPlan(START, rs);
+  const acts = D.range(START, D.addDays(START, 6)).map(k => record('walk-a', k, 'done', { title: 'Caminar' }));
+  acts.push(record('walk-b', START, 'skipped', { title: 'Caminar' }));
+  acts.push({ id: 'extra-walk', date: START, title: 'Caminar', status: 'postponed' });
+  const p = M.weeklyProgress(START, plan, acts);
+  assert.equal(p.goals.length, 1);
+  assert.deepEqual([p.goals[0].done, p.goals[0].total], [3, 5]);
+  assert.deepEqual(p.goals[0].routineIds, ['walk-a', 'walk-b']);
+  assert.equal(plan.length, 2, 'agrupar no modifica ni borra reglas');
+});
+
+test('el calendario oculta solo pending: conserva los otros cuatro estados y las hojas', async () => {
+  await MC.store.init({ memory: true }); await M.loadSettings();
+  const rs = [routine('routine-calendar', { type: 'daily' }, { startDate: D.addDays(START, -7) })];
+  const acts = M.STATUSES.map((status, n) => ({ id: 'status-' + n, date: START, title: status, status }));
+  assert.deepEqual(acts.filter(M.calendarVisible).map(a => a.status), ['done', 'partial', 'postponed', 'skipped']);
+  const p = M.summarize([], acts, { from: START, to: D.addDays(START, 6), routines: rs, recordedOnly: true, pages: [{ id: 'page-cal', date: START, title: 'Nicole' }] });
+  assert.deepEqual(p[START].items.map(a => a.status), ['done', 'partial', 'postponed', 'skipped']);
+  assert.equal(p[START].total, 4);
+  assert.equal(p[START].pending, 0);
+  assert.equal(p[START].pages.length, 1);
+  assert.equal(p[D.addDays(START, 1)], undefined, 'no inventa pendientes virtuales en el calendario');
+  assert.equal(M.summarize([], acts, { from: START, to: START, routines: rs })[START].pending, 2, 'la lectura general conserva las casillas para la página del día');
+});

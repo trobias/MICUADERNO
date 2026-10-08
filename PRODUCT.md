@@ -49,6 +49,8 @@ No real user content. All sample data in tests is synthetic. No testimonials or 
 
 Since D55, the weekly planner includes automatic activity checklists, fixed weekdays and flexible weekly targets, optional duration notes, and descriptive daily/weekly counts. D56 places progress inside the Important note, with a visible weekly bar per activity and five editable initial activities. Pencil controls open the existing editor; scheduling stays in a closed disclosure. Initial activities are installed once, never reappear after deletion, and never overwrite existing equivalents. Progress measures completed scheduled opportunities; it never ranks people or emotions. Closed weeks retain their plan and dated records. The notebook remains classic JavaScript (D42).
 
+D57 groups weekly bars by activity name: three Trabajar opportunities show one 0/3 bar. Both calendars hide only unmarked activities, in past, present and future dates; all other states remain visible, including skipped and postponed. Unmarked checkboxes remain preloaded on the day page and still count toward the weekly target. Grouping and visibility are derived; original records, rules and history stay intact.
+
 1. The notebook is the interface: every surface is paper, tab, sticker or ink.
 2. Kind always: no failure language, no guilt mechanics.
 3. Log in under a minute; everything is optional.

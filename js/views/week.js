@@ -118,15 +118,25 @@
           return goalOrder(a) - goalOrder(b);
         });
         p.goals.forEach(function (g) {
-          var key = g.routineId || g.id;
+          var key = g.key;
           present[key] = true;
           var row = goalRows[key];
           if (!row) {
-            var edit = null, routine = editableRoutines[g.routineId];
-            if (routine) {
+            var edit = null, routines = g.routineIds.map(function (id) { return editableRoutines[id]; }).filter(Boolean);
+            if (routines.length) {
               var button = h('button.icon-btn', { type: 'button', 'aria-label': 'Editar actividad: ' + g.title, dataset: { focus: 'goal:' + key } }, MC.icon('edit'));
               button.addEventListener('click', function () {
-                MC.repeat.editor(routine, null, { hint: end < today ? 'Esta semana conserva su plan. Los cambios de frecuencia se aplican a las semanas actuales y futuras.' : null });
+                function editRoutine(routine) {
+                  MC.repeat.editor(routine, null, { hint: end < today ? 'Esta semana conserva su plan. Los cambios de frecuencia se aplican a las semanas actuales y futuras.' : null });
+                }
+                if (routines.length === 1) { editRoutine(routines[0]); return; }
+                var choices = h('ul.week-progress__goals');
+                routines.forEach(function (routine) {
+                  var choice = h('button.text-btn', { type: 'button' }, MC.recurrence.describe(routine));
+                  choice.addEventListener('click', function () { dialog.close(); setTimeout(function () { editRoutine(routine); }, 0); });
+                  choices.appendChild(h('li', choice));
+                });
+                var dialog = c.dialog({ title: 'Configurar ' + g.title, content: [h('p', 'Estas repeticiones comparten la misma barra. Elegí cuál querés cambiar.'), choices] });
               });
               edit = h('span.week-progress__actions', button);
             }
@@ -138,15 +148,16 @@
             goalRows[key] = row;
             ul.appendChild(row);
           }
-          row.querySelector('.week-progress__goal-count').textContent = g.done + ' de ' + g.total + (g.done === g.total ? ' · completo' : '') + (g.flexible ? ' · días a elección' : '');
+          row.querySelector('.week-progress__goal-count').textContent = g.done + '/' + g.total + (g.done === g.total ? ' · completo' : '') + (g.flexible ? ' · días a elección' : '');
           var goalBar = row.querySelector('progress');
           goalBar.max = g.total; goalBar.value = g.done;
           goalBar.setAttribute('aria-valuetext', g.done + ' de ' + g.total + ' completadas esta semana');
         });
         Object.keys(goalRows).forEach(function (key) { if (!present[key]) { goalRows[key].remove(); delete goalRows[key]; } });
         Object.keys(dailyCounts).forEach(function (k) {
-          var day = p.daily[k];
-          dailyCounts[k].textContent = day.total ? day.done + ' de ' + day.total + ' completadas' : 'Sin actividades con día fijo';
+          var count = +dailyCounts[k].dataset.recorded || 0;
+          dailyCounts[k].textContent = count === 1 ? '1 actividad registrada' : count + ' actividades registradas';
+          dailyCounts[k].hidden = !count;
         });
       });
     }
@@ -226,20 +237,23 @@
       var headLink = h('a.week-day__head', { href: R.day(k), dataset: { date: k, focus: 'head:' + k }, 'aria-label': D.capitalize(D.DAYS[D.weekday(k)]) + ' ' + p.d + ' de ' + D.MONTHS[p.m - 1] + (k === today ? ' (hoy)' : '') },
         h('span.week-day__name', D.capitalize(D.DAYS[D.weekday(k)])),
         h('span.week-day__num.t-display', String(p.d)));
-      // Las mismas marcas que el mes (D49): escribiste, recuerdo, hecho, planeado, hoja.
+      // D57: únicamente las actividades sin marcar quedan fuera del calendario, en cualquier fecha.
       var done = list.filter(function (it) { return M.countsAsDone(it.status); }).length;
-      var planned = k >= today ? list.filter(function (it) { return it.status === 'pending'; }).length : 0;
-      var marks = MC.views.calendar.parts.dayMarks({ wrote: day && M.hasWriting(day), memory: day && day.reflection && day.reflection.keep.trim(), done: done, planned: planned, pages: pages.length });
+      var marks = MC.views.calendar.parts.dayMarks({ wrote: day && M.hasWriting(day), memory: day && day.reflection && day.reflection.keep.trim(), done: done,
+        postponed: list.filter(function (it) { return it.status === 'postponed'; }).length,
+        skipped: list.filter(function (it) { return it.status === 'skipped'; }).length, pages: pages.length });
       marks.classList.add('week-day__marks');
       cell.appendChild(h('div.week-day__top', headLink,
         feelings && feelings.length ? h('span.week-day__feelings', feelings.map(function (word) { return c.feelingMark(word, palette); })) : null,
         marks.childNodes.length ? marks : null));
 
       var ul = h('ul.activity-list.activity-list--compact');
+      dailyCounts[k] = h('p.week-day__progress.t-meta');
       function paint(items) {
         MC.clear(ul);
-        // D55: en la semana se puede completar una casilla de un día anterior.
-        items.forEach(function (it) {
+        var visible = items.filter(M.calendarVisible);
+        dailyCounts[k].dataset.recorded = visible.length;
+        visible.forEach(function (it) {
           var row = MC.activityRow(it, { saved: saved, onRestored: refreshDay, onRemoved: function () { refreshDay(); } });
           row.dataset.focus = 'act:' + (it.id || it.routineId + ':' + k);
           ul.appendChild(row);
@@ -248,7 +262,6 @@
       function refreshDay() { return M.itemsForDay(k, null, plan).then(function (items) { if (!destroyed) paint(items); return refreshProgress(); }); }
       paint(list);
       cell.appendChild(ul);
-      dailyCounts[k] = h('p.week-day__progress.t-meta');
       cell.appendChild(dailyCounts[k]);
 
       var add = h('input', { type: 'text', placeholder: past ? 'anotar algo que hiciste…' : 'anotar…', 'aria-label': 'Anotar algo para el ' + D.longLabel(k), maxlength: 200, enterkeyhint: 'done' });

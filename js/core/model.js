@@ -1066,6 +1066,33 @@
     });
   }
 
+  function weeklyActivityKey(title) {
+    var key = emotionKey(str(title).replace(/\s+/g, ' '));
+    return key === 'practicar diseno' ? 'practica diseno' : key;
+  }
+
+  function calendarVisible(item) { return !!item && STATUSES.indexOf(item.status) > 0; }
+
+  // D57: una sola barra por nombre, aunque las oportunidades sean actividades sueltas o rutinas distintas.
+  // Se agrupa la lectura: los ids, fechas, estados y reglas originales no se modifican.
+  function groupWeeklyGoals(goals) {
+    var byName = Object.create(null), grouped = [];
+    goals.forEach(function (g) {
+      var key = weeklyActivityKey(g.title), group = byName[key];
+      if (!group) {
+        group = Object.assign({}, g, { key: key, done: 0, total: 0, recorded: 0, dates: [], routineIds: [], targetNotes: [] });
+        byName[key] = group; grouped.push(group);
+      }
+      group.done += g.done; group.total += g.total; group.recorded += g.recorded;
+      group.flexible = !!group.flexible && !!g.flexible;
+      (g.dates || []).forEach(function (k) { if (group.dates.indexOf(k) === -1) group.dates.push(k); });
+      if (g.routineId && group.routineIds.indexOf(g.routineId) === -1) group.routineIds.push(g.routineId);
+      if (g.targetNote && group.targetNotes.indexOf(g.targetNote) === -1) group.targetNotes.push(g.targetNote);
+      group.targetNote = group.targetNotes.join(' · ');
+    });
+    return grouped;
+  }
+
   /** Cuenta completa solo `done`. `partial` conserva su estado amable, pero no completa una oportunidad. */
   function weeklyProgress(date, plan, activities, days) {
     var start = D.startOfWeek(date), end = D.addDays(start, 6), excluded = Object.create(null), daily = {};
@@ -1094,7 +1121,7 @@
     });
     var total = goals.reduce(function (n, g) { return n + g.total; }, 0);
     var done = goals.reduce(function (n, g) { return n + g.done; }, 0);
-    return { week: start, done: done, total: total, percent: total ? Math.round(done / total * 100) : 0, goals: goals, daily: daily };
+    return { week: start, done: done, total: total, percent: total ? Math.round(done / total * 100) : 0, goals: groupWeeklyGoals(goals), daily: daily };
   }
 
   function getWeeklyProgress(date, plan) {
@@ -1266,7 +1293,7 @@
     });
     var marked = {};
     activities.forEach(function (a) {
-      if (isDeleted(a) || !inRange(a.date)) return;
+      if (isDeleted(a) || !inRange(a.date) || (extra.recordedOnly && !calendarVisible(a))) return;
       var s = at(a.date);
       s.total++;
       if (countsAsDone(a.status)) s.done++;
@@ -1276,7 +1303,7 @@
     });
     if (extra.routines && extra.routines.length && from && to) {
       D.range(from, to).forEach(function (k) {
-        routineOccurrences(extra.routines, k, function (r) { return marked[r.id + '|' + k]; }).forEach(function (v) {
+        (extra.recordedOnly ? [] : routineOccurrences(extra.routines, k, function (r) { return marked[r.id + '|' + k]; })).forEach(function (v) {
           var s = at(k);
           s.total++; s.pending++; s.planned++; s.routines++;
           s.byRoutine[v.routineId] = 'pending';
@@ -1295,9 +1322,9 @@
     return map;
   }
 
-  function summaryRange(from, to) {
+  function summaryRange(from, to, opts) {
     return Promise.all([daysInRange(from, to), activitiesInRange(from, to), getRoutines(), getPages()]).then(function (r) {
-      return summarize(r[0], r[1], { from: from, to: to, routines: r[2], pages: r[3] });
+      return summarize(r[0], r[1], { from: from, to: to, routines: r[2], pages: r[3], recordedOnly: !!(opts && opts.recordedOnly) });
     });
   }
 
@@ -1454,6 +1481,8 @@
     activitiesInRange: activitiesInRange,
     normalizeRoutine: normalizeRoutine, getRoutines: getRoutines, saveRoutine: saveRoutine, deleteRoutine: deleteRoutine,
     weeklyDefaults: weeklyDefaults, ensureWeeklyDefaults: ensureWeeklyDefaults,
+    weeklyActivityKey: weeklyActivityKey,
+    calendarVisible: calendarVisible,
     normalizePage: normalizePage, getPages: getPages, getPage: getPage, savePage: savePage, deletePage: deletePage,
     sanitizeBlocks: sanitizeBlocks, sanitizeValues: sanitizeValues, BLOCK_TYPES: BLOCK_TYPES,
     normalizeWeek: normalizeWeek, activityPlan: activityPlan, ensureActivityPlan: ensureActivityPlan, weeklyProgress: weeklyProgress, getWeeklyProgress: getWeeklyProgress,

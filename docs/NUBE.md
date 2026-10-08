@@ -4,6 +4,8 @@ Estado al 05/10/2026: **publicada en `https://micuaderno-five.vercel.app`** (Pro
 
 ## 1. Cómo está armado
 
+**D57 (08/10):** agrupar metas por nombre y filtrar Sin marcar son lecturas derivadas en el cuaderno, sin nuevo campo persistente. Copia v11, IDB 5, cache v51; conserva la separación de permisos D56. No requiere SQL, variables ni servicios nuevos. La QA local no confirma el despliegue de Production.
+
 **Objetivos semanales (D55, cambio local del 07/10):** la copia pasa a v10 sin cambiar tablas ni RLS. `routines.targetNote` y `weeks.activityPlan` viajan con permiso `repeticiones`; Importante/Notas conservan `semana`, las marcas `actividades` y sus emociones `emociones`. Mirar como invitada no escribe planes. La clasificación usa `MC.sections`, también en el servidor. No requiere variables nuevas, servicios ni migración SQL. La QA de esta entrega es local; el push autorizado a main puede activar el despliegue automático, cuyo resultado requiere verificación aparte.
 
 **D56 (08/10):** copia v11; `settings.weeklyDefaultsInstalled` viaja con Ajustes en el registro existente de settings. Las rutinas iniciales son repeticiones comunes, nunca se crean en un cuaderno invitado. En Importante conviven barras y notas con permisos distintos: las anotaciones siguen en Semana, las barras en Actividades/Repeticiones y sus lápices/alta solo en Repeticiones. No requiere SQL, variables ni servicios nuevos. Las pruebas locales amplían la matriz a permisos mezclados de Semana/Repeticiones/Actividades.
