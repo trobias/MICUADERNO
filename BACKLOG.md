@@ -221,6 +221,8 @@ Al empezar un ítem: pasarlo a NOW, leer `VISION.md` §0 y la decisión que lo c
 
 ## Cerrados recientemente (traza para quien llega sin contexto)
 
+- **D55 (07/10/2026, local):** calendario semanal con generación automática, casillas, metas fijas/flexibles, duración opcional, barra semanal y detalle por objetivo, conteos diarios e historial de planificación. Ver SPEC §7.3/§11, DATA_MODEL v10 y CHANGELOG. No altera NB4/NB5.
+
 Ya no están arriba porque están hechos. El detalle, en `CHANGELOG.md` (por fecha) y el contrato, en la decisión indicada.
 
 | # | Qué quedó | Cuándo | Dónde mirar |

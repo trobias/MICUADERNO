@@ -155,7 +155,11 @@ El calendario es donde aparece **todo lo que tiene fecha**: emociones, escritura
   Los días pasados **no** muestran lo que quedó sin marcar (sin cuentas de “pendientes” para atrás: amable, ver D18). Cada marca tiene su texto en el `aria-label` del día (“una cosa planeada”, “empezaste una página”) y su lugar en la leyenda. Todo lo que esté en la papelera (`deletedAt != null`) se ignora por completo (DA1). Hoy con borde a lápiz; el último día abierto lleva una cinta-marcador. Tocar un día → su página en el cuadro desplegable.
 - **Animaciones** (con motion “Completas”/“Suaves”): cambiar de mes desliza la hoja hacia ese lado; pasar de mes a semana (o al revés) la acomoda con una escala apenas; el día nuevo se arma aparte y entra cuando está listo (sin parpadeo).
 - **Mi semana (A6, vista por defecto)**: un planner de papel en una sola hoja: **Importante · Lunes · Martes / Miércoles · Jueves · Viernes / Sábado · Domingo · Notas** (tres columnas si la hoja es ancha, dos en tablet, una en el celular, con hoy a la vista). Flechas de semana, “Esta semana”, Mes/Semana y la tira de meses.
-  - **Cada día:** nombre y número (enlace a su página; flechas, Enter y foco de vuelta al cerrar), sus emociones, sus actividades con la **misma fila** que la página del día (casilla que se marca ahí mismo, menú completo, antes/después) y un renglón **anotar…** (Enter agrega, Esc cancela); sus hojas. En días pasados queda lo que se hizo o se anotó y **nunca** lo que se repetía y no se marcó (D18); lo que se anota en un día pasado **nace hecho** (se cambia con un toque).
+  - **Progreso semanal (D55):** antes de la grilla, barra con porcentaje y «N de M actividades completadas». El detalle por objetivo y «Programar actividad» están en «Ver objetivos y organizar», plegado al abrir. No hay rachas ni juicios. Sin actividades, muestra un texto vacío y «—», sin división por cero. También queda al principio en el celular.
+  - **Cada día:** nombre y número (enlace a su página; flechas, Enter y foco de vuelta al cerrar), sus emociones, sus actividades con la **misma fila** que la página del día (casilla que se marca ahí mismo, menú completo, antes/después) y un renglón **anotar…** (Enter agrega, Esc cancela); sus hojas y un conteo diario. **D55 reemplaza D18 solo en la semana:** las oportunidades de días pasados conservan su casilla para marcar después; el mes sigue ocultando pendientes pasados. Lo que se anota en un día pasado **nace hecho** (se cambia con un toque).
+  - **Días fijos:** elegir lunes a viernes genera cinco oportunidades. **Meta flexible:** «3 veces por semana» ofrece una casilla por día elegible, con «elegís el día», y cuenta tres oportunidades semanales, nunca siete. Las casillas de otros días no son obligaciones; se puede registrar más sin superar el 100 %. Una marca por actividad y fecha. La duración/meta escrita es opcional y se ve junto a la actividad.
+  - **Cálculo:** solo `done` completa una oportunidad; `partial`, `pending`, `postponed` y `skipped` conservan su significado, sin completar la meta. El conteo diario incluye actividades fijas/sueltas y las veces flexibles realizadas; las opciones flexibles sin marcar no suman pendientes diarios. Los días con `noInsights` o en papelera quedan fuera de las estadísticas. Importante, Notas y hojas repetidas no son objetivos de actividades.
+  - **Historial:** la planificación semanal se conserva en `weeks.activityPlan`; una semana cerrada conserva sus metas aunque después cambie, se pause o se purgue una repetición. La semana actual y las futuras reflejan la configuración vigente. Las marcas quedan en `activities`, con su fecha; el lunes siguiente se calculan nuevas oportunidades sin copiar estados. Una semana antigua sin plan se calcula con las reglas disponibles: no se pueden recuperar configuraciones borradas antes de esta entrega.
   - **Importante** (casillas) y **Notas** son de la semana (`weeks`): se guardan solos con borrador (D13) e indicador de guardado; una semana vacía no se guarda.
   - Se edita en el fondo (D27): mientras se escribe en ella o hay un menú abierto, el calendario en vivo espera (no pisa ni una letra ni el foco); lo escrito se guarda antes de abrir un cuadro, al ocultar la pestaña y al cerrar.
 - **Mi año** sigue mostrando solo lo registrado: una rutina sin marcar no borda medio punto. Días con `privacy.noReviews` no aportan recuerdos a “Lo que guardé” (PV1), y elementos borrados no se computan (DA1).
@@ -280,7 +284,7 @@ La tranquilidad de que nada se pierde se transmite con un componente unificado `
 
 Una persona puede escribir una o varias palabras o frases cortas al empezar (`morning.feelings`) y al terminar (`evening.feelings`) el día; ambos campos son opcionales y se pueden vaciar. No hay escala, puntuación ni lista cerrada. Las sugerencias muestran solo palabras ya anotadas por esa persona. Cada palabra se ve junto a un hilo; el calendario y *Mi año* asignan hasta ocho colores según frecuencia en la vista, y un color fijado en Ajustes tiene prioridad. El texto siempre comunica el dato aunque no se distinga el color.
 
-Una actividad guarda opcionalmente `feel.before` y `feel.after`, visibles en su fila y exportables. Las copias con `mood: 1..5` se siguen leyendo mediante `legacyMoodLabels` del cuaderno de origen; `[]` significa que la persona quitó las emociones y no debe reponer el valor viejo. El contrato v6 recién retirará `mood` después de una migración segura.
+Una actividad guarda opcionalmente `feel.before` y `feel.after`, visibles en su fila y exportables. Las copias con `mood: 1..5` se siguen leyendo mediante los nombres del cuaderno de origen; `[]` significa que la persona quitó las emociones y no debe reponer el valor viejo. El contrato v6 retiró `mood` de la escritura con migración e instantánea; la lectura conserva compatibilidad.
 
 ## 10. Estados de actividad
 
@@ -302,12 +306,13 @@ Click en la casilla alterna `pending ↔ done`. El menú (…) ofrece los cinco.
 |---|---|---|
 | `daily` | — | Todos los días |
 | `weekdays` | `days: [0..6]` (0 = domingo) | Lun · Mié · Vie; semanal = un día |
+| `weeklyTarget` | `count: 1..7` entero | Caminar 3 veces por semana, cualquier día; solo actividades |
 | `interval` | `every: n` (días), ancla = `startDate` | Cada 3 días |
 | `monthlyDay` | `day: 1..31` (si el mes es más corto → último día) | Todos los 15 |
 | `monthlyNth` | `nth: 1..4 \| -1`, `weekday: 0..6` | Primer sábado del mes · Último domingo |
 | `once` | `date` | Una sola vez, el 12/10 |
 
-Todas aceptan `startDate` (default: fecha de creación) y `endDate` opcional (rutinas temporales). Las pausadas (`archived: true`) no aparecen.
+Todas aceptan `startDate` (default: fecha de creación) y `endDate` opcional (rutinas temporales). Las pausadas (`archived: true`) no generan nuevas oportunidades. En semanas parciales, la meta flexible se limita a la cantidad de días elegibles. `targetNote` permite escribir una duración/meta opcional, sin medir tiempo ni exigir una nota de cumplimiento.
 
 **Materialización perezosa:** las ocurrencias no se guardan por adelantado. Se calculan al mostrar un día. Solo cuando la persona cambia el estado de una ocurrencia se crea un registro `activity` con `routineId` y `date`. Consecuencias: borrar o editar una rutina no reescribe el pasado ya registrado; los días futuros se ven al instante.
 
@@ -327,9 +332,9 @@ Catálogo actual: días desde que empezó el cuaderno; veces que escribió esta 
 
 Ver `DATA_MODEL.md` para esquema. Resumen:
 
-- **IndexedDB** (`mi-cuaderno`): `meta`, `days`, `activities`, `routines`, `pages`, `images`, `files`, `weeks`, `templates`, `marks`. Versión IDB 4 (contrato v6, A13: días sin `mood`, hojas siempre en bloques; ver DATA_MODEL).
+- **IndexedDB** (`mi-cuaderno`): `meta`, `days`, `activities`, `routines`, `pages`, `images`, `files`, `weeks`, `templates`, `marks` y el store interno `outbox`. Versión IDB 5 (NB2); esquema de copia v10 aditivo (D55), sin stores nuevos.
 - **localStorage**: solo preferencias livianas de UI (última ruta, cantidad de aperturas de tapa, borrador transitorio). Nada importante vive solo ahí.
-- **Backup JSON**: `{ app: "mi-cuaderno", kind: "backup", schemaVersion: 6, exportedAt, data: {...} }`. Import valida estructura, aplica migraciones automáticas (`MIGRATIONS[v]`, hasta el contrato v6), rechaza archivos de otra app o versiones futuras (> 6) con mensaje claro. Incluye elementos en papelera, marcas de `privacy`, emociones libres, semanas, plantillas y marcas. Después del contrato, Ajustes ofrece “Descargar la copia de antes”.
+- **Backup JSON**: `{ app: "mi-cuaderno", kind: "backup", schemaVersion: 10, exportedAt, data: {...} }`. Import valida estructura, aplica migraciones automáticas (`MIGRATIONS[v]`, incluidas v6 a v10), rechaza archivos de otra app o versiones futuras (> 10) con mensaje claro. Incluye elementos en papelera, marcas de `privacy`, emociones libres, semanas con su planificación, metas flexibles y duración, plantillas y marcas. Después del contrato v6, Ajustes ofrece “Descargar la copia de antes”.
 - **Restaurar = reemplazar** (con advertencia y opción de descargar la copia actual antes). No hay “merge” en v1 para evitar duplicados ambiguos.
 - **Papelera y retención (DA1):** borrado suave universal con purga automática según `settings.trashRetentionDays` (default 30 días) y vaciado manual.
 - **TXT**: diario legible, día por día.
@@ -406,7 +411,7 @@ skills/               colección de skills (no es parte de la app)
 
 ## 20. Estrategia de pruebas
 
-- **Unit (node:test):** fechas, recurrencias (incluye 29/02, día 31, n-ésimo día, intervalos, temporales), materialización de rutinas, validación y migración de backups (v1→…→v6, contrato v6 puro, rechazo de versiones más nuevas), plantillas y bloques de hojas, cuentas del año y victorias, motor de temas (AA), pinceles y balde, historial de deshacer/rehacer (`MC.history`: límites, reversión, eventos), papelera (DA1: soft-delete, retención, purga, restauración), privacidad emocional (PV1: exclusión en insights y recuerdos), CSV (escapes), ZIP/XLSX (estructura válida), insights (umbrales, redacción no causal).
+- **Unit (node:test):** fechas, recurrencias (incluye 29/02, día 31, n-ésimo día, intervalos, temporales y metas flexibles), materialización de rutinas, progreso diario/semanal e historial de planes, validación y migración de backups (v1→…→v10, contrato v6 puro, v10 aditiva, rechazo de versiones más nuevas), plantillas y bloques de hojas, cuentas del año y victorias, motor de temas (AA), pinceles y balde, historial de deshacer/rehacer (`MC.history`: límites, reversión, eventos), papelera (DA1: soft-delete, retención, purga, restauración), privacidad emocional (PV1: exclusión en insights y recuerdos), CSV (escapes), ZIP/XLSX (estructura válida), insights (umbrales, redacción no causal).
 - **E2E (Playwright/Chromium):** primera apertura → onboarding → registrar ánimo → actividades con estados → recargar y ver persistencia → rutina que aparece → calendario → exportar JSON → borrar → restaurar → datos de vuelta. En `file://` y en `http://` (SW registrado, offline con red cortada). Viewports 375×812, 820×1180, 1440×900.
 - **QA visual:** capturas desktop + mobile revisadas contra DESIGN.md; detector de `impeccable` una vez al final.
 

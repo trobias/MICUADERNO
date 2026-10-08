@@ -4,6 +4,8 @@ Estado al 05/10/2026: **publicada en `https://micuaderno-five.vercel.app`** (Pro
 
 ## 1. Cómo está armado
 
+**Objetivos semanales (D55, cambio local del 07/10):** la copia pasa a v10 sin cambiar tablas ni RLS. `routines.targetNote` y `weeks.activityPlan` viajan con permiso `repeticiones`; Importante/Notas conservan `semana`, las marcas `actividades` y sus emociones `emociones`. Mirar como invitada no escribe planes. La clasificación usa `MC.sections`, también en el servidor. No requiere variables nuevas, servicios ni migración SQL. La QA de esta entrega es local; el push autorizado a main puede activar el despliegue automático, cuyo resultado requiere verificación aparte.
+
 ```
 navegador ──► Vercel (Next.js 16)
                 ├─ /                 → el cuaderno de siempre (public/index.html, copiado por tools/copy-notebook.mjs)

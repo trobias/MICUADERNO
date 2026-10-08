@@ -4,6 +4,8 @@ Estado al 05/10/2026: **la etapa A del plan nuevo está completa** (A0–A13) y 
 
 ## Ruta aprobada ahora
 
+Pedido del 07/10 (D55), implementado localmente: checklist semanal automático, metas fijas/flexibles, duración opcional, progreso diario/semanal e historial. Cache v49, copia v10, IndexedDB 5. Se valida con el gate y la QA específica de `docs/QA.md`; no implica publicación de estos cambios.
+
 | Tramo | Estado | Resultado |
 |---|---|---|
 | A0–A3 · protección, navegación, limpieza y datos v5 | Hecho | Commits `34e9b6e`, `cc7697d`, `4f124d7`, `a39dad2`. |

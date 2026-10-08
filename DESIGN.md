@@ -166,6 +166,8 @@ Un solo sistema, `js/ui/icons.js` (sprite SVG): 24×24, trazo 1.75px, `stroke-li
 
 ## 10. Layout y responsive
 
+**Semana y objetivos (D55):** una línea de progreso de hilo salvia, con borde de tinta suave, sobre el mismo papel; título «Progreso semanal», porcentaje, barra nativa accesible y «N de M actividades completadas». Va antes de la grilla, también a 375px: ya no se desplaza automáticamente a hoy al entrar. «Ver objetivos y organizar» es un `<details>` cerrado de fábrica, con listado tipográfico y enlace para programar. La cuenta cambia al guardar sin reemplazar campos ni foco, sin animar ancho ni números. En cada día hay un conteo en tinta suave; las opciones flexibles llevan «elegís el día». Sin rojo, medallas, anillos, tarjetas adicionales ni lenguaje de deuda.
+
 - **Pantalla principal (todas las medidas):** la hoja ancha del calendario (máx. 1040px) con la tira de meses y, a su derecha, los marcadores de tela (D22). Sin encabezado aparte.
 - **Cuadros, ≥ 1100px — doble página:** dos hojas de ~560px con lomo central (sombra interior + costura).
 - **Cuadros, 700–1099px — una hoja:** máx. 780px.

@@ -367,11 +367,11 @@
    * Ocurrencias de rutina en `date` que todavía no tienen actividad guardada (virtuales): el único lugar
    * que las calcula (lista del día, resumen del calendario, semana). `marked(r)` dice si ya está marcada.
    */
-  function routineOccurrences(routines, date, marked) {
+  function routineOccurrences(routines, date, marked, includeFlexible) {
     var out = [];
     (routines || []).forEach(function (r) {
-      if (isDeleted(r) || r.kind === 'sheet' || marked(r) || !R.occursOn(r, date)) return;
-      out.push({ id: 'v:' + r.id + ':' + date, virtual: true, date: date, title: r.title, status: 'pending', routineId: r.id, order: 0, movedFrom: null });
+      if (isDeleted(r) || r.kind === 'sheet' || (!includeFlexible && r.rule.type === 'weeklyTarget') || marked(r) || !R.occursOn(r, date)) return;
+      out.push({ id: 'v:' + r.id + ':' + date, virtual: true, date: date, title: r.title, status: 'pending', routineId: r.id, order: 0, movedFrom: null, targetNote: r.targetNote, flexible: r.rule.type === 'weeklyTarget' });
     });
     return out;
   }
@@ -380,16 +380,20 @@
    * Lista del día: actividades guardadas + ocurrencias de rutinas todavía no marcadas (virtuales).
    * Orden: rutinas (mañana → noche → cuando sea), después las propias por `order`.
    */
-  function itemsForDay(date, routines) {
+  function itemsForDay(date, routines, plan) {
     var routinesP = routines ? Promise.resolve(routines) : getRoutines();
-    return Promise.all([S().getAllByIndex('activities', 'date', date), routinesP]).then(function (res) {
+    return Promise.all([S().getAllByIndex('activities', 'date', date), routinesP, plan ? Promise.resolve(plan) : getWeek(date)]).then(function (res) {
       var stored = dedupeOccurrences(res[0].filter(function (a) { return !isDeleted(a); }).map(normalizeActivity));
       var rs = res[1];
       var byRoutine = {};
       stored.forEach(function (a) { if (a.routineId) byRoutine[a.routineId] = a; });
       var routineMap = {};
       rs.forEach(function (r) { routineMap[r.id] = r; });
-      var fromRoutines = routineOccurrences(rs, date, function (r) { return !!byRoutine[r.id]; });
+      var historical = D.addDays(D.startOfWeek(date), 6) < D.today();
+      var goals = Array.isArray(res[2]) ? res[2] : historical ? res[2].activityPlan : null;
+      var fromRoutines = goals ? goals.filter(function (g) { return g.dates.indexOf(date) !== -1 && !byRoutine[g.routineId] && (plan || (routineMap[g.routineId] && !routineMap[g.routineId].archived)); }).map(function (g) {
+        return { id: 'v:' + g.routineId + ':' + date, virtual: true, date: date, title: g.title, status: 'pending', routineId: g.routineId, order: 0, targetNote: g.targetNote, flexible: g.flexible };
+      }) : routineOccurrences(rs, date, function (r) { return !!byRoutine[r.id]; }, true);
       var routineItems = fromRoutines.concat(stored.filter(function (a) { return a.routineId; }));
       routineItems.sort(function (a, b) {
         var ra = routineMap[a.routineId], rb = routineMap[b.routineId];
@@ -400,6 +404,9 @@
         var r = routineMap[a.routineId];
         a.moment = r ? r.moment : null;
         a.routineGone = !r;
+        var goal = goals && goals.filter(function (g) { return g.routineId === a.routineId; })[0];
+        if (goal) { a.targetNote = goal.targetNote; a.flexible = goal.flexible; }
+        else if (r) { a.targetNote = r.targetNote; a.flexible = r.rule.type === 'weeklyTarget'; }
       });
       var own = stored.filter(function (a) { return !a.routineId; }).sort(function (a, b) { return a.order - b.order; });
       return routineItems.concat(own);
@@ -451,6 +458,10 @@
 
   /** Materializa un ítem virtual (ocurrencia de rutina) si hace falta y guarda cambios. */
   function saveItem(item, patch) {
+    return ensureActivityPlan(item.date).then(function () { return writeItem(item, patch); });
+  }
+
+  function writeItem(item, patch) {
     if (!item.virtual) return S().put('activities', stamp(normalizeActivity(Object.assign({}, item, patch))));
     // Si otra pestaña (o un doble toque) ya la materializó, se suma a esa en vez de pisarla.
     var id = occurrenceId(item.routineId, item.date);
@@ -515,6 +526,7 @@
       // v5 (D29): una repetición puede ser una actividad (de siempre) o una hoja que se repite con su plantilla congelada.
       kind: r.kind === 'sheet' ? 'sheet' : 'activity',
       templateId: typeof r.templateId === 'string' ? r.templateId.slice(0, 80) : null,
+      targetNote: str(r.targetNote).trim().slice(0, 120),
       deletedAt: sanitizeDeletedAt(r.deletedAt),
       createdAt: stampOf(r.createdAt),
       updatedAt: stampOf(r.updatedAt)
@@ -534,12 +546,13 @@
     if (!n || !n.title) return Promise.reject(new Error('La rutina necesita un nombre y una frecuencia.'));
     stamp(n);
     if (n.rule.type === 'once') { n.startDate = n.rule.date < n.startDate ? n.rule.date : n.startDate; }
-    return S().put('routines', n);
+    // Antes de cambiar la planificación, conservar las semanas que tuvieron registros.
+    return captureActivityWeeks().then(function () { return S().put('routines', n); });
   }
 
   function deleteRoutine(id) {
     // El historial ya marcado queda como actividades sueltas (routineId se conserva; se muestra aunque la rutina no exista).
-    return sendToTrash('routines', id);
+    return captureActivityWeeks().then(function () { return sendToTrash('routines', id); });
   }
 
   /* ---------- páginas ---------- */
@@ -938,6 +951,7 @@
         return { id: typeof it.id === 'string' ? it.id.slice(0, 40) : MC.uid('imp'), text: str(it.text).slice(0, 200), done: it.done === true };
       }),
       notes: str(w.notes),
+      activityPlan: sanitizeActivityPlan(w.activityPlan, D.startOfWeek(w.week)),
       privacy: sanitizePrivacy(w.privacy),
       deletedAt: sanitizeDeletedAt(w.deletedAt),
       createdAt: stampOf(w.createdAt),
@@ -946,7 +960,7 @@
   }
 
   function isEmptyWeek(w) {
-    return !w || (!w.notes.trim() && !w.important.some(function (it) { return it.text.trim(); }));
+    return !w || (!w.activityPlan && !w.notes.trim() && !w.important.some(function (it) { return it.text.trim(); }));
   }
   /** La semana de una fecha (su lunes). Nunca null: una semana sin nada es válida y no se guarda. */
   function getWeek(date) {
@@ -960,8 +974,97 @@
     var w = normalizeWeek(week);
     if (!w) return Promise.reject(new Error('Semana inválida.'));
     w.important = w.important.filter(function (it, i, all) { return it.text.trim() || i === all.length - 1; });
-    if (isEmptyWeek(w)) return S().del('weeks', w.week).then(function () { return w; });
-    return S().put('weeks', stamp(w));
+    // El borrador de Notas puede ser anterior a la captura del plan: no lo pisa.
+    return S().get('weeks', w.week).then(function (raw) {
+      if (raw && raw.activityPlan) w.activityPlan = sanitizeActivityPlan(raw.activityPlan, w.week);
+      if (isEmptyWeek(w)) return S().del('weeks', w.week).then(function () { return w; });
+      return S().put('weeks', stamp(w));
+    });
+  }
+
+  /* ---------- objetivos de actividades por semana (D55) ---------- */
+  function sanitizeActivityPlan(plan, start) {
+    if (!Array.isArray(plan)) return null;
+    var end = D.addDays(start, 6), seen = Object.create(null);
+    return plan.filter(function (g) {
+      if (!g || typeof g.routineId !== 'string' || !g.routineId || seen[g.routineId]) return false;
+      seen[g.routineId] = true;
+      return typeof g.title === 'string';
+    }).map(function (g) {
+      var dates = (Array.isArray(g.dates) ? g.dates : []).filter(function (k, i, a) { return D.isValid(k) && k >= start && k <= end && a.indexOf(k) === i; }).sort();
+      return { routineId: g.routineId, title: str(g.title).slice(0, 120), targetNote: str(g.targetNote).slice(0, 120),
+        dates: dates, flexible: g.flexible === true, target: g.flexible === true ? Math.min(dates.length, MC.clamp(Number(g.target) | 0, 1, 7)) : dates.length };
+    }).filter(function (g) { return g.dates.length; });
+  }
+
+  function activityPlan(date, routines) {
+    var start = D.startOfWeek(date), dates = D.range(start, D.addDays(start, 6));
+    return (routines || []).filter(function (r) { return !isDeleted(r) && !r.archived && r.kind !== 'sheet'; }).map(function (r) {
+      var eligible = dates.filter(function (k) { return R.occursOn(r, k); });
+      var flexible = r.rule.type === 'weeklyTarget';
+      return { routineId: r.id, title: r.title, targetNote: r.targetNote || '', dates: eligible, flexible: flexible,
+        target: flexible ? Math.min(r.rule.count, eligible.length) : eligible.length };
+    }).filter(function (g) { return g.target; });
+  }
+
+  function ensureActivityPlan(date, routines) {
+    var start = D.startOfWeek(date);
+    return Promise.all([S().get('weeks', start), routines ? Promise.resolve(routines) : getRoutines()]).then(function (r) {
+      var raw = r[0], w = normalizeWeek(raw || { week: start });
+      if (w.activityPlan && D.addDays(start, 6) < D.today()) return w.activityPlan;
+      var plan = activityPlan(start, r[1]);
+      // Sin metas no crear semanas vacías; la invitada nunca escribe por el solo hecho de mirar.
+      if ((!plan.length && !w.activityPlan) || isDeleted(raw) || (MC.cloud && MC.cloud.mode === 'guest') || JSON.stringify(plan) === JSON.stringify(w.activityPlan)) return plan;
+      w.activityPlan = plan;
+      return S().put('weeks', stamp(w)).then(function () { return plan; });
+    });
+  }
+
+  function captureActivityWeeks() {
+    return S().getAll('activities').then(function (rows) {
+      var dates = Array.from(new Set(rows.filter(function (a) { return !isDeleted(a) && D.isValid(a.date); }).map(function (a) { return D.startOfWeek(a.date); })));
+      // Secuencial: cada semana es independiente, sin competir con su propia escritura.
+      return dates.reduce(function (p, k) { return p.then(function () { return ensureActivityPlan(k); }); }, Promise.resolve());
+    });
+  }
+
+  /** Cuenta completa solo `done`. `partial` conserva su estado amable, pero no completa una oportunidad. */
+  function weeklyProgress(date, plan, activities, days) {
+    var start = D.startOfWeek(date), end = D.addDays(start, 6), excluded = Object.create(null), daily = {};
+    (days || []).forEach(function (d) { if (isDeleted(d) || isPrivate(d, 'noInsights')) excluded[d.date] = true; });
+    D.range(start, end).forEach(function (k) { daily[k] = { done: 0, total: 0 }; });
+    var rows = dedupeOccurrences((activities || []).filter(function (a) { return !isDeleted(a) && !excluded[a.date] && a.date >= start && a.date <= end; }));
+    var taken = Object.create(null);
+    var goals = (sanitizeActivityPlan(plan, start) || []).map(function (g) {
+      var dates = g.dates.filter(function (k) { return !excluded[k]; });
+      var matches = rows.filter(function (a) { return a.routineId === g.routineId && dates.indexOf(a.date) !== -1; });
+      matches.forEach(function (a) { taken[a.id] = true; });
+      var done = matches.filter(function (a) { return a.status === 'done'; });
+      var target = g.flexible ? Math.min(g.target, dates.length) : dates.length;
+      dates.forEach(function (k) {
+        var completed = done.some(function (a) { return a.date === k; });
+        if (!g.flexible || completed) daily[k].total++;
+        if (completed) daily[k].done++;
+      });
+      return Object.assign({}, g, { done: Math.min(done.length, target), total: target, recorded: done.length });
+    }).filter(function (g) { return g.total; });
+    // Las actividades sueltas (también las de una rutina ya retirada) son una oportunidad cada una.
+    rows.filter(function (a) { return !taken[a.id]; }).forEach(function (a) {
+      var done = a.status === 'done' ? 1 : 0;
+      goals.push({ id: a.id, title: a.title, done: done, total: 1, recorded: done, dates: [a.date], flexible: false });
+      daily[a.date].total++; daily[a.date].done += done;
+    });
+    var total = goals.reduce(function (n, g) { return n + g.total; }, 0);
+    var done = goals.reduce(function (n, g) { return n + g.done; }, 0);
+    return { week: start, done: done, total: total, percent: total ? Math.round(done / total * 100) : 0, goals: goals, daily: daily };
+  }
+
+  function getWeeklyProgress(date, plan) {
+    var start = D.startOfWeek(date), end = D.addDays(start, 6);
+    // Incluye las fichas de días borrados solo para excluir también sus actividades de las cuentas.
+    return Promise.all([activitiesInRange(start, end), S().getRange('days', null, start, end)]).then(function (r) {
+      return weeklyProgress(start, plan, r[0], r[1]);
+    });
   }
 
   /** Plantilla de hoja: estructura (bloques), contenido inicial, papel y stickers. `frozen`: copia de una repetición. */
@@ -1314,7 +1417,8 @@
     normalizeRoutine: normalizeRoutine, getRoutines: getRoutines, saveRoutine: saveRoutine, deleteRoutine: deleteRoutine,
     normalizePage: normalizePage, getPages: getPages, getPage: getPage, savePage: savePage, deletePage: deletePage,
     sanitizeBlocks: sanitizeBlocks, sanitizeValues: sanitizeValues, BLOCK_TYPES: BLOCK_TYPES,
-    normalizeWeek: normalizeWeek, sheetOccurrenceId: sheetOccurrenceId, sheetOccurrences: sheetOccurrences, sheetBlocks: sheetBlocks, sheetText: sheetText, sheetCount: sheetCount,
+    normalizeWeek: normalizeWeek, activityPlan: activityPlan, ensureActivityPlan: ensureActivityPlan, weeklyProgress: weeklyProgress, getWeeklyProgress: getWeeklyProgress,
+    sheetOccurrenceId: sheetOccurrenceId, sheetOccurrences: sheetOccurrences, sheetBlocks: sheetBlocks, sheetText: sheetText, sheetCount: sheetCount,
     markId: markId, getMarks: getMarks, isVictory: isVictory, setVictory: setVictory,
     getTemplates: getTemplates, getTemplate: getTemplate, getDayTemplates: getDayTemplates, dayTemplateFrom: dayTemplateFrom, applyDayTemplate: applyDayTemplate, repeatDay: repeatDay, saveTemplate: saveTemplate, deleteTemplate: deleteTemplate, templateFrom: templateFrom, repeatSheet: repeatSheet, getWeek: getWeek, saveWeek: saveWeek, isEmptyWeek: isEmptyWeek, normalizeTemplate: normalizeTemplate, normalizeMark: normalizeMark,
     sanitizeFeelings: sanitizeFeelings, sanitizeFeel: sanitizeFeel, sanitizeMoves: sanitizeMoves,

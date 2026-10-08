@@ -44,6 +44,9 @@
     ['.routines-page', ['repeticiones']],
     ['.free-page, .template-page', ['hojas']],
     ['.planner__cell--important, .planner__cell--notes', ['semana']],
+    ['.week-progress', ['actividades', 'repeticiones']],
+    ['.week-progress__details', ['repeticiones']],
+    ['.week-day__progress', ['actividades']],
     ['.week-day .activity-list, .week-day .add-activity', ['actividades']],
     ['.settings-page', ['ajustes']]
   ];

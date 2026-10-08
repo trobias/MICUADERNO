@@ -93,7 +93,7 @@
       lines.push('════════════════════════════════════════');
       lines.push('LO QUE SE REPITE');
       all.routines.forEach(function (r) {
-        lines.push('  ' + (r.kind === 'sheet' ? '(hoja) ' : '') + r.title + ' — ' + MC.recurrence.describe(r) + (r.archived ? ' (en pausa)' : ''));
+        lines.push('  ' + (r.kind === 'sheet' ? '(hoja) ' : '') + r.title + ' — ' + MC.recurrence.describe(r) + (r.targetNote ? ' · ' + r.targetNote : '') + (r.archived ? ' (en pausa)' : ''));
       });
     }
     return lines.join('\n') + '\n';
@@ -154,12 +154,12 @@
 
   function routinesTable(all) {
     all = MC.model.activeOnly(all);
-    var rows = [['rutina', 'frecuencia', 'momento', 'desde', 'hasta', 'estado', 'veces_hecha']];
+    var rows = [['rutina', 'frecuencia', 'momento', 'desde', 'hasta', 'estado', 'veces_hecha', 'duracion_meta']];
     var done = {};
     all.activities.forEach(function (a) { if (a.routineId && a.status === 'done') done[a.routineId] = (done[a.routineId] || 0) + 1; });
     all.routines.forEach(function (r) {
       rows.push([r.title, MC.recurrence.describe(r), MC.model.MOMENT_LABEL[r.moment || ''], r.startDate, r.endDate || '',
-        r.archived ? 'en pausa' : 'activa', done[r.id] || 0]);
+        r.archived ? 'en pausa' : 'activa', done[r.id] || 0, r.targetNote || '']);
     });
     return rows;
   }

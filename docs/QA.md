@@ -1,5 +1,20 @@
 # QA cruzada (A12) — 05/10/2026
 
+## Actualización del 07/10/2026 · Objetivos semanales (D55, entrega local)
+
+- Integrado sobre `main` en `9d5f885`, conservando sus 13 commits de plantillas, emociones, permisos y sincronización. D55 suma la migración v10 después de v7–v9 y cache v49 después de v48. La matriz D51 también abre los objetivos para comprobar el permiso del botón de programar; una invitada sin Repeticiones no lo ve y mirar nunca escribe el plan.
+- `npm run check`: **exit 0**, sintaxis del shell, **153/153 pruebas unitarias** y **64/64 recorridos E2E** aprobados después de integrar main.
+- `npm run typecheck` y `npm run build`: exit 0. `npm run e2e:cloud`: **3/3** comprobaciones locales aprobadas (cuaderno servido por Next con CSP, ingreso/preparación y API sin sesión).
+- `npm run test:cloud`: **14 aprobadas, 1 omitida**: RLS no corrió porque no hay Postgres local. El humo de la nube no prueba sincronización entre cuentas ni permisos en una base remota.
+- Recorridos D55: `file://` a **1366×900** y HTTP a **375×812**, con movimiento reducido. Cinco días de trabajo, cinco de diseño y tres caminatas suman **13** oportunidades. Se verificaron teclado (Espacio), marca/desmarca, tres caminatas completas, cuarta marca sin inflar el porcentaje, 100 %, recarga, una semana nueva sin marcas y plan histórico intacto tras editar la frecuencia. El formulario rechaza 8 veces, acepta 3 y conserva duración/meta. Sin errores de consola ni scroll horizontal.
+- Unitarias específicas: vigencia parcial, solo `done`, deduplicación, límite del 100 %, actividad suelta, semana vacía, pausa/hojas, `noInsights`, días en papelera, edición/borrado/purga de rutina, borrador de Notas anterior al plan, copia v9→v10 y v10 de ida/vuelta, exportación TXT/XLSX, lectura invitada sin escrituras y separación de permisos `semana`/`repeticiones`.
+- Revisión visual de capturas de escritorio y 375 px: papel/tela/tokens existentes, barra antes de la grilla, cuenta textual, objetivos cerrados de fábrica, sin animación de ancho ni tarjetas nuevas. Se quitó el desplazamiento automático a hoy para conservar visible el inicio de la semana.
+- Se corrigió una espera de la suite anterior: el test de color de emoción recargaba al cambiar la caché antes de terminar IndexedDB. Se reprodujo también con los archivos del commit anterior y ahora espera el valor durable; no cambió la función de guardado ni se debilitó la comprobación.
+
+**Límites:** verificación local; el push a main fue autorizado por la dueña. El despliegue de Production no se valida con esta QA. No se instalaron dependencias ni se modificaron credenciales, servicios o datos de Production. No se probaron dispositivos ni lectores de pantalla reales, Firefox/WebKit, RLS ni la sincronización con dos cuentas reales. Una copia antigua sin planificación no permite reconstruir reglas históricas que ya fueron borradas; conserva las marcas existentes. Cache **v49**, copia **v10**, IndexedDB **5**.
+
+---
+
 Qué se probó, cómo y qué **no** se pudo probar. Todo corrió en Chromium (`/opt/pw-browsers/chromium`, el único navegador del entorno). Nada de esto reemplaza probar en dispositivos reales (ROADMAP → Verificación pendiente).
 
 ## 1. Matriz de navegación (E2E `A12: matriz…`)

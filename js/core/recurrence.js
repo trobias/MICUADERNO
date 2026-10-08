@@ -4,7 +4,7 @@
   var MC = root.MC || (root.MC = {});
   var D = MC.dates;
 
-  var TYPES = ['daily', 'weekdays', 'interval', 'monthlyDay', 'monthlyNth', 'yearly', 'once'];
+  var TYPES = ['daily', 'weekdays', 'weeklyTarget', 'interval', 'monthlyDay', 'monthlyNth', 'yearly', 'once'];
   var NTH_LABEL = { 1: 'Primer', 2: 'Segundo', 3: 'Tercer', 4: 'Cuarto', '-1': 'Último' };
   var WEEKDAY_ORDER = [1, 2, 3, 4, 5, 6, 0]; // lunes primero
 
@@ -14,6 +14,7 @@
     var p = D.parse(key);
     switch (rule.type) {
       case 'daily':
+      case 'weeklyTarget': // Días elegibles; la meta se cuenta una sola vez por semana en el modelo.
         return true;
       case 'weekdays':
         return Array.isArray(rule.days) && rule.days.indexOf(D.weekday(key)) !== -1;
@@ -79,6 +80,7 @@
     switch (r.type) {
       case 'daily': base = 'Todos los días'; break;
       case 'weekdays': base = weekdaysLabel(r.days || []); break;
+      case 'weeklyTarget': base = r.count + (r.count === 1 ? ' vez' : ' veces') + ' por semana, en los días que elijas'; break;
       case 'interval': base = (r.every | 0) <= 1 ? 'Todos los días' : 'Cada ' + (r.every | 0) + ' días'; break;
       case 'monthlyDay': base = 'Todos los ' + (r.day | 0) + ' del mes'; break;
       case 'monthlyNth': base = (NTH_LABEL[String(r.nth)] || '') + ' ' + D.DAYS[r.weekday] + ' del mes'; break;
@@ -94,7 +96,11 @@
   function sanitizeRule(rule) {
     if (!rule || TYPES.indexOf(rule.type) === -1) return null;
     var out = { type: rule.type };
-    if (rule.type === 'weekdays') {
+    if (rule.type === 'weeklyTarget') {
+      var count = Number(rule.count);
+      if (!Number.isInteger(count) || count < 1 || count > 7) return null;
+      out.count = count;
+    } else if (rule.type === 'weekdays') {
       out.days = (Array.isArray(rule.days) ? rule.days : [])
         .map(Number).filter(function (d) { return d >= 0 && d <= 6; })
         .filter(function (d, i, a) { return a.indexOf(d) === i; });

@@ -2,6 +2,12 @@
 
 Registro breve de decisiones de arquitectura y producto. Formato: contexto → decisión → consecuencias.
 
+## D55 · Checklist semanal automático y metas flexibles (2026-10-07)
+**Contexto:** la dueña pidió siete días de lunes a domingo, casillas precargadas, frecuencias fijas y flexibles, duración/meta opcional, barra antes del lunes, porcentaje semanal, detalle por objetivo e historial. La barra se toma como parte del pedido actual. No se cargan actividades de ejemplo en cuadernos reales.
+**Decisión:** extender la semana y el motor de rutinas existentes, sin framework ni dependencias. `weeklyTarget` ofrece días a elección y cuenta una meta por semana (5 + 5 + 3 = 13, nunca 17). Solo `done` completa una oportunidad; los otros estados amables permanecen. Una fecha admite una marca por rutina; las marcas extra permanecen, con el porcentaje limitado al 100 %. La duración es texto opcional, no cronómetro. El detalle de objetivos y su alta se descubre en un desplegable cerrado.
+**Historial:** guardar la planificación en `weeks.activityPlan` al abrir o marcar; capturar semanas con registros antes de editar/borrar rutinas. La semana actual y las futuras reflejan la configuración vigente; las cerradas con plan conservan sus oportunidades aun tras purgar rutinas. Importante/Notas no pisan esa captura. Copias viejas sin plan conservan sus marcas, pero no permiten reconstruir frecuencias históricas ya borradas. Esquema v10 aditivo, IndexedDB 5, cache v49.
+**Consecuencias:** D18 se mantiene para el mes; **la semana sí conserva casillas de días anteriores** para completar el registro. Los porcentajes son descriptivos de actividades programadas, sin rachas ni juicios. Las opciones flexibles vacías no son pendientes diarios; los conteos diarios suman las veces flexibles realizadas. `noInsights` y papelera se respetan. El plan viaja en `repeticiones`, las marcas en `actividades`; mirar un cuaderno compartido no escribe planes. Tests de cálculo, vigencia, duplicados, privacidad, copia, permisos, teclado, móvil, recarga y semanas anteriores.
+
 ## D1 · JavaScript clásico, sin build (2026-09-30)
 **Contexto:** la persona usuaria debe abrir `index.html` con doble clic. Chrome bloquea `<script type="module">` y `fetch` de archivos locales en `file://`.
 **Decisión:** scripts clásicos que cuelgan de `window.MC`, cargados en orden desde `index.html`. Sin bundler.

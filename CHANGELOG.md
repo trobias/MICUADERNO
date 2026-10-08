@@ -2,6 +2,20 @@
 
 Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantiene. El porqué de cada decisión está en `DECISIONS.md` (Dn); lo que falta, en `ROADMAP.md`. Cada entrega que toca archivos de la app sube `CACHE_VERSION` en `sw.js` para que las PWA instaladas se actualicen.
 
+## 2026-10-07 · Actividades automáticas y objetivos semanales (verificado localmente, cache `v49`)
+
+**Para quien lo usa**
+- La semana tiene barra de progreso arriba, porcentaje y actividades completadas frente a programadas. Los siete días conservan sus casillas, incluso para marcar un día anterior. El mes sigue sin mostrar pendientes pasados.
+- Desde «Ver objetivos y organizar → Programar actividad»: días fijos o una cantidad por semana, con duración/meta opcional. Se configura una vez y aparece sola; no hay que volver a escribir cada cumplimiento.
+- Cinco veces de trabajo, cinco de diseño y tres caminatas suman trece oportunidades. Las caminatas se marcan en los días elegidos y la meta queda completa al llegar a tres; otras marcas no inflan el porcentaje. Solo «Lo hice» completa una oportunidad.
+- El lunes renueva oportunidades, sin borrar marcas ni planes de semanas anteriores. Sin juicios, rachas ni tareas de ejemplo cargadas en datos reales.
+
+**Para quien lo mantiene**
+- `weeklyTarget`/`targetNote`, cálculo puro de progreso y plan en `weeks.activityPlan`. Esquema v10 con migración aditiva, IDB 5 sin cambios de stores, cache v49. Se captura antes de marcar y antes de editar/borrar repeticiones con historial; guardar Notas preserva el plan.
+- Integrado sobre main (`9d5f885`) conservando las entregas D45–D54 y las migraciones v7–v9. Esta entrega usa D55. El control de programar y los objetivos respetan los permisos nuevos de Repeticiones y Actividades (D51).
+- Permisos: el plan pertenece a `repeticiones`, separado de `semana`; mirar como invitada no captura. Privacidad y papelera se excluyen de los conteos. TXT, XLSX e impresión incluyen duración/meta.
+- Se actualizan SPEC, DESIGN, DATA_MODEL, D55, AGENTS, HANDOFF, MIGRATION_PLAN, ROADMAP, BACKLOG, README, PRODUCT y docs/NUBE. No se creó CLAUDE.md (no existe), ni se tocaron dependencias o trabajo ajeno. Verificación y límites en docs/QA.
+
 ## 2026-10-04 · Accesos de nube preparados, credenciales de Supabase pendientes
 
 - La CLI de Vercel quedó vinculada a `trobias-projects/micuaderno`. Se fijaron las variables públicas indicadas y se cargaron en Production y Preview los secretos generables, VAPID, su asunto y `NEXT_TELEMETRY_DISABLED`. Falta `SUPABASE_SECRET_KEY`.

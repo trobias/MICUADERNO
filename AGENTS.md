@@ -107,6 +107,8 @@ skills/                 colección de skills del proyecto (no es parte de la app
 
 ## Archivos críticos
 
+- Objetivos semanales (D55, copia v10, IndexedDB 5): `weeklyTarget` cuenta `count` oportunidades por semana, nunca siete pendientes. Solo `done` completa el objetivo. `weeks.activityPlan` conserva la planificación de semanas cerradas; usar `ensureActivityPlan`/`weeklyProgress`/`getWeeklyProgress` e `itemsForDay(fecha, rutinas, plan)` para sus casillas. El plan pertenece a `repeticiones`, separado de Importante/Notas (`semana`). En la semana se muestran casillas pasadas para completar el registro; D18 sigue ocultando pendientes en el mes. No reemplazar el plan al guardar un borrador de Notas.
+
 - `js/core/store.js` + `js/core/backup.js`: tocar con cuidado; cualquier cambio de forma de datos exige migración y subir `SCHEMA_VERSION` (ver DATA_MODEL.md).
 - `js/core/recurrence.js`: cubierto por tests; agregá casos antes de cambiar.
 - `css/tokens.css`: única fuente de valores visuales. No hardcodear colores en otros archivos (lo vigila `tests/unit/guards.test.js`; en JS un hex funcional lleva la marca `color-ok` con su razón). El arte de stickers usa clases `sf-*`/`ss-*` con tokens `--st-*`, y la impresión `--print-*`: ninguno de los dos sigue al tema.
@@ -172,7 +174,7 @@ Probar a mano además: doble clic en `index.html`; mobile 375px; teclado solo; `
 - Rutas: nunca escribir `'#/…'` a mano; usar `MC.routes.*`. Una ruta nueva se agrega en `js/core/routes.js` con su test (D19).
 - Antes de dibujar o contar algo, buscá si ya existe (D19): `MC.model.summarize` / `countsAsDone` / `hasWriting` / `feelingsOf` / `emotionPalette` / `pageTitle`, `MC.dates.fromISO`, `MC.c.feelingEditor` / `feelingMark` / `statusMark` / `pageLink(s)`, `MC.stickers.statusMarkup`.
 - Conexiones (D20): una vista nueva se conecta con las demás por las fechas: de cada cosa a sus días y de cada día a sus cosas (SPEC §5.1). Enlaces sobre texto que ya existe, no botones nuevos.
-- Todo lo que tiene fecha tiene que verse en el calendario (DECISIONS D18). Si agregás algo fechado, sumalo en `MC.model.summarize` (con test) y dale marca + texto en la celda y la leyenda de `js/views/calendar.js`. En días pasados, nunca mostrar lo que quedó sin hacer.
+- Todo lo que tiene fecha tiene que verse en el calendario (DECISIONS D18). Si agregás algo fechado, sumalo en `MC.model.summarize` (con test) y dale marca + texto en la celda y la leyenda de `js/views/calendar.js`. En el mes, los días pasados no muestran lo que quedó sin hacer; en la semana se conservan las casillas para completar el registro (D55).
 - El calendario de fondo se redibuja solo después de cada cambio guardado (D21): no hace falta avisarle. Una vista del calendario tiene que devolver `{ destroy, ready }` (`ready` = promesa de “ya está dibujado”) para que el cambio sea sin parpadeo. La semana (A6, D27) suma `busy()` (mientras se escribe o hay un menú abierto, el redibujo espera) y `flush()` (el router guarda Importante/Notas antes de abrir un cuadro y al ocultar la pestaña); los controles llevan `data-focus` para que el foco vuelva al mismo lugar después de redibujar.
 
 ## Anti-patterns

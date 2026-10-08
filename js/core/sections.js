@@ -34,7 +34,7 @@
     templates: { base: 'hojas' },
     images: { base: 'fotos' },
     files: { base: 'fotos' },
-    weeks: { base: 'semana' },
+    weeks: { base: 'semana', fields: { activityPlan: 'repeticiones' } },
     marks: { base: 'anio' }
   };
 

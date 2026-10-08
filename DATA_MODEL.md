@@ -1,6 +1,6 @@
 # MI CUADERNO — Modelo de datos
 
-`schemaVersion: 5` · Base IndexedDB `mi-cuaderno` (versión IDB 3: stores `weeks`, `templates` y `marks`, índice `pages.date`; ver “Esquema v5”).
+`schemaVersion: 10` · Base IndexedDB `mi-cuaderno` (versión IDB 5, incluido el store interno `outbox`). El contrato activo retira las formas viejas desde v6; las secciones v1–v6 de abajo registran la evolución histórica. D55 suma metas semanales sin stores ni índices nuevos.
 
 **Uso activo desde A4:** `days.morning/evening.feelings` y `activities.feel.before/after` se escriben desde la interfaz. `MC.model.feelingsOf(slot, settings)` hace lectura dual: si `feelings` es array, lo respeta incluso vacío; si es `null`, convierte `mood` con `legacyMoodLabels` (o `moodLabels` de una copia vieja). `emotionKey` normaliza mayúsculas y tildes para deduplicar y para `settings.emotionColors`; conserva la palabra escrita para mostrarla. `emotionPalette` asigna ocho hilos por frecuencia de la vista, con prioridad a colores elegidos. `summarize` devuelve `morning`, `evening` y `feelings` como arrays de palabras; `mood` ya no es el dato visible. TXT/CSV/XLSX e impresión exportan las palabras y antes/después de actividades. El v5 sigue siendo **aditivo**; no reescribir `updatedAt` al leer ni retirar formas antiguas hasta A13.
 
@@ -20,7 +20,7 @@
 
 | key | value |
 |---|---|
-| `schemaVersion` | `4` |
+| `schemaVersion` | `10` |
 | `settings` | objeto Settings (abajo) |
 | `createdAt` | ISO del primer arranque |
 | `lastBackupAt` | ISO de la última copia descargada, o `null` |
@@ -99,7 +99,8 @@ Unicidad lógica: para ocurrencias de rutina, a lo sumo una actividad por `(rout
   id: 'rut_…',
   title: 'Caminar',
   rule: {
-    type: 'daily' | 'weekdays' | 'interval' | 'monthlyDay' | 'monthlyNth' | 'once',
+    type: 'daily' | 'weekdays' | 'weeklyTarget' | 'interval' | 'monthlyDay' | 'monthlyNth' | 'yearly' | 'once',
+    count: 3,                    // weeklyTarget: entero 1..7, una vez por fecha
     days: [1,3,5],                // weekdays (0 = domingo)
     every: 3,                     // interval
     day: 15,                      // monthlyDay (1..31; clamp al último día)
@@ -111,6 +112,7 @@ Unicidad lógica: para ocurrencias de rutina, a lo sumo una actividad por `(rout
   endDate: 'AAAA-MM-DD' | null,
   moment: 'manana' | 'tarde' | 'noche' | null,
   archived: false,                // pausada
+  targetNote: '',                 // duración/meta opcional; texto de hasta 120 caracteres (v10)
   deletedAt: ISO | null,          // DA1 (v4): instante de envío a la papelera (null o ausente = activo)
   createdAt, updatedAt
 }
@@ -180,7 +182,7 @@ Un sticker pegado la usa con `sticker: 'img:<id>'`. Si la imagen se manda a la p
 {
   app: 'mi-cuaderno',
   kind: 'backup',
-  schemaVersion: 5,
+  schemaVersion: 10,
   exportedAt: ISO,
   data: {
     meta: { createdAt, settings },
@@ -346,6 +348,17 @@ B5 (D38, migración `20261005090000`): `profiles.has_notebook` (quien tiene cuad
 `MC.sections.split(store, registro)` decide las partes: los campos de identidad, fechas, papelera y privacidad van en todas; el resto según el mapa (por ejemplo `days.morning/evening/energy/sleep` → `emociones`, lo demás del día → `escritura`; `activities.feel` → `emociones`). Un campo nuevo cae en la sección por defecto de su store.
 
 ## Migraciones
+
+### Esquema v10 · objetivos semanales (07/10/2026, D55)
+
+- `routines.rule = { type: 'weeklyTarget', count: 1..7 }` y `routines.targetNote: string` opcional. La cantidad se valida como entero; las hojas que se repiten conservan reglas con días definidos.
+- `weeks.activityPlan: null | [{ routineId, title, targetNote, dates: ['AAAA-MM-DD'], flexible, target }]`. `dates` son los días elegibles de esa semana; las oportunidades fijas son `dates.length`, las flexibles `min(count, dates.length)`. `null` significa que no se capturó el plan; `[]`, que se capturó sin metas. No se guardan porcentajes ni acumulados.
+- `M.activityPlan` calcula; `M.ensureActivityPlan` captura al abrir el planner o antes de marcar. Antes de cambiar/borrar una rutina, captura también las semanas con actividades que todavía no tenían plan. La semana actual/futura usa las reglas vigentes; una semana cerrada con plan nunca lo recalcula por una edición de rutinas. Las casillas históricas del planner se generan desde ese plan incluso si la rutina fue purgada.
+- `M.weeklyProgress` es puro: deduplica `(routineId, date)`, cuenta solo `done`, limita cada meta flexible al objetivo, suma una oportunidad por actividad suelta, devuelve `{ week, done, total, percent, goals, daily }`. `M.getWeeklyProgress` lee también las fichas de días en papelera para excluir sus actividades, además de los días con `noInsights`. Los conteos generales del mes/año siguen admitiendo `partial` como registro; no son la medida de cumplimiento de un objetivo.
+- `saveWeek` preserva el plan más reciente al guardar Importante/Notas, incluso si el borrador se tomó antes de capturarlo. Las semanas con plan son registros válidos aunque no tengan texto. Una semana vacía sin plan no se guarda. La invitada no captura planes por mirar.
+- **Copia:** `SCHEMA_VERSION = 10`, `MIGRATIONS[10]` aditiva e idempotente, sin inventar planes históricos ni tocar fechas. Las migraciones v7–v9 de main se conservan. `normalizeRoutine`/`normalizeWeek` validan los campos nuevos. IndexedDB permanece en **5**, sin reescritura masiva. No es posible recuperar reglas históricas ya borradas en versiones anteriores.
+- **Permisos:** `targetNote` viaja con `routines` en `repeticiones`; `weeks.activityPlan` también pertenece a `repeticiones`, separado de Importante/Notas (`semana`). Las marcas siguen en `actividades` y las emociones en `emociones`. No hay sección, tabla ni migración SQL nueva.
+- TXT e impresión incluyen la duración/meta junto a la frecuencia; la hoja Rutinas del XLSX agrega `duracion_meta`. La copia JSON conserva el plan completo.
 
 `js/core/backup.js` exporta `MIGRATIONS = { 1: d => d }`. Para agregar una versión: escribir `N: d => {...}` que transforme datos v(N-1) → vN y subir `SCHEMA_VERSION`.
 

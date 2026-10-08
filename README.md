@@ -16,6 +16,8 @@ Un diario personal con forma de cuaderno de tela bordado: podés escribir cómo 
 
 ## Cuidar tus datos
 
+**Actividades y hábitos:** en Mi semana, abrí «Ver objetivos y organizar → Programar actividad». Elegí días fijos (por ejemplo, lunes a viernes) o «Una cantidad de veces por semana» (por ejemplo, caminar 3 veces). Podés agregar una duración/meta opcional. Se configura una vez: las actividades aparecen solas y después solo marcás su casilla. La barra semanal y el detalle por objetivo se actualizan al guardar; cada lunes empieza una semana nueva y las anteriores conservan sus marcas y planificación (D55).
+
 - **Ajustes → Mis datos → Guardar una copia (.json)**: una copia completa. El cuaderno te lo recuerda de vez en cuando.
 - **Abrir una copia…** restaura esa copia (avisa antes de reemplazar lo que hay).
 - **Llevarme mi cuaderno**: texto (.txt), planilla (.xlsx), CSV e **Imprimir mi cuaderno** (A4, A5 o Carta; también “Guardar como PDF”).

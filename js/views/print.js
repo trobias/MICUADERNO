@@ -85,7 +85,7 @@
 
     if (opts.routines && all.routines.length) {
       doc.appendChild(h('section.p-sheet.p-routines', h('h2.p-h', 'Mis rutinas'),
-        h('ul.p-list', all.routines.map(function (r) { return h('li', h('strong', r.title), ' — ' + MC.recurrence.describe(r) + (r.archived ? ' (en pausa)' : '')); }))));
+        h('ul.p-list', all.routines.map(function (r) { return h('li', h('strong', r.title), ' — ' + MC.recurrence.describe(r) + (r.targetNote ? ' · ' + r.targetNote : '') + (r.archived ? ' (en pausa)' : '')); }))));
     }
     return doc;
   }

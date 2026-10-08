@@ -8,6 +8,7 @@
   var FREQ = [
     ['daily', 'Todos los días'],
     ['weekdays', 'Algunos días de la semana'],
+    ['weeklyTarget', 'Una cantidad de veces por semana'],
     ['interval', 'Cada tantos días'],
     ['monthlyDay', 'Un día del mes'],
     ['monthlyNth', 'Un día de la semana del mes'],
@@ -27,7 +28,9 @@
     var r = existing ? MC.clone(existing) : { title: opts.title || '', rule: opts.rule || { type: 'weekdays', days: [D.weekday(today)] }, startDate: today, endDate: null, moment: null };
     var rule = r.rule;
     var title = h('input.input', { id: 'rt-title', type: 'text', value: r.title, maxlength: 120, placeholder: 'caminar, leer un rato, regar las plantas…', required: true });
-    var freq = h('select.select', { id: 'rt-freq' }, FREQ.map(function (f) { return h('option', { value: f[0], selected: rule.type === f[0] }, f[1]); }));
+    var isSheet = r.kind === 'sheet' || opts.kind === 'sheet';
+    var freq = h('select.select', { id: 'rt-freq' }, FREQ.filter(function (f) { return !isSheet || f[0] !== 'weeklyTarget'; }).map(function (f) { return h('option', { value: f[0], selected: rule.type === f[0] }, f[1]); }));
+    var targetNote = h('input.input', { id: 'rt-target-note', type: 'text', value: r.targetNote || '', maxlength: 120, placeholder: 'por ejemplo, 1 hora por día' });
     var extra = h('div.rt-extra');
     var preview = h('p.rt-preview.t-hand', { 'aria-live': 'polite' });
     var moment = h('div.choice-row', { role: 'radiogroup', 'aria-label': 'Momento del día' });
@@ -55,7 +58,13 @@
     function paintExtra() {
       MC.clear(extra);
       var t = freq.value;
-      if (t === 'weekdays') {
+      if (t === 'weeklyTarget') {
+        rule.count = rule.count || 3;
+        var count = h('input.input.input--num', { id: 'rt-count', type: 'number', min: 1, max: 7, step: 1, value: rule.count, inputmode: 'numeric', 'aria-describedby': 'rt-count-hint' });
+        count.addEventListener('input', function () { rule.count = Number(count.value); paintPreview(); });
+        extra.appendChild(h('div.field.field--inline', h('label', { for: 'rt-count' }, 'Veces por semana'), count));
+        extra.appendChild(h('p.section__hint', { id: 'rt-count-hint' }, 'Elegís los días al marcar. Cada día cuenta una vez; la meta se renueva el lunes.'));
+      } else if (t === 'weekdays') {
         rule.days = Array.isArray(rule.days) && rule.days.length ? rule.days : [D.weekday(today)];
         var row = h('div.choice-row', { role: 'group', 'aria-label': 'Días' });
         [1, 2, 3, 4, 5, 6, 0].forEach(function (wd) {
@@ -107,7 +116,7 @@
     function currentRoutine() {
       var clean = R.sanitizeRule(Object.assign({}, rule, { type: freq.value }));
       return Object.assign({}, r, {
-        title: title.value.trim(), rule: clean,
+        title: title.value.trim(), rule: clean, targetNote: targetNote.value.trim(),
         startDate: D.isValid(start.value) ? start.value : today,
         endDate: hasEnd.checked && D.isValid(end.value) ? end.value : null
       });
@@ -140,7 +149,7 @@
       var cur = currentRoutine();
       if (opts.noTitle && !cur.title) cur.title = opts.title || 'Este día';
       if (!cur.title) { titleErr.textContent = 'Poné un nombre, por ejemplo “caminar”.'; title.setAttribute('aria-invalid', 'true'); title.focus(); return false; }
-      if (!cur.rule) { error.textContent = 'Elegí al menos un día de la semana.'; return false; }
+      if (!cur.rule) { error.textContent = freq.value === 'weeklyTarget' ? 'Elegí una cantidad entera entre 1 y 7 veces por semana.' : 'Elegí al menos un día de la semana.'; var count = extra.querySelector('#rt-count'); if (count) count.focus(); return false; }
       if (cur.endDate && cur.endDate < cur.startDate) { endErr.textContent = 'La fecha final quedó antes del inicio: movela un poco más adelante.'; end.setAttribute('aria-invalid', 'true'); end.focus(); return false; }
       return (opts.save ? opts.save(cur) : M.saveRoutine(cur)).then(function (saved) {
         onSaved(saved);
@@ -156,6 +165,7 @@
         opts.noTitle ? null : h('div.field', h('label', { for: 'rt-title' }, 'Nombre'), title, titleErr),
         h('div.field', h('label', { for: 'rt-freq' }, 'Frecuencia'), freq),
         extra,
+        !isSheet ? h('div.field', h('label', { for: 'rt-target-note' }, 'Duración o meta (opcional)'), targetNote) : null,
         preview,
         h('div.field', h('span', 'Momento del día'), moment),
         h('div.rt-dates',

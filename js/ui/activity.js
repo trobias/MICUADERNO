@@ -93,6 +93,8 @@
     function paintMeta() {
       MC.clear(meta);
       if (it.routineId) meta.appendChild(h('span.activity__routine', MC.icon('rutinas'), it.routineGone ? 'ya no se repite' : 'se repite'));
+      if (it.flexible) meta.appendChild(h('span.activity__routine', 'elegís el día'));
+      if (it.targetNote) meta.appendChild(h('span.activity__routine', it.targetNote));
       // “Viene del…” lleva al día de donde se pasó.
       if (it.movedFrom) meta.appendChild(h('a.activity__routine.activity__from', { href: R.day(it.movedFrom) }, MC.icon('later'), 'viene del ' + D.shortLabel(it.movedFrom)));
       var n = statusNote(it);

@@ -74,3 +74,11 @@ test('descripciones humanas', () => {
   assert.equal(R.describe(r({ type: 'weekdays', days: [6] })), 'Todos los sábados');
   assert.equal(R.describe(r({ type: 'daily' }, { endDate: '2026-10-31' })), 'Todos los días · hasta el 31 oct');
 });
+
+test('meta flexible: cualquier día es elegible, la cantidad no genera días fijos', () => {
+  const t = r({ type: 'weeklyTarget', count: 3 });
+  assert.equal(hits(t, '2026-09-28', '2026-10-04').length, 7);
+  assert.equal(R.describe(t), '3 veces por semana, en los días que elijas');
+  assert.deepEqual(R.sanitizeRule({ type: 'weeklyTarget', count: '3' }), { type: 'weeklyTarget', count: 3 });
+  for (const count of [0, 8, 2.5, '', null, 'tres']) assert.equal(R.sanitizeRule({ type: 'weeklyTarget', count }), null);
+});

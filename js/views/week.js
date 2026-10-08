@@ -17,6 +17,8 @@
     var today = D.today();
     var destroyed = false;
     var week = null;
+    var plan = null, progressBox = null, progressSeq = 0;
+    var dailyCounts = {};
     var saved = c.savedNote();
     var page = h('section.page.cal-page.planner-page', { 'aria-label': 'Mi semana' });
     main.appendChild(h('div.spread.spread--single', page));
@@ -49,11 +51,16 @@
       var byDay = {};
       r[1].forEach(function (d) { byDay[d.date] = d; });
       var pagesByDay = M.summarize([], [], { from: start, to: end, pages: r[2] });
-      return Promise.all(D.range(start, end).map(function (k) { return M.itemsForDay(k, routines); })).then(function (lists) {
+      return M.ensureActivityPlan(start, routines).then(function (captured) {
+        plan = captured;
+        return Promise.all(D.range(start, end).map(function (k) { return M.itemsForDay(k, routines, plan); }));
+      }).then(function (lists) {
         if (destroyed) return;
         week = recoverDraft(r[3]);
         var palette = M.emotionPalette(r[1], M.settings());
         page.appendChild(head());
+        progressBox = progressSection();
+        page.appendChild(progressBox);
         var grid = h('div.planner', { role: 'list', 'aria-label': 'Semana del ' + D.longLabel(start) + ' al ' + D.longLabel(end) });
         grid.appendChild(importantCell());
         D.range(start, end).forEach(function (k, i) {
@@ -63,23 +70,54 @@
         page.appendChild(grid);
         page.appendChild(MC.views.calendar.parts.legend(null, palette, { week: true }));
         page.appendChild(h('div.planner__foot', saved));
-        scrollToToday(grid);
+        // La barra y el comienzo de la semana quedan visibles también en el celular.
+        return refreshProgress();
       });
     });
 
-    /** En el celular (una columna), hoy queda a la vista al abrir la semana: una vez por sesión y semana. */
-    function scrollToToday(grid) {
-      if (today < start || today > end || today === start) return;
-      var key = 'mc.weekScrolled.' + start;
-      try { if (root.sessionStorage.getItem(key)) return; } catch (e) { return; }
-      setTimeout(function () {
-        if (destroyed || !grid.isConnected || grid.clientWidth >= 560) return;
-        var cell = grid.querySelector('.week-day[data-date="' + today + '"]');
-        if (!cell) return;
-        try { root.sessionStorage.setItem(key, '1'); } catch (e) { /* noop */ }
-        cell.scrollIntoView({ block: 'start', behavior: MC.motion.allows('move') ? 'smooth' : 'auto' });
-      }, 60);
+    function progressSection() {
+      var add = h('button.text-btn', { type: 'button' }, MC.icon('plus'), 'Programar actividad');
+      add.addEventListener('click', function () {
+        MC.repeat.editor(null, null, { date: today >= start && today <= end ? today : start, rule: { type: 'weekdays', days: [1, 2, 3, 4, 5] } });
+      });
+      return h('section.week-progress', { 'aria-labelledby': 'week-progress-title' },
+        h('div.week-progress__head', h('h2.planner__title', { id: 'week-progress-title' }, 'Progreso semanal'), h('span.week-progress__percent')),
+        h('progress.week-progress__bar', { max: 100, value: 0, 'aria-label': 'Progreso semanal' }),
+        h('p.week-progress__count.t-meta', { 'aria-live': 'polite', 'aria-atomic': 'true' }),
+        h('details.week-progress__details', { dataset: { focus: 'goals' } },
+          h('summary', 'Ver objetivos y organizar'), h('ul.week-progress__goals'),
+          h('p.t-meta', 'Las metas flexibles se cuentan por semana; cada día que marcás cuenta una vez.'), add));
     }
+
+    function refreshProgress() {
+      var seq = ++progressSeq;
+      return M.getWeeklyProgress(start, plan).then(function (p) {
+        if (destroyed || !progressBox || seq !== progressSeq) return;
+        progressBox.querySelector('.week-progress__percent').textContent = p.total ? p.percent + '%' : '—';
+        var bar = progressBox.querySelector('progress');
+        bar.value = p.percent;
+        bar.setAttribute('aria-valuetext', p.total ? p.done + ' de ' + p.total + ' actividades completadas' : 'Sin actividades programadas');
+        progressBox.querySelector('.week-progress__count').textContent = p.total ? p.done + ' de ' + p.total + ' actividades completadas' : 'Todavía no hay actividades programadas para esta semana.';
+        var ul = progressBox.querySelector('.week-progress__goals');
+        MC.clear(ul);
+        p.goals.forEach(function (g) {
+          ul.appendChild(h('li.week-progress__goal',
+            h('span', g.routineId ? h('a', { href: R.routine(g.routineId) }, g.title) : g.title,
+              g.targetNote ? h('span.t-meta', ' · ' + g.targetNote) : null),
+            h('span.t-meta', g.done + ' de ' + g.total + (g.done === g.total ? ' · completo' : '') + (g.flexible ? ' · días a elección' : ''))));
+        });
+        Object.keys(dailyCounts).forEach(function (k) {
+          var day = p.daily[k];
+          dailyCounts[k].textContent = day.total ? day.done + ' de ' + day.total + ' completadas' : 'Sin actividades con día fijo';
+        });
+      });
+    }
+
+    // Actualiza las cuentas sin reemplazar casillas, campos, menús ni el foco.
+    var offProgress = MC.on('store:changed', function (change) {
+      if (change.store === 'activities' || change.store === 'days' || change.store === '*') refreshProgress();
+    });
+    var offRemote = MC.on('store:remote', function () { refreshProgress(); });
 
     function head() {
       var sp = D.parse(start), ep = D.parse(end);
@@ -161,16 +199,18 @@
       var ul = h('ul.activity-list.activity-list--compact');
       function paint(items) {
         MC.clear(ul);
-        // En días pasados queda lo que se hizo o se anotó; nunca lo que se repetía y no se marcó (D18).
-        items.filter(function (it) { return !(past && it.virtual && it.status === 'pending'); }).forEach(function (it) {
+        // D55: en la semana se puede completar una casilla de un día anterior.
+        items.forEach(function (it) {
           var row = MC.activityRow(it, { saved: saved, onRestored: refreshDay, onRemoved: function () { refreshDay(); } });
           row.dataset.focus = 'act:' + (it.id || it.routineId + ':' + k);
           ul.appendChild(row);
         });
       }
-      function refreshDay() { return M.itemsForDay(k).then(function (items) { if (!destroyed) paint(items); }); }
+      function refreshDay() { return M.itemsForDay(k, null, plan).then(function (items) { if (!destroyed) paint(items); return refreshProgress(); }); }
       paint(list);
       cell.appendChild(ul);
+      dailyCounts[k] = h('p.week-day__progress.t-meta');
+      cell.appendChild(dailyCounts[k]);
 
       var add = h('input', { type: 'text', placeholder: past ? 'anotar algo que hiciste…' : 'anotar…', 'aria-label': 'Anotar algo para el ' + D.longLabel(k), maxlength: 200, enterkeyhint: 'done' });
       add.addEventListener('input', function () { MC.emit('typing'); });
@@ -201,7 +241,7 @@
       ready: ready,
       busy: busy,
       flush: function () { save.flush(); },
-      destroy: function () { destroyed = true; save.flush(); }
+      destroy: function () { destroyed = true; offProgress(); offRemote(); save.flush(); }
     };
   }
 

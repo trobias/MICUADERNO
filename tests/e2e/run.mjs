@@ -693,7 +693,7 @@ await test('A5: cuatro marcadores; Agenda va a la semana; Mis hojas reúne hojas
   await context.close();
 });
 
-await test('A6: la semana-planner de fondo; anotar y marcar ahí; pasado sin repeticiones sin marcar; Importante y Notas persisten', async () => {
+await test('A6 y D55: semana-planner editable, casillas históricas, Importante y Notas persisten', async () => {
   const { page, errors, context } = await newPage(browser);
   await page.goto(FILE_URL);
   await onboard(page);
@@ -739,11 +739,11 @@ await test('A6: la semana-planner de fondo; anotar y marcar ahí; pasado sin rep
   assert.deepEqual(imp.slice(0, 2), [['pagar la luz', 'done'], ['regalo de cumple', 'pending']]);
   // Lo que pasó afuera mientras se escribía ya está en su día.
   await page.waitForSelector(`${todayCell} .activity:has-text("algo de otra pestaña")`);
-  // Una semana pasada: lo anotado nace hecho y no aparecen repeticiones sin marcar (D18).
+  // D55: una semana pasada conserva sus casillas para completar registros después.
   const past = add(TODAY, -7);
   await goto(page, '#/calendario/semana/' + past);
   await page.waitForSelector(`#main .week-day[data-date="${past}"]`);
-  assert.equal(await page.locator('#main .activity:has-text("Estirar")').count(), 0, 'sin repeticiones sin marcar en el pasado');
+  assert.equal(await page.locator('#main .activity:has-text("Estirar")').count(), 7, 'las siete oportunidades históricas siguen siendo editables');
   await page.fill(`#main .week-day[data-date="${past}"] .add-activity input`, 'caminé por el río');
   await page.press(`#main .week-day[data-date="${past}"] .add-activity input`, 'Enter');
   await page.waitForSelector(`#main .week-day[data-date="${past}"] .activity[data-status="done"]:has-text("caminé por el río")`);
@@ -2485,6 +2485,7 @@ await test('nube: la psicóloga abre el cuaderno de Nicole, edita lo permitido y
   await page.waitForSelector('.planner');
   assert.equal(await page.evaluate(() => [...document.querySelectorAll('.planner__cell--important, .planner__cell--notes')].every((el) => el.hidden)), true);
   assert.equal(await page.evaluate(() => [...document.querySelectorAll('.week-day .add-activity input')].every((el) => el.readOnly)), true);
+  assert.equal(await page.locator('.week-progress__details').isVisible(), false, 'sin permiso de repeticiones no se ofrece programar actividades');
   await page.click('.guest-note__out');
   await page.waitForURL(/\/entrar$/, { timeout: 4000 });
   assert.ok(loggedOut, 'se cerró la sesión en el servidor');
@@ -2527,6 +2528,9 @@ await test('nube (D51): matriz de permisos — en cada cuadro, nada editable fue
     await setCookie('mc_view', CA);
     await page.goto(HTTP_URL + '#/semana/' + TODAY);
     await page.waitForSelector('.planner', { timeout: 8000 });
+    // D55: incluir el botón de programar en la matriz, aunque los objetivos nazcan plegados.
+    const goals = page.locator('.week-progress__details');
+    if (await goals.isVisible()) await goals.evaluate(el => { el.open = true; });
     const label = JSON.stringify(sections);
     const scan = (where) => page.evaluate(([where]) => {
       const root = where === 'base' ? document.getElementById('main') : document.getElementById('panel-body');
@@ -2587,6 +2591,83 @@ await test('nube: sin la marca de cuentas (file:// o servidor simple) no cambia 
   assert.equal(await page.evaluate(() => MC.cloud.on), false);
   assert.equal(await page.evaluate(() => MC.ui.prefix), '');
   assert.equal(await page.locator('#st-account').count(), 0);
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+await test('objetivos semanales: 5 + 5 + 3, casillas, recarga e historial (file y HTTP, desktop y móvil)', async () => {
+  for (const [url, viewport] of [[FILE_URL, { width: 1366, height: 900 }], [HTTP_URL, { width: 375, height: 812 }]]) {
+    const { page, errors, context } = await newPage(browser, { viewport, reducedMotion: 'reduce' });
+    await page.goto(url);
+    await onboard(page);
+    const start = await page.evaluate(async () => {
+      await MC.model.saveSettings({ showCover: false, motion: 'ninguna', motionChosen: true });
+      const k = MC.dates.addDays(MC.dates.startOfWeek(MC.dates.today()), -7);
+      for (const [id, title, rule, targetNote] of [
+        ['rut_trabajar', 'Trabajar', { type: 'weekdays', days: [1, 2, 3, 4, 5] }, 'Según planificación'],
+        ['rut_diseno', 'Practicar diseño', { type: 'weekdays', days: [1, 2, 3, 4, 5] }, '1 hora por día'],
+        ['rut_caminar', 'Caminar', { type: 'weeklyTarget', count: 3 }, '3 caminatas']]) {
+        await MC.model.saveRoutine({ id, title, rule, targetNote, startDate: k });
+      }
+      location.hash = MC.routes.week(k);
+      return k;
+    });
+    await page.waitForSelector('.week-progress__count:has-text("0 de 13")');
+    assert.equal(await page.locator('.week-day').count(), 7);
+    assert.equal(await page.locator('.week-progress__details').getAttribute('open'), null);
+    const order = await page.evaluate(() => document.querySelector('.week-progress').getBoundingClientRect().top < document.querySelector('.week-day').getBoundingClientRect().top);
+    assert.equal(order, true, 'barra antes del lunes');
+    assert.equal(await page.locator('.week-day').nth(5).locator('.activity').count(), 1, 'el sábado ofrece caminar, sin trabajo ni diseño');
+    await page.locator('.week-progress__details > summary').click();
+    await page.waitForSelector('.week-progress__goal:has-text("Caminar"):has-text("0 de 3")');
+    async function mark(day, title, key = false) {
+      const box = page.locator('.week-day').nth(day).locator('.activity').filter({ has: page.locator('.activity__title', { hasText: title }) }).locator('.stitch-box');
+      if (key) { await box.focus(); await box.press('Space'); } else await box.click();
+    }
+    await mark(0, 'Caminar', true);
+    await page.waitForSelector('.week-progress__count:has-text("1 de 13")');
+    await mark(2, 'Caminar'); await mark(6, 'Caminar');
+    await page.waitForSelector('.week-progress__goal:has-text("Caminar"):has-text("3 de 3 · completo")');
+    await page.waitForSelector('.week-progress__percent:has-text("23%")');
+    await mark(1, 'Caminar');
+    await page.waitForSelector('.week-progress__count:has-text("3 de 13")');
+    for (let n = 0; n < 5; n++) { await mark(n, 'Trabajar'); await mark(n, 'Practicar diseño'); }
+    await page.waitForSelector('.week-progress__percent:has-text("100%")');
+    await mark(0, 'Trabajar');
+    await page.waitForSelector('.week-progress__count:has-text("12 de 13")');
+    await page.reload();
+    await page.waitForSelector('.week-progress__count:has-text("12 de 13")');
+    assert.equal(await page.locator('.week-day').nth(0).locator('.activity:has-text("Trabajar")').getAttribute('data-status'), 'pending');
+    await page.evaluate(async () => {
+      const r = (await MC.model.getRoutines()).find((r) => r.id === 'rut_caminar');
+      await MC.model.saveRoutine({ ...r, rule: { type: 'weeklyTarget', count: 5 } });
+      location.hash = MC.routes.week(MC.dates.addDays(MC.dates.startOfWeek(MC.dates.today()), 7));
+    });
+    await page.waitForSelector('.week-progress__count:has-text("0 de 15")');
+    await page.evaluate((k) => { location.hash = MC.routes.week(k); }, start);
+    await page.waitForSelector('.week-progress__count:has-text("12 de 13")');
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+    assert.deepEqual(errors, []);
+    await context.close();
+  }
+});
+
+await test('objetivos semanales: formulario flexible, meta opcional y validación', async () => {
+  const { page, errors, context } = await newPage(browser);
+  await page.goto(FILE_URL); await onboard(page);
+  await page.evaluate(() => { location.hash = MC.routes.week(MC.dates.today()); });
+  await page.waitForSelector('.week-progress');
+  await page.locator('.week-progress__details > summary').click();
+  await page.getByRole('button', { name: 'Programar actividad' }).click();
+  await page.fill('#rt-title', 'Caminar');
+  await page.selectOption('#rt-freq', 'weeklyTarget');
+  await page.fill('#rt-count', '8');
+  await page.getByRole('button', { name: 'Que se repita', exact: true }).click();
+  await page.waitForSelector('.form-error:has-text("entre 1 y 7")');
+  await page.fill('#rt-count', '3'); await page.fill('#rt-target-note', '3 caminatas');
+  await page.getByRole('button', { name: 'Que se repita', exact: true }).click();
+  await page.waitForFunction(async () => (await MC.model.getRoutines()).some((r) => r.rule.type === 'weeklyTarget' && r.rule.count === 3 && r.targetNote === '3 caminatas'));
+  await page.waitForSelector('.week-day .activity:has-text("Caminar")');
   assert.deepEqual(errors, []);
   await context.close();
 });
