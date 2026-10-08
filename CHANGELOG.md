@@ -683,3 +683,7 @@ Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantien
 ### 08/10/2026 · Number Animation (D62)
 
 - Contadores N/M y porcentaje ruedan al cambiar; texto accesible real, sin animación inicial, durante escritura ni con movimiento reducido.
+
+### 08/10/2026 · Adaptive Stepper (D62)
+
+- Controles menos/más para metas semanales e intervalos, con límites y entrada nativa editable; reutiliza validación y reglas existentes.

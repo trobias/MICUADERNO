@@ -27,6 +27,30 @@
     el._counterAnimations[1].finished.then(function () { old.remove(); }, function () { old.remove(); });
   };
 
+  /** El input nativo conserva escritura, validación y lectores de pantalla. */
+  c.stepper = function (input, label) {
+    var less = h('button.icon-btn', { type: 'button', 'aria-label': 'Reducir ' + label }, MC.icon('minus'));
+    var more = h('button.icon-btn', { type: 'button', 'aria-label': 'Aumentar ' + label }, MC.icon('plus'));
+    // El sprite no requiere un ícono nuevo para el signo menos.
+    MC.clear(less); less.appendChild(h('span', { 'aria-hidden': 'true' }, '−'));
+    function paint() {
+      less.disabled = input.disabled || Number(input.value) <= Number(input.min);
+      more.disabled = input.disabled || Number(input.value) >= Number(input.max);
+    }
+    function change(dir) {
+      if (input.disabled || input.readOnly) return;
+      var n = Number(input.value);
+      if (!Number.isFinite(n)) n = Number(input.min) || 0;
+      input.value = MC.clamp(n + dir * (Number(input.step) || 1), Number(input.min), Number(input.max));
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new Event('change', { bubbles: true })); paint();
+    }
+    less.addEventListener('click', function () { change(-1); });
+    more.addEventListener('click', function () { change(1); });
+    input.addEventListener('input', paint); paint();
+    return h('div.adaptive-stepper', { role: 'group', 'aria-label': label }, less, input, more);
+  };
+
   /** Dónde colgar menús y avisos: dentro del diálogo abierto de más arriba (si no, quedan inertes debajo). */
   c.layer = function () {
     var open = MC.$$('dialog[open]');

@@ -155,6 +155,10 @@
 .rolling-value { position: relative; display: inline-block; overflow: hidden; vertical-align: bottom; font-variant-numeric: tabular-nums; }
 .rolling-value__current { display: block; }
 .rolling-value__old { position: absolute; inset: 0; pointer-events: none; }
+.adaptive-stepper { display: inline-flex; align-items: center; gap: var(--s-1); padding: 3px; background: var(--paper-shade); border-radius: var(--radius-label); }
+.adaptive-stepper .input--num { width: 4.5rem; text-align: center; background: var(--paper); font-variant-numeric: tabular-nums; }
+.adaptive-stepper .icon-btn { color: var(--ink); }
+.adaptive-stepper .icon-btn:disabled { opacity: .4; cursor: default; }
 .stitch-box {
   position: relative;
   flex: none;

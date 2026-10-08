@@ -62,7 +62,7 @@
         rule.count = rule.count || 3;
         var count = h('input.input.input--num', { id: 'rt-count', type: 'number', min: 1, max: 7, step: 1, value: rule.count, inputmode: 'numeric', 'aria-describedby': 'rt-count-hint' });
         count.addEventListener('input', function () { rule.count = Number(count.value); paintPreview(); });
-        extra.appendChild(h('div.field.field--inline', h('label', { for: 'rt-count' }, 'Veces por semana'), count));
+        extra.appendChild(h('div.field.field--inline', h('label', { for: 'rt-count' }, 'Veces por semana'), c.stepper(count, 'veces por semana')));
         extra.appendChild(h('p.section__hint', { id: 'rt-count-hint' }, 'Elegís los días al marcar. Cada día cuenta una vez; la meta se renueva el lunes.'));
       } else if (t === 'weekdays') {
         rule.days = Array.isArray(rule.days) && rule.days.length ? rule.days : [D.weekday(today)];
@@ -82,7 +82,7 @@
         var n = h('input.input.input--num', { id: 'rt-every', type: 'number', min: 2, max: 60, value: rule.every || 2, inputmode: 'numeric' });
         n.addEventListener('input', function () { rule.every = +n.value || 2; paintPreview(); });
         rule.every = rule.every || 2;
-        extra.appendChild(h('div.field.field--inline', h('label', { for: 'rt-every' }, 'Cada'), n, h('span', 'días, empezando el día de inicio')));
+        extra.appendChild(h('div.field.field--inline', h('label', { for: 'rt-every' }, 'Cada'), c.stepper(n, 'días entre repeticiones'), h('span', 'días, empezando el día de inicio')));
       } else if (t === 'monthlyDay') {
         var dnum = h('input.input.input--num', { id: 'rt-day', type: 'number', min: 1, max: 31, value: rule.day || D.parse(today).d, inputmode: 'numeric' });
         rule.day = rule.day || D.parse(today).d;
