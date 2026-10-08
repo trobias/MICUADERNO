@@ -1,0 +1,13 @@
+# Interacciones de papelería · Be UI
+
+Pedido del 08/10/2026: integrar la selección propuesta, un commit por componente.
+Son implementaciones propias para el cuaderno clásico inspiradas en las interacciones del
+[catálogo público de Be UI](https://beui.dev/). No se instala React, Tailwind ni Motion en el cuaderno.
+Se reutilizan rutas, permisos, guardado y tokens; sin recursos externos durante el uso.
+Las animaciones respetan Ajustes, movimiento reducido del sistema y teclado.
+
+## Componentes entregados
+
+| Componente | Uso y contrato |
+| --- | --- |
+| Checkbox | Puntadas interrumpibles, estados completos y parciales, sin movimiento del sistema reducido; conserva casillas y datos existentes. |

@@ -94,11 +94,18 @@
     box.setAttribute('aria-pressed', String(status === 'done'));
     var extra = status === 'partial' ? ' (hice un poquito)' : status === 'postponed' ? ' (lo dejé para otro día)' : status === 'skipped' ? ' (hoy no salió)' : '';
     box.setAttribute('aria-label', 'Lo hice: ' + title + extra);
-    if (animate && (status === 'done' || status === 'partial') && MC.motion.allows('move')) {
-      box.classList.remove('is-sewing');
-      void box.offsetWidth;
-      box.classList.add('is-sewing');
-      setTimeout(function () { box.classList.remove('is-sewing'); }, 400);
+    // Interrumpible: cancelar la puntada anterior también al volver a Sin marcar.
+    (box._stitchAnimations || []).forEach(function (a) { a.cancel(); });
+    box._stitchAnimations = [];
+    if (animate && (status === 'done' || status === 'partial') && MC.motion.allows('move') && !MC.motion.systemReduced()) {
+      ['.mark--x1', status === 'done' ? '.mark--x2' : null].filter(Boolean).forEach(function (selector, i) {
+        var path = box.querySelector(selector);
+        if (!path.animate) return;
+        path.style.strokeDasharray = '1';
+        var a = path.animate([{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }],
+          { duration: MC.motion.duration('press'), delay: i * MC.motion.duration('press'), easing: getComputedStyle(document.documentElement).getPropertyValue('--ease-out').trim() });
+        box._stitchAnimations.push(a);
+      });
     }
   };
 

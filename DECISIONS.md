@@ -1,5 +1,9 @@
 # Decisiones
 
+## D62 · Interacciones de Be UI adaptadas al cuaderno (2026-10-08)
+
+La dueña aprobó la selección propuesta y pidió un commit por componente. Se implementan las interacciones con JS clásico, CSS y los componentes existentes (D42); no se instala el registro React. Papel, tela, pasteles, tokens, permisos y guardado siguen vigentes. Fuentes y mapa de componentes en `docs/BEUI.md`; la propuesta no incluye los componentes financieros, chat ni cambios de arquitectura. Nuevos datos necesitan contrato y copia; una mejora visual no escribe registros nuevos.
+
 Registro breve de decisiones de arquitectura y producto. Formato: contexto → decisión → consecuencias.
 
 ## D61 · Skeleton loader and reveal al abrir (2026-10-08)

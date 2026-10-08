@@ -675,3 +675,7 @@ Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantien
 - **Robustez:**
   - fuentes embebidas para `file://` (D12);
   - borrador local además de IndexedDB para no perder lo escrito al recargar (D13).
+
+### 08/10/2026 · Checkbox (D62)
+
+- Puntadas interrumpibles, estados completos y parciales, sin movimiento del sistema reducido; conserva casillas y datos existentes.
