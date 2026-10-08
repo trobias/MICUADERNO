@@ -1,5 +1,10 @@
 # MI CUADERNO — Cambios
 
+## 2026-10-08 · Conteos de progreso más simples (cache v55)
+
+- Quita «N un poquito» del resumen, las barras individuales y las victorias semanales de Mi año. Quedan los conteos N/M y las barras pastel; los medios avances siguen aportando la mitad y generando estrellas.
+- La descripción para lectores de pantalla conserva completas, medios avances y porcentaje. Sin cambios de datos o frecuencias.
+
 ## 2026-10-08 · Barras de actividades en pastel (cache v54)
 
 - Cada actividad tiene una barra de 24 px, con verde menta para Lo hice y amarillo manteca para Un poquito. Fondo de papel con un toque lavanda, contorno suave y esquinas de 6 px.

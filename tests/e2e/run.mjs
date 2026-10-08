@@ -2832,11 +2832,14 @@ await test('objetivos semanales D58: tres un poquito llenan media barra amarilla
     assert.equal(await goal.locator('.week-progress__victory').isVisible(), true);
     assert.equal(await goal.locator('.week-progress__victory svg').count(), 1, 'estrella del cuaderno');
     assert.equal(await goal.locator('.week-progress__victory').evaluate(el => el.getAnimations().length), 0, 'movimiento reducido conserva la estrella quieta');
-    assert.match(await goal.locator('.week-progress__goal-count').textContent(), /3\/3 · 3 un poquito/);
+    assert.match(await goal.locator('.week-progress__goal-count').textContent(), /^3\/3/);
+    assert.doesNotMatch(await goal.locator('.week-progress__goal-count').textContent(), /un poquito/);
+    assert.doesNotMatch(await page.locator('.week-progress__count').textContent(), /un poquito/);
     assert.doesNotMatch(await goal.locator('.week-progress__goal-count').textContent(), /completo/);
     assert.equal(await goal.locator('progress').getAttribute('value'), '1.5');
     await page.evaluate(() => { location.hash = MC.routes.year(MC.dates.today().slice(0, 4)); });
-    await page.locator('.wins .win:has-text("Caminar · 3/3 · 3 un poquito")').waitFor();
+    await page.locator('.wins .win:has-text("Caminar · 3/3")').waitFor();
+    assert.doesNotMatch(await page.locator('.wins .win:has-text("Caminar · 3/3")').textContent(), /un poquito/);
     assert.equal(await page.locator('.wins .win:has-text("Caminar · 3/3")').count(), 1);
     await page.locator('.wins a:has-text("Caminar · 3/3")').click();
     await goal.locator('.week-progress__goal-count:has-text("3/3")').waitFor();

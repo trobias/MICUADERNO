@@ -117,7 +117,7 @@
         var bar = progressBox.querySelector('progress');
         updateMeter(bar, p, 100);
         if (!p.total) bar.setAttribute('aria-valuetext', 'Sin actividades programadas');
-        progressBox.querySelector('.week-progress__count').textContent = p.total ? (p.partial ? p.checked + ' de ' + p.total + ' actividades registradas · ' + p.done + ' completas · ' + p.partial + ' un poquito' : p.done + ' de ' + p.total + ' actividades completadas') : 'Todavía no hay actividades programadas para esta semana.';
+        progressBox.querySelector('.week-progress__count').textContent = p.total ? (p.partial ? p.checked + ' de ' + p.total + ' actividades registradas' : p.done + ' de ' + p.total + ' actividades completadas') : 'Todavía no hay actividades programadas para esta semana.';
         var ul = progressBox.querySelector('.week-progress__goals');
         var present = Object.create(null);
         var defaults = M.weeklyDefaults(start);
@@ -164,7 +164,7 @@
             goalRows[key] = row;
             ul.appendChild(row);
           }
-          row.querySelector('.week-progress__goal-count').textContent = g.checked + '/' + g.total + (g.done === g.total ? ' · completo' : g.partial ? ' · ' + g.partial + ' un poquito' : '') + (g.flexible ? ' · días a elección' : '');
+          row.querySelector('.week-progress__goal-count').textContent = g.checked + '/' + g.total + (g.done === g.total ? ' · completo' : '') + (g.flexible ? ' · días a elección' : '');
           var goalBar = row.querySelector('progress');
           updateMeter(goalBar, g, g.total);
           var victory = row.querySelector('.week-progress__victory');

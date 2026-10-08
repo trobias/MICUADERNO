@@ -79,7 +79,7 @@ test('metas semanales: tres un poquito son una victoria derivada en el primer d�
   const all = { days: [], activities, pages: [], marks: [], weeks: [{ week: start, activityPlan: plan }], routines: [] };
   let v = I.victories(all, '2026');
   assert.equal(v.length, 1);
-  assert.deepEqual([v[0].week, v[0].date, v[0].text], [start, '2026-09-30', 'Caminar · 3/3 · 3 un poquito']);
+  assert.deepEqual([v[0].week, v[0].date, v[0].text], [start, '2026-09-30', 'Caminar · 3/3']);
   assert.deepEqual(I.victories(all, '2026'), v, 'sin duplicados al volver a calcular');
   assert.equal(I.victories(all, '2025').length, 0);
   assert.equal(I.victories({ ...all, activities: activities.slice(0, 2) }, '2026').length, 0, '2/3 no es meta alcanzada');

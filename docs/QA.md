@@ -1,5 +1,12 @@
 # QA cruzada (A12) — 05/10/2026
 
+## Actualización del 08/10/2026 · conteos sin «N un poquito» (cache v55)
+
+- Resumen, metas individuales y victorias semanales de Mi año omiten el añadido. El nombre accesible de las barras conserva completas, medios avances y porcentaje; el relleno y las estrellas mantienen D58.
+- `npm run check` con `E2E_GREP=D58:`: sintaxis de 47 scripts, 170/170 unitarias y recorrido D58 aprobado en file/HTTP, escritorio/375 px. Verifica ausencia del añadido en conteos y Mi año, media barra amarilla, mezclas, recarga y estrellas. No se repitió la suite completa.
+- Revisión visual adicional en 1366 y 375 px: sin errores JavaScript ni overflow; rellenos pastel, 24 px y colores forzados intactos.
+- Investigación de la demora al reabrir una invitada: `store.init` espera permisos, `pullLocked(true)` completo, contenido de medios y apariencia antes de renderizar. La base de la invitada es memoria y se rehace al reabrir; `apply` procesa registros en serie. Se identificó el bloqueo en código, sin medir la sesión real ni atribuir tiempos concretos a Supabase/Vercel. La carga no fue modificada en esta entrega.
+
 ## Actualización del 08/10/2026 · barras pastel (cache v54)
 
 - Barras individuales de 24 px: menta para completas y manteca para medios avances. Contorno suave y esquinas de 6 px; texto y glifos de estado conservan sus hilos oscuros.

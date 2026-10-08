@@ -271,7 +271,7 @@
         if (!date || date.slice(0, 4) !== year) return;
         // Una actividad de 1/1 ya elegida manualmente conserva su referencia y enlace originales.
         if (goal.total === 1 && out.some(function (w) { return w.sourceType === 'activity' && acts[w.sourceId] && M.weeklyActivityKey(acts[w.sourceId].title) === goal.key && w.date >= start && w.date <= D.addDays(start, 6); })) return;
-        out.push({ id: 'week:' + start + ':' + goal.key, date: date, week: start, text: goal.title + ' · ' + goal.checked + '/' + goal.total + (goal.partial ? ' · ' + goal.partial + ' un poquito' : ''), sourceType: 'week', page: null });
+        out.push({ id: 'week:' + start + ':' + goal.key, date: date, week: start, text: goal.title + ' · ' + goal.checked + '/' + goal.total, sourceType: 'week', page: null });
       });
     });
     moments(all, year).filter(function (m) { return m.victory; }).forEach(function (m) {
