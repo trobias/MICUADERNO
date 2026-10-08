@@ -81,6 +81,7 @@
         palette.otherCount ? h('li', 'Otras emociones, con su nombre') : null,
         h('li', h('span.stitch-cell.stitch-cell--key.is-half', { 'aria-hidden': 'true' }), 'algo anotado, sin emoción'),
         Object.keys(winDays).length ? h('li', h('span.stitch-cell.stitch-cell--key.is-win', { 'aria-hidden': 'true' }), 'una pequeña victoria') : null));
+      pMapa.appendChild(recordCalendar(all.days, wins, year));
 
       // Mes a mes (A8, D31): un gráfico propio y la misma información en una tabla.
       part('grafico', left).appendChild(monthChart(MC.insights.byMonth(all, year), year));
@@ -169,6 +170,34 @@
     }
 
     return { destroy: function () { destroyed = true; } };
+  }
+
+  /** Mosaico descriptivo: escritura visible y victorias, nunca una meta de días. */
+  function recordCalendar(days, wins, year) {
+    var written = Object.create(null), victories = Object.create(null);
+    days.forEach(function (d) { if (!M.isDeleted(d) && !M.isPrivate(d, 'noReviews') && !M.isPrivate(d, 'noInsights') && M.hasWriting(d)) written[d.date] = true; });
+    wins.forEach(function (w) { victories[w.date] = (victories[w.date] || 0) + 1; });
+    var grid = h('div.heat-calendar', { role: 'grid', 'aria-label': 'Días con escritura o pequeñas victorias en ' + year });
+    var dates = D.range(year + '-01-01', year + '-12-31'), cells = [], week;
+    var offset = (D.weekday(dates[0]) + 6) % 7;
+    dates.forEach(function (date, i) {
+      if (!week || (i + offset) % 7 === 0) { week = h('div.heat-calendar__week', { role: 'row' }); grid.appendChild(week); }
+      if (!i) for (var pad = 0; pad < offset; pad++) week.appendChild(h('span.heat-calendar__gap', { 'aria-hidden': 'true' }));
+      var win = victories[date] || 0, wrote = !!written[date];
+      var label = D.longLabel(date) + ': ' + (wrote ? 'con escritura' : 'sin escritura registrada') + (win ? ', ' + win + (win === 1 ? ' victoria' : ' victorias') : '');
+      var b = h('button.heat-calendar__day', { type: 'button', role: 'gridcell', tabindex: i ? '-1' : '0', title: label, 'aria-label': label,
+        dataset: { date: date, kind: win ? 'victory' : wrote ? 'writing' : 'empty', browse: '1' } }, win ? MC.icon('star') : wrote ? MC.icon('edit') : null);
+      b.addEventListener('click', function () { location.hash = R.day(date); });
+      b.addEventListener('keydown', function (e) {
+        var delta = { ArrowRight: 7, ArrowLeft: -7, ArrowDown: 1, ArrowUp: -1 }[e.key];
+        var target = e.key === 'Home' ? 0 : e.key === 'End' ? dates.length - 1 : delta != null ? i + delta : null;
+        if (target == null || !cells[target]) return;
+        e.preventDefault(); cells.forEach(function (c) { c.tabIndex = -1; }); cells[target].tabIndex = 0; cells[target].focus();
+      }); cells.push(b); week.appendChild(b);
+    });
+    return h('details.record-calendar', h('summary', 'Días con escritura y victorias'),
+      h('p.section__hint', 'Cada casilla abre su día. Un día vacío también está bien. Podés recorrer el mosaico con las flechas.'), grid,
+      h('p.t-meta', MC.icon('edit'), ' Escritura · ', MC.icon('star'), ' Pequeña victoria'));
   }
 
   /** Papelitos por mes: una fuente por momento, con imagen solo si pertenece a esa fuente visible. */

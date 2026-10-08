@@ -21,3 +21,4 @@ Las animaciones respetan Ajustes, movimiento reducido del sistema y teclado.
 | Image Viewer | Fotos del álbum y adjuntos se amplían con miniaturas, zoom, gesto y teclado; fuentes locales validadas, descargar separado y controles de lectura permitidos. |
 | Infinite Masonry | Álbum opcional de fotos y dibujos en columnas de distintas alturas, carga diferida en tandas de 24, visor y enlace a su fuente; sin auto-scroll. |
 | Date Range Picker | Selector opcional Desde/Hasta filtra los álbumes del año con validación de rango y vuelta al año completo; filtros de lectura no persistidos. |
+| Heat Calendar | Mosaico anual opcional de escritura y victorias, con días neutrales, fecha local, nombres accesibles, flechas y enlace al día; dentro de la parte mapa. |

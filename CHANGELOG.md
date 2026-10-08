@@ -719,3 +719,7 @@ Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantien
 ### 08/10/2026 · Date Range Picker (D62)
 
 - Selector opcional Desde/Hasta filtra los álbumes del año con validación de rango y vuelta al año completo; filtros de lectura no persistidos.
+
+### 08/10/2026 · Heat Calendar (D62)
+
+- Mosaico anual opcional de escritura y victorias, con días neutrales, fecha local, nombres accesibles, flechas y enlace al día; dentro de la parte mapa.
