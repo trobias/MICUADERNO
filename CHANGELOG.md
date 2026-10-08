@@ -687,3 +687,7 @@ Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantien
 ### 08/10/2026 · Adaptive Stepper (D62)
 
 - Controles menos/más para metas semanales e intervalos, con límites y entrada nativa editable; reutiliza validación y reglas existentes.
+
+### 08/10/2026 · Sortable List (D62)
+
+- Organizar actividades permite arrastrar o subir/bajar metas; orden opcional en repeticiones, copia v13 aditiva y misma sección de permisos.

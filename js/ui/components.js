@@ -51,6 +51,40 @@
     return h('div.adaptive-stepper', { role: 'group', 'aria-label': label }, less, input, more);
   };
 
+  /** Lista reordenable: arrastre de manija y botones equivalentes para toque/teclado. */
+  c.sortableList = function (entries, onChange) {
+    var rows = entries.slice(), busy = false, dragged = null;
+    var list = h('ol.sortable-list'), say = h('p.sr-only', { role: 'status' });
+    function move(from, to) {
+      if (busy || from === to || to < 0 || to >= rows.length) return;
+      var next = rows.slice(), item = next.splice(from, 1)[0]; next.splice(to, 0, item);
+      busy = true; list.setAttribute('aria-busy', 'true');
+      MC.$$('button', list).forEach(function (b) { b.disabled = true; });
+      Promise.resolve().then(function () { return onChange(next); }).then(function () {
+        rows = next; paint();
+        say.textContent = item.title + ', posición ' + (to + 1) + ' de ' + rows.length;
+        var focus = list.querySelector('[data-sort-index="' + to + '"] .sortable-list__handle'); if (focus) focus.focus();
+      }, function () { paint(); say.textContent = 'No se pudo guardar el orden. Probá de nuevo.'; }).finally(function () { busy = false; list.removeAttribute('aria-busy'); });
+    }
+    function paint() {
+      MC.clear(list);
+      rows.forEach(function (item, i) {
+        var handle = h('button.text-btn.sortable-list__handle', { type: 'button', draggable: true, 'aria-label': 'Mover ' + item.title + '. Usá las flechas para cambiar su posición.' }, MC.icon('grid'), item.title);
+        handle.addEventListener('keydown', function (e) { if (e.key === 'ArrowUp' || e.key === 'ArrowDown') { e.preventDefault(); move(i, i + (e.key === 'ArrowUp' ? -1 : 1)); } });
+        handle.addEventListener('dragstart', function (e) { dragged = i; e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', String(i)); });
+        handle.addEventListener('dragend', function () { dragged = null; });
+        var up = h('button.icon-btn', { type: 'button', disabled: i === 0, 'aria-label': 'Subir ' + item.title }, MC.icon('arrow-left'));
+        var down = h('button.icon-btn', { type: 'button', disabled: i === rows.length - 1, 'aria-label': 'Bajar ' + item.title }, MC.icon('arrow-right'));
+        up.addEventListener('click', function () { move(i, i - 1); }); down.addEventListener('click', function () { move(i, i + 1); });
+        var row = h('li', { dataset: { sortIndex: i } }, handle, up, down);
+        row.addEventListener('dragover', function (e) { if (dragged != null) e.preventDefault(); });
+        row.addEventListener('drop', function (e) { e.preventDefault(); if (dragged != null) move(dragged, i); dragged = null; });
+        list.appendChild(row);
+      });
+    }
+    paint(); return h('div', list, say);
+  };
+
   /** Dónde colgar menús y avisos: dentro del diálogo abierto de más arriba (si no, quedan inertes debajo). */
   c.layer = function () {
     var open = MC.$$('dialog[open]');

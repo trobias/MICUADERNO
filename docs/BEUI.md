@@ -13,3 +13,4 @@ Las animaciones respetan Ajustes, movimiento reducido del sistema y teclado.
 | Checkbox | Puntadas interrumpibles, estados completos y parciales, sin movimiento del sistema reducido; conserva casillas y datos existentes. |
 | Number Animation | Contadores N/M y porcentaje ruedan al cambiar; texto accesible real, sin animación inicial, durante escritura ni con movimiento reducido. |
 | Adaptive Stepper | Controles menos/más para metas semanales e intervalos, con límites y entrada nativa editable; reutiliza validación y reglas existentes. |
+| Sortable List | Organizar actividades permite arrastrar o subir/bajar metas; orden opcional en repeticiones, copia v13 aditiva y misma sección de permisos. |

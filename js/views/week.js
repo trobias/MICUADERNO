@@ -106,6 +106,7 @@
         h('details.week-progress__details', { dataset: { focus: 'goals' } },
           h('summary', 'Organizar actividades'),
           h('p.t-meta', 'Podés cambiar nombre, frecuencia, días y meta con el lápiz, o borrar una actividad desde su editor. Abrí un día para marcar sus casillas. Lo hice llena en verde; Un poquito aporta la mitad en amarillo.'), add,
+          h('div.week-progress__order'),
           h('p.t-meta', h('a', { href: R.sheets() }, 'Ver lo que se repite'))));
     }
 
@@ -122,6 +123,8 @@
         var present = Object.create(null);
         var defaults = M.weeklyDefaults(start);
         function goalOrder(g) {
+          var positions = g.routineIds.map(function (id) { return editableRoutines[id] && editableRoutines[id].order; }).filter(function (n) { return n != null; });
+          if (positions.length) return Math.min.apply(null, positions) - 10002;
           var key = M.emotionKey(g.title.replace(/\s+/g, ' '));
           var i = defaults.findIndex(function (r) {
             return r.id === g.routineId || M.emotionKey(r.title) === key ||
@@ -132,6 +135,20 @@
         p.goals.sort(function (a, b) {
           return goalOrder(a) - goalOrder(b);
         });
+        var orderBox = progressBox.querySelector('.week-progress__order');
+        if (!orderBox.firstChild) {
+          var sortable = p.goals.filter(function (g) { return g.routineIds.length; });
+          if (sortable.length > 1) orderBox.appendChild(c.sortableList(sortable, function (ordered) {
+            return M.getRoutines().then(function (latest) {
+              return ordered.reduce(function (promise, goal, i) { return promise.then(function () {
+                return Promise.all(goal.routineIds.map(function (id) {
+                  var r = latest.find(function (r) { return r.id === id; });
+                  return r ? M.saveRoutine(Object.assign({}, r, { order: i })).then(function (savedRoutine) { editableRoutines[id] = savedRoutine; }) : null;
+                }));
+              }); }, Promise.resolve());
+            }).then(refreshProgress);
+          }));
+        }
         p.goals.forEach(function (g) {
           var key = g.key;
           present[key] = true;
@@ -164,6 +181,7 @@
             goalRows[key] = row;
             ul.appendChild(row);
           }
+          ul.appendChild(row); // El orden cambia sin reemplazar los controles ni sus listeners.
           c.rollText(row.querySelector('.week-progress__goal-count'), g.checked + '/' + g.total + (g.done === g.total ? ' · completo' : '') + (g.flexible ? ' · días a elección' : ''));
           var goalBar = row.querySelector('progress');
           updateMeter(goalBar, g, g.total);

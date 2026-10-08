@@ -159,6 +159,10 @@
 .adaptive-stepper .input--num { width: 4.5rem; text-align: center; background: var(--paper); font-variant-numeric: tabular-nums; }
 .adaptive-stepper .icon-btn { color: var(--ink); }
 .adaptive-stepper .icon-btn:disabled { opacity: .4; cursor: default; }
+.sortable-list { list-style: none; padding: 0; margin: var(--s-3) 0; }
+.sortable-list li { display: flex; align-items: center; gap: var(--s-1); border-bottom: 1px dashed var(--rule); }
+.sortable-list__handle { flex: 1; min-width: 0; justify-content: flex-start; text-align: left; cursor: grab; }
+.sortable-list .icon-btn svg { transform: rotate(90deg); }
 .stitch-box {
   position: relative;
   flex: none;

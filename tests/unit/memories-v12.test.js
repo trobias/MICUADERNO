@@ -21,7 +21,7 @@ test('v12: elecciones por referencia conservan ID antiguo, fechas, copia y secci
   assert.equal(all.marks.length, 2);
   assert.equal(all.marks.find(m => m.kind === 'victoria').createdAt, first.createdAt);
   const backup = MC.backup.build(all);
-  assert.equal(backup.schemaVersion, 12);
+  assert.equal(backup.schemaVersion, 13);
   const validated = MC.backup.validate(JSON.stringify(backup));
   assert.equal(validated.ok, true, validated.error);
   assert.deepEqual(validated.payload.marks, all.marks);

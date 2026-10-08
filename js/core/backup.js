@@ -5,7 +5,7 @@
   var D = MC.dates;
   var M = function () { return MC.model; };
 
-  var SCHEMA_VERSION = 12;
+  var SCHEMA_VERSION = 13;
   var APP_ID = 'mi-cuaderno';
 
   /* ---------- contrato v6 (A13, D34): retirar las formas viejas sin perder nada ---------- */
@@ -112,7 +112,9 @@
     // v11 (D56): indicador de instalación única de actividades iniciales. No agrega rutinas al importar.
     11: function (data) { return data; },
     // D59: memorias por referencia, aditivas. No crea hitos ni fechas al importar.
-    12: function (data) { return data; }
+    12: function (data) { return data; },
+    // D62: orden opcional de repeticiones. No reordena ni estampa registros antiguos.
+    13: function (data) { return data; }
   };
 
   function build(everything) {

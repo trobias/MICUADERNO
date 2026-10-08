@@ -527,6 +527,7 @@
       endDate: D.isValid(r.endDate) ? r.endDate : null,
       moment: MOMENTS.indexOf(r.moment) !== -1 ? r.moment : null,
       archived: !!r.archived,
+      order: Number.isInteger(r.order) && r.order >= 0 && r.order <= 10000 ? r.order : null,
       // v5 (D29): una repetición puede ser una actividad (de siempre) o una hoja que se repite con su plantilla congelada.
       kind: r.kind === 'sheet' ? 'sheet' : 'activity',
       templateId: typeof r.templateId === 'string' ? r.templateId.slice(0, 80) : null,
@@ -541,7 +542,7 @@
     return S().getAll('routines').then(function (rows) {
       return rows.filter(function (r) { return !isDeleted(r); }).map(normalizeRoutine)
         .filter(Boolean)
-        .sort(function (a, b) { return momentRank(a.moment) - momentRank(b.moment) || a.title.localeCompare(b.title, 'es'); });
+        .sort(function (a, b) { return (a.order == null ? 10001 : a.order) - (b.order == null ? 10001 : b.order) || momentRank(a.moment) - momentRank(b.moment) || a.title.localeCompare(b.title, 'es'); });
     });
   }
 
