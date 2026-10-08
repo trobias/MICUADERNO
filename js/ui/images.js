@@ -10,6 +10,43 @@
   var MAX_SIDE = 900;
   var MAX_ATTACH = 10 * 1024 * 1024;
 
+  /** Cola local con progreso real por archivos, errores y reintento; cerrar deja afuera lo pendiente. */
+  function fileQueue(files, process, title) {
+    if (!files.length) return Promise.resolve([]);
+    return new Promise(function (resolve) {
+      var saved = [], urls = [], closed = false, running = false;
+      var progress = h('progress.file-queue__progress', { max: files.length, value: 0, 'aria-label': 'Archivos guardados' });
+      var status = h('p.t-meta', { role: 'status' }), list = h('ul.file-queue');
+      var entries = files.map(function (file) {
+        var note = h('span.file-queue__state', 'En espera'), thumbnail = null;
+        if (/^image\/(png|jpeg|webp|gif|avif)$/.test(file.type)) { var url = URL.createObjectURL(file); urls.push(url); thumbnail = h('img.file-queue__preview', { src: url, alt: '' }); }
+        var retry = h('button.text-btn', { type: 'button', hidden: true }, 'Reintentar');
+        var entry = { file: file, state: 'pending', note: note, retry: retry };
+        retry.addEventListener('click', function () { if (!running) { entry.state = 'pending'; run(); } });
+        list.appendChild(h('li', thumbnail || MC.icon('upload'), h('div', h('p', file.name), note), retry)); return entry;
+      });
+      var dlg = c.dialog({ title: title, className: 'file-queue-sheet', content: [h('p.section__hint', 'Cerrar deja afuera los archivos que todavía están en espera. Lo guardado queda en el cuaderno.'), progress, status, list],
+        onClose: function () { closed = true; urls.forEach(function (url) { URL.revokeObjectURL(url); }); if (!running) resolve(saved); } });
+      function paint() { var done = entries.filter(function (e) { return e.state === 'done'; }).length; progress.value = done; status.textContent = done + ' de ' + entries.length + ' archivos guardados'; }
+      function run() {
+        running = true; entries.forEach(function (e) { e.retry.disabled = true; });
+        entries.reduce(function (p, entry) { return p.then(function () {
+          if (closed || entry.state !== 'pending') return;
+          entry.state = 'processing'; entry.note.textContent = 'Preparando…'; entry.retry.hidden = true;
+          return process(entry.file, function (message) { entry.note.textContent = message; }).then(function (result) {
+            entry.state = 'done'; entry.note.textContent = 'Guardado'; if (result) saved.push(result); paint();
+          }, function (error) { entry.state = 'failed'; entry.note.textContent = error.message || 'No se pudo guardar. Probá de nuevo.'; entry.retry.hidden = false; paint(); });
+        }); }, Promise.resolve()).then(function () {
+          running = false; entries.forEach(function (e) { e.retry.disabled = false; });
+          if (closed) { resolve(saved); return; }
+          if (entries.every(function (e) { return e.state === 'done'; })) dlg.close();
+          else status.textContent += '. Podés reintentar los que quedaron pendientes.';
+        });
+      }
+      paint(); run();
+    });
+  }
+
   /** Pide archivos con el selector del sistema → Promise<File[]> */
   function pickFiles(accept, multiple) {
     return new Promise(function (resolve) {
@@ -55,15 +92,7 @@
   /** Elegir imágenes y guardarlas en “Mis stickers” → Promise<imagen[]> */
   function uploadStickers() {
     return pickFiles('image/*', true).then(function (files) {
-      if (!files.length) return [];
-      var saved = [];
-      return files.reduce(function (p, f) {
-        return p.then(function () {
-          return importImage(f).then(function (img) { saved.push(img); }, function () {
-            c.toast('No pude leer «' + f.name + '». Probá con PNG o JPG.');
-          });
-        });
-      }, Promise.resolve()).then(function () {
+      return fileQueue(files, function (file, report) { report('Preparando y guardando imagen…'); return importImage(file).catch(function () { throw new Error('No se pudo leer o guardar. Probá con PNG o JPG.'); }); }, 'Agregar imágenes').then(function (saved) {
         if (saved.length) c.toast(saved.length === 1 ? 'Quedó en Mis stickers.' : 'Quedaron ' + saved.length + ' en Mis stickers.');
         return saved;
       });
@@ -71,11 +100,12 @@
   }
 
   /* ---------- Adjuntos ---------- */
-  function readAsDataURL(file) {
+  function readAsDataURL(file, report) {
     return new Promise(function (resolve, reject) {
       var r = new FileReader();
       r.onload = function () { resolve(r.result); };
       r.onerror = function () { reject(r.error); };
+      r.onprogress = function (e) { if (report && e.lengthComputable) report('Leyendo ' + Math.round(e.loaded / e.total * 100) + '%'); };
       r.readAsDataURL(file);
     });
   }
@@ -144,22 +174,33 @@
 
     add.addEventListener('click', function () {
       pickFiles(null, true).then(function (files) {
-        return files.reduce(function (p, file) {
-          return p.then(function () {
-            if (file.size > MAX_ATTACH) { c.toast('«' + file.name + '» pesa más de 10 MB: es mucho para guardar en el cuaderno.'); return; }
-            return readAsDataURL(file).then(function (data) {
-              return M.addFile({ owner: owner, name: file.name, type: file.type, size: file.size, data: data });
-            }).catch(function () { c.toast('No se pudo guardar «' + file.name + '».'); });
-          });
-        }, Promise.resolve()).then(function () { if (files.length) load(); });
+        return fileQueue(files, function (file, report) {
+          if (file.size > MAX_ATTACH) return Promise.reject(new Error('Pesa más de 10 MB. Elegí un archivo más chico.'));
+          return readAsDataURL(file, report).then(function (data) { report('Guardando…'); return M.addFile({ owner: owner, name: file.name, type: file.type, size: file.size, data: data }); });
+        }, 'Guardar adjuntos').then(function () { load(); });
       });
+    });
+
+    section.addEventListener('dragover', function (e) {
+      if (MC.access && MC.access.level(['fotos']) !== 'editar') return;
+      if (e.dataTransfer && Array.from(e.dataTransfer.types).indexOf('Files') !== -1) { e.preventDefault(); section.classList.add('is-file-drop'); }
+    });
+    section.addEventListener('dragleave', function (e) { if (!section.contains(e.relatedTarget)) section.classList.remove('is-file-drop'); });
+    section.addEventListener('drop', function (e) {
+      section.classList.remove('is-file-drop');
+      if (MC.access && MC.access.level(['fotos']) !== 'editar' || !e.dataTransfer || !e.dataTransfer.files.length) return;
+      e.preventDefault();
+      fileQueue(Array.from(e.dataTransfer.files), function (file, report) {
+        if (file.size > MAX_ATTACH) return Promise.reject(new Error('Pesa más de 10 MB. Elegí un archivo más chico.'));
+        return readAsDataURL(file, report).then(function (data) { report('Guardando…'); return M.addFile({ owner: owner, name: file.name, type: file.type, size: file.size, data: data }); });
+      }, 'Guardar adjuntos').then(load);
     });
 
     load();
     return section;
   }
 
-  MC.images = { pickFiles: pickFiles, importImage: importImage, uploadStickers: uploadStickers, attachments: attachments, dataToBlob: dataToBlob };
+  MC.images = { pickFiles: pickFiles, importImage: importImage, uploadStickers: uploadStickers, attachments: attachments, dataToBlob: dataToBlob, fileQueue: fileQueue };
   MC.on('images:trashed', function (id) {
     c.toast('Se fue a la papelera.', { action: 'Deshacer', onAction: function () { M.restoreTrash('images', id); } });
     // Al cerrar el sobre, volver a dibujar la hoja: un img:<id> en papelera ya no tiene imagen.

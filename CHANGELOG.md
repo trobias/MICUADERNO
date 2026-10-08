@@ -743,3 +743,7 @@ Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantien
 ### 08/10/2026 · Action Swap (D62)
 
 - Guardando y Guardado intercambian glifo y texto con feedback breve al confirmar persistencia; sin loops ni movimiento al escribir, aviso de fallo conservado.
+
+### 08/10/2026 · File Upload (D62)
+
+- Cola de imágenes/adjuntos con miniaturas, progreso real por archivos, errores y reintento; arrastrar adjuntos, límite vigente y permisos de Fotos. No cambia la sincronización.

@@ -27,3 +27,4 @@ Las animaciones respetan Ajustes, movimiento reducido del sistema y teclado.
 | Bloom Menu | Un más en la barra de decorar despliega Anotar, Foto, Sticker y Dibujo en cuatro pétalos pastel; reutiliza menú accesible y acciones existentes. |
 | Morphing Search | Búsqueda plegada en Mis hojas, índice efímero de texto y emociones, filtros por tipo/fecha, enlaces y exclusión de papelera, fuentes privadas y secciones no permitidas. |
 | Action Swap | Guardando y Guardado intercambian glifo y texto con feedback breve al confirmar persistencia; sin loops ni movimiento al escribir, aviso de fallo conservado. |
+| File Upload | Cola de imágenes/adjuntos con miniaturas, progreso real por archivos, errores y reintento; arrastrar adjuntos, límite vigente y permisos de Fotos. No cambia la sincronización. |
