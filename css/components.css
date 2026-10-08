@@ -100,6 +100,7 @@
 .saved-note__face { display: inline-flex; align-items: center; gap: 4px; }
 .saved-note__glyph:empty { display: none; }
 .saved-note__glyph svg { width: 16px; height: 16px; stroke-width: 2.25; }
+.saved-note[data-state='saving'] .saved-note__glyph { color: var(--thread-later-text); }
 /* El aviso de fallo es más largo: baja a su propio renglón para no apretar el saludo ni el título. */
 .saved-note[data-state='failed'] {
   position: relative;

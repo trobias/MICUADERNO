@@ -466,10 +466,19 @@
       var glyph = h('span.saved-note__glyph');
       var f = h('span.saved-note__face', { 'aria-hidden': 'true' }, glyph, text);
       f.paint = function (state) {
+        var previous = f.dataset.saveFace;
+        f.dataset.saveFace = state;
+        if (f._swapAnimation) f._swapAnimation.cancel();
         MC.clear(glyph);
-        var icon = state === 'saved' ? 'check' : state === 'failed' ? 'edit' : null;
+        var icon = state === 'saved' ? 'check' : state === 'failed' ? 'edit' : state === 'saving' ? 'rutinas' : null;
         if (icon) glyph.appendChild(MC.icon(icon));
         text.textContent = state === 'saving' ? 'guardando…' : state === 'saved' ? 'guardado' : state === 'failed' ? failText : text.textContent;
+        var active = document.activeElement;
+        if (previous && previous !== state && state === 'saved' && MC.motion.allows('fade') && !MC.motion.systemReduced() &&
+            !document.hidden && !(active && /^(INPUT|TEXTAREA)$/.test(active.tagName)) && f.animate) {
+          f._swapAnimation = f.animate([{ opacity: .45, transform: MC.motion.allows('move') ? 'translateY(3px)' : 'none' }, { opacity: 1, transform: 'none' }],
+            { duration: MC.motion.duration('press'), easing: getComputedStyle(document.documentElement).getPropertyValue('--ease-out').trim() });
+        }
       };
       return f;
     }
