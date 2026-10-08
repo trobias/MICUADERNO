@@ -47,7 +47,16 @@
             h('span.toc__num', String(i + 1))),
           h('p.toc__preview', preview)));
       });
-      left.appendChild(ol);
+      var groups = Object.create(null);
+      pages.forEach(function (p, i) {
+        var key = D.monthKey(M.pageDate(p));
+        if (!groups[key]) groups[key] = { list: h('ol.toc', { 'aria-label': D.monthLabel(key) }), titles: [] };
+        groups[key].list.appendChild(ol.children[0]); groups[key].titles.push(M.pageTitle(p));
+      });
+      Object.keys(groups).sort().reverse().forEach(function (key, i) {
+        var group = groups[key];
+        left.appendChild(c.paperFolder(D.capitalize(D.monthLabel(key)) + ' · ' + group.titles.length + (group.titles.length === 1 ? ' hoja' : ' hojas'), group.list, group.titles, i === 0));
+      });
     }
 
     /* ---------- lo que se repite (rutinas, también las pausadas) ---------- */

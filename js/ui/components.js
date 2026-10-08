@@ -85,6 +85,16 @@
     paint(); return h('div', list, say);
   };
 
+  /** Carpeta de papel: contenido real, apertura nativa con toque, Enter y espacio. */
+  c.paperFolder = function (title, content, previews, open) {
+    var fan = h('span.paper-folder__fan', { 'aria-hidden': 'true' }, (previews || []).slice(0, 3).map(function (text, i) {
+      return h('span.paper-folder__peek', { style: { '--peek-index': i } }, String(text).slice(0, 45));
+    }));
+    return h('details.paper-folder', { open: !!open },
+      h('summary.paper-folder__cover', fan, h('span.paper-folder__title', title), h('span.paper-folder__hint', 'Abrir las hojas')),
+      h('div.paper-folder__body', content));
+  };
+
   /** Dónde colgar menús y avisos: dentro del diálogo abierto de más arriba (si no, quedan inertes debajo). */
   c.layer = function () {
     var open = MC.$$('dialog[open]');

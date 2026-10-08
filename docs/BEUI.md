@@ -16,3 +16,4 @@ Las animaciones respetan Ajustes, movimiento reducido del sistema y teclado.
 | Sortable List | Organizar actividades permite arrastrar o subir/bajar metas; orden opcional en repeticiones, copia v13 aditiva y misma sección de permisos. |
 | Swipeable List | Deslizar una actividad hacia la izquierda revela su menú completo; nunca marca ni borra, conserva scroll vertical, teclado y permisos. |
 | Bottom Sheet | Diálogos nativos como hojas inferiores en celular, manija para cerrar, alternativa visible y Escape; foco modal nativo y movimiento reducido. |
+| Project Folder | Mis hojas se agrupa por mes en carpetas desplegables con hojas pastel; la más reciente abre de entrada, enlaces reales y teclado nativo, sin colecciones nuevas. |

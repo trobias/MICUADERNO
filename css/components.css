@@ -163,6 +163,20 @@
 .sortable-list li { display: flex; align-items: center; gap: var(--s-1); border-bottom: 1px dashed var(--rule); }
 .sortable-list__handle { flex: 1; min-width: 0; justify-content: flex-start; text-align: left; cursor: grab; }
 .sortable-list .icon-btn svg { transform: rotate(90deg); }
+.paper-folder { margin: var(--s-6) 0; }
+.paper-folder__cover { position: relative; display: grid; gap: var(--s-1); padding: 46px var(--s-4) var(--s-3); min-height: 112px; cursor: pointer; list-style: none; isolation: isolate; }
+.paper-folder__cover::-webkit-details-marker { display: none; }
+.paper-folder__cover::after { content: ''; position: absolute; z-index: -1; inset: 32px 0 0; background: color-mix(in srgb, var(--lavender) 40%, var(--paper)); border: 1px dashed var(--ink-faint); border-radius: 4px 12px 4px 4px; box-shadow: var(--shadow-note); }
+.paper-folder__fan { position: absolute; inset: 0 12px auto; height: 70px; z-index: -2; pointer-events: none; }
+.paper-folder__peek { position: absolute; left: calc(12% + var(--peek-index) * 22%); top: 0; width: 40%; height: 75px; overflow: hidden; padding: 8px; border-radius: 2px; background: var(--sage); color: var(--ink); font-family: var(--font-hand); font-size: var(--fs-md); transform: rotate(calc((var(--peek-index) - 1) * 5deg)); transition: transform var(--dur-ui) var(--ease-out); }
+.paper-folder__peek:nth-child(2) { background: var(--butter); }
+.paper-folder__peek:nth-child(3) { background: var(--blush); }
+.paper-folder[open] .paper-folder__peek { transform: translateY(calc(-6px * var(--move))) rotate(calc((var(--peek-index) - 1) * 8deg * var(--move))); }
+.paper-folder__title { font-family: var(--font-text); font-size: var(--fs-lg); }
+.paper-folder__hint { font-family: var(--font-ui); font-size: var(--fs-xs); color: var(--ink-soft); }
+.paper-folder[open] .paper-folder__hint { visibility: hidden; }
+.paper-folder__body { padding: var(--s-2) var(--s-3); border-inline: 1px dashed var(--rule-strong); }
+@media (prefers-reduced-motion: reduce) { .paper-folder__peek, .paper-folder[open] .paper-folder__peek { transform: none; transition: none; } }
 .stitch-box {
   position: relative;
   flex: none;

@@ -699,3 +699,7 @@ Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantien
 ### 08/10/2026 · Bottom Sheet (D62)
 
 - Diálogos nativos como hojas inferiores en celular, manija para cerrar, alternativa visible y Escape; foco modal nativo y movimiento reducido.
+
+### 08/10/2026 · Project Folder (D62)
+
+- Mis hojas se agrupa por mes en carpetas desplegables con hojas pastel; la más reciente abre de entrada, enlaces reales y teclado nativo, sin colecciones nuevas.
