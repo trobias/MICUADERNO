@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   title: 'MI CUADERNO',
   description: 'Un lugarcito para mí.',
   referrer: 'no-referrer',
-  icons: { icon: '/assets/icons/favicon.svg', apple: '/assets/icons/apple-touch-icon.png' },
+  icons: { icon: '/assets/icons/favicon.svg?v=56', apple: '/assets/icons/apple-touch-icon.png' },
   manifest: '/manifest.webmanifest'
 };
 

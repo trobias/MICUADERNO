@@ -2,6 +2,11 @@
 
 Registro breve de decisiones de arquitectura y producto. Formato: contexto → decisión → consecuencias.
 
+## D60 · Acompañar la apertura y reconocer la mariposa (2026-10-08)
+**Pedido:** evitar una pantalla vacía mientras abre el cuaderno compartido, con estado de carga y mariposa; favicon donde se aprecie la mariposa, sin el marco grande.
+**Decisión:** estado estático precargado en index.html, con SVG de la misma mariposa del favicon, papel crema, texto accesible y esqueleto decorativo. Se conserva hasta que el primer calendario esté listo; bienvenida síncrona lo reemplaza. Sin animaciones repetidas, porcentajes inventados ni espera mínima. Fallos permiten reintentar, manteniendo los avisos de la base. Arte del favicon separado de los iconos de instalación, en assets/icons/src/favicon.svg; tools/make-icons.mjs reproduce SVG, PNG de 16/32/48 e ICO. URLs de favicon versionadas también precargadas por el SW.
+**Consecuencias:** cache v56; copia v12 e IDB 5 intactos. La espera de red no se reduce en esta entrega; se mantiene memoria/permisos D38. Probar con red demorada, errores, recarga, pantalla de 375px, sin JavaScript, teclado y movimiento reducido.
+
 ## D59 · Mi año conserva victorias personales y recuerdos especiales (2026-10-08)
 **Pedido:** ampliar las victorias más allá de las metas, con primer dibujo, creaciones terminadas, primeras experiencias, encuentros, decisiones, retomar algo y días/hojas para recordar; diseño de papelería dentro de Mi año.
 **Decisión:** reutilizar marks y un único editor contextual. La persona puede elegir una victoria personal y sus palabras, guardar días/hojas como recuerdo, marcar una creación terminada o clasificar una actividad/repetición como especial. Done y partial generan momentos especiales; primera vez solo el primer registro. Los hitos no infieren mérito, emociones, vínculos ni descansos a partir de textos. Primer dibujo del año se deriva de dibujos guardados y colocados, enlazando su fuente. Mi año conserva sus partes victorias/recuerdos y sus permisos, presenta estrellas, papelitos con imagen opcional y agrupación por mes. Sin rankings, rachas ni dependencias nuevas.

@@ -1,5 +1,7 @@
 # MI CUADERNO — SPEC
 
+**Apertura visible (D60):** desde el HTML inicial, una hoja de papel con mariposa pastel, «Cargando el cuaderno…» y un esqueleto discreto del calendario acompaña el arranque. No muestra datos personales ni porcentajes ficticios. Permanece hasta que la bienvenida o el primer calendario estén listos; un fallo ofrece reintentar y las advertencias de base bloqueada/nueva se conservan. Favicon transparente con la misma mariposa ampliada, sin medallón o marco de bordado. No cambia la descarga ni guarda el cuaderno de las invitadas.
+
 ## Actualización D59 · victorias y recuerdos personales (08/10/2026)
 
 - Mi año conserva metas semanales D58 y suma primer dibujo anual guardado/colocado, creaciones elegidas como terminadas y momentos especiales. La persona señala una actividad o repetición una vez desde “Esto es especial para mí…”: primera vez, encuentro, decisión, retomar algo o significado propio. Solo Lo hice/Hice un poquito produce el momento; primera vez usa solo la primera ocurrencia, incluso entre años. No interpreta texto, emociones, pausas ni vínculos.

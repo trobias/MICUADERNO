@@ -10,9 +10,9 @@ const src = (f) => fs.readFileSync(path.join(root, 'assets/icons/src', f), 'utf8
 const out = (f) => path.join(root, 'assets/icons', f);
 
 const jobs = [
-  ['icon.svg', 'favicon-16x16.png', 16],
-  ['icon.svg', 'favicon-32x32.png', 32],
-  ['icon.svg', 'favicon-48x48.png', 48],
+  ['favicon.svg', 'favicon-16x16.png', 16],
+  ['favicon.svg', 'favicon-32x32.png', 32],
+  ['favicon.svg', 'favicon-48x48.png', 48],
   ['icon.svg', 'icon-192.png', 192],
   ['icon.svg', 'icon-512.png', 512],
   ['icon-maskable.svg', 'icon-maskable-192.png', 192],
@@ -25,6 +25,7 @@ const jobs = [
   ['icon.svg', 'shortcut-hoy.png', 96]
 ];
 
+fs.writeFileSync(out('favicon.svg'), src('favicon.svg'));
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM || '/opt/pw-browsers/chromium' });
 const page = await browser.newPage({ deviceScaleFactor: 1 });
 for (const [file, name, size] of jobs) {

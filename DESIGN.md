@@ -165,6 +165,8 @@ Reglas: máx. ~12 stickers por hoja recomendados (sin límite duro); tamaño 48�
 
 ## 9. Iconografía
 
+**Favicon y apertura (D60):** mariposa rosa y lavanda con contorno de tinta, alas que ocupan el icono y fondo transparente, sin marco, círculo o bordado alrededor. Su maestro es `assets/icons/src/favicon.svg`; el generador reproduce SVG, PNG 16/32/48 e ICO. El mismo SVG aparece a 96 px en una hoja de carga centrada, con «Cargando el cuaderno…», texto secundario y tres casillas de esqueleto en papel/lavanda. Es estático desde el HTML inicial para respetar preferencias aún no cargadas y movimiento reducido; no hay shimmer, loops o porcentajes ficticios. El primer calendario reemplaza la espera solo cuando está listo. Errores muestran un botón-etiqueta de reintentar, sin rojo de valoración. La carga no se imprime.
+
 Un solo sistema, `js/ui/icons.js` (sprite SVG): 24×24, trazo 1.75px, `stroke-linecap: round`, `stroke-linejoin: round`, `currentColor`. Navegación (hoy=sol naciente sobre hoja, calendario, rutinas=bucle de hilo, páginas, año=bastidor, ajustes=carretel), acciones (agregar, editar, borrar, exportar, imprimir, restaurar, cerrar, flechas, más). Sin emojis como íconos. El ♡ tipográfico se permite solo como firma de texto.
 
 ## 10. Layout y responsive

@@ -1,5 +1,15 @@
 # QA cruzada (A12) — 05/10/2026
 
+## Actualización del 08/10/2026 · carga con mariposa y favicon (D60, cache v56)
+
+- La hoja de espera existe desde index.html: mariposa pastel, estado accesible y esqueleto decorativo estático. Sin animaciones, porcentajes inventados o espera mínima. Favicon SVG transparente y PNG/ICO legibles sin medallón; arte maestro separado de los iconos de instalación.
+- Recorridos D60 enfocados 3/3: invitada con descarga y apariencia retenidas, primer calendario retenido hasta ready, recarga en 1366 y 375 px; error real de API simulada 503 con reintento por teclado; sin JavaScript conserva el aviso; SVG publicado coincide con el maestro y PNG/ICO contienen 16/32/48 px.
+- Capturas revisadas en escritorio/celular y comparación del favicon en sus tamaños reales. Sin overflow horizontal ni errores de JavaScript en la apertura correcta; movimiento reducido conserva todo quieto. Un fallo de descarga inicial no abre un calendario vacío.
+- Se detectó y corrigió un botón Recargar duplicado en VersionError: se mantiene el único botón del aviso existente de la base. Recorrido A0 enfocado aprobado tras la corrección.
+- Gate final `npm run check` aprobado: sintaxis de 47 scripts, 170/170 unitarias y 71/71 recorridos Chromium, incluidos los tres D60 y las regresiones de tapa, calendario, persistencia, PWA y permisos. La primera pasada encontró el duplicado de Recargar; se repitió la suite completa después de corregirlo.
+- `npm run typecheck` y `npm run build` aprobados; humo de Next 3/3 con Chromium local. El primer intento del humo usó la ruta Linux por falta de CHROMIUM y no inició el navegador; se repitió con el ejecutable local instalado. Sin dependencias o servicios nuevos.
+- Los pedidos de la nube se simulan en los recorridos. No se midieron los 20 s de la sesión real ni se optimizó su descarga; esto verifica feedback de espera, permisos existentes y recuperación. No confirma una sesión de Production, otro navegador o un dispositivo real.
+
 ## Actualización del 08/10/2026 · conteos sin «N un poquito» (cache v55)
 
 - Resumen, metas individuales y victorias semanales de Mi año omiten el añadido. El nombre accesible de las barras conserva completas, medios avances y porcentaje; el relleno y las estrellas mantienen D58.

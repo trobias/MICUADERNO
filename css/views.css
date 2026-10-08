@@ -237,6 +237,23 @@ a.months__year { text-decoration: none; padding: 4px 6px; border-radius: 6px; }
   .week-progress__partial { background: CanvasText; forced-color-adjust: none; }
 }
 
+/* ---------- Apertura del cuaderno (D60) ---------- */
+.boot-loading { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--s-5); min-height: calc(100dvh - var(--s-8)); text-align: center; }
+.boot-loading__butterfly { width: 96px; height: 96px; flex: none; }
+.boot-loading__message { display: grid; gap: var(--s-3); max-width: 28em; }
+.boot-loading__message h1 { font-family: var(--font-text); font-size: var(--fs-xl); }
+.boot-loading__hint { font-family: var(--font-ui); font-size: var(--fs-sm); color: var(--ink-soft); }
+.boot-loading__preview { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s-3); width: min(100%, 480px); margin-top: var(--s-3); }
+.boot-loading__preview > span { display: grid; align-content: start; gap: var(--s-3); padding: var(--s-4); min-height: 96px; border: 1px dashed var(--rule-strong); background: color-mix(in srgb, var(--lavender) 8%, var(--paper)); }
+.boot-loading__preview i { display: block; height: var(--s-1); background: var(--rule); border-radius: var(--radius-note); }
+.boot-loading__preview i:first-child { width: 55%; background: color-mix(in srgb, var(--rose) 35%, var(--paper)); }
+.boot-loading__preview i:last-child { width: 70%; }
+@media (max-width: 699px) {
+  .boot-loading { min-height: calc(100dvh - var(--s-5)); padding-inline: var(--s-5); }
+  .boot-loading__preview { gap: var(--s-2); }
+  .boot-loading__preview > span { padding: var(--s-3); }
+}
+
 /* ---------- Rutinas ---------- */
 .routine-group + .routine-group { margin-top: var(--s-5); }
 .routine-group__title { font-family: var(--font-text); font-style: italic; font-size: var(--fs-md); color: var(--ink-soft); margin-bottom: var(--s-2); }

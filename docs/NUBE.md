@@ -1,5 +1,7 @@
 # MI CUADERNO en la nube: Vercel + Supabase (etapa B, base)
 
+**Apertura D60 (cache v56):** el shell inicial muestra mariposa y «Cargando el cuaderno…» hasta tener el primer calendario listo. Una descarga inicial fallida de invitada mantiene la hoja y ofrece reintentar; no abre memoria vacía como si el cuaderno estuviera listo. Los permisos y la carga completa D38 se conservan. Es feedback de espera, sin medición o mejora de latencia de Production.
+
 D59 (08/10): los nuevos recuerdos/victorias siguen usando marks en la sección anio, sin tablas, SQL, variables o servicios nuevos. category/note son elecciones personales de esa sección; las miniaturas se resuelven desde las imágenes y sus fuentes compartidas. El shell incorpora memories.js y cache v53; copia v12 aditiva, IDB 5. Verificación local/entrega en docs/QA. No implica validación con cuentas o dispositivos reales.
 
 Estado al 05/10/2026: **publicada en `https://micuaderno-five.vercel.app`** (Production se despliega en cada push a `main`). Supabase con esquema y RLS aplicados; Nicole creó su cuenta de administradora. Hay cuentas con usuario y PIN (entrada eligiendo a la persona, D41), permisos por sección con RLS, cuadernos compartidos y sincronización (D38), avisos push y el latido que evita que Supabase pause el proyecto. **Falta** que viajen fotos, dibujos y adjuntos (NB1, lo próximo) y lo demás de la sección NB de `BACKLOG.md`. Las secciones de abajo guardan la historia de la puesta en marcha. Decisiones: D35–D38, D40–D42.

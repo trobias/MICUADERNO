@@ -2967,6 +2967,102 @@ await test('D59: victorias personales, momentos especiales y álbum con imágene
   }
 });
 
+await test('D60: carga visible con mariposa hasta completar nube y calendario, recarga y 375px', async () => {
+  const PSI = '33333333-3333-4333-8333-333333333333';
+  for (const width of [1366, 375]) {
+    const state = { me: { id: PSI, name: 'Psicóloga', hasNotebook: false,
+      shares: [{ owner: CA, name: 'Nicole', sections: { escritura: 'ver', actividades: 'ver', semana: 'ver' } }] }, parts: [], look: { cover: 'lavanda', theme: null } };
+    const { page, context, errors, setCookie } = await cloudContext(state);
+    await page.setViewportSize({ width, height: 812 });
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await setCookie('mc_person', PSI); await setCookie('mc_view', CA);
+    let releasePull, releaseLook;
+    const pullGate = new Promise(resolve => { releasePull = resolve; });
+    const lookGate = new Promise(resolve => { releaseLook = resolve; });
+    await context.route('**/api/sync/pull**', async route => {
+      await pullGate;
+      await route.fulfill({ status: 200, contentType: 'application/json', body: '{"parts":[],"more":false}' });
+    });
+    await context.route('**/api/look**', async route => {
+      await lookGate;
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(state.look) });
+    });
+    try {
+      await page.goto(HTTP_URL, { waitUntil: 'domcontentloaded' });
+      await page.waitForSelector('#boot-loading');
+      assert.match(await page.textContent('[role="status"]'), /Cargando el cuaderno/);
+      assert.equal(await page.locator('.boot-loading__preview').getAttribute('aria-hidden'), 'true');
+      assert.equal(await page.locator('.boot-loading__butterfly').evaluate(img => img.complete && img.naturalWidth > 0), true);
+      assert.equal(await page.locator('#boot-loading').evaluate(el => el.getAnimations({ subtree: true }).length), 0);
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+      if (process.env.E2E_CAPTURE) await page.screenshot({ path: path.join(process.env.E2E_CAPTURE, 'loading-butterfly-' + width + '.png') });
+      await page.evaluate(() => {
+        const render = MC.views.calendar.render;
+        MC.views.calendar.render = function (host, params) {
+          const instance = render(host, params);
+          const gate = new Promise(resolve => { window.__releaseCalendar = resolve; });
+          instance.ready = Promise.all([instance.ready, gate]);
+          return instance;
+        };
+      });
+      releasePull();
+      assert.equal(await page.locator('#boot-loading').isVisible(), true, 'la apariencia todavía no llegó');
+      releaseLook();
+      await page.waitForFunction(() => typeof window.__releaseCalendar === 'function');
+      assert.equal(await page.locator('#boot-loading').isVisible(), true, 'el calendario todavía no está listo');
+      await page.evaluate(() => window.__releaseCalendar());
+      await page.locator('#boot-loading').waitFor({ state: 'detached' });
+      await page.waitForSelector('.planner-page, .cal-page');
+      assert.equal(await page.evaluate(() => MC.cloud.mode), 'guest');
+      await page.reload();
+      await page.waitForSelector('.planner-page, .cal-page');
+      assert.equal(await page.locator('#boot-loading').count(), 0);
+      assert.deepEqual(errors, []);
+    } finally { releasePull(); releaseLook(); await context.close(); }
+  }
+});
+
+await test('D60: descarga fallida ofrece reintentar con teclado y no abre un cuaderno vacío', async () => {
+  const PSI = '33333333-3333-4333-8333-333333333333';
+  const state = { me: { id: PSI, name: 'Psicóloga', hasNotebook: false,
+    shares: [{ owner: CA, name: 'Nicole', sections: { escritura: 'ver' } }] }, parts: [] };
+  const { page, context, setCookie, errors } = await cloudContext(state);
+  await setCookie('mc_person', PSI); await setCookie('mc_view', CA);
+  let fail = true;
+  await context.route('**/api/sync/pull**', route => route.fulfill({ status: fail ? 503 : 200, contentType: 'application/json', body: fail ? '{"error":"No se pudo leer el cuaderno."}' : '{"parts":[],"more":false}' }));
+  try {
+    await page.goto(HTTP_URL);
+    await page.waitForSelector('#boot-loading[data-state="failed"]');
+    assert.equal(await page.locator('.planner-page, .cal-page').count(), 0);
+    assert.equal(await page.locator('.boot-loading__preview').isVisible(), false);
+    const retry = page.getByRole('button', { name: 'Volver a intentar', exact: true });
+    await retry.focus(); fail = false;
+    await Promise.all([page.waitForEvent('domcontentloaded'), page.keyboard.press('Enter')]);
+    await page.waitForSelector('.planner-page, .cal-page');
+    assert.equal(await page.locator('#boot-loading').count(), 0);
+    assert.ok(errors.every(error => /503|No se pudo leer el cuaderno/.test(error)), errors.join('\n'));
+  } finally { await context.close(); }
+});
+
+await test('D60: sin JavaScript conserva el aviso; favicon transparente reproducible en SVG, PNG e ICO', async () => {
+  const context = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 375, height: 812 } });
+  const page = await context.newPage();
+  try {
+    await page.goto(FILE_URL);
+    assert.equal(await page.locator('#boot-loading').isVisible(), false);
+    assert.match(await page.textContent('noscript'), /necesita JavaScript/);
+    const source = fs.readFileSync(path.join(root, 'assets/icons/src/favicon.svg'), 'utf8');
+    assert.equal(fs.readFileSync(path.join(root, 'assets/icons/favicon.svg'), 'utf8'), source);
+    assert.doesNotMatch(source, /<circle|stroke-dasharray|width="512"/);
+    for (const size of [16, 32, 48]) {
+      const png = fs.readFileSync(path.join(root, 'assets/icons/favicon-' + size + 'x' + size + '.png'));
+      assert.equal(png.readUInt32BE(16), size); assert.equal(png.readUInt32BE(20), size);
+    }
+    const ico = fs.readFileSync(path.join(root, 'assets/icons/favicon.ico'));
+    assert.equal(ico.readUInt16LE(2), 1); assert.equal(ico.readUInt16LE(4), 3);
+  } finally { await context.close(); }
+});
+
 await browser.close();
 server.close();
 const failed = results.filter((r) => !r[0]);

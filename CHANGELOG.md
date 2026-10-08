@@ -1,5 +1,12 @@
 # MI CUADERNO — Cambios
 
+## 2026-10-08 · Mariposa durante la apertura y favicon claro (D60, cache v56)
+
+- Una hoja con mariposa rosa/lavanda, «Cargando el cuaderno…» y esqueleto de calendario aparece desde el HTML inicial. Se reemplaza al estar lista la bienvenida o el primer calendario, sin espera artificial.
+- Si la descarga inicial de la invitada falla, muestra «Volver a intentar» y conserva los avisos de base bloqueada o versión nueva. Nunca presenta una descarga fallida como cuaderno vacío listo.
+- Favicon transparente con mariposa grande, sin el medallón y costura anteriores. Mismo arte que la carga, en SVG y PNG de 16/32/48 px e ICO; generación desde assets/icons/src/favicon.svg. URLs versionadas y precargadas para PWA/offline.
+- Sin animaciones repetidas, cambios de datos o nuevas dependencias. La espera de red todavía conserva la descarga completa; resultados y límites en docs/QA.
+
 ## 2026-10-08 · Conteos de progreso más simples (cache v55)
 
 - Quita «N un poquito» del resumen, las barras individuales y las victorias semanales de Mi año. Quedan los conteos N/M y las barras pastel; los medios avances siguen aportando la mitad y generando estrellas.

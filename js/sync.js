@@ -426,6 +426,8 @@
     // Invitada: memoria, con el cuaderno compartido traído de la nube antes de dibujar nada.
     return init0.call(store, { memory: true }).then(function (kind) {
       return shareReady.then(function () { return pullLocked(true); }).then(function () {
+        // Una descarga fallida no abre un calendario vacío como si estuviera listo (D60).
+        if (status.error) throw new Error(status.error);
         ready = true;
         return store.get('meta', 'settings');
       }).then(function (row) {

@@ -3,7 +3,7 @@
    NO pasan por acá: viven en IndexedDB. Al cambiar cualquier archivo de SHELL, subir CACHE_VERSION. */
 'use strict';
 
-var CACHE_VERSION = 'mi-cuaderno-v55';
+var CACHE_VERSION = 'mi-cuaderno-v56';
 var SHELL = [
   './', 'index.html', 'manifest.webmanifest',
   'css/fonts.css', 'css/tokens.css', 'css/base.css', 'css/notebook.css', 'css/components.css', 'css/views.css', 'css/print.css',
@@ -14,6 +14,7 @@ var SHELL = [
   'js/views/pages.js', 'js/views/sheets.js', 'js/views/year.js', 'js/views/settings.js', 'js/views/print.js',
   'js/notify.js', 'js/pwa.js', 'js/app.js',
   'assets/icons/favicon.ico', 'assets/icons/favicon.svg', 'assets/icons/favicon-16x16.png', 'assets/icons/favicon-32x32.png',
+  'assets/icons/favicon.ico?v=56', 'assets/icons/favicon.svg?v=56', 'assets/icons/favicon-16x16.png?v=56', 'assets/icons/favicon-32x32.png?v=56',
   'assets/icons/apple-touch-icon.png', 'assets/icons/icon-192.png', 'assets/icons/icon-512.png',
   'assets/icons/icon-maskable-192.png', 'assets/icons/icon-maskable-512.png',
   'assets/icons/notification-icon.png', 'assets/icons/notification-badge.png', 'assets/icons/shortcut-hoy.png'

@@ -137,6 +137,17 @@
     if (!prev) {
       // Primera vez (o se viene de la bienvenida): directo, sin animación.
       if (shownBase) destroy(shownBase);
+      if (document.getElementById('boot-loading')) {
+        // La espera inicial queda visible hasta tener el calendario completo (D60).
+        var firstHolder = document.createElement('div');
+        var firstEntry = { key: key, params: params, day: D.today(), instance: MC.views.calendar.render(firstHolder, params) };
+        base = firstEntry;
+        Promise.resolve(firstEntry.instance && firstEntry.instance.ready).then(function () {
+          if (base !== firstEntry) { destroy(firstEntry); return; }
+          showBase(firstEntry, firstHolder);
+        }).catch(showBootFailure);
+        return true;
+      }
       MC.clear(main);
       base = shownBase = { key: key, params: params, day: D.today(), instance: MC.views.calendar.render(main, params) };
       return true;
@@ -437,6 +448,25 @@
     }).catch(function () {}).then(function () { setTimeout(function () { location.reload(); }, 150); });
   }
 
+  /** Una apertura fallida ofrece una salida en la misma hoja de espera (D60). */
+  function showBootFailure(err) {
+    var loading = document.getElementById('boot-loading');
+    if (!loading) {
+      main.appendChild(h('div.page', h('p.t-text', 'Algo no salió bien al abrir el cuaderno. Probá recargar la página.')));
+      return;
+    }
+    var newer = err && err.name === 'VersionError';
+    loading.dataset.state = 'failed';
+    loading.querySelector('h1').textContent = newer ? 'El cuaderno necesita actualizarse' : 'No pudimos abrir el cuaderno';
+    loading.querySelector('.boot-loading__hint').textContent = newer ? 'Recargá para abrir la versión nueva.' : 'Probá de nuevo para abrir las páginas.';
+    loading.querySelector('.boot-loading__preview').hidden = true;
+    var retry = loading.querySelector('.boot-loading__retry');
+    // Para VersionError, el aviso de la base ya ofrece el único botón Recargar.
+    retry.hidden = !!newer;
+    retry.textContent = newer ? 'Recargar' : 'Volver a intentar';
+    retry.onclick = reloadNewest;
+  }
+
   function handleShortcut() {
     var params = new URLSearchParams(location.search);
     var go = params.get('go');
@@ -571,9 +601,9 @@
         start();
       }
     }).catch(function (err) {
-      if (err && err.name === 'VersionError') { showStoreNotice('newer'); return; }
+      if (err && err.name === 'VersionError') { showBootFailure(err); showStoreNotice('newer'); return; }
       console.error(err);
-      main.appendChild(h('div.page', h('p.t-text', 'Algo no salió bien al abrir el cuaderno. Probá recargar la página.')));
+      showBootFailure(err);
     });
 
     // Guardar lo pendiente antes de cerrar/ocultar.
