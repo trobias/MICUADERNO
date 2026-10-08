@@ -120,7 +120,10 @@
       var open = h('button.text-btn.attachment__open', { type: 'button', title: 'Descargar o abrir ' + f.name },
         isImg ? h('img.attachment__thumb', { src: f.data, alt: '' }) : MC.icon('download'),
         h('span.attachment__name', f.name), h('span.attachment__size', sizeLabel(f.size)));
-      open.addEventListener('click', function () { MC.download(f.name, dataToBlob(f.data, f.type), f.type); });
+      open.dataset.browse = '1';
+      open.addEventListener('click', function () { if (isImg) c.imageViewer([{ src: f.data, name: f.name }], 0); else MC.download(f.name, dataToBlob(f.data, f.type), f.type); });
+      var download = h('button.icon-btn', { type: 'button', 'aria-label': 'Descargar ' + f.name, dataset: { browse: '1' } }, MC.icon('download'));
+      download.addEventListener('click', function () { MC.download(f.name, dataToBlob(f.data, f.type), f.type); });
       var more = [];
       if (isImg && opts.onSticker) {
         var st = h('button.icon-btn.icon-btn--sm', { type: 'button', 'aria-label': 'Usar «' + f.name + '» como sticker', title: 'Usar como sticker' }, MC.icon('sticker'));
@@ -136,7 +139,7 @@
           M.deleteFile(f.id).then(function () { load(); c.toast('Se fue a la papelera.', { action: 'Deshacer', onAction: function () { M.restoreTrash('files', f.id).then(load); } }); });
         });
       });
-      return h('li.attachment', open, more, del);
+      return h('li.attachment', open, more, download, del);
     }
 
     add.addEventListener('click', function () {

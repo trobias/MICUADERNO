@@ -162,6 +162,7 @@
   /** Papelitos por mes: una fuente por momento, con imagen solo si pertenece a esa fuente visible. */
   function memoryAlbum(entries, victory) {
     var box = h('div.year-album'), groups = {}, hidden = [], links = [];
+    var photos = entries.filter(function (m) { return m.image; }).map(function (m) { return m.image; });
     var list = h(victory ? 'ul.wins' : 'ul.memories', { id: MC.uid('album') });
     entries.forEach(function (m, i) {
       var key = m.date.slice(0, 7);
@@ -172,13 +173,18 @@
       }
       var href = m.week ? R.week(m.week) : m.page ? R.page(m.page) : R.day(m.date);
       var link = h(victory ? 'a.win__link' : 'a.memory__link', { href: href },
-        m.image ? h('img.year-album__image', { src: m.image.src, alt: m.image.name, width: m.image.w, height: m.image.h, loading: 'lazy', decoding: 'async' }) : null,
         h(victory ? 'span.win__date' : 'span.memory__date', D.shortLabel(m.date)),
         h(victory ? 'span.win__text' : 'span.memory__text', m.text),
         m.detail && m.detail !== m.text ? h('span.year-album__detail', m.detail) : null,
         h('span.year-album__origin', m.origin || (m.week ? 'Meta semanal · los pequeños pasos cuentan' : 'Elegido por vos')));
+      var photo = null;
+      if (m.image) {
+        photo = h('button.year-album__photo', { type: 'button', 'aria-label': 'Ampliar foto: ' + m.image.name, dataset: { browse: '1' } },
+          h('img.year-album__image', { src: m.image.src, alt: m.image.name, width: m.image.w, height: m.image.h, loading: 'lazy', decoding: 'async' }));
+        photo.addEventListener('click', function () { c.imageViewer(photos, photos.indexOf(m.image)); });
+      }
       var row = h(victory ? 'li.win' : 'li.memory', { dataset: { memoryId: m.id } }, victory ? MC.icon('star') : null,
-        c.paperPocket((victory ? 'Victoria' : 'Recuerdo') + ' · ' + D.shortLabel(m.date), link));
+        c.paperPocket((victory ? 'Victoria' : 'Recuerdo') + ' · ' + D.shortLabel(m.date), h('div', photo, link)));
       links.push(link);
       if (i >= 6) { row.hidden = true; hidden.push(row); }
       list.appendChild(row);

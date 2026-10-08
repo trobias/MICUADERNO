@@ -707,3 +707,7 @@ Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantien
 ### 08/10/2026 · Card Folder (D62)
 
 - Victorias y recuerdos del año dentro de bolsillos pastel con nota desplegable; mantiene fuentes, enlaces, privacidad y selección existentes.
+
+### 08/10/2026 · Image Viewer (D62)
+
+- Fotos del álbum y adjuntos se amplían con miniaturas, zoom, gesto y teclado; fuentes locales validadas, descargar separado y controles de lectura permitidos.

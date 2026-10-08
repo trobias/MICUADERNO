@@ -63,7 +63,7 @@
     var title = el.querySelector(':scope > .section__title, :scope > label, :scope > h2');
     if (title && !title.querySelector('.lookonly-tag') && !el.matches('.settings-page')) title.appendChild(h('span.lookonly-tag', ' · solo para mirar'));
     MC.$$(CONTROLS, el).concat(el.matches(CONTROLS) ? [el] : []).forEach(function (c) {
-      if (c.closest(KEEP) || c.dataset.lookonly) return;
+      if (c.closest(KEEP) || c.dataset.lookonly || c.dataset.browse === '1') return;
       c.dataset.lookonly = '1';
       if (c.tagName === 'INPUT' || c.tagName === 'TEXTAREA') {
         if (c.type === 'checkbox' || c.type === 'radio' || c.type === 'file' || c.type === 'color' || c.type === 'date') c.disabled = true;
