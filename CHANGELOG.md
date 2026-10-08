@@ -1,5 +1,11 @@
 # MI CUADERNO — Cambios
 
+## 2026-10-08 · Skeleton loader and reveal al abrir (D61, cache v57)
+
+- Las casillas de la espera pulsan suavemente; el calendario listo aparece con un fundido de 260 ms. Adaptación CSS/JS clásica de Skeleton loader and reveal de transitions.dev, sin dependencias nuevas y con la mariposa/favicon D60.
+- Movimiento reducido del sistema y Ajustes en Reducidas/Ninguna: espera estática, recordada antes de abrir la base. Pulso pausa en pestaña oculta y termina al llegar contenido o fallar; sin animación durante escritura/navegación ni demora artificial.
+- La capa saliente no tapa controles y se retira al terminar o cambiar calendario. Mantiene reintento, teclado, avisos de base y permisos. Sin cambios de datos o descarga; evidencia en docs/QA.
+
 ## 2026-10-08 · Mariposa durante la apertura y favicon claro (D60, cache v56)
 
 - Una hoja con mariposa rosa/lavanda, «Cargando el cuaderno…» y esqueleto de calendario aparece desde el HTML inicial. Se reemplaza al estar lista la bienvenida o el primer calendario, sin espera artificial.

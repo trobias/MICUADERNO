@@ -3035,10 +3035,12 @@ await test('D60: descarga fallida ofrece reintentar con teclado y no abre un cua
     await page.waitForSelector('#boot-loading[data-state="failed"]');
     assert.equal(await page.locator('.planner-page, .cal-page').count(), 0);
     assert.equal(await page.locator('.boot-loading__preview').isVisible(), false);
+    assert.equal(await page.locator('#boot-loading').evaluate(el => el.getAnimations({ subtree: true }).length), 0);
     const retry = page.getByRole('button', { name: 'Volver a intentar', exact: true });
     await retry.focus(); fail = false;
     await Promise.all([page.waitForEvent('domcontentloaded'), page.keyboard.press('Enter')]);
     await page.waitForSelector('.planner-page, .cal-page');
+    await page.locator('#boot-loading').waitFor({ state: 'detached' });
     assert.equal(await page.locator('#boot-loading').count(), 0);
     assert.ok(errors.every(error => /503|No se pudo leer el cuaderno/.test(error)), errors.join('\n'));
   } finally { await context.close(); }
@@ -3061,6 +3063,94 @@ await test('D60: sin JavaScript conserva el aviso; favicon transparente reproduc
     const ico = fs.readFileSync(path.join(root, 'assets/icons/favicon.ico'));
     assert.equal(ico.readUInt16LE(2), 1); assert.equal(ico.readUInt16LE(4), 3);
   } finally { await context.close(); }
+});
+
+await test('D61: skeleton pulsa y cruza con contenido listo, sin tapar controles, escritorio y 375px', async () => {
+  const PSI = '33333333-3333-4333-8333-333333333333';
+  for (const width of [1366, 375]) {
+    const state = { me: { id: PSI, name: 'Psicóloga', hasNotebook: false,
+      shares: [{ owner: CA, name: 'Nicole', sections: { escritura: 'ver', actividades: 'ver', semana: 'ver' } }] }, parts: [] };
+    const { page, context, errors, setCookie } = await cloudContext(state);
+    await page.setViewportSize({ width, height: 812 });
+    await setCookie('mc_person', PSI); await setCookie('mc_view', CA);
+    let releasePull;
+    const gate = new Promise(resolve => { releasePull = resolve; });
+    await context.route('**/api/sync/pull**', async route => {
+      await gate;
+      await route.fulfill({ status: 200, contentType: 'application/json', body: '{"parts":[],"more":false}' });
+    });
+    try {
+      await page.goto(HTTP_URL, { waitUntil: 'domcontentloaded' });
+      await page.waitForSelector('#boot-loading.is-pulsing');
+      const pulse = await page.evaluate(() => {
+        const el = document.querySelector('.boot-loading__preview > span');
+        const animation = el.getAnimations()[0];
+        animation.pause(); animation.currentTime = 0;
+        const start = Number(getComputedStyle(el).opacity);
+        animation.currentTime = 500;
+        const halfway = Number(getComputedStyle(el).opacity);
+        animation.play();
+        return { start, halfway, text: getComputedStyle(document.querySelector('.boot-loading__message')).opacity };
+      });
+      assert.equal(pulse.start, 1); assert.equal(pulse.halfway, 0.5); assert.equal(pulse.text, '1');
+      if (process.env.E2E_CAPTURE) await page.screenshot({ path: path.join(process.env.E2E_CAPTURE, 'skeleton-pulse-' + width + '.png') });
+      await page.evaluate(() => {
+        document.addEventListener('transitionrun', event => {
+          if (!event.target.classList.contains('t-skel-content') || event.propertyName !== 'opacity') return;
+          const content = event.target, loading = document.getElementById('boot-loading');
+          const animation = content.getAnimations()[0];
+          animation.pause(); animation.currentTime = 90;
+          const head = content.querySelector('.week-day__head');
+          const rect = head.getBoundingClientRect();
+          window.__bootReveal = {
+            opacity: Number(getComputedStyle(content).opacity), duration: animation.effect.getTiming().duration,
+            inert: loading.inert, hidden: loading.getAttribute('aria-hidden'),
+            hit: !!document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2).closest('.week-day__head'),
+            pulsing: loading.getAnimations({ subtree: true }).some(a => a.animationName === 't-skel-pulse')
+          };
+          animation.play();
+        });
+      });
+      releasePull();
+      await page.waitForFunction(() => !!window.__bootReveal);
+      const reveal = await page.evaluate(() => window.__bootReveal);
+      assert.ok(reveal.opacity > 0 && reveal.opacity < 1, 'el contenido realmente entra con opacidad intermedia');
+      assert.ok(reveal.duration > 0 && reveal.duration <= 300);
+      assert.equal(reveal.inert, true); assert.equal(reveal.hidden, 'true');
+      assert.equal(reveal.hit, true); assert.equal(reveal.pulsing, false);
+      await page.locator('#boot-loading').waitFor({ state: 'detached' });
+      assert.equal(await page.locator('#main.t-skel, .t-skel-content').count(), 0);
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+      const day = page.locator('.week-day__head').first();
+      await day.focus(); await page.keyboard.press('Enter');
+      await page.waitForSelector('#panel[open] .day-head');
+      assert.deepEqual(errors, []);
+    } finally { releasePull(); await context.close(); }
+  }
+});
+
+await test('D61: Ninguna y Reducidas se recuerdan antes de abrir la base y conservan teclado y calendario', async () => {
+  for (const motion of ['ninguna', 'reducidas']) {
+    const { page, context, errors } = await newPage(browser, { serviceWorkers: 'block' });
+    try {
+      await page.goto(HTTP_URL); await onboard(page);
+      await page.evaluate(motion => MC.model.saveSettings({ motion, motionChosen: true, showCover: false }), motion);
+      await context.route('**/js/core/store.js', async route => {
+        const res = await route.fetch();
+        await route.fulfill({ response: res, body: (await res.text()) + '\n(function(){var init=MC.store.init;MC.store.init=function(){return new Promise(function(resolve){window.__openStore=resolve;}).then(function(){return init();});};})();' });
+      });
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await page.waitForFunction(() => typeof window.__openStore === 'function');
+      assert.equal(await page.getAttribute('html', 'data-motion'), motion);
+      assert.equal(await page.locator('#boot-loading').evaluate(el => el.getAnimations({ subtree: true }).length), 0);
+      await page.evaluate(() => window.__openStore());
+      await page.locator('#boot-loading').waitFor({ state: 'detached' });
+      await page.waitForSelector('.planner-page');
+      assert.equal(await page.getAttribute('html', 'data-motion'), motion);
+      assert.equal(await page.locator('.t-skel, .t-skel-content').count(), 0);
+      assert.deepEqual(errors, []);
+    } finally { await context.close(); }
+  }
 });
 
 await browser.close();

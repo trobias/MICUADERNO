@@ -1,5 +1,23 @@
 # QA cruzada (A12) — 05/10/2026
 
+## Actualización del 08/10/2026 · Skeleton loader and reveal (D61, cache v57)
+
+- Adaptación de la receta de transitions.dev: pulso real de opacidad 1 → 0.5 en las casillas; el texto mantiene opacidad 1. Cruce de capas de 260 ms al llegar el calendario listo, sin espera mínima. Conserva mariposa y favicon D60.
+- Recorridos D61 2/2: escritorio/375 px con descarga retenida; muestreo de opacidad intermedia durante el reveal, capa saliente inerte/aria-hidden, hit-test sobre el día durante el fundido y apertura con teclado después de limpiar. Reducidas/Ninguna se guardan realmente en Ajustes, se recarga reteniendo IndexedDB y se verifica el recuerdo de UI antes de abrir. D60 sigue cubriendo reduced-motion del sistema, apariencia/calendario retenidos, reintento tras fallo y sin JavaScript; el fallo ahora también comprueba cero animaciones.
+- Capturas revisadas a 1366 y 375 px: papel crema, mariposa legible, pulso pastel de las casillas, sin overflow. Los tests D61 observan animaciones del navegador, no solo las clases CSS.
+- `npm run check` completo aprobado: sintaxis de 47 scripts, 170/170 unitarias y 73/73 recorridos en Chromium local. Incluye file/HTTP, PWA/offline, base bloqueada/nueva, permisos y los recorridos D60/D61.
+- `npm run typecheck`, `npm run build` y humo de Next (`npm run e2e:cloud`) aprobados, 3/3. Sin dependencias nuevas, cambios de esquema, credenciales o servicios.
+- Revisión de motion con animate/review-animations: aprobada para la apertura, opacidad únicamente, tokens del cuaderno, fin/limpieza y guard de reduced-motion. El pulso continuo es feedback de carga solicitado por la dueña, pausado en pestaña oculta; no es una escena ambiental ni se repite al escribir.
+
+| Receta de referencia | Adaptación aplicada | Motivo |
+| --- | --- | --- |
+| Reveal de 400 ms y blur | `--dur-panel` (260 ms), `--ease-out`, solo opacidad | Cohesión del cuaderno y evitar difuminar toda la hoja |
+| Ambas capas absolutas | Calendario en flujo; solo espera saliente absoluta/inerta | Altura natural y controles utilizables al llegar datos |
+| Un pulso de demostración | Pulso mientras carga; pausa/fin explícitos | La espera real puede durar más de un segundo, sin fingir un porcentaje |
+
+- La primera corrida enfocada D60 detectó una expectativa antigua de retiro inmediato: ahora el recorrido espera que termine el fundido antes de comprobar retiro. No se alteró la comprobación de fallo, calendario vacío ni reintento.
+- Pedidos de nube simulados; no mide los 20 s de la sesión real ni confirma Production. La entrega mejora la transición, conserva la descarga completa existente.
+
 ## Actualización del 08/10/2026 · carga con mariposa y favicon (D60, cache v56)
 
 - La hoja de espera existe desde index.html: mariposa pastel, estado accesible y esqueleto decorativo estático. Sin animaciones, porcentajes inventados o espera mínima. Favicon SVG transparente y PNG/ICO legibles sin medallón; arte maestro separado de los iconos de instalación.

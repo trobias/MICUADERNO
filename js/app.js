@@ -108,13 +108,47 @@
   }
 
   var shownBase = null;     // el calendario que está en pantalla (puede ir un paso atrás de `base` mientras se dibuja el nuevo)
+  var finishBootReveal = null;
+
+  /** Cruza la espera con el calendario listo; nunca retrasa datos ni bloquea sus controles (D61). */
+  function revealBoot(loading) {
+    var content = main.firstElementChild;
+    if (!content || !MC.motion.allows('move') || MC.motion.systemReduced() || document.hidden || panelEl.open) return;
+    loading.inert = true;
+    loading.setAttribute('aria-hidden', 'true');
+    loading.classList.remove('is-pulsing');
+    content.classList.add('t-skel-content');
+    main.classList.add('t-skel', 'is-resetting');
+    main.appendChild(loading);
+    // Establece la capa de contenido antes de revelar ambas en el mismo frame.
+    void getComputedStyle(content).opacity;
+    main.classList.remove('is-resetting');
+    main.classList.add('is-revealed');
+    function finish() {
+      clearTimeout(timer);
+      content.removeEventListener('transitionend', ended);
+      main.classList.add('is-resetting');
+      loading.remove();
+      content.classList.remove('t-skel-content');
+      main.classList.remove('t-skel', 'is-resetting', 'is-revealed');
+      finishBootReveal = null;
+    }
+    function ended(e) { if (e.target === content && e.propertyName === 'opacity') finish(); }
+    content.addEventListener('transitionend', ended);
+    var duration = parseFloat(getComputedStyle(content).getPropertyValue('--reveal-dur')) || 0;
+    var timer = setTimeout(finish, duration + 80); // respaldo si se cancela la transición o cambia la preferencia
+    finishBootReveal = finish;
+  }
 
   /** Pone en pantalla un calendario ya dibujado aparte. */
   function showBase(entry, holder) {
+    if (finishBootReveal) finishBootReveal();
+    var loading = document.getElementById('boot-loading');
     var focused = main.contains(document.activeElement);
     if (shownBase && shownBase !== entry) destroy(shownBase);
     MC.clear(main);
     while (holder.firstChild) main.appendChild(holder.firstChild);
+    if (loading) revealBoot(loading);
     shownBase = entry;
     if (focused) focusMarkedDay();
   }
@@ -135,7 +169,7 @@
     sessSet('calMode', params.mode);
     followYear(params);
     if (!prev) {
-      // Primera vez (o se viene de la bienvenida): directo, sin animación.
+      // Primera vez: la espera cruza con el calendario listo; desde bienvenida, directo.
       if (shownBase) destroy(shownBase);
       if (document.getElementById('boot-loading')) {
         // La espera inicial queda visible hasta tener el calendario completo (D60).
@@ -457,6 +491,7 @@
     }
     var newer = err && err.name === 'VersionError';
     loading.dataset.state = 'failed';
+    loading.classList.remove('is-pulsing');
     loading.querySelector('h1').textContent = newer ? 'El cuaderno necesita actualizarse' : 'No pudimos abrir el cuaderno';
     loading.querySelector('.boot-loading__hint').textContent = newer ? 'Recargá para abrir la versión nueva.' : 'Probá de nuevo para abrir las páginas.';
     loading.querySelector('.boot-loading__preview').hidden = true;

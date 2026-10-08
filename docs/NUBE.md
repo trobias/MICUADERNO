@@ -1,5 +1,7 @@
 # MI CUADERNO en la nube: Vercel + Supabase (etapa B, base)
 
+**Apertura D61 (cache v57):** agrega pulso de skeleton y reveal de 260 ms cuando el calendario está listo, adaptado de transitions.dev sin dependencias nuevas. Motion recordado por persona antes de esperar base/nube; sistema reducido o Reducidas/Ninguna: estático. Conserva la carga completa y los fallos/permisos D60/D38. No mide ni optimiza la latencia real.
+
 **Apertura D60 (cache v56):** el shell inicial muestra mariposa y «Cargando el cuaderno…» hasta tener el primer calendario listo. Una descarga inicial fallida de invitada mantiene la hoja y ofrece reintentar; no abre memoria vacía como si el cuaderno estuviera listo. Los permisos y la carga completa D38 se conservan. Es feedback de espera, sin medición o mejora de latencia de Production.
 
 D59 (08/10): los nuevos recuerdos/victorias siguen usando marks en la sección anio, sin tablas, SQL, variables o servicios nuevos. category/note son elecciones personales de esa sección; las miniaturas se resuelven desde las imágenes y sus fuentes compartidas. El shell incorpora memories.js y cache v53; copia v12 aditiva, IDB 5. Verificación local/entrega en docs/QA. No implica validación con cuentas o dispositivos reales.

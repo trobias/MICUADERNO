@@ -237,7 +237,32 @@ a.months__year { text-decoration: none; padding: 4px 6px; border-radius: 6px; }
   .week-progress__partial { background: CanvasText; forced-color-adjust: none; }
 }
 
-/* ---------- Apertura del cuaderno (D60) ---------- */
+/* ---------- Apertura del cuaderno (D60–D61) ---------- */
+/* Adapted from Skeleton loader and reveal, Transitions.dev (Jakub Antalik).
+   Source revision 90988df1d42a891f69fd400154cca80aabe9fb34, 14-skeleton-reveal.md.
+   Local timing, flow-sized content and opacity only: no full-calendar blur. */
+.t-skel { position: relative; }
+.t-skel-skeleton, .t-skel-content { transition: opacity var(--reveal-dur) var(--reveal-ease); }
+.t-skel-skeleton { opacity: 1; }
+.t-skel-content { opacity: 0; }
+.t-skel.is-revealed > .t-skel-skeleton { position: absolute; inset: 0; z-index: 3; opacity: 0; pointer-events: none; }
+.t-skel.is-revealed > .t-skel-content { opacity: 1; }
+.t-skel.is-resetting > .t-skel-skeleton, .t-skel.is-resetting > .t-skel-content { transition: none; }
+.t-skel-skeleton.is-pulsing .boot-loading__preview > span { animation: t-skel-pulse var(--pulse-dur) var(--ease-in-out) var(--pulse-count); }
+.t-skel-skeleton.is-paused .boot-loading__preview > span { animation-play-state: paused; }
+.t-skel-skeleton[data-state='failed'] .boot-loading__preview > span { animation: none; }
+@keyframes t-skel-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: var(--pulse-min); }
+}
+html[data-motion='reducidas'] .t-skel-skeleton, html[data-motion='ninguna'] .t-skel-skeleton,
+html[data-motion='reducidas'] .t-skel-content, html[data-motion='ninguna'] .t-skel-content { transition: none; }
+html[data-motion='reducidas'] .t-skel-skeleton.is-pulsing .boot-loading__preview > span,
+html[data-motion='ninguna'] .t-skel-skeleton.is-pulsing .boot-loading__preview > span { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  .t-skel-skeleton, .t-skel-content { transition: none !important; }
+  .t-skel-skeleton.is-pulsing .boot-loading__preview > span { animation: none !important; }
+}
 .boot-loading { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--s-5); min-height: calc(100dvh - var(--s-8)); text-align: center; }
 .boot-loading__butterfly { width: 96px; height: 96px; flex: none; }
 .boot-loading__message { display: grid; gap: var(--s-3); max-width: 28em; }

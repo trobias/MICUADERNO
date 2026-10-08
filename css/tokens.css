@@ -159,6 +159,12 @@
   --dur-page: 420ms;
   --dur-cover: 900ms;
   --move: 1;      /* multiplicador de desplazamientos */
+  /* Skeleton loader and reveal (transitions.dev), adaptado al cuaderno. */
+  --pulse-dur: 1000ms;
+  --pulse-count: infinite;
+  --pulse-min: 0.5;
+  --reveal-dur: var(--dur-panel);
+  --reveal-ease: var(--ease-out);
 
   /* Foco */
   --focus: var(--ink);

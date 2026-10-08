@@ -336,6 +336,8 @@ Los ajustes pueden traer `hiddenDefaults: { feelings: [clave], templates: [id de
 
 **En el dispositivo:** con cuentas, la base IndexedDB se llama `mi-cuaderno@<id de la persona>` (sin cuentas, `mi-cuaderno`) y las preferencias de UI `mc.ui.<id>.<clave>`. La cookie `mc_person` guarda solo ese id. Mismos stores, mismas versiones.
 
+D61: la clave de UI `motion` recuerda el nivel efectivo de movimiento para respetarlo durante la espera, antes de abrir IndexedDB/nube. `settings.motion` y `motionChosen` conservan su contrato como fuente de Ajustes/copia/sincronización; el recuerdo de UI es prescindible y no guarda contenido personal. Sin cambio de esquema.
+
 **En Supabase** (`supabase/migrations/20261004120000_cuentas_permisos.sql`, RLS en todas):
 | Tabla | Qué guarda |
 |---|---|

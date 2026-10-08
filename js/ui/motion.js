@@ -9,6 +9,10 @@
   function apply(l) {
     level = MC.model.MOTION.indexOf(l) !== -1 ? l : 'completas';
     document.documentElement.dataset.motion = level;
+    // Preferencia de UI por persona, disponible antes de IndexedDB/nube. Settings sigue siendo la fuente.
+    MC.ui.set('motion', level);
+    var loading = document.getElementById('boot-loading');
+    if (loading) loading.classList.toggle('is-pulsing', (level === 'completas' || level === 'suaves') && loading.dataset.state !== 'failed');
   }
 
   /**
@@ -53,4 +57,9 @@
 
   MC.motion = { apply: apply, allows: allows, level: function () { return level; }, duration: duration, swap: swap,
     systemReduced: function () { return !!(mq && mq.matches); } };
+  apply(MC.ui.get('motion', 'completas'));
+  document.addEventListener('visibilitychange', function () {
+    var loading = document.getElementById('boot-loading');
+    if (loading) loading.classList.toggle('is-paused', document.hidden);
+  });
 })(typeof window !== 'undefined' ? window : globalThis);

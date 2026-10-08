@@ -1,5 +1,7 @@
 # MI CUADERNO — Traspaso para el próximo agente
 
+**D61 (08/10, cache v57):** la dueña aclaró que quiere Skeleton loader and reveal de transitions.dev. Receta adaptada sin instalación: pulso solo en casillas, fundido de 260 ms al llegar el calendario listo, sin blur/layout animado/espera artificial. Espera inerte al salir y limpieza al terminar/cambiar calendario. Reducidas/Ninguna y reduced-motion: estático; motion.js recuerda UI por persona antes de abrir base/nube. Pulso pausa al ocultar y termina al fallar/revelar. Conserva mariposa/favicon D60, copia v12/IDB 5. La descripción estática de D60 abajo es histórica. Fuente/licencia en D61 de DECISIONS y verificación en docs/QA.
+
 **D60 (08/10, cache v56):** apertura con hoja de papel, mariposa pastel y estado «Cargando el cuaderno…» desde el HTML. El primer calendario conserva la espera hasta ready; descarga inicial fallida de invitada ofrece reintentar. Favicon transparente con la misma mariposa grande, sin medallón, reproducible desde assets/icons/src/favicon.svg. Sin loops, espera mínima, copia local de invitadas o mejora de tiempos de red; copia v12/IDB 5.
 
 **Conteos simplificados del 08/10 (cache v55):** se quitó «N un poquito» del resumen y barras de Progreso y de las victorias semanales de Mi año. Cuenta N/M, rellenos pastel, medios avances, estrellas y descripción accesible intactos. Copia v12/IDB 5.
