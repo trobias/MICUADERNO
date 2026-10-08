@@ -275,6 +275,7 @@
   c.dialog = function (opts) {
     var titleId = MC.uid('dlg');
     var dlg = h('dialog.sheet', { 'aria-labelledby': titleId, class: opts.className || null });
+    if (opts.bottom !== false) dlg.classList.add('sheet--mobile-bottom');
     var body = h('div.sheet__body');
     var closeBtn = h('button.icon-btn.sheet__close', { type: 'button', 'aria-label': 'Cerrar' }, MC.icon('close'));
     body.appendChild(h('h2.sheet__title', { id: titleId }, opts.title));
@@ -303,6 +304,13 @@
       body.appendChild(row);
     }
     dlg.appendChild(closeBtn);
+    var grip = h('span.sheet__grip', { 'aria-hidden': 'true' });
+    dlg.appendChild(grip);
+    var gripStart = null;
+    grip.addEventListener('pointerdown', function (e) { if (!root.matchMedia('(max-width: 699px)').matches) return; gripStart = e.clientY; grip.setPointerCapture(e.pointerId); });
+    grip.addEventListener('pointermove', function (e) { if (gripStart == null || !MC.motion.allows('move') || MC.motion.systemReduced()) return; dlg.style.transform = 'translateY(' + MC.clamp(e.clientY - gripStart, 0, 90) + 'px)'; });
+    function releaseGrip(e) { var dismiss = gripStart != null && e.type !== 'pointercancel' && e.clientY - gripStart > 70; gripStart = null; dlg.style.transform = ''; if (dismiss) close(null); }
+    grip.addEventListener('pointerup', releaseGrip); grip.addEventListener('pointercancel', releaseGrip);
     dlg.appendChild(body);
     closeBtn.addEventListener('click', function () { close(null); });
     dlg.addEventListener('cancel', function () { result = null; });

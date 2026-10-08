@@ -15,3 +15,4 @@ Las animaciones respetan Ajustes, movimiento reducido del sistema y teclado.
 | Adaptive Stepper | Controles menos/más para metas semanales e intervalos, con límites y entrada nativa editable; reutiliza validación y reglas existentes. |
 | Sortable List | Organizar actividades permite arrastrar o subir/bajar metas; orden opcional en repeticiones, copia v13 aditiva y misma sección de permisos. |
 | Swipeable List | Deslizar una actividad hacia la izquierda revela su menú completo; nunca marca ni borra, conserva scroll vertical, teclado y permisos. |
+| Bottom Sheet | Diálogos nativos como hojas inferiores en celular, manija para cerrar, alternativa visible y Escape; foco modal nativo y movimiento reducido. |

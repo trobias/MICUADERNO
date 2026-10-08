@@ -340,6 +340,17 @@ dialog.sheet[open] { animation: sheet-in var(--dur-panel) var(--ease-out); }
 .sheet__body { padding: 28px clamp(20px, 5vw, 36px) 24px; display: grid; gap: var(--s-5); }
 .sheet__title { font-family: var(--font-display); font-size: var(--fs-xl); line-height: 1.15; padding-right: 36px; }
 .sheet__close { position: absolute; top: 10px; right: 10px; }
+.sheet__grip { display: none; }
+@media (max-width: 699px) {
+  dialog.sheet--mobile-bottom { width: 100%; max-width: none; max-height: 88dvh; margin: auto 0 0; border-radius: 16px 16px 0 0; padding-bottom: env(safe-area-inset-bottom); }
+  .sheet--mobile-bottom[open] { animation-name: bottom-sheet-in; }
+  .sheet--mobile-bottom .sheet__grip { display: block; width: 64px; height: 24px; margin: 4px auto -12px; cursor: grab; touch-action: none; }
+  .sheet--mobile-bottom .sheet__grip::after { content: ''; display: block; width: 32px; height: 4px; margin: 10px auto; background: var(--rule-strong); border-radius: 4px; }
+  .sheet--mobile-bottom .sheet__body { padding-top: 30px; }
+  @keyframes bottom-sheet-in { from { opacity: 0; transform: translateY(calc(30px * var(--move))); } to { opacity: 1; transform: none; } }
+  .menu { max-height: 70dvh; overflow-y: auto; }
+}
+@media (prefers-reduced-motion: reduce) { dialog.sheet--mobile-bottom[open] { animation: none; } }
 .sheet__actions { display: flex; flex-wrap: wrap; gap: var(--s-3); justify-content: flex-end; align-items: center; padding-top: var(--s-2); }
 .sheet__actions .spacer { flex: 1; }
 @media (max-width: 599px) {
