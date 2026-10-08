@@ -711,3 +711,7 @@ Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantien
 ### 08/10/2026 · Image Viewer (D62)
 
 - Fotos del álbum y adjuntos se amplían con miniaturas, zoom, gesto y teclado; fuentes locales validadas, descargar separado y controles de lectura permitidos.
+
+### 08/10/2026 · Infinite Masonry (D62)
+
+- Álbum opcional de fotos y dibujos en columnas de distintas alturas, carga diferida en tandas de 24, visor y enlace a su fuente; sin auto-scroll.

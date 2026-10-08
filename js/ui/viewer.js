@@ -2,6 +2,26 @@
 (function (root) {
   'use strict';
   var MC = root.MC, h = MC.h, c = MC.c;
+  /** Collage progresivo: como máximo 24 imágenes nuevas por toque, carga diferida. */
+  c.photoAlbum = function (entries) {
+    var photos = entries.filter(function (m) { return m.image; });
+    if (!photos.length) return null;
+    var drawn = 0, list = h('div.photo-collage');
+    var more = h('button.text-btn', { type: 'button', dataset: { browse: '1' } }, 'Ver más fotos');
+    var details = h('details.photo-album', h('summary', 'Ver fotos como álbum · ' + photos.length), list, more);
+    function append() {
+      var end = Math.min(drawn + 24, photos.length);
+      for (; drawn < end; drawn++) (function (m, i) {
+        var b = h('button.photo-collage__open', { type: 'button', 'aria-label': 'Ampliar ' + m.image.name, dataset: { browse: '1' } },
+          h('img', { src: m.image.src, alt: m.image.name, width: m.image.w, height: m.image.h, loading: 'lazy', decoding: 'async' }));
+        b.addEventListener('click', function () { c.imageViewer(photos.map(function (p) { return p.image; }), i); });
+        list.appendChild(h('figure.photo-collage__item', b, h('figcaption', MC.dates.shortLabel(m.date), h('a', { href: m.page ? MC.routes.page(m.page) : MC.routes.day(m.date) }, m.text))));
+      })(photos[drawn], drawn);
+      more.hidden = drawn === photos.length;
+    }
+    details.addEventListener('toggle', function () { if (details.open && !drawn) append(); });
+    more.addEventListener('click', append); return details;
+  };
   c.imageViewer = function (images, initial) {
     images = (images || []).filter(function (im) { return im && /^data:image\/(png|jpeg|webp|gif|avif);base64,/.test(im.src); });
     if (!images.length) return null;

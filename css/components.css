@@ -190,6 +190,15 @@ dialog.image-viewer { width: min(960px, calc(100% - 24px)); }
 .image-viewer__thumb { flex: none; width: 56px; height: 56px; border: 2px solid transparent; border-radius: 4px; }
 .image-viewer__thumb img { width: 100%; height: 100%; object-fit: cover; }
 .image-viewer__thumb[aria-current='true'] { border-color: var(--ink); }
+.photo-album { margin-block: var(--s-4); }
+.photo-album > summary { min-height: 44px; padding-block: var(--s-2); cursor: pointer; font-family: var(--font-text); }
+.photo-collage { columns: 2; column-gap: var(--s-3); padding: var(--s-2); }
+.photo-collage__item { break-inside: avoid; margin: 0 0 var(--s-4); padding: var(--s-2); background: var(--paper); box-shadow: var(--shadow-note); }
+.photo-collage__open { width: 100%; display: block; cursor: zoom-in; }
+.photo-collage__item img { display: block; width: 100%; height: auto; }
+.photo-collage__item figcaption { display: grid; gap: var(--s-1); padding-top: var(--s-2); font-family: var(--font-hand); font-size: var(--fs-md); }
+.photo-collage__item figcaption a { font-family: var(--font-text); font-size: var(--fs-sm); }
+@media (max-width: 420px) { .photo-collage { columns: 1; } }
 @media (hover: hover) and (pointer: fine) { .paper-pocket:focus-within .paper-pocket__note, .paper-pocket:hover .paper-pocket__note { transform: translateY(calc(-8px * var(--move))); } }
 @media (prefers-reduced-motion: reduce) { .paper-pocket__note, .paper-pocket:hover .paper-pocket__note, .paper-pocket:focus-within .paper-pocket__note { transform: none; transition: none; } }
 @media (prefers-reduced-motion: reduce) { .paper-folder__peek, .paper-folder[open] .paper-folder__peek { transform: none; transition: none; } }
