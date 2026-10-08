@@ -691,3 +691,7 @@ Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantien
 ### 08/10/2026 · Sortable List (D62)
 
 - Organizar actividades permite arrastrar o subir/bajar metas; orden opcional en repeticiones, copia v13 aditiva y misma sección de permisos.
+
+### 08/10/2026 · Swipeable List (D62)
+
+- Deslizar una actividad hacia la izquierda revela su menú completo; nunca marca ni borra, conserva scroll vertical, teclado y permisos.

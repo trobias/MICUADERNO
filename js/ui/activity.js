@@ -293,6 +293,29 @@
     li.appendChild(box);
     li.appendChild(text);
     li.appendChild(more);
+    // Deslizar solo revela opciones: nunca cambia el estado ni borra una actividad.
+    var swipe = null;
+    more.title = 'Más opciones · también podés deslizar hacia la izquierda';
+    li.addEventListener('pointerdown', function (e) {
+      if (e.pointerType === 'mouse' || more.disabled || e.target.closest('button, input, textarea, a') || li.closest('.is-lookonly')) return;
+      swipe = { x: e.clientX, y: e.clientY, id: e.pointerId, horizontal: false };
+    });
+    li.addEventListener('pointermove', function (e) {
+      if (!swipe || swipe.id !== e.pointerId) return;
+      var dx = e.clientX - swipe.x, dy = e.clientY - swipe.y;
+      if (!swipe.horizontal && Math.abs(dy) > 12 && Math.abs(dy) > Math.abs(dx)) { swipe = null; return; }
+      if (dx < -12 && Math.abs(dx) > Math.abs(dy) * 1.5) swipe.horizontal = true;
+      if (swipe.horizontal) {
+        li.classList.add('is-swiping');
+        if (MC.motion.allows('move') && !MC.motion.systemReduced()) li.style.transform = 'translateX(' + Math.max(-24, dx / 3) + 'px)';
+      }
+    });
+    function endSwipe(e) {
+      var reveal = swipe && swipe.horizontal && e.type !== 'pointercancel' && e.clientX - swipe.x < -48;
+      swipe = null; li.style.transform = ''; li.classList.remove('is-swiping');
+      if (reveal && !more.disabled) more.click();
+    }
+    li.addEventListener('pointerup', endSwipe); li.addEventListener('pointercancel', endSwipe);
     return li;
   }
 

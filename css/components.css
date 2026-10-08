@@ -230,6 +230,11 @@
 .activity__from { text-decoration-style: dashed; text-decoration-color: var(--ink-faint); }
 .activity .icon-btn { margin-right: -8px; }
 .activity__edit { flex: 1; min-width: 0; }
+@media (pointer: coarse) {
+  .activity { touch-action: pan-y; }
+  .activity.is-swiping { background: color-mix(in srgb, var(--lavender) 18%, var(--paper)); }
+  .activity.is-swiping > .icon-btn { color: var(--ink); }
+}
 .add-activity { display: flex; align-items: center; gap: 10px; min-height: 48px; border-bottom: 1px solid var(--rule); }
 .add-activity svg { width: 20px; height: 20px; color: var(--ink-faint); flex: none; margin-left: 2px; margin-right: 2px; }
 .add-activity input { flex: 1; min-width: 0; border: 0; background: transparent; font-family: var(--font-text); font-size: var(--fs-md); padding: 10px 0; }
