@@ -104,6 +104,11 @@
 
       // Hoja derecha: lo que fui notando (cuentas por período + observaciones), pequeñas victorias y lo que guardé
       var current = today.slice(0, 4) === year;
+      var rangeFrom = year + '-01-01', rangeTo = year + '-12-31', winContent, memoryContent;
+      var range = c.dateRange({ min: rangeFrom, max: rangeTo, onChange: function (from, to) {
+        rangeFrom = from; rangeTo = to; paintAlbums();
+      } });
+      range.dataset.yearTitle = 'victorias recuerdos'; right.appendChild(range);
       var insights = MC.insights.compute(all, current ? today : year + '-12-31');
       right.appendChild(h('h2.t-display.notes-title', { dataset: { yearTitle: 'cuentas notando' } }, 'Lo que fui notando'));
       part('cuentas', right).appendChild(tallies(all, current ? today : year + '-12-31', current, palette));
@@ -118,7 +123,7 @@
         pWins.appendChild(h('p.section__hint', 'Metas alcanzadas, tu primer dibujo y momentos elegidos por vos. Podés guardar una victoria desde una actividad, una hoja o “Este día…”.'));
       } else {
         pWins.appendChild(h('p.section__hint', 'También cuentan los pequeños pasos y lo que tuvo significado para vos.'));
-        pWins.appendChild(memoryAlbum(wins, true));
+        winContent = h('div', memoryAlbum(wins, true)); pWins.appendChild(winContent);
       }
 
       // Lo que guardé es un repaso y un recuerdo: no muestra días marcados para quedar afuera (PV1) ni lo borrado.
@@ -128,7 +133,14 @@
       if (!memories.length) {
         pMem.appendChild(h('p.section__hint', 'Una frase, una foto o un día especial. Elegí “Quiero recordarlo” en una actividad u hoja, “Este día…” o escribí “Qué quiero guardar” al cerrar un día.'));
       } else {
-        pMem.appendChild(memoryAlbum(memories, false));
+        memoryContent = h('div', memoryAlbum(memories, false)); pMem.appendChild(memoryContent);
+      }
+      function paintAlbums() {
+        [[winContent, wins, true], [memoryContent, memories, false]].forEach(function (group) {
+          if (!group[0]) return;
+          var chosen = group[1].filter(function (m) { return m.date >= rangeFrom && m.date <= rangeTo; });
+          MC.clear(group[0]); group[0].appendChild(chosen.length ? memoryAlbum(chosen, group[2]) : h('p.section__hint', 'No hay momentos guardados en este período.'));
+        });
       }
     });
 

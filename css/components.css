@@ -191,6 +191,11 @@ dialog.image-viewer { width: min(960px, calc(100% - 24px)); }
 .image-viewer__thumb img { width: 100%; height: 100%; object-fit: cover; }
 .image-viewer__thumb[aria-current='true'] { border-color: var(--ink); }
 .photo-album { margin-block: var(--s-4); }
+.date-range { padding: var(--s-3); margin-bottom: var(--s-4); background: color-mix(in srgb, var(--lavender) 18%, var(--paper)); }
+.date-range > summary { cursor: pointer; min-height: 36px; font-family: var(--font-text); }
+.date-range__fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-3); }
+.date-range__fields .input { min-width: 0; width: 100%; }
+@media (max-width: 420px) { .date-range__fields { grid-template-columns: 1fr; } }
 .photo-album > summary { min-height: 44px; padding-block: var(--s-2); cursor: pointer; font-family: var(--font-text); }
 .photo-collage { columns: 2; column-gap: var(--s-3); padding: var(--s-2); }
 .photo-collage__item { break-inside: avoid; margin: 0 0 var(--s-4); padding: var(--s-2); background: var(--paper); box-shadow: var(--shadow-note); }

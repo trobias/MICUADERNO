@@ -99,6 +99,30 @@
     return h('details.paper-pocket', { open: true }, h('summary.paper-pocket__seam', title), h('div.paper-pocket__note', content));
   };
 
+  c.dateRange = function (opts) {
+    var fromId = MC.uid('desde'), toId = MC.uid('hasta');
+    var from = h('input.input', { id: fromId, type: 'date', value: opts.from || opts.min, min: opts.min, max: opts.max });
+    var to = h('input.input', { id: toId, type: 'date', value: opts.to || opts.max, min: opts.min, max: opts.max });
+    var error = h('p.form-error', { role: 'alert' });
+    var apply = h('button.label-btn.label-btn--soft', { type: 'button', dataset: { browse: '1' } }, 'Ver período');
+    var reset = h('button.text-btn', { type: 'button', dataset: { browse: '1' } }, 'Todo el año');
+    var details = h('details.date-range', h('summary', 'Elegir período'),
+      h('div.date-range__fields', h('div.field', h('label', { for: fromId }, 'Desde'), from), h('div.field', h('label', { for: toId }, 'Hasta'), to)), error,
+      h('div.data-actions', apply, reset));
+    // Son filtros de lectura, no campos del cuaderno.
+    from.dataset.browse = to.dataset.browse = '1';
+    function choose() {
+      if (!MC.dates.isValid(from.value) || !MC.dates.isValid(to.value) || !from.checkValidity() || !to.checkValidity() || from.value > to.value) {
+        error.textContent = 'Elegí dos fechas de este año, con el inicio antes del final.'; return;
+      }
+      error.textContent = ''; opts.onChange(from.value, to.value);
+      details.querySelector('summary').textContent = 'Período: ' + MC.dates.shortLabel(from.value) + ' al ' + MC.dates.shortLabel(to.value);
+    }
+    apply.addEventListener('click', choose);
+    reset.addEventListener('click', function () { from.value = opts.min; to.value = opts.max; choose(); });
+    return details;
+  };
+
   /** Dónde colgar menús y avisos: dentro del diálogo abierto de más arriba (si no, quedan inertes debajo). */
   c.layer = function () {
     var open = MC.$$('dialog[open]');

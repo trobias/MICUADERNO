@@ -715,3 +715,7 @@ Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantien
 ### 08/10/2026 · Infinite Masonry (D62)
 
 - Álbum opcional de fotos y dibujos en columnas de distintas alturas, carga diferida en tandas de 24, visor y enlace a su fuente; sin auto-scroll.
+
+### 08/10/2026 · Date Range Picker (D62)
+
+- Selector opcional Desde/Hasta filtra los álbumes del año con validación de rango y vuelta al año completo; filtros de lectura no persistidos.
