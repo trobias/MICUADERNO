@@ -1,5 +1,11 @@
 # MI CUADERNO — Cambios
 
+## 2026-10-08 · Barras de actividades en pastel (cache v54)
+
+- Cada actividad tiene una barra de 24 px, con verde menta para Lo hice y amarillo manteca para Un poquito. Fondo de papel con un toque lavanda, contorno suave y esquinas de 6 px.
+- Conserva conteos, medios avances, estrellas y descripciones accesibles; alto contraste del sistema conserva sus colores. Sin datos nuevos ni dependencias.
+- Verificación visual y recorridos de progreso en `docs/QA.md`.
+
 ## 2026-10-08 · Un año de recuerdos y pequeñas victorias (D59, cache v53)
 
 - Álbum por mes con estrellas, papelitos, frases propias y miniaturas de fotos/dibujos colocados. Conserva metas semanales y Qué quiero guardar; enlaces a su día, hoja o semana y más entradas a elección.

@@ -50,7 +50,9 @@
   /* Hilos de estado */
   --thread-done: #5F8150;
   --thread-partial: #BF6E3F;
-  --progress-partial: #AE850F; /* D58: amarillo para el medio avance de Un poquito, sin cambiar su glifo. */
+  --progress-partial: #AE850F; /* D58: hilo de la estrella; el relleno pastel tiene su propio token. */
+  --progress-done-fill: #B7DCC5; /* Menta pastel: relleno de progreso, separado del hilo y del texto de estado. */
+  --progress-partial-fill: #F5D990; /* Manteca pastel: medio avance, con conteo y descripción accesible. */
   --thread-later: #6E5CA0;
   --thread-skip: var(--ink-soft);
   /* Mismos hilos, un punto más oscuros para texto chico (≥4.5:1 sobre papel) */

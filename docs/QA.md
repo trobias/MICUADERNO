@@ -1,5 +1,13 @@
 # QA cruzada (A12) — 05/10/2026
 
+## Actualización del 08/10/2026 · barras pastel (cache v54)
+
+- Barras individuales de 24 px: menta para completas y manteca para medios avances. Contorno suave y esquinas de 6 px; texto y glifos de estado conservan sus hilos oscuros.
+- `npm run check` con `E2E_GREP=D58:`: sintaxis de 47 scripts, 170/170 unitarias y recorrido D58 aprobado en file/HTTP, escritorio/375 px. Tres parciales conservan 3/3 y media barra amarilla; mezclas y recarga conservan sus cuentas. La aserción de color del recorrido se actualizó al nuevo amarillo pastel.
+- `npm run e2e` con `E2E_GREP=D59:`: recorrido D59 aprobado en file/HTTP, escritorio/375 px, incluyendo barras grandes, álbum y copia. No se repitió la suite completa de 68 recorridos para este ajuste de CSS.
+- Revisión visual adicional con avances completos, parciales y mixtos en 1366 px y 375 px: barras de 24 px, sin errores de JavaScript ni overflow horizontal. Colores forzados reemplazan el pastel por los colores del sistema; conserva descripción accesible del conteo. Sin dependencias, datos nuevos o migración.
+- `npm run build` aprobado; copia los estilos del cuaderno al shell publicado por Next. Esta verificación local no confirma la actualización de Production.
+
 ## Actualización del 08/10/2026 · álbum anual y barras grandes (D59)
 
 - Copia v12 aditiva, IDB 5, cache v53. Nuevo script clásico memories.js en index y shell; ninguna dependencia/SQL nueva.

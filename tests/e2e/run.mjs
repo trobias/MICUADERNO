@@ -2842,10 +2842,10 @@ await test('objetivos semanales D58: tres un poquito llenan media barra amarilla
     await goal.locator('.week-progress__goal-count:has-text("3/3")').waitFor();
     const paint = await goal.locator('.week-progress__partial').evaluate(el => {
       const meter = el.parentNode.getBoundingClientRect(), span = el.getBoundingClientRect();
-      return { width: span.width / meter.width, left: el.style.left, yellow: getComputedStyle(el).backgroundColor, expected: getComputedStyle(document.documentElement).getPropertyValue('--progress-partial').trim() };
+      return { width: span.width / meter.width, left: el.style.left, yellow: getComputedStyle(el).backgroundColor };
     });
     assert.ok(Math.abs(paint.width - 0.5) < 0.01, JSON.stringify(paint));
-    assert.equal(paint.left, '0%'); assert.equal(paint.yellow, 'rgb(174, 133, 15)');
+    assert.equal(paint.left, '0%'); assert.equal(paint.yellow, 'rgb(245, 217, 144)');
     assert.match(await goal.locator('progress').getAttribute('aria-valuetext'), /0 completas y 3 un poquito; 50%/);
     await page.reload(); await goal.locator('.week-progress__goal-count:has-text("3/3")').waitFor();
     assert.equal(await goal.locator('progress').getAttribute('value'), '1.5');
