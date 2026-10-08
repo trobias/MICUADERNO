@@ -747,3 +747,7 @@ Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantien
 ### 08/10/2026 · File Upload (D62)
 
 - Cola de imágenes/adjuntos con miniaturas, progreso real por archivos, errores y reintento; arrastrar adjuntos, límite vigente y permisos de Fotos. No cambia la sincronización.
+
+### 08/10/2026 · OTP Input (D62)
+
+- Ingreso del PIN con seis casillas, números siempre ocultos y un único campo nativo para pegar, editar y usar gestores de contraseñas; sin cambiar la autenticación.

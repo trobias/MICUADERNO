@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { b64ToBytes, send, useNote } from '../form';
+import PinInput from './pin-input';
 
 export type Chooser = { username: string; name: string; admin: boolean; noPin?: boolean };
 
@@ -86,7 +87,7 @@ export default function Login({ people, vapid }: { people: Chooser[] | null; vap
         ) : (
           <label>Usuario<input name="username" autoComplete="username" autoCapitalize="none" spellCheck={false} required /></label>
         )}
-        {!open && <label>PIN<input ref={pinRef} name="pin" type="password" inputMode="numeric" autoComplete="current-password" pattern="\d{6}" maxLength={6} required /></label>}
+        {!open && <PinInput inputRef={pinRef} />}
         {note.view}
         <div className="row"><button className="label-btn entrar-btn" disabled={busy}>{busy ? 'Abriendo…' : 'Abrir mi cuaderno'}</button></div>
       </form>
