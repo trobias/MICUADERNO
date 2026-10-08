@@ -3,16 +3,25 @@
   'use strict';
   var MC = root.MC;
   var h = MC.h, D = MC.dates, M = MC.model, R = MC.routes, c = MC.c;
+  var lastMode = null, pointerModeChange = false;
 
   function modeSwitch(mode, month, date, keep) {
     var sw = h('div.choice-row.cal-mode', { role: 'group', 'aria-label': 'Cómo ver el calendario' });
+    var marker = h('span.cal-mode__marker', { 'aria-hidden': 'true', style: { transform: mode === 'semana' ? 'translateX(100%)' : 'none' } });
+    sw.appendChild(marker);
     [['mes', 'Mes', 'grid'], ['semana', 'Semana', 'week']].forEach(function (m) {
       var b = h('button.choice', { type: 'button', 'aria-pressed': String(mode === m[0]) }, MC.icon(m[2]), m[1]);
-      b.addEventListener('click', function () {
+      b.addEventListener('click', function (e) {
+        pointerModeChange = e.detail > 0;
         location.hash = m[0] === 'mes' ? R.month(month || D.monthKey(date), keep) : R.week(date || (month === D.monthKey(D.today()) ? D.today() : month + '-01'));
       });
       sw.appendChild(b);
     });
+    if (lastMode && lastMode !== mode && pointerModeChange && MC.motion.allows('move') && !MC.motion.systemReduced() && marker.animate) {
+      marker.animate([{ transform: lastMode === 'semana' ? 'translateX(100%)' : 'none' }, { transform: mode === 'semana' ? 'translateX(100%)' : 'none' }],
+        { duration: MC.motion.duration('ui'), easing: getComputedStyle(document.documentElement).getPropertyValue('--ease-out').trim() });
+    }
+    lastMode = mode; pointerModeChange = false;
     return sw;
   }
 

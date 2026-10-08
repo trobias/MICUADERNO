@@ -155,6 +155,10 @@
 .rolling-value { position: relative; display: inline-block; overflow: hidden; vertical-align: bottom; font-variant-numeric: tabular-nums; }
 .rolling-value__current { display: block; }
 .rolling-value__old { position: absolute; inset: 0; pointer-events: none; }
+.cal-mode { position: relative; display: inline-grid; grid-template-columns: repeat(2, 1fr); gap: 0; isolation: isolate; padding: 3px; background: var(--paper-shade); border-radius: var(--radius-label); }
+.cal-mode__marker { position: absolute; z-index: -1; left: 3px; top: 3px; bottom: 3px; width: calc(50% - 3px); background: color-mix(in srgb, var(--butter) 50%, var(--paper)); border: 1px dashed var(--ink-faint); border-radius: 4px; pointer-events: none; }
+.cal-mode .choice { background: transparent; border-color: transparent; min-height: 44px; }
+.cal-mode .choice[aria-pressed='true'] { background: transparent; border-color: transparent; color: var(--ink); }
 .adaptive-stepper { display: inline-flex; align-items: center; gap: var(--s-1); padding: 3px; background: var(--paper-shade); border-radius: var(--radius-label); }
 .adaptive-stepper .input--num { width: 4.5rem; text-align: center; background: var(--paper); font-variant-numeric: tabular-nums; }
 .adaptive-stepper .icon-btn { color: var(--ink); }
