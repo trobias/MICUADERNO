@@ -333,6 +333,12 @@ dialog.image-viewer { width: min(960px, calc(100% - 24px)); }
   text-align: left;
   font-size: var(--fs-sm);
 }
+.bloom-menu__trigger { background: color-mix(in srgb, var(--blush) 35%, var(--paper)); color: var(--ink); }
+.menu--bloom { display: grid; grid-template-columns: repeat(2, minmax(96px, 1fr)); gap: 6px; padding: 10px; min-width: 224px; }
+.menu--bloom .menu__item { display: grid; justify-items: center; gap: 6px; min-height: 72px; text-align: center; border-radius: 6px; background: color-mix(in srgb, var(--lavender) 25%, var(--paper)); }
+.menu--bloom .menu__item:nth-child(2) { background: color-mix(in srgb, var(--blush) 30%, var(--paper)); }
+.menu--bloom .menu__item:nth-child(3) { background: color-mix(in srgb, var(--sage) 35%, var(--paper)); }
+.menu--bloom .menu__item:nth-child(4) { background: color-mix(in srgb, var(--butter) 35%, var(--paper)); }
 .menu__item svg { width: 20px; height: 20px; flex: none; }
 .menu__item[aria-checked='true'] { font-weight: 650; background: color-mix(in srgb, var(--butter) 30%, transparent); }
 .menu__item:focus-visible { outline-offset: -2px; }

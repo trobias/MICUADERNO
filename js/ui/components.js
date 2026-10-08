@@ -260,9 +260,9 @@
   /**
    * items: [{ label, icon, checked, role: 'menuitemradio'|'menuitem', onSelect }] o 'sep'.
    */
-  c.menu = function (anchor, items, label) {
+  c.menu = function (anchor, items, label, opts) {
     closeMenu(false);
-    var menu = h('div.menu', { role: 'menu', 'aria-label': label || 'Opciones', tabindex: '-1' });
+    var menu = h('div.menu', { role: 'menu', 'aria-label': label || 'Opciones', tabindex: '-1', class: opts && opts.className });
     if (supportsPopover) menu.setAttribute('popover', 'manual');
     var buttons = [];
     items.forEach(function (it) {
@@ -303,6 +303,12 @@
     var checked = buttons.filter(function (b) { return b.getAttribute('aria-checked') === 'true'; })[0];
     (checked || buttons[0]).focus();
     return menu;
+  };
+
+  c.bloomMenu = function (items) {
+    var button = h('button.icon-btn.bloom-menu__trigger', { type: 'button', 'aria-label': 'Agregar a esta hoja', 'aria-haspopup': 'menu', 'aria-expanded': 'false' }, MC.icon('plus'));
+    button.addEventListener('click', function () { c.menu(button, items, 'Agregar a esta hoja', { className: 'menu--bloom' }); });
+    return button;
   };
 
   function position(menu, anchor) {

@@ -340,6 +340,12 @@
           if (!list.length) openTray(add);
         });
         toolbar.appendChild(start);
+        toolbar.appendChild(MC.c.bloomMenu([
+          { label: 'Anotar', icon: 'edit', onSelect: function () { var field = pageEl.querySelector('textarea.write'); if (field) field.focus(); } },
+          { label: 'Foto', icon: 'upload', onSelect: function () { MC.images.uploadStickers().then(function (images) { images.forEach(function (img) { if (!decorating) setDecorating(true); add('img:' + img.id); }); }); } },
+          { label: 'Sticker', icon: 'sticker', onSelect: function () { setDecorating(true); openTray(add); } },
+          { label: 'Dibujo', icon: 'edit', onSelect: function () { drawNew(false); } }
+        ]));
         toolbar.appendChild(status);
         return;
       }

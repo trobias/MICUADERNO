@@ -731,3 +731,7 @@ Qué cambió en cada entrega, para quien usa el cuaderno y para quien lo mantien
 ### 08/10/2026 · Color Selector (D62)
 
 - Muestras con nombre y selección marcada para colores propios; radios nativos, teclado y selectores/códigos personalizados conservados.
+
+### 08/10/2026 · Bloom Menu (D62)
+
+- Un más en la barra de decorar despliega Anotar, Foto, Sticker y Dibujo en cuatro pétalos pastel; reutiliza menú accesible y acciones existentes.

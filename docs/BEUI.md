@@ -24,3 +24,4 @@ Las animaciones respetan Ajustes, movimiento reducido del sistema y teclado.
 | Heat Calendar | Mosaico anual opcional de escritura y victorias, con días neutrales, fecha local, nombres accesibles, flechas y enlace al día; dentro de la parte mapa. |
 | Tabs | Señalador pastel entre Mes y Semana, movimiento breve solo al cambiar con puntero; botones nativos, estados accesibles y preferencias de movimiento. |
 | Color Selector | Muestras con nombre y selección marcada para colores propios; radios nativos, teclado y selectores/códigos personalizados conservados. |
+| Bloom Menu | Un más en la barra de decorar despliega Anotar, Foto, Sticker y Dibujo en cuatro pétalos pastel; reutiliza menú accesible y acciones existentes. |
