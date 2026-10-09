@@ -1,5 +1,10 @@
 # MI CUADERNO — Cambios
 
+### 08/10/2026 · Pulido del cambio de calendario (D63)
+
+- Se reutiliza el deslizamiento direccional que ya tenía mes/semana, con 260 ms y easing del cuaderno. No se agrega una segunda transición.
+- Solo navegación con puntero/toque; teclado, actualización de datos, pestaña oculta y movimiento reducido quedan quietos. Otra navegación, tecleo o cambio del sistema cancela la transición activa. Cache v80.
+
 ### 08/10/2026 · Foto desde su miniatura (D63)
 
 - El visor amplía la foto al espacio disponible y conecta su entrada con la miniatura del bolsillo, collage o adjunto, manteniendo su proporción. El marco queda quieto y los controles se pueden usar desde el inicio.

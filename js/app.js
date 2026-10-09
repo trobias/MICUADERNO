@@ -23,6 +23,8 @@
   var panelTabs = document.getElementById('panel-tabs');
   var panelEl = document.getElementById('panel');
   var panelBody = document.getElementById('panel-body');
+  var basePointer = false, baseAnimation = null;
+  function stopBaseMotion() { if (baseAnimation) { baseAnimation.cancel(); baseAnimation = null; } }
 
   var base = null;          // { key, params, instance } — el calendario de fondo (o la bienvenida)
   var panel = null;         // { route, instance } — el cuadro abierto
@@ -158,6 +160,7 @@
    * El nuevo se arma aparte y entra con su animación cuando está listo (sin parpadeo, D23).
    */
   function renderBase(params) {
+    var pointerNavigation = basePointer; basePointer = false;
     var key = baseKey(params);
     if (base && base.key === key) return false;
     var prev = shownBase && shownBase.params ? shownBase : null;
@@ -193,15 +196,16 @@
     Promise.resolve(entry.instance && entry.instance.ready).then(function () {
       if (base !== entry) { destroy(entry); return; } // mientras tanto se fue a otro lado
       showBase(entry, holder);
-      if (!panelEl.open) animateBase(prev.params, params);
+      if (!panelEl.open) animateBase(prev.params, params, pointerNavigation);
     }).catch(function (err) { console.error(err); });
     return true;
   }
 
   /** Cambiar de mes desliza la hoja hacia ese lado; pasar de mes a semana (o al revés) la acomoda con una escala. */
-  function animateBase(from, to) {
+  function animateBase(from, to, pointerNavigation) {
+    stopBaseMotion();
     var el = main.firstElementChild;
-    if (!el || !el.animate || !MC.motion.allows('fade')) return;
+    if (!pointerNavigation || !el || !el.animate || !MC.motion.allows('move') || MC.motion.systemReduced() || document.hidden) return;
     var move = MC.motion.allows('move');
     var start;
     if (from.mode !== to.mode) start = move ? 'scale(0.97)' : 'none';
@@ -211,8 +215,8 @@
       var dir = b > a ? 1 : b < a ? -1 : 0;
       start = move && dir ? 'translateX(' + (28 * dir) + 'px)' : 'none';
     }
-    el.animate([{ opacity: 0, transform: start }, { opacity: 1, transform: 'none' }],
-      { duration: Math.min(300, MC.motion.duration('page') || 300), easing: 'cubic-bezier(0.23, 1, 0.32, 1)' });
+    baseAnimation = el.animate([{ opacity: 0, transform: start }, { opacity: 1, transform: 'none' }],
+      { duration: MC.motion.duration('panel'), easing: getComputedStyle(document.documentElement).getPropertyValue('--ease-out').trim() });
   }
 
   /* ---------- Calendario en vivo (DECISIONS D21) ----------
@@ -545,6 +549,10 @@
 
   function boot() {
     if (MC.cloud && MC.cloud.leaving) return; // sin sesión: js/cloud.js ya lleva al ingreso
+    main.addEventListener('click', function (e) { basePointer = e.detail > 0 && !!e.target.closest('.cal-head a, .months a, .cal-mode button'); }, true);
+    document.addEventListener('keydown', function () { basePointer = false; stopBaseMotion(); });
+    document.addEventListener('visibilitychange', function () { if (document.hidden) stopBaseMotion(); });
+    MC.on('motion:system', stopBaseMotion);
     MC.icons.injectSprite();
     buildTabs();
     if (/[?&]debug=hit(&|$)/.test(location.search)) setupHitDebug();

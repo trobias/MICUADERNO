@@ -3309,6 +3309,43 @@ await test('D62: cola de archivos reintenta errores sin duplicar y cerrar respet
   } finally { await context.close(); }
 });
 
+await test('D63: transición de calendario direccional, interrumpible y sin movimiento por teclado o sistema reducido', async () => {
+  const { page, context, errors } = await newPage(browser);
+  try {
+    await page.goto(HTTP_URL); await onboard(page); await page.click('#panel-close'); await page.waitForSelector('.planner-page');
+    await page.evaluate(() => {
+      window.__calendarAnimations = [];
+      const animate = Element.prototype.animate;
+      Element.prototype.animate = function (frames, timing) {
+        const a = animate.call(this, frames, timing);
+        if (this.parentElement && this.parentElement.id === 'main') {
+          window.__calendarAnimations.push({ frames, timing, animation: a }); a.pause(); a.currentTime = timing.duration / 2;
+        }
+        return a;
+      };
+    });
+    await page.getByRole('link', { name: 'Semana siguiente', exact: true }).click();
+    await page.waitForFunction(() => window.__calendarAnimations.length === 1);
+    assert.equal(await page.evaluate(() => window.__calendarAnimations[0].frames[0].transform), 'translateX(28px)');
+    await page.getByRole('link', { name: 'Semana anterior', exact: true }).click();
+    await page.waitForFunction(() => window.__calendarAnimations.length === 2);
+    assert.equal(await page.evaluate(() => window.__calendarAnimations[0].animation.playState), 'idle');
+    assert.equal(await page.evaluate(() => window.__calendarAnimations[1].frames[0].transform), 'translateX(-28px)');
+    const before = page.url(); await page.getByRole('link', { name: 'Semana siguiente', exact: true }).press('Enter');
+    await page.waitForURL(url => url.href !== before); await page.waitForFunction(() => window.__calendarAnimations[1].animation.playState === 'idle');
+    await page.waitForFunction(() => document.querySelector('.planner-page') && !document.querySelector('#boot-loading'));
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.getByRole('link', { name: 'Semana siguiente', exact: true }).click();
+    await page.getByRole('button', { name: 'Mes', exact: true }).click(); await page.waitForSelector('.day-cell');
+    assert.equal(await page.evaluate(() => window.__calendarAnimations.length), 2);
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.locator('.months li a:not([aria-current="date"])').first().click();
+    await page.waitForFunction(() => window.__calendarAnimations.length === 3);
+    assert.ok(await page.evaluate(() => window.__calendarAnimations[2].timing.duration <= 300));
+    assert.deepEqual(errors, []);
+  } finally { await context.close(); }
+});
+
 await browser.close();
 server.close();
 const failed = results.filter((r) => !r[0]);

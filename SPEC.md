@@ -1,5 +1,7 @@
 # MI CUADERNO — SPEC
 
+**D63 · calendario:** el deslizamiento direccional existente se conserva para puntero/toque, con 260 ms y tokens compartidos. Navegación por teclado, actualizaciones guardadas, movimiento reducido y pestaña oculta no lo disparan; una nueva navegación o tecla interrumpe la transición activa.
+
 **D63 · foto desde su miniatura:** abrir una foto con puntero conecta la miniatura con el visor mediante geometría real, escala uniforme y opacidad; ocupa el espacio disponible conservando su proporción. El diálogo y sus controles son utilizables desde el inicio. Zoom, gesto, otra foto o cierre interrumpen la entrada. Teclado, Ajustes en Reducidas/Ninguna y reduced-motion del sistema abren directamente. Es una mejora del visor D62, sin modificar imágenes, registros ni permisos.
 
 ## Interacciones de papelería · D62 (08/10/2026)
