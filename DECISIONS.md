@@ -1,5 +1,9 @@
 # Decisiones
 
+## D63 · Completar el movimiento que falta (2026-10-08)
+
+La dueña aprobó más animaciones y señaló que varias propuestas ya existían. Se conserva la base D58/D62 y las escenas: puntadas, barras, contadores, carpetas y estrella no se duplican. El visor conecta miniatura y foto con WAAPI y geometría real, con marco inmóvil, controles inmediatos y cancelación. El cambio de calendario ya deslizaba: se revisa esa implementación, sin crear otro efecto superpuesto. La confirmación de recuerdo debe ocurrir después de persistir. JS/CSS/SVG propios, tokens existentes, sin nuevos datos ni dependencias. Cada interacción mantiene su commit.
+
 ## D62 · Interacciones de Be UI adaptadas al cuaderno (2026-10-08)
 
 La dueña aprobó la selección propuesta y pidió un commit por componente. Se implementan las interacciones con JS clásico, CSS y los componentes existentes (D42); no se instala el registro React. Papel, tela, pasteles, tokens, permisos y guardado siguen vigentes. Fuentes y mapa de componentes en `docs/BEUI.md`; la propuesta no incluye los componentes financieros, chat ni cambios de arquitectura. Nuevos datos necesitan contrato y copia; una mejora visual no escribe registros nuevos.

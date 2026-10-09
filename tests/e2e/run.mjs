@@ -3198,14 +3198,38 @@ await test('D62: fotos del año, zoom, período y mosaico accesibles en escritor
         location.hash = MC.routes.year(); return today;
       });
       await page.waitForSelector('.year-album__photo');
+      await page.evaluate(() => {
+        window.__photoAnimations = [];
+        const animate = Element.prototype.animate;
+        Element.prototype.animate = function (frames, timing) {
+          const a = animate.call(this, frames, timing);
+          if (this.matches('.image-viewer__photo')) { window.__photoAnimations.push({ frames, timing }); a.pause(); a.currentTime = timing.duration / 2; }
+          return a;
+        };
+      });
       await page.locator('.year-album__photo').first().click();
       await page.waitForSelector('dialog.image-viewer[open]');
+      await page.waitForFunction(() => window.__photoAnimations.length === 1);
+      const entrance = await page.evaluate(() => window.__photoAnimations[0]);
+      assert.match(entrance.frames[0].transform, /translate\(.+scale\(/);
+      assert.ok(entrance.timing.duration > 0 && entrance.timing.duration <= 300);
+      if (process.env.E2E_CAPTURE) await page.screenshot({ path: path.join(process.env.E2E_CAPTURE, 'photo-reveal-' + width + '.png') });
       await page.getByRole('button', { name: 'Acercar foto', exact: true }).click();
+      assert.equal(await page.locator('.image-viewer__photo').evaluate(el => el.getAnimations().length), 0, 'zoom interrumpe la entrada');
       assert.match(await page.locator('.image-viewer__photo').evaluate(el => el.style.transform), /scale\(1.5\)/);
       await page.getByRole('button', { name: 'Ver completa', exact: true }).click();
       assert.match(await page.locator('.image-viewer__photo').evaluate(el => el.style.transform), /scale\(1\)/);
       await page.keyboard.press('Escape'); await page.locator('dialog.image-viewer').waitFor({ state: 'detached' });
       assert.equal(await page.locator('.year-album__photo').first().evaluate(el => el === document.activeElement), true);
+      await page.locator('.year-album__photo').first().press('Enter');
+      await page.waitForSelector('dialog.image-viewer[open]');
+      assert.equal(await page.evaluate(() => window.__photoAnimations.length), 1, 'teclado abre sin movimiento');
+      await page.keyboard.press('Escape'); await page.locator('dialog.image-viewer').waitFor({ state: 'detached' });
+      await page.emulateMedia({ reducedMotion: 'reduce' });
+      await page.locator('.year-album__photo').first().click(); await page.waitForSelector('dialog.image-viewer[open]');
+      assert.equal(await page.evaluate(() => window.__photoAnimations.length), 1, 'el sistema reducido abre sin movimiento');
+      await page.keyboard.press('Escape'); await page.locator('dialog.image-viewer').waitFor({ state: 'detached' });
+      await page.emulateMedia({ reducedMotion: 'no-preference' });
       await page.locator('.photo-album > summary').click();
       await page.locator('.photo-collage__item').first().waitFor();
       assert.equal(await page.locator('.photo-collage__item').count(), 1);

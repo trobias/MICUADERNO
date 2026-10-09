@@ -151,7 +151,7 @@
         isImg ? h('img.attachment__thumb', { src: f.data, alt: '' }) : MC.icon('download'),
         h('span.attachment__name', f.name), h('span.attachment__size', sizeLabel(f.size)));
       open.dataset.browse = '1';
-      open.addEventListener('click', function () { if (isImg) c.imageViewer([{ src: f.data, name: f.name }], 0); else MC.download(f.name, dataToBlob(f.data, f.type), f.type); });
+      open.addEventListener('click', function (e) { if (isImg) c.imageViewer([{ src: f.data, name: f.name }], 0, { source: open.querySelector('img'), pointer: e.detail > 0 }); else MC.download(f.name, dataToBlob(f.data, f.type), f.type); });
       var download = h('button.icon-btn.attachment__download', { type: 'button', 'aria-label': 'Descargar ' + f.name, dataset: { browse: '1' } }, MC.icon('download'));
       download.addEventListener('click', function () { MC.download(f.name, dataToBlob(f.data, f.type), f.type); });
       var more = [];

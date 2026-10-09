@@ -1,5 +1,10 @@
 # MI CUADERNO — Cambios
 
+### 08/10/2026 · Foto desde su miniatura (D63)
+
+- El visor amplía la foto al espacio disponible y conecta su entrada con la miniatura del bolsillo, collage o adjunto, manteniendo su proporción. El marco queda quieto y los controles se pueden usar desde el inicio.
+- Movimiento de 260 ms con los tokens existentes; teclado, Reducidas/Ninguna y sistema reducido abren directamente. Zoom, gesto, cambio de foto, ruta o cierre cancelan la entrada. Sin dependencia ni cambio de datos; cache v79.
+
 ### 08/10/2026 · Verificación de las interacciones D62
 
 - Correcciones de integración: visor desde los bolsillos, leyenda compacta del mosaico, búsqueda actualizada con datos guardados y recuerdos de actividades sin día escrito, foco del PIN y cierre del filtro de fechas.

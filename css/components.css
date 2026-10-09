@@ -195,7 +195,7 @@
 .year-album__photo .year-album__image { max-height: 200px; width: 100%; object-fit: contain; }
 dialog.image-viewer { width: min(960px, calc(100% - 24px)); }
 .image-viewer__stage { display: grid; place-items: center; height: min(55dvh, 520px); overflow: hidden; touch-action: none; background: var(--paper-shade); cursor: grab; }
-.image-viewer__photo { max-width: 100%; max-height: 100%; width: auto; object-fit: contain; user-select: none; }
+.image-viewer__photo { max-width: 100%; max-height: 100%; width: 100%; height: 100%; object-fit: contain; user-select: none; }
 .image-viewer__tools { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--s-2); }
 .image-viewer__thumbs { display: flex; gap: var(--s-2); overflow-x: auto; padding: 4px; }
 .image-viewer__thumb { flex: none; width: 56px; height: 56px; border: 2px solid transparent; border-radius: 4px; }
@@ -426,6 +426,8 @@ dialog.sheet {
 }
 dialog.sheet::backdrop { background: rgb(40 30 28 / 0.38); }
 dialog.sheet[open] { animation: sheet-in var(--dur-panel) var(--ease-out); }
+/* El visor anima la foto desde su miniatura; el marco permanece quieto para medir y usarlo. */
+dialog.sheet.image-viewer[open] { animation: none; }
 @keyframes sheet-in { from { opacity: 0; transform: translateY(calc(10px * var(--move))) scale(0.985); } to { opacity: 1; transform: none; } }
 .sheet__body { padding: 28px clamp(20px, 5vw, 36px) 24px; display: grid; gap: var(--s-5); }
 .sheet__title { font-family: var(--font-display); font-size: var(--fs-xl); line-height: 1.15; padding-right: 36px; }

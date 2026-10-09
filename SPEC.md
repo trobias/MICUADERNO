@@ -1,5 +1,7 @@
 # MI CUADERNO — SPEC
 
+**D63 · foto desde su miniatura:** abrir una foto con puntero conecta la miniatura con el visor mediante geometría real, escala uniforme y opacidad; ocupa el espacio disponible conservando su proporción. El diálogo y sus controles son utilizables desde el inicio. Zoom, gesto, otra foto o cierre interrumpen la entrada. Teclado, Ajustes en Reducidas/Ninguna y reduced-motion del sistema abren directamente. Es una mejora del visor D62, sin modificar imágenes, registros ni permisos.
+
 ## Interacciones de papelería · D62 (08/10/2026)
 
 Selección de 19 interacciones inspiradas en Be UI, integradas sin dependencias nuevas: [mapa de componentes y contratos](docs/BEUI.md). Casillas con puntadas, contadores con transición, frecuencia con menos/más, orden de metas con arrastre o teclado, opciones de actividad con gesto y diálogos inferiores en celular. La página del día espera la carga inicial de rutinas antes de mostrar sus casillas; mes/semana mantienen D57. Ningún gesto marca ni borra.
