@@ -1,5 +1,7 @@
 # MI CUADERNO — SPEC
 
+**D63 · guardar un momento:** el aviso confirmado muestra un papelito entrando en un bolsillo durante 200 ms después de persistir y cerrar el editor. El enlace Ver abre Mi año. Con teclado, movimiento reducido o escritura activa, el papelito es estático. Quitar un momento, señalar una repetición especial y los errores no disparan el efecto de guardado en el año. La confirmación no desaparece al retirar el diálogo.
+
 **D63 · calendario:** el deslizamiento direccional existente se conserva para puntero/toque, con 260 ms y tokens compartidos. Navegación por teclado, actualizaciones guardadas, movimiento reducido y pestaña oculta no lo disparan; una nueva navegación o tecla interrumpe la transición activa.
 
 **D63 · foto desde su miniatura:** abrir una foto con puntero conecta la miniatura con el visor mediante geometría real, escala uniforme y opacidad; ocupa el espacio disponible conservando su proporción. El diálogo y sus controles son utilizables desde el inicio. Zoom, gesto, otra foto o cierre interrumpen la entrada. Teclado, Ajustes en Reducidas/Ninguna y reduced-motion del sistema abren directamente. Es una mejora del visor D62, sin modificar imágenes, registros ni permisos.

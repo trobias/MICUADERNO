@@ -2959,6 +2959,7 @@ await test('D59: victorias personales, momentos especiales y álbum con imágene
       await page.screenshot({ path: path.join(process.env.E2E_CAPTURE, 'memories-saved-' + viewport.width + '.png') });
     }
     await page.reload();
+    await page.locator('.cover__board, .year-album').first().waitFor();
     if (await page.locator('.cover__board').count()) await openCover(page);
     await page.waitForSelector('.year-album');
     assert.equal(await page.locator('.win', { hasText: 'Me di tiempo para descansar' }).count(), 1);
@@ -3342,6 +3343,49 @@ await test('D63: transición de calendario direccional, interrumpible y sin movi
     await page.locator('.months li a:not([aria-current="date"])').first().click();
     await page.waitForFunction(() => window.__calendarAnimations.length === 3);
     assert.ok(await page.evaluate(() => window.__calendarAnimations[2].timing.duration <= 300));
+    assert.deepEqual(errors, []);
+  } finally { await context.close(); }
+});
+
+await test('D63: papelito solo tras guardar, aviso visible fuera del editor y alternativa estática', async () => {
+  const { page, context, errors } = await newPage(browser, { viewport: { width: 375, height: 860 } });
+  try {
+    await page.goto(FILE_URL); await onboard(page);
+    await page.evaluate(() => {
+      window.__receiptAnimations = [];
+      const animate = Element.prototype.animate;
+      Element.prototype.animate = function (frames, timing) {
+        const a = animate.call(this, frames, timing);
+        if (this.matches('.memory-receipt__paper')) { window.__receiptAnimations.push({ frames, timing }); a.pause(); a.currentTime = timing.duration / 2; }
+        return a;
+      };
+      return MC.memories.editor('day', MC.dates.today(), 'recuerdo', { title: 'Un día para guardar' });
+    });
+    await page.locator('.memory-editor textarea').fill('El paseo de Nicole');
+    await page.getByRole('button', { name: 'Guardar en Mi año', exact: true }).click();
+    await page.locator('.memory-editor').waitFor({ state: 'detached' }); await page.locator('.toast:not([hidden]) .memory-receipt').waitFor();
+    assert.equal(await page.evaluate(() => window.__receiptAnimations.length), 1);
+    assert.ok(await page.locator('.toast').evaluate(el => el.getBoundingClientRect().width > 300));
+    assert.equal(await page.locator('.toast').evaluate(el => !!el.closest('#panel') && !el.closest('.memory-editor')), true);
+    assert.equal(await page.evaluate(async () => (await MC.model.getMarks()).filter(m => m.note === 'El paseo de Nicole').length), 1);
+    assert.ok(await page.evaluate(() => window.__receiptAnimations[0].timing.duration <= 300));
+    if (process.env.E2E_CAPTURE) await page.screenshot({ path: path.join(process.env.E2E_CAPTURE, 'memory-receipt-375.png') });
+    await page.locator('.toast').getByRole('button', { name: 'Ver', exact: true }).click(); await page.waitForSelector('.memory');
+    assert.match(await page.locator('.memory').innerText(), /El paseo de Nicole/);
+    await page.evaluate(() => MC.memories.editor('day', MC.dates.today(), 'recuerdo'));
+    await page.getByRole('button', { name: 'Guardar en Mi año', exact: true }).press('Enter');
+    await page.locator('.memory-editor').waitFor({ state: 'detached' });
+    assert.equal(await page.evaluate(() => window.__receiptAnimations.length), 1, 'teclado confirma sin animar');
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.evaluate(() => MC.memories.editor('day', MC.dates.today(), 'recuerdo'));
+    await page.getByRole('button', { name: 'Guardar en Mi año', exact: true }).click(); await page.locator('.memory-editor').waitFor({ state: 'detached' });
+    assert.equal(await page.evaluate(() => window.__receiptAnimations.length), 1, 'sistema reducido confirma sin animar');
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.evaluate(() => { window.__setMemory = MC.model.setMemory; MC.model.setMemory = () => Promise.reject(new Error('Guardado interrumpido')); return MC.memories.editor('day', MC.dates.today(), 'recuerdo'); });
+    await page.getByRole('button', { name: 'Guardar en Mi año', exact: true }).click();
+    await page.locator('.memory-editor [role="alert"]:not([hidden])').waitFor();
+    assert.equal(await page.evaluate(() => window.__receiptAnimations.length), 1, 'un error nunca celebra un guardado');
+    assert.equal(await page.locator('.memory-editor').isVisible(), true);
     assert.deepEqual(errors, []);
   } finally { await context.close(); }
 });

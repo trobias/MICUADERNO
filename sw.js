@@ -3,7 +3,7 @@
    NO pasan por acá: viven en IndexedDB. Al cambiar cualquier archivo de SHELL, subir CACHE_VERSION. */
 'use strict';
 
-var CACHE_VERSION = 'mi-cuaderno-v80';
+var CACHE_VERSION = 'mi-cuaderno-v81';
 var SHELL = [
   './', 'index.html', 'manifest.webmanifest',
   'css/fonts.css', 'css/tokens.css', 'css/base.css', 'css/notebook.css', 'css/components.css', 'css/views.css', 'css/print.css',

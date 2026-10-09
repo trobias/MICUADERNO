@@ -6,6 +6,8 @@ Son implementaciones propias para el cuaderno clásico inspiradas en las interac
 Se reutilizan rutas, permisos, guardado y tokens; sin recursos externos durante el uso.
 Las animaciones respetan Ajustes, movimiento reducido del sistema y teclado.
 
+D63 agrega entrada de foto desde miniatura y papelito tras guardar un recuerdo; refina el deslizamiento que el calendario ya tenía. No agrega componentes de terceros ni duplica la selección D62. Shell actual: cache v81 (v78 corresponde a la entrega D62).
+
 ## Datos, permisos y límites
 
 - Copia v13/IDB 5: solo `routines.order` opcional agrega datos. Reordenar no fusiona actividades ni reemplaza planes históricos. Las migraciones anteriores son aditivas; nube y copia conservan el orden.

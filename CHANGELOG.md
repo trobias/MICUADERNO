@@ -1,5 +1,10 @@
 # MI CUADERNO — Cambios
 
+### 08/10/2026 · Papelito al guardar un recuerdo (D63)
+
+- Después de guardar y cerrar el editor, el aviso muestra un papelito entrando en un bolsillo pastel. La confirmación y el enlace Ver permanecen visibles en la hoja abierta.
+- El efecto ocurre solo después de persistir y con puntero; errores, quitar recuerdos y señalar repeticiones especiales no lo disparan. Teclado, movimiento reducido o escritura activa conservan confirmación estática. Cache v81; copia v13/IDB 5.
+
 ### 08/10/2026 · Pulido del cambio de calendario (D63)
 
 - Se reutiliza el deslizamiento direccional que ya tenía mes/semana, con 260 ms y easing del cuaderno. No se agrega una segunda transición.

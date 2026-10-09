@@ -432,6 +432,8 @@
     }
     if (toastEl.parentNode !== c.layer()) c.layer().appendChild(toastEl);
     MC.clear(toastEl);
+    toastEl.classList.toggle('toast--illustrated', !!opts.decoration);
+    if (opts.decoration) toastEl.appendChild(opts.decoration);
     toastEl.appendChild(h('span', text));
     if (opts.action) {
       var b = h('button', { type: 'button' }, opts.action);

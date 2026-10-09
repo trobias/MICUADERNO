@@ -6,6 +6,8 @@
 
 ## 1. Esencia
 
+**D63 · continuidad y confirmación:** al abrir una foto con toque/clic, la imagen viaja desde su miniatura con escala uniforme dentro de un marco quieto (260 ms); zoom, cierre y cambio de foto interrumpen la entrada. El calendario conserva su deslizamiento direccional existente (260 ms), únicamente tras navegación con puntero. Un papelito entra en un bolsillo (200 ms) al guardar realmente un recuerdo; el aviso queda en la capa activa después de cerrar el editor. Teclado y movimiento reducido reciben el estado final estático. Solo transform/opacity y tokens existentes; sin demorar controles ni persistencia.
+
 **Un diario de tela, bordado a mano, que se abre sobre la mesa.**
 
 - La tapa es **tela de encuadernar** (lino) de un color pleno, con una mariposa bordada y un elástico.

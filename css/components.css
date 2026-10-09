@@ -470,6 +470,13 @@ dialog.sheet.image-viewer[open] { animation: none; }
 }
 .toast[hidden] { display: flex !important; opacity: 0; transform: translate(-50%, calc(8px * var(--move))); pointer-events: none; visibility: hidden; }
 .toast button { color: var(--butter); font-weight: 650; text-decoration: underline; text-underline-offset: 3px; min-height: 32px; }
+.toast--illustrated { width: min(92vw, 480px); }
+.memory-receipt { width: 40px; height: 40px; flex: none; }
+.memory-receipt svg { display: block; width: 100%; height: 100%; }
+.memory-receipt__paper rect { fill: var(--butter); }
+.memory-receipt__paper path { fill: none; stroke: var(--ink); stroke-width: 1.5; }
+.memory-receipt__pocket { fill: var(--lavender); stroke: var(--paper); stroke-width: 1; }
+.memory-receipt__check { fill: none; stroke: var(--ink); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
 @media (max-width: 699px) { .toast { bottom: calc(76px + env(safe-area-inset-bottom)); } }
 
 /* ---------- Cuaderno compartido (nube, D38): de quién es y qué se puede hacer ---------- */

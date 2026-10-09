@@ -1,5 +1,24 @@
 # QA cruzada (A12) — 05/10/2026
 
+## Actualización del 08/10/2026 · Continuidad y confirmación (D63, cache v81)
+
+- Dos interacciones nuevas y un refinamiento del calendario existente; sin dependencias ni cambios de datos (copia v13/IDB 5).
+- Recorridos enfocados **3/3**: foto a 1280/375 px con entrada muestreada a mitad de animación, cancelación por zoom, teclado y sistema reducido; calendario con dirección, interrupción, cambio de mes y alternativas estáticas; recuerdo persistido antes del aviso, enlace a Mi año, teclado, sistema reducido y error de guardado sin falsa confirmación.
+- Capturas sintéticas revisadas: foto en tránsito y aviso a 375 px. Se corrigió el ancho del aviso ilustrado para evitar texto apilado; conserva acción Ver y queda fuera del editor cerrado. No se usaron datos personales.
+- `npm run typecheck`, build de producción y `npm run e2e:cloud` **3/3** aprobados con Next local.
+- `npm run check`: sintaxis de **50** scripts y **172/172** unitarias aprobadas; corrida completa **78/79**. D59 agotó la espera después de recargar: consultaba la tapa antes de terminar el arranque. Pasó al repetirlo; se reemplazó la consulta inmediata por una espera explícita de tapa/álbum. Los recorridos D62/D63 pasaron dentro de la corrida completa. No se presenta esa corrida como 79/79.
+- D59 volvió a pasar **1/1** después de corregir su espera (file/HTTP, escritorio/375 px); no cambió código de producción para resolver ese fallo.
+
+### Revisión de animaciones
+
+| Antes | Después | Por qué |
+| --- | --- | --- |
+| Foto abría sin continuidad con su miniatura | Imagen con escala uniforme y recorrido desde la miniatura; marco estático, 260 ms (`js/ui/viewer.js:92`) | Conserva el origen visual; zoom/cierre cancelan la entrada sin bloquear controles. |
+| Calendario ya deslizaba al navegar | Misma dirección, token de 260 ms y cancelación; teclado/sistema reducido estáticos (`js/app.js:205`) | Evita duplicar la interacción y movimiento innecesario al usar teclado. |
+| Aviso de recuerdo podía desaparecer con el editor | Aviso en capa activa y papel entrando al bolsillo, 200 ms, solo tras persistir (`js/ui/memories.js:23`) | Confirma una operación real sin retrasarla; fallo no genera celebración. |
+
+**Veredicto: Approve.** Solo transform/opacity, easing existente, duración acotada, sin loops nuevos; teclado y preferencias reducidas tienen alternativa estática. Se comprobaron cuadros intermedios en Chromium, no fluidez en dispositivos físicos. No se midió la sesión de la psicóloga, la demora de descarga ni Production.
+
 ## Actualización del 08/10/2026 · Interacciones de papelería (D62, cache v78)
 
 - Selección de 19 componentes, cada uno en un commit; adaptación propia en JS/CSS clásicos, sin instalaciones. Mapa en `docs/BEUI.md`. Copia v13 aditiva por orden de rutinas; IndexedDB 5.
