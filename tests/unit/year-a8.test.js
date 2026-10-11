@@ -6,6 +6,27 @@ const MC = require('./_load').load();
 const M = MC.model;
 const I = MC.insights;
 
+test('D64: las victorias usan la misma meta con sueltas, fecha de alcance e historial; sin permisos no se inventan', () => {
+  const f = require('../fixtures/weekly-progress.cjs')();
+  const all = { days: [], pages: [], marks: [], activities: f.activities, routines: [],
+    weeks: [{ week: f.start, activityPlan: M.activityPlan(f.start, f.routines.map(M.normalizeRoutine)) }] };
+  const wins = () => I.victories(all, '2026').filter(v => v.sourceType === 'week');
+  const own = wins();
+  assert.deepEqual(own.map(v => [v.text, v.date]), [['Caminar · 3/3', f.dates[4]]]);
+  assert.deepEqual(wins(), own);
+  const cloud = MC.cloud, sync = MC.sync;
+  MC.cloud = { mode: 'guest' };
+  try {
+    MC.sync = { level: section => section === 'actividades' ? 'ver' : null };
+    assert.deepEqual(wins(), []);
+    MC.sync = { level: section => section === 'repeticiones' ? 'ver' : null };
+    assert.deepEqual(wins(), []);
+    MC.sync = { level: () => 'ver' };
+    assert.deepEqual(wins(), own);
+  } finally { MC.cloud = cloud; MC.sync = sync; }
+  assert.deepEqual(all.marks, []);
+});
+
 async function fresh() {
   await MC.store.init({ memory: true });
   await M.loadSettings();

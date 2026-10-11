@@ -151,7 +151,7 @@ test('agrupa rutinas y actividades sueltas por nombre, conservando todas las reg
   acts.push({ id: 'extra-walk', date: START, title: 'Caminar', status: 'postponed' });
   const p = M.weeklyProgress(START, plan, acts);
   assert.equal(p.goals.length, 1);
-  assert.deepEqual([p.goals[0].done, p.goals[0].total], [3, 5]);
+  assert.deepEqual([p.goals[0].done, p.goals[0].total], [3, 4], 'la suelta no crea otra obligación de Caminar');
   assert.deepEqual(p.goals[0].routineIds, ['walk-a', 'walk-b']);
   assert.equal(plan.length, 2, 'agrupar no modifica ni borra reglas');
 });
@@ -180,7 +180,69 @@ test('medios avances agrupados respetan estados, privacidad, papelera y oportuni
   assert.deepEqual([p.done, p.partial, p.checked, p.value, p.total], [1, 0, 1, 1, 4]);
   const rs = [routine('fixed-half', { type: 'weekdays', days: [1, 2, 3] }, { title: 'Leer' })];
   p = M.weeklyProgress(START, M.activityPlan(START, rs), [record('fixed-half', START, 'partial', { title: 'Leer' }), ...acts]);
-  assert.deepEqual([p.goals.length, p.checked, p.value, p.total], [1, 4, 2.5, 9]);
+  assert.deepEqual([p.goals.length, p.checked, p.value, p.total], [1, 3, 2, 3]);
+});
+
+test('D64: las sueltas aportan a la meta sin duplicar oportunidades; 43%, Caminar 3/3 y una adicional', async () => {
+  const f = require('../fixtures/weekly-progress.cjs')();
+  const before = JSON.stringify(f);
+  const plan = M.activityPlan(f.start, f.routines.map(M.normalizeRoutine));
+  const p = M.weeklyProgress(f.start, plan, f.activities);
+  assert.deepEqual([p.checked, p.value, p.total, p.percent], [8, 6.5, 15, 43]);
+  assert.deepEqual(p.goals.map(g => [g.title, g.checked, g.total]), [
+    ['Trabajar', 3, 5], ['Caminar', 3, 3], ['Practica Diseño', 2, 5], ['Salir con una amiga', 0, 1], ['Bici', 0, 1]
+  ]);
+  assert.deepEqual([p.goals[1].recorded, p.goals[1].extra], [4, 1]);
+  assert.equal(JSON.stringify(f), before, 'no enlaza, borra ni reescribe registros');
+  await MC.store.init({ memory: true });
+  const backup = MC.backup.validate(MC.backup.build({ ...await M.everything(), activities: f.activities, routines: f.routines, weeks: [{ week: f.start, activityPlan: plan }] }));
+  assert.equal(backup.ok, true, backup.error);
+  assert.equal(backup.payload.activities.length, 14);
+  assert.equal(M.weeklyProgress(f.start, backup.payload.weeks[0].activityPlan, backup.payload.activities).percent, 43);
+});
+
+test('D64: sin plan compartido solo devuelve registros; nunca un porcentaje ni una meta 4/4', () => {
+  const f = require('../fixtures/weekly-progress.cjs')();
+  const p = M.weeklyProgress(f.start, [], f.activities, [], { complete: false, missing: 'repeticiones' });
+  assert.deepEqual([p.complete, p.percent, p.total, p.value, p.checked], [false, null, null, null, 9]);
+  const walk = p.goals.find(g => g.title === 'Caminar');
+  assert.deepEqual([walk.checked, walk.total], [4, null]);
+});
+
+test('D64: completos primero, nombres normalizados y semanas sin meta conservan las sueltas', () => {
+  const plan = M.activityPlan(START, [routine('walking', { type: 'weeklyTarget', count: 3 }, { title: 'Caminar' })]);
+  const acts = [record('walking', START, 'partial', { title: 'Caminar' }),
+    ...[1, 2, 3, 4].map(n => ({ id: 'own-' + n, title: ' CAMINÁR ', date: D.addDays(START, n), status: 'done' }))];
+  const p = M.weeklyProgress(START, plan, acts);
+  assert.deepEqual([p.done, p.partial, p.total, p.percent, p.goals[0].extra], [3, 0, 3, 100, 2]);
+  assert.deepEqual([M.weeklyProgress(START, [], acts).checked, M.weeklyProgress(START, [], acts).total], [5, 5]);
+  const hidden = [{ date: D.addDays(START, 1), privacy: { noInsights: true } },
+    { date: D.addDays(START, 2), deletedAt: '2026-10-01T00:00:00Z' }];
+  assert.equal(M.weeklyProgress(START, plan, acts, hidden).value, 2.5);
+});
+
+test('D64: permisos completos producen el mismo cálculo; mirar usa el plan recibido sin recalcularlo', async () => {
+  const f = require('../fixtures/weekly-progress.cjs')();
+  await MC.store.init({ memory: true });
+  const plan = M.activityPlan(f.start, f.routines.map(M.normalizeRoutine));
+  await MC.store.put('weeks', { week: f.start, activityPlan: plan });
+  for (const a of f.activities) await MC.store.put('activities', a);
+  const owner = await M.getWeeklyProgress(f.start, plan);
+  const cloud = MC.cloud, sync = MC.sync;
+  MC.cloud = { mode: 'guest' };
+  try {
+    MC.sync = { level: section => section === 'actividades' ? 'ver' : null };
+    assert.equal((await M.getWeeklyProgress(f.start, [])).percent, null);
+    MC.sync = { level: section => section === 'repeticiones' ? 'ver' : null };
+    assert.equal((await M.getWeeklyProgress(f.start, plan)).complete, false);
+    MC.sync = { level: () => 'ver' };
+    assert.deepEqual(await M.getWeeklyProgress(f.start, plan), owner);
+    assert.deepEqual(await M.ensureActivityPlan(f.start, []), plan);
+    const current = D.startOfWeek(D.today());
+    const currentPlan = M.activityPlan(current, f.routines.map(M.normalizeRoutine));
+    await MC.store.put('weeks', { week: current, activityPlan: currentPlan });
+    assert.deepEqual(await M.ensureActivityPlan(current, []), currentPlan, 'la invitada conserva también el plan recibido de la semana actual');
+  } finally { MC.cloud = cloud; MC.sync = sync; }
 });
 
 test('el calendario oculta solo pending: conserva los otros cuatro estados y las hojas', async () => {

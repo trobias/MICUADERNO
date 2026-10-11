@@ -1,5 +1,7 @@
 # MI CUADERNO — DESIGN
 
+**D64 · lectura de Progreso:** N/M y estrella usan la meta limitada; si hay más marcas, el texto añade «N registros adicionales». Sin metas compartidas, mostrar «N registros» y un aviso explicativo, ocultando barras, porcentaje y completo. Sin actividades compartidas, avisar que faltan registros y ocultar conteos. Mantiene tipografía, tokens, accesibilidad y motion existentes; no añade celebración ni controles. Contrato: `docs/PROGRESO_SEMANAL.md`.
+
 > Reglas visuales, de interacción y de motion. Si una decisión no está acá, se decide en coherencia con §1 y se agrega acá.
 
 **D62 · interacciones de papelería:** referencias de Be UI reinterpretadas con los tokens existentes: hojas salvia/manteca/rosa/lavanda, carpetas por mes, bolsillos con notas y controles discretos plegados. Las casillas mantienen sus estados; los contadores muestran siempre el valor real. Menos/más conserva entrada editable; arrastre y gesto tienen alternativa visible de teclado/toque. En móvil los diálogos se apoyan abajo, conservando cierre y foco nativos. Filtros se cierran al aplicarse. Visor: foto protagonista, miniaturas y zoom explícito; collage solo al abrirlo y por tandas. Mosaico neutro, con texto y glifos de escritura/victoria, nunca niveles que juzguen a la persona. Sin movimiento inicial ni loops nuevos, sin animar guardado/contadores mientras se escribe; sistema reducido y Ajustes mandan. Contratos y destinos en `docs/BEUI.md`.

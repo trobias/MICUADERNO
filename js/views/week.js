@@ -101,6 +101,7 @@
       return h('section.week-progress', { 'aria-labelledby': 'week-progress-title' },
         h('div.week-progress__head', h('h3', { id: 'week-progress-title' }, 'Progreso semanal'), h('span.week-progress__percent')),
         progressMeter('Progreso semanal', 100),
+        h('p.week-progress__notice.t-meta', { hidden: true }),
         h('p.week-progress__count.t-meta', { 'aria-live': 'polite', 'aria-atomic': 'true' }),
         h('ul.week-progress__goals'),
         h('details.week-progress__details', { dataset: { focus: 'goals' } },
@@ -114,11 +115,18 @@
       var seq = ++progressSeq;
       return M.getWeeklyProgress(start, plan).then(function (p) {
         if (destroyed || !progressBox || seq !== progressSeq) return;
-        c.rollText(progressBox.querySelector('.week-progress__percent'), p.total ? p.percent + '%' : '—');
+        var percent = progressBox.querySelector('.week-progress__percent');
+        percent.hidden = !p.complete;
+        c.rollText(percent, p.complete && p.total ? p.percent + '%' : '—');
         var bar = progressBox.querySelector('progress');
-        updateMeter(bar, p, 100);
+        bar.parentNode.hidden = !p.complete;
+        if (p.complete) updateMeter(bar, p, 100);
+        var notice = progressBox.querySelector('.week-progress__notice');
+        notice.hidden = p.complete;
+        notice.textContent = p.complete ? '' : p.missing === 'actividades' ? 'Las metas están compartidas, pero no los registros de actividades. El progreso semanal no está disponible.' : 'Podés mirar los registros. Las metas no están compartidas, por eso el progreso semanal no está disponible.';
         if (!p.total) bar.setAttribute('aria-valuetext', 'Sin actividades programadas');
-        progressBox.querySelector('.week-progress__count').textContent = p.total ? (p.partial ? p.checked + ' de ' + p.total + ' actividades registradas' : p.done + ' de ' + p.total + ' actividades completadas') : 'Todavía no hay actividades programadas para esta semana.';
+        progressBox.querySelector('.week-progress__count').hidden = !p.complete && p.missing === 'actividades';
+        progressBox.querySelector('.week-progress__count').textContent = !p.complete ? p.checked + (p.checked === 1 ? ' actividad registrada' : ' actividades registradas') : p.total ? (p.partial ? p.checked + ' de ' + p.total + ' actividades registradas' : p.done + ' de ' + p.total + ' actividades completadas') : 'Todavía no hay actividades programadas para esta semana.';
         var ul = progressBox.querySelector('.week-progress__goals');
         var present = Object.create(null);
         var defaults = M.weeklyDefaults(start);
@@ -183,11 +191,12 @@
             ul.appendChild(row);
           }
           ul.appendChild(row); // El orden cambia sin reemplazar los controles ni sus listeners.
-          c.rollText(row.querySelector('.week-progress__goal-count'), g.checked + '/' + g.total + (g.done === g.total ? ' · completo' : '') + (g.flexible ? ' · días a elección' : ''));
+          c.rollText(row.querySelector('.week-progress__goal-count'), !p.complete ? g.checked + (g.checked === 1 ? ' registro' : ' registros') : g.checked + '/' + g.total + (g.done === g.total ? ' · completo' : '') + (g.flexible ? ' · días a elección' : '') + (g.extra ? ' · ' + g.extra + (g.extra === 1 ? ' registro adicional' : ' registros adicionales') : ''));
           var goalBar = row.querySelector('progress');
-          updateMeter(goalBar, g, g.total);
+          goalBar.parentNode.hidden = !p.complete;
+          if (p.complete) updateMeter(goalBar, g, g.total);
           var victory = row.querySelector('.week-progress__victory');
-          var reached = g.checked === g.total;
+          var reached = p.complete && g.checked === g.total;
           var newlyReached = victory.hidden && reached;
           victory.hidden = !reached;
           var starKey = start + ':' + key;

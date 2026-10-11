@@ -2,11 +2,13 @@
 
 *un lugarcito para mí ♡*
 
-Mi año también guarda pequeñas victorias y recuerdos con su fecha e imagen: desde el menú de una actividad/hoja o “Este día…”, elegí qué querés conservar. Podés señalar una repetición como especial una sola vez: al marcarla aparece en el año, incluso Un poquito. El primer dibujo del año aparece automáticamente cuando queda colocado en una fuente visible; una creación terminada se elige desde su hoja. Copia v12, IDB 5, cache v53 (D59). Las barras individuales de Progreso son más grandes, de 16 px.
+Mi año también guarda pequeñas victorias y recuerdos con su fecha e imagen: desde el menú de una actividad/hoja o “Este día…”, elegí qué querés conservar. Podés señalar una repetición como especial una sola vez: al marcarla aparece en el año, incluso Un poquito. El primer dibujo del año aparece automáticamente cuando queda colocado en una fuente visible; una creación terminada se elige desde su hoja. Copia v13, IDB 5; barras individuales de Progreso de 24 px.
+
+**Corrección D64 (cache v82, pendiente de publicación):** las actividades sueltas del mismo nombre aportan a la meta prevista sin aumentar las obligaciones; los registros adicionales se conservan. Para mirar el progreso de las metas en un cuaderno compartido hacen falta Actividades y Repeticiones; si faltan metas, se muestran solo los registros y un aviso. Contrato y pruebas en [docs/PROGRESO_SEMANAL.md](docs/PROGRESO_SEMANAL.md).
 
 Un diario personal con forma de cuaderno de tela bordado: podés escribir cómo te sentiste al empezar y terminar el día, y antes o después de una actividad, con tus propias palabras. Hay actividades con estados amables (*lo hice · hice un poquito · lo dejo para otro día · hoy no salió*), rutinas, páginas libres, stickers y dibujos, adjuntos, calendario, año bordado y recuerdos. Nada se pierde de golpe: hay papelera, deshacer y un “guardado ✓” que avisa cuándo quedó guardado; cada día o página puede marcarse como privado.
 
-**En la versión actual, todo queda en este dispositivo.** No hay estadísticas de uso. La base de la versión en la nube (cuenta con usuario y PIN, permisos por sección, avisos) ya está hecha pero **todavía no está publicada** ni sincroniza datos: ver [`docs/NUBE.md`](docs/NUBE.md) y [`MIGRATION_PLAN.md`](MIGRATION_PLAN.md).
+**Sin cuenta, todo queda en este dispositivo.** No hay estadísticas de uso. La versión con cuenta y PIN está publicada y sincroniza el cuaderno por secciones, con permisos para compartir: ver [`docs/NUBE.md`](docs/NUBE.md) y [`MIGRATION_PLAN.md`](MIGRATION_PLAN.md). Una corrección local pendiente de publicación no modifica todavía esa versión.
 
 ## Cómo abrirlo
 

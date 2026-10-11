@@ -1,5 +1,12 @@
 # MI CUADERNO — Cambios
 
+### 11/10/2026 · Progreso sin obligaciones duplicadas (D64)
+
+- Actividades sueltas del mismo nombre aportan a la meta semanal existente; excedentes se conservan y aparecen como registros adicionales. No cambia registros, reglas ni planes históricos.
+- Vista compartida con permisos incompletos muestra un aviso y únicamente los conteos disponibles, sin porcentaje, completo o victoria semanal inventados. La invitada conserva el plan recibido sin regenerarlo.
+- Mi año usa la misma meta y fecha de alcance. Regresión sintética compartida por pruebas unitarias y navegador; contrato en docs/PROGRESO_SEMANAL.md. Cache v82, copia v13/IDB 5; publicación pendiente.
+- Verificación final: `npm run check` 177/177 unitarias y 80/80 recorridos; tipos/build y humo Next 3/3 aprobados. Se aisló el observador de DA3 para no mezclar indicadores entre pantallas. Detalle y límites de nube/RLS en docs/QA.md.
+
 ### 08/10/2026 · Papelito al guardar un recuerdo (D63)
 
 - Después de guardar y cerrar el editor, el aviso muestra un papelito entrando en un bolsillo pastel. La confirmación y el enlace Ver permanecen visibles en la hoja abierta.

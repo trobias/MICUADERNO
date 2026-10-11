@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import assert from 'node:assert/strict';
+import weeklyFixture from '../fixtures/weekly-progress.cjs';
 import { start as startServer } from '../../tools/serve.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -278,12 +279,17 @@ await test('guardado visible (DA3): “guardando…” → “guardado” en el 
   await onboard(page);
   // Anota cada estado del indicador para ver el orden real (y qué se anuncia a lectores de pantalla).
   const watch = (sel) => page.evaluate((s) => {
+    // Al pasar del día a la hoja, su indicador anterior no debe escribir en la nueva secuencia.
+    (window.__saveObservers || []).forEach(o => o.disconnect());
     const note = document.querySelector(s);
     window.__states = [note.dataset.state];
     window.__said = [];
     const live = note.querySelector('[aria-live]');
-    new MutationObserver(() => window.__states.push(note.dataset.state + ':' + note.querySelector('.saved-note__text').textContent)).observe(note, { attributes: true, attributeFilter: ['data-state'] });
-    new MutationObserver(() => window.__said.push(live.textContent)).observe(live, { childList: true, characterData: true, subtree: true });
+    const stateObserver = new MutationObserver(() => window.__states.push(note.dataset.state + ':' + note.querySelector('.saved-note__text').textContent));
+    const liveObserver = new MutationObserver(() => window.__said.push(live.textContent));
+    stateObserver.observe(note, { attributes: true, attributeFilter: ['data-state'] });
+    liveObserver.observe(live, { childList: true, characterData: true, subtree: true });
+    window.__saveObservers = [stateObserver, liveObserver];
   }, sel);
   const states = () => page.evaluate(() => window.__states);
 
@@ -2187,6 +2193,75 @@ async function cloudContext(state) {
 }
 
 const CA = '11111111-1111-4111-8111-111111111111', CB = '22222222-2222-4222-8222-222222222222';
+
+await test('D64: metas sin duplicados y progreso compartido solo con información completa', async () => {
+  const f = weeklyFixture();
+  if (process.env.E2E_CAPTURE) fs.mkdirSync(process.env.E2E_CAPTURE, { recursive: true });
+  let plan;
+  for (const [url, viewport] of [[FILE_URL, { width: 1366, height: 900 }], [HTTP_URL, { width: 375, height: 812 }]]) {
+    const { page, context, errors } = await newPage(browser, { viewport, reducedMotion: 'reduce' });
+    await page.goto(url); await onboard(page);
+    plan = await page.evaluate(async f => {
+      for (const r of f.routines) await MC.model.saveRoutine(r);
+      const plan = MC.model.activityPlan(f.start, f.routines.map(MC.model.normalizeRoutine));
+      await MC.store.put('weeks', { week: f.start, activityPlan: plan });
+      for (const a of f.activities) await MC.store.put('activities', a);
+      location.hash = MC.routes.week(f.start);
+      return plan;
+    }, f);
+    await page.waitForSelector('.week-progress__percent:has-text("43%")');
+    await page.waitForSelector('.week-progress__goal:has-text("Caminar"):has-text("3/3"):has-text("1 registro adicional")');
+    assert.equal(await page.locator('.week-progress__goal:has-text("Caminar") .week-progress__victory').isVisible(), true);
+    if (process.env.E2E_CAPTURE) await page.locator('.planner__cell--important').screenshot({ path: path.join(process.env.E2E_CAPTURE, 'progress-owner-' + viewport.width + '.png') });
+    await page.reload();
+    await openCover(page);
+    await page.waitForSelector('.week-progress__percent:has-text("43%")');
+    assert.equal(await page.evaluate(async () => (await MC.store.getAll('activities')).length), 14);
+    await page.evaluate(() => { location.hash = MC.routes.year('2026'); });
+    await page.waitForSelector('.year-page h1');
+    assert.deepEqual(errors, [], 'Mi año debe poder dibujarse');
+    assert.ok(await page.evaluate(async () => MC.insights.victories(await MC.model.everything(), '2026').some(w => w.text === 'Caminar · 3/3')), 'Mi año comparte el cálculo');
+    await page.waitForSelector('.win__text:has-text("Caminar")', { state: 'attached' });
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+    assert.deepEqual(errors, []);
+    await context.close();
+  }
+  const PSI = '33333333-3333-4333-8333-333333333333';
+  const at = '2026-10-01T12:00:00.000Z';
+  const part = (store, record_id, section, data) => ({ store, record_id, section, data: { ...data, updatedAt: at }, deleted_at: null, updated_at: at, updated_by: CA });
+  const records = f.activities.map(a => part('activities', a.id, 'actividades', a));
+  const plans = [part('weeks', f.start, 'repeticiones', { week: f.start, activityPlan: plan })];
+  for (const viewport of [{ width: 1366, height: 900 }, { width: 375, height: 812 }]) {
+    const state = { me: { id: PSI, username: 'invitada', name: 'Nicole', admin: false, hasNotebook: false,
+      shares: [{ owner: CA, name: 'Nicole', sections: { actividades: 'ver', anio: 'ver' } }] }, parts: records };
+    const { page, context, errors, setCookie } = await cloudContext(state);
+    await page.setViewportSize(viewport);
+    await setCookie('mc_person', PSI); await setCookie('mc_view', CA);
+    await page.goto(HTTP_URL + '#/calendario/semana/' + f.start);
+    await page.waitForSelector('.week-progress__notice:has-text("metas no están compartidas")');
+    assert.equal(await page.locator('.week-progress__percent').isVisible(), false);
+    assert.equal(await page.locator('.week-progress__meter:visible').count(), 0);
+    const walk = page.locator('.week-progress__goal:has-text("Caminar")');
+    assert.match(await walk.textContent(), /4 registros/);
+    assert.doesNotMatch(await walk.locator('.week-progress__goal-count').textContent(), /\/|completo/);
+    assert.equal(await walk.locator('.week-progress__victory').isVisible(), false);
+    if (process.env.E2E_CAPTURE) await page.locator('.planner__cell--important').screenshot({ path: path.join(process.env.E2E_CAPTURE, 'progress-guest-' + viewport.width + '.png') });
+    assert.equal(await page.evaluate(async () => MC.insights.victories(await MC.model.everything(), '2026').filter(w => w.sourceType === 'week').length), 0);
+    state.me.shares[0].sections.repeticiones = 'ver'; state.parts = records.concat(plans);
+    await page.reload();
+    await page.waitForSelector('.week-progress__percent:has-text("43%")');
+    assert.equal(await page.locator('.week-progress__goal:has-text("Caminar") .week-progress__victory').isVisible(), true);
+    assert.equal(state.pushes.length, 0, 'mirar no escribe planes ni amplía permisos');
+    delete state.me.shares[0].sections.actividades; state.parts = plans;
+    await page.reload();
+    await page.waitForSelector('.week-progress__notice:has-text("no los registros")');
+    assert.equal(await page.locator('.week-progress__percent').isVisible(), false);
+    assert.equal(await page.locator('.week-progress__goal').count(), 0);
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+    assert.deepEqual(errors.filter(e => !/Failed to load resource/.test(e)), []);
+    await context.close();
+  }
+});
 
 await test('nube (NB2): la cola de salida vive en IndexedDB junto al cambio, sobrevive a recargar y sincroniza una sola pestaña', async () => {
   const state = { me: { id: CA, username: 'nicole', name: 'Nicole', admin: true, hasNotebook: true, shares: [] } };

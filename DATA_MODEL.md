@@ -1,5 +1,9 @@
 # MI CUADERNO — Modelo de datos
 
+### D64 · progreso derivado, sin migración
+
+Se conservan copia v13, IndexedDB 5, registros originales y planes históricos. `weeklyProgress` reúne sueltas del mismo nombre en la meta existente sin escribir enlaces. Devuelve `complete/missing`, `checked` limitado, `recorded` y `extra` por grupo; en lectura parcial `total/value/percent` son null. Actividades y Repeticiones son necesarias para calcular metas compartidas. No persistir estas cifras ni victorias derivadas. Contrato: [docs/PROGRESO_SEMANAL.md](docs/PROGRESO_SEMANAL.md).
+
 ### Esquema v13 · orden de repeticiones (D62)
 
 `routines.order: entero 0..10000 | null`, opcional. Copias anteriores reciben null al normalizar,

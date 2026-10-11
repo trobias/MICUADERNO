@@ -1,5 +1,7 @@
 # MI CUADERNO en la nube: Vercel + Supabase (etapa B, base)
 
+**D64 · metas compartidas:** el progreso requiere permisos de Actividades y Repeticiones, no basta Semana. Sin Repeticiones, se muestran marcas recibidas y un aviso, sin porcentaje ni falso completo; sin Actividades, no hay conteo de avance. El año tampoco deriva victorias semanales con permisos incompletos. La invitada usa el plan recibido, incluso en la semana en curso, sin regenerarlo ni subirlo. No se cambiaron permisos, API, RLS o SQL; sin migración. Contrato y regresión: [PROGRESO_SEMANAL.md](PROGRESO_SEMANAL.md).
+
 **D62 · ingreso:** `app/entrar/pin-input.tsx` muestra seis casillas enmascaradas sobre un único input password nativo. Permite pegado, borrado y gestor de contraseñas; mantiene `current-password`, validación de seis números, formulario y `/api/auth/login`. No agrega autenticación OTP ni cambia credenciales, permisos, sesiones o servicios. `data-browse` deja utilizar filtros/visor en cuadernos de lectura; nunca habilita guardado. La única forma nueva sincronizada es `routines.order` opcional, en la sección repeticiones ya existente.
 
 **Apertura D61 (cache v57):** agrega pulso de skeleton y reveal de 260 ms cuando el calendario está listo, adaptado de transitions.dev sin dependencias nuevas. Motion recordado por persona antes de esperar base/nube; sistema reducido o Reducidas/Ninguna: estático. Conserva la carga completa y los fallos/permisos D60/D38. No mide ni optimiza la latencia real.

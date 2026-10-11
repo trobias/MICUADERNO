@@ -1,5 +1,7 @@
 # MI CUADERNO — Backlog
 
+**Corregido localmente D64 (11/10):** metas infladas por registros sueltos del mismo nombre y porcentaje/completo incorrectos con permisos parciales. Contrato en `docs/PROGRESO_SEMANAL.md`, regresión automatizada y pendientes de publicación en `docs/QA.md`. Sin modificar la planificación guardada ni permisos.
+
 **Entregado D62 (08/10):** selección de 19 interacciones Be UI adaptadas al cuaderno clásico; detalle en `docs/BEUI.md`. Resuelve búsqueda de texto/emociones/fechas y orden de metas. No cierra por completo los ítems de búsqueda de adjuntos/canciones/colecciones, arrastre de actividades diarias o carga/pegado en cualquier hoja: tienen un alcance mayor que esta entrega.
 
 Cada idea pendiente, con su estado. **Nada se pierde por estar fuera de la fase actual.** El orden y las fases están en [`ROADMAP.md`](ROADMAP.md); el porqué de las ideas nuevas, en [`VISION.md`](VISION.md) (los números `[n]` son los del pedido original); lo hecho, en [`CHANGELOG.md`](CHANGELOG.md).

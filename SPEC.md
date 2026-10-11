@@ -1,5 +1,7 @@
 # MI CUADERNO — SPEC
 
+**D64 · progreso coherente:** una actividad suelta del mismo nombre que una meta semanal aporta a esa meta sin añadir obligaciones. Se mantienen límites por repetición y completas primero; las marcas excedentes se muestran como registros adicionales, conservando los originales. Una invitada necesita Actividades y Repeticiones para ver porcentaje, N/M, completo y victorias semanales automáticas; sin metas compartidas ve únicamente marcas registradas y un aviso. El año usa el mismo cálculo y fecha de primer alcance. Contrato y ejemplo reproducible: [docs/PROGRESO_SEMANAL.md](docs/PROGRESO_SEMANAL.md).
+
 **D63 · guardar un momento:** el aviso confirmado muestra un papelito entrando en un bolsillo durante 200 ms después de persistir y cerrar el editor. El enlace Ver abre Mi año. Con teclado, movimiento reducido o escritura activa, el papelito es estático. Quitar un momento, señalar una repetición especial y los errores no disparan el efecto de guardado en el año. La confirmación no desaparece al retirar el diálogo.
 
 **D63 · calendario:** el deslizamiento direccional existente se conserva para puntero/toque, con 260 ms y tokens compartidos. Navegación por teclado, actualizaciones guardadas, movimiento reducido y pestaña oculta no lo disparan; una nueva navegación o tecla interrumpe la transición activa.

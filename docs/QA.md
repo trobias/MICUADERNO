@@ -1,5 +1,15 @@
 # QA cruzada (A12) — 05/10/2026
 
+## Actualización del 11/10/2026 · Progreso coherente (D64, cache v82)
+
+- Investigación de producción de lectura: plan persistido, conteos de actividades y permisos efectivos explicaron el 33 % de la dueña frente al 54 % de la lectura sin metas. Sin cambios de datos o permisos en producción; fixtures exclusivamente sintéticos.
+- Corrección derivada: sueltas del mismo nombre aportan a la meta sin aumentar obligaciones; excedentes conservados, límites por repetición y medias marcas. El ejemplo da **43 %, Caminar 3/3 + 1 registro adicional**. Los 14 registros y el plan sobreviven al cálculo, copia y recarga. Contrato en [PROGRESO_SEMANAL.md](PROGRESO_SEMANAL.md).
+- `npm test`: **177/177**. Regresión de metas, normalización, prioridad de completas, privacidad/papelera, historial, copia, permisos y plan recibido de la semana actual. Mi año comparte la meta y la fecha de primer alcance, sin escribir marks.
+- Recorrido D64 **1/1**: dueña file/escritorio y HTTP/375 px; invitada escritorio/375 px con actividades sin metas, ambas secciones y metas sin actividades. Comprueba ausencia de porcentaje/completo/victoria cuando faltan datos y cero subidas al mirar. Capturas sintéticas de Progreso revisadas a 1366/375 px; texto de adicionales y aviso legibles, sin desborde horizontal.
+- `npm run typecheck` y `npm run build` aprobados. `npm run e2e:cloud` **3/3** con Next local, CSP e ingreso. `npm run test:cloud`: **14 aprobadas, 1 omitida** (RLS, sin Postgres local); no presentar esto como prueba de RLS real.
+- Primera corrida de `npm run check`: sintaxis de **50** scripts, **177/177** unitarias y **79/80** recorridos. DA3 mezclaba eventos del indicador del día con el de la hoja: se desconectan los observadores anteriores al cambiar la fuente, conservando las aserciones de estados y persistencia. DA3 pasó enfocado después de la corrección. **Corrida completa final aprobada: 50 scripts, 177/177 unitarias y 80/80 recorridos**, exit 0; incluye D64 y DA3.
+- Límites: no se publicaron cambios, no se cambió la BD, no se ampliaron permisos y no se probaron dispositivos físicos. Build y nube con fixtures no validan el despliegue de Production; verificación de publicación en el contrato D64. Sin dependencias nuevas, sin migración; copia v13/IDB 5.
+
 ## Actualización del 08/10/2026 · Continuidad y confirmación (D63, cache v81)
 
 - Dos interacciones nuevas y un refinamiento del calendario existente; sin dependencias ni cambios de datos (copia v13/IDB 5).

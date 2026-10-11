@@ -1067,7 +1067,7 @@
     var start = D.startOfWeek(date);
     return Promise.all([S().get('weeks', start), routines ? Promise.resolve(routines) : getRoutines()]).then(function (r) {
       var raw = r[0], w = normalizeWeek(raw || { week: start });
-      if (w.activityPlan && D.addDays(start, 6) < D.today()) return w.activityPlan;
+      if (w.activityPlan && (D.addDays(start, 6) < D.today() || (MC.cloud && MC.cloud.mode === 'guest'))) return w.activityPlan;
       var plan = activityPlan(start, r[1]);
       // Sin metas no crear semanas vacías; la invitada nunca escribe por el solo hecho de mirar.
       if ((!plan.length && !w.activityPlan) || isDeleted(raw) || (MC.cloud && MC.cloud.mode === 'guest') || JSON.stringify(plan) === JSON.stringify(w.activityPlan)) return plan;
@@ -1119,12 +1119,24 @@
     return { done: done, partial: partial, checked: done + partial, value: done + partial / 2, total: total };
   }
 
-  function weeklyProgress(date, plan, activities, days) {
+  /** La lectura parcial nunca convierte las marcas recibidas en una meta semanal (D64). */
+  function weeklyProgressAccess() {
+    if (!MC.cloud || MC.cloud.mode !== 'guest') return { complete: true };
+    var level = function (section) { return MC.sync && MC.sync.level && MC.sync.level(section); };
+    if (!level('actividades')) return { complete: false, missing: 'actividades' };
+    if (!level('repeticiones')) return { complete: false, missing: 'repeticiones' };
+    return { complete: true };
+  }
+
+  function weeklyProgress(date, plan, activities, days, options) {
     var start = D.startOfWeek(date), end = D.addDays(start, 6), excluded = Object.create(null), daily = {};
     (days || []).forEach(function (d) { if (isDeleted(d) || isPrivate(d, 'noInsights')) excluded[d.date] = true; });
     D.range(start, end).forEach(function (k) { daily[k] = { done: 0, total: 0 }; });
     var rows = dedupeOccurrences((activities || []).filter(function (a) { return !isDeleted(a) && !excluded[a.date] && a.date >= start && a.date <= end; }));
+    var complete = !options || options.complete !== false;
     var taken = Object.create(null);
+    // Sin ambos permisos solo contamos registros; no usamos ni inventamos metas.
+    if (!complete) plan = [];
     var goals = (sanitizeActivityPlan(plan, start) || []).map(function (g) {
       var dates = g.dates.filter(function (k) { return !excluded[k]; });
       var matches = rows.filter(function (a) { return a.routineId === g.routineId && dates.indexOf(a.date) !== -1; });
@@ -1140,25 +1152,43 @@
       });
       return Object.assign({}, g, goalProgress(done.length, partial.length, target), { recorded: done.length + partial.length });
     }).filter(function (g) { return g.total; });
-    // Las actividades sueltas (también las de una rutina ya retirada) son una oportunidad cada una.
+    var grouped = groupWeeklyGoals(goals), byName = Object.create(null);
+    grouped.forEach(function (g) { byName[g.key] = g; });
+    // D64: las sueltas del mismo nombre aportan a la meta, sin crear más obligaciones.
+    // Los límites de cada repetición se aplicaron antes: sus marcas excedentes no completan otra regla.
     rows.filter(function (a) { return !taken[a.id]; }).forEach(function (a) {
       var done = a.status === 'done' ? 1 : 0;
       var partial = a.status === 'partial' ? 1 : 0;
+      var group = byName[weeklyActivityKey(a.title)];
+      if (group) {
+        group.recorded += done + partial;
+        // Completas primero, también si reemplazan un medio avance dentro de la meta.
+        Object.assign(group, goalProgress(group.done + done, group.partial + partial, group.total));
+        if (group.dates.indexOf(a.date) === -1) group.dates.push(a.date);
+        return;
+      }
       goals.push(Object.assign({ id: a.id, title: a.title, recorded: done + partial, dates: [a.date], flexible: false }, goalProgress(done, partial, 1)));
       daily[a.date].total++; daily[a.date].done += done;
     });
-    var total = goals.reduce(function (n, g) { return n + g.total; }, 0);
-    var done = goals.reduce(function (n, g) { return n + g.done; }, 0);
-    var partial = goals.reduce(function (n, g) { return n + g.partial; }, 0);
+    // Agrupar las sueltas sin plan aparte evita sumar de nuevo las metas ya calculadas.
+    grouped = grouped.concat(groupWeeklyGoals(goals.filter(function (g) { return !g.routineId; })));
+    grouped.forEach(function (g) { g.extra = Math.max(0, g.recorded - g.checked); });
+    var total = grouped.reduce(function (n, g) { return n + g.total; }, 0);
+    var done = grouped.reduce(function (n, g) { return n + g.done; }, 0);
+    var partial = grouped.reduce(function (n, g) { return n + g.partial; }, 0);
     var value = done + partial / 2;
-    return { week: start, done: done, partial: partial, checked: done + partial, value: value, total: total, percent: total ? Math.round(value / total * 100) : 0, goals: groupWeeklyGoals(goals), daily: daily };
+    if (!complete) grouped.forEach(function (g) { g.total = null; g.value = null; });
+    return { week: start, complete: complete, missing: options && options.missing || null,
+      done: done, partial: partial, checked: done + partial, value: complete ? value : null,
+      total: complete ? total : null, percent: complete ? (total ? Math.round(value / total * 100) : 0) : null,
+      goals: grouped, daily: daily };
   }
 
   function getWeeklyProgress(date, plan) {
     var start = D.startOfWeek(date), end = D.addDays(start, 6);
     // Incluye las fichas de días borrados solo para excluir también sus actividades de las cuentas.
     return Promise.all([activitiesInRange(start, end), S().getRange('days', null, start, end)]).then(function (r) {
-      return weeklyProgress(start, plan, r[0], r[1]);
+      return weeklyProgress(start, plan, r[0], r[1], weeklyProgressAccess());
     });
   }
 
@@ -1523,7 +1553,7 @@
     calendarVisible: calendarVisible,
     normalizePage: normalizePage, getPages: getPages, getPage: getPage, savePage: savePage, deletePage: deletePage,
     sanitizeBlocks: sanitizeBlocks, sanitizeValues: sanitizeValues, BLOCK_TYPES: BLOCK_TYPES,
-    normalizeWeek: normalizeWeek, activityPlan: activityPlan, ensureActivityPlan: ensureActivityPlan, weeklyProgress: weeklyProgress, getWeeklyProgress: getWeeklyProgress,
+    normalizeWeek: normalizeWeek, activityPlan: activityPlan, ensureActivityPlan: ensureActivityPlan, weeklyProgress: weeklyProgress, getWeeklyProgress: getWeeklyProgress, weeklyProgressAccess: weeklyProgressAccess,
     sheetOccurrenceId: sheetOccurrenceId, sheetOccurrences: sheetOccurrences, sheetBlocks: sheetBlocks, sheetText: sheetText, sheetCount: sheetCount,
     markId: markId, getMarks: getMarks, isVictory: isVictory, setVictory: setVictory, setMemory: setMemory, MEMORY_CATEGORIES: MEMORY_CATEGORIES,
     getTemplates: getTemplates, getTemplate: getTemplate, getDayTemplates: getDayTemplates, dayTemplateFrom: dayTemplateFrom, applyDayTemplate: applyDayTemplate, repeatDay: repeatDay, saveTemplate: saveTemplate, deleteTemplate: deleteTemplate, templateFrom: templateFrom, repeatSheet: repeatSheet, getWeek: getWeek, saveWeek: saveWeek, isEmptyWeek: isEmptyWeek, normalizeTemplate: normalizeTemplate, normalizeMark: normalizeMark,
